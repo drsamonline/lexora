@@ -1,0 +1,9 @@
+%% LEXORA system context (proposed)
+flowchart TB
+  U[Operator on ~4 GiB-RAM machine] --> CLI[LEXORA CLI - planned, not implemented]
+  CLI --> IN[(Input corpus\nTXT / PDF / scanned PDF)]
+  CLI --> OUT[(.lxz archives - format NOT frozen)]
+  CLI --> BM[Benchmark harness - planned Phase 2]
+  BM --> MAN[(Frozen corpus manifest\ntrain/val/held-out lineage split)]
+  BM --> BASE[Baselines: Zstd-19, Brotli q11, XZ, PPMd\nmeasurement-only roles pending ADR-0002/0003]
+  CLI -.optional.-> TESS[Tesseract OCR\navailability = OQ-10]

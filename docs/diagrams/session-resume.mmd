@@ -1,0 +1,12 @@
+%% Session continuity workflow (master prompt section 8)
+flowchart TD
+  S1[Start session] --> S2[Read NEXT_SESSION.md]
+  S2 --> S3[Read STATUS.md + latest SESSION_LOG entry]
+  S3 --> S4[git status / branch / HEAD inspection]
+  S4 --> S5{Repo matches recorded checkpoint?}
+  S5 -->|no| S6[Investigate drift first - document findings]
+  S5 -->|yes| S7[Pick smallest next task + acceptance criteria]
+  S6 --> S7
+  S7 --> S8[Do the work - batches of <=5 files then checkpoint]
+  S8 --> S9[Update STATUS / PROGRESS / SESSION_LOG / NEXT_SESSION / matrix / README as affected]
+  S9 --> S10[Commit if workflow permits; record hash only if real]
