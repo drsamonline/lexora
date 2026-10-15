@@ -2,7 +2,7 @@
 
 > **Status:** Draft (candidate values proposed; become normative only at `.lxz` v0 format freeze via ADR — verified 2026-10-15)
 > **Owner:** Documentation architect (delegated)
-> **Related:** [PERFORMANCE_BUDGET.md](PERFORMANCE_BUDGET.md) · [FORMAT_LXZ.md](FORMAT_LXZ.md) · [SPECIFICATION.md](SPECIFICATION.md) §4 · THREAT_MODEL.md *(Batch D)*
+> **Related:** [PERFORMANCE_BUDGET.md](PERFORMANCE_BUDGET.md) · [FORMAT_LXZ.md](FORMAT_LXZ.md) · [SPECIFICATION.md](SPECIFICATION.md) §4 · [THREAT_MODEL.md](THREAT_MODEL.md)
 
 ## Purpose & scope
 

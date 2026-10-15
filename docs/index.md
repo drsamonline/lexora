@@ -21,15 +21,15 @@ LEXORA = **L**ayered **EX**act-text **O**ptimized... see [PROJECT_CHARTER.md](PR
 
 - `USER_GUIDE.md` — not yet written (planned, Batch C)
 - `CLI_REFERENCE.md` — not yet written (planned; must document only implemented commands)
-- `INSTALLATION.md` / `BUILD_GUIDE.md` — not yet written (no build tooling exists)
-- `TROUBLESHOOTING.md` — not yet written (Batch D)
+- [INSTALLATION.md](INSTALLATION.md) / [BUILD_GUIDE.md](BUILD_GUIDE.md) — exist as drafts; no working build/tooling is claimed in them
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — Batch D draft (symptom map for the designed system; no CLI exists yet)
 
 ## Developers
 
-- `DEVELOPMENT_SETUP.md` — *planned, Batch C* (not yet created; Python version itself is an open decision — see [DECISIONS.md](DECISIONS.md) OQ-7)
+- `DEVELOPMENT_SETUP.md` — exists as Batch C draft (Python version itself is still an open decision — see [DECISIONS.md](DECISIONS.md) OQ-7)
 - [PRODUCT_REQUIREMENTS.md](PRODUCT_REQUIREMENTS.md) — numbered requirements (`REQ-*`)
 - [GLOSSARY.md](GLOSSARY.md) — terminology used across all docs
-- `TESTING_GUIDE.md`, `QUALITY_PLAN.md` — *planned, Batch C*
+- [QUALITY_PLAN.md](QUALITY_PLAN.md) — Batch C draft; `TESTING_GUIDE.md` not yet written (deferred to when test tooling exists)
 
 ## Architecture & specification
 
@@ -47,16 +47,24 @@ LEXORA = **L**ayered **EX**act-text **O**ptimized... see [PROJECT_CHARTER.md](PR
 
 ## Testing & benchmarks
 
-- `TEST_STRATEGY.md`, `BENCHMARK_PROTOCOL.md`, `CORPUS_POLICY.md` — *planned, Batch C*
-- `BENCHMARK_RESULTS.md` — *planned, Batch C*. **No validated benchmark results exist.** Any numbers appearing anywhere before a frozen-protocol run are invalid.
+- [TEST_STRATEGY.md](TEST_STRATEGY.md), [BENCHMARK_PROTOCOL.md](BENCHMARK_PROTOCOL.md), [CORPUS_POLICY.md](CORPUS_POLICY.md) — Batch C drafts
+- [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) — exists; **holds zero numbers. No validated benchmark results exist.** Any numbers appearing anywhere before a frozen-protocol run are invalid.
 
 ## Security & privacy
 
-- `SECURITY.md`, `SECURITY_ARCHITECTURE.md`, `THREAT_MODEL.md`, `PRIVACY_AND_DATA_HANDLING.md`, `ENCRYPTION_PROFILE.md` — *planned, Batch D*. No security guarantees are currently claimed.
+- Root [SECURITY.md](../SECURITY.md) — reporting process only; **no security guarantees claimed** (nothing implemented).
+- [SECURITY_ARCHITECTURE.md](SECURITY_ARCHITECTURE.md) — trust boundaries, asset inventory, REQ-SEC mechanism map (design intent).
+- [THREAT_MODEL.md](THREAT_MODEL.md) — attacker profiles + threat register TM-01…TM-13.
+- [PRIVACY_AND_DATA_HANDLING.md](PRIVACY_AND_DATA_HANDLING.md) — P0–P3 classification tiers, dictionary-leakage policy, incident handling.
+- [ENCRYPTION_PROFILE.md](ENCRYPTION_PROFILE.md) — ⚠️ PROPOSED, out of current scope (Phase 9 gate; no cipher decided).
 
 ## Operations & troubleshooting
 
-- `ERROR_HANDLING.md`, `LOGGING_AND_DIAGNOSTICS.md`, `RESOURCE_LIMITS.md`, `runbooks/*` — *planned, Batch D*
+- [ERROR_HANDLING.md](ERROR_HANDLING.md) — error taxonomy E-*, severities, fail-closed contract (proposed codes).
+- [LOGGING_AND_DIAGNOSTICS.md](LOGGING_AND_DIAGNOSTICS.md) — levels, privacy-safe log rules, run-manifest format.
+- [RESOURCE_LIMITS.md](RESOURCE_LIMITS.md) — LIM-* candidate ceilings (Batch C draft, pending format freeze).
+- Runbooks: [BENCHMARK_RUNBOOK.md](runbooks/BENCHMARK_RUNBOOK.md) · [CORRUPTION_TRIAGE.md](runbooks/CORRUPTION_TRIAGE.md) · [PERFORMANCE_TRIAGE.md](runbooks/PERFORMANCE_TRIAGE.md) · [RECOVERY_RUNBOOK.md](runbooks/RECOVERY_RUNBOOK.md)
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — symptom→cause→action index.
 
 ## Project management & resumability
 
@@ -64,12 +72,12 @@ LEXORA = **L**ayered **EX**act-text **O**ptimized... see [PROJECT_CHARTER.md](PR
 - [PROGRESS.md](PROGRESS.md) — phase-by-phase completion
 - [SESSION_LOG.md](SESSION_LOG.md) — append-only dated session history
 - [NEXT_SESSION.md](NEXT_SESSION.md) — resume card
-- `ROADMAP.md`, `PHASES.md`, `IMPLEMENTATION_PLAN.md`, `IMPLEMENTATION_MATRIX.md`, `REQUIREMENTS_TRACEABILITY.md` — *planned, Batch C*
+- [ROADMAP.md](ROADMAP.md), [PHASES.md](PHASES.md), [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md), [IMPLEMENTATION_MATRIX.md](IMPLEMENTATION_MATRIX.md), [REQUIREMENTS_TRACEABILITY.md](REQUIREMENTS_TRACEABILITY.md) — Batch C drafts
 
 ## Decisions & history
 
 - [DECISIONS.md](DECISIONS.md) — index of ADRs and open decisions
-- [ADR/](ADR/) — decision records: [ADR-0001 gate scope](ADR/ADR-0001-gate-scope.md) · [ADR-0002 Brotli role](ADR/ADR-0002-brotli-role.md) · [ADR-0003 PPMd role](ADR/ADR-0003-ppmd-role.md) · [ADR-0004 cleaning metric](ADR/ADR-0004-cleaning-error-metric.md) — all **Proposed**, none accepted; [template](templates/ADR_TEMPLATE.md)
+- [ADR/](ADR/) — decision records: [ADR-0001 gate scope](ADR/ADR-0001-gate-scope.md) · [ADR-0002 Brotli role](ADR/ADR-0002-brotli-role.md) · [ADR-0003 PPMd role](ADR/ADR-0003-ppmd-role.md) · [ADR-0004 cleaning metric](ADR/ADR-0004-cleaning-error-metric.md) — all **Accepted** (2026-10-15, owner delegation; see DECISIONS.md note); [template](templates/ADR_TEMPLATE.md)
 - [../CHANGELOG.md](../CHANGELOG.md) — change history
 - [templates/](templates/) — reusable document templates ([session note](templates/SESSION_NOTE_TEMPLATE.md), [ADR](templates/ADR_TEMPLATE.md))
 
