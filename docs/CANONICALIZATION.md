@@ -43,7 +43,7 @@ Only rules in this table may alter bytes; all other bytes pass through unchanged
 
 ## Error-rate metric
 
-Defined by [ADR-0004](ADR/ADR-0004-cleaning-error-metric.md) — currently **Proposed**. Until accepted, cleaning quality claims are prohibited anywhere in docs/benchmarks.
+Defined by [ADR-0004](ADR/ADR-0004-cleaning-error-metric.md) — **Accepted 2026-10-15** (owner delegation): rule-audit metric on stratified seeded sample (point estimate ≤ 1%, 95% bootstrap upper bound ≤ 2%) plus 100% automated invariant checks. Quality *claims* remain prohibited until a measured run exists.
 
 ## Test vectors (required before freeze)
 

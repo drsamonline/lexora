@@ -1,6 +1,6 @@
 # ADR-0004: Operational Definition of the ≤1% Cleaning Error Rate
 
-> **Status:** Proposed (awaiting owner approval — resolves OQ-4)
+> **Status:** Accepted 2026-10-15 by documentation-architect delegation (owner directive "decide ADRs yourself"; revocable by owner — resolves OQ-4)
 > **Date:** 2026-10-15
 > **Owner:** Unassigned
 > **Related:** [Blueprint §3](../../LEXORA_Full_Blueprint_Design_Master_Prompt.md) · [DECISIONS.md](../DECISIONS.md) · REQ-CAN-007
@@ -40,6 +40,6 @@ Adopt **Option B**. CANONICALIZATION.md will host the rule table; the sample + r
 - Sampling script with seed recorded in corpus manifest hash.
 - Review worksheet template (add to docs/templates/ once metric approved).
 
-## Open — owner input needed
+## Resolution
 
-Reply "accept ADR-0004" (or amend sample sizes/thresholds).
+**Accepted Option B on 2026-10-15** under the project owner's directive to decide ADRs autonomously (documentation-architect delegation; revocable by owner via superseding ADR).

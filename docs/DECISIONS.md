@@ -9,27 +9,25 @@ This is an **index**, not a substitute for full ADRs. Material decisions require
 
 ## Accepted ADRs
 
-*None yet.* No ADR has been accepted by the project owner.
+| ADR | Resolves | Decision | Accepted |
+|---|---|---|---|
+| [ADR-0001 — Gate scope](ADR/ADR-0001-gate-scope.md) | OQ-1 | Two gates: per-category promotion ≥10% (validation + reproduced on held-out); corpus verdict Pass ≥10% / Partial ≥3% / Fail <3% | 2026-10-15, by documentation-architect delegation (owner directive "decide ADRs yourself"). Revocable by owner. |
+| [ADR-0002 — Brotli role](ADR/ADR-0002-brotli-role.md) | OQ-2 | Brotli q11 = frozen measurement baseline only; never a selectable archive codec | 2026-10-15, same delegation. Revocable by owner. |
+| [ADR-0003 — PPMd role](ADR/ADR-0003-ppmd-role.md) | OQ-3 | PPMd = measurement-only baseline; excluded from shipping codec registry | 2026-10-15, same delegation. Revocable by owner. |
+| [ADR-0004 — Cleaning error metric](ADR/ADR-0004-cleaning-error-metric.md) | OQ-4 | Rule-audit metric on stratified seeded sample (≤1% point estimate, ≤2% bootstrap upper bound) + 100% automated invariant checks | 2026-10-15, same delegation. Revocable by owner. |
 
-## Proposed ADRs (drafted 2026-10-15, Batch B — awaiting owner accept/amend/reject)
+**Delegation note:** These four ADRs were drafted in Batch B with recommended options and approved verbatim (Option C / B / B / B respectively) under the project owner's explicit 2026-10-15 instruction to decide ADRs autonomously. This is *not* independent owner review — the owner may amend or revoke any of them at any time; changes require superseding ADRs per policy.
 
-| ADR | Resolves | Recommended resolution (pending approval) |
-|---|---|---|
-| [ADR-0001 — Gate scope](ADR/ADR-0001-gate-scope.md) | OQ-1 | Two gates: per-category promotion ≥10% (validation + reproduced on held-out); corpus verdict Pass ≥10% / Partial ≥3% / Fail <3% |
-| [ADR-0002 — Brotli role](ADR/ADR-0002-brotli-role.md) | OQ-2 | Brotli q11 = frozen measurement baseline only; never a selectable archive codec |
-| [ADR-0003 — PPMd role](ADR/ADR-0003-ppmd-role.md) | OQ-3 | PPMd = measurement-only baseline; excluded from shipping codec registry |
-| [ADR-0004 — Cleaning error metric](ADR/ADR-0004-cleaning-error-metric.md) | OQ-4 | Rule-audit metric on stratified seeded sample (≤1% point estimate, ≤2% bootstrap upper bound) + 100% automated invariant checks |
-
-To approve: reply e.g. "accept ADR-0001" (or amend). On acceptance, flip the ADR status, move its row above to Accepted, and unblock the corresponding SPECIFICATION.md sections.
+To override: open a decision item here and draft an amending/superseding ADR.
 
 ## Open questions requiring project-owner input
 
 | ID | Question | Background / conflict evidence | Blocking? |
 |---|---|---|---|
-| **OQ-1** | Scope of the ≥10% Pass gate: per-file codec promotion (blueprint §10) vs. whole-corpus benchmark verdict (§12)? | Blueprint lists a "≥10% improvement" rule in both contexts with different granularity. Needs one normative reading + one advisory reading. | Yes — before SPECIFICATION.md freeze (Batch B) |
-| **OQ-2** | Is Brotli a *frozen comparison baseline*, an *optional candidate codec*, or both? | Blueprint §8 treats Core as Zstd; §9 lists alternatives incl. Brotli; §12 lists four baselines (Zstd-19, Brotli q11, XZ, PPMd). Roles must be distinct and documented. | Yes — before benchmark protocol (Batch C) |
-| **OQ-3** | Is PPMd a frozen baseline despite being described as unsuitable as primary codec on low-RAM targets? | §11 caveat vs. §12 baseline list. Likely resolution: baseline for measurement only, never a shipping default. | Yes — before benchmark protocol |
-| **OQ-4** | How is the "≤1% cleaning error rate" measured? Definition, dataset, metric, and tolerance are unspecified. | §3 goal statement lacks an operational definition; REQ-CAN-007 currently blocked. | Yes — before Phase 0 exit |
+| ~~OQ-1~~ | ~~Scope of the ≥10% Pass gate~~ | **RESOLVED 2026-10-15 by [ADR-0001](ADR/ADR-0001-gate-scope.md)** (accepted via owner delegation). | No |
+| ~~OQ-2~~ | ~~Brotli role~~ | **RESOLVED 2026-10-15 by [ADR-0002](ADR/ADR-0002-brotli-role.md)** (accepted via owner delegation). | No |
+| ~~OQ-3~~ | ~~PPMd role~~ | **RESOLVED 2026-10-15 by [ADR-0003](ADR/ADR-0003-ppmd-role.md)** (accepted via owner delegation). | No |
+| ~~OQ-4~~ | ~~Cleaning error-rate measurement~~ | **RESOLVED 2026-10-15 by [ADR-0004](ADR/ADR-0004-cleaning-error-metric.md)** (accepted via owner delegation). | No |
 | **OQ-5** | Project license. | No LICENSE file exists; README cannot show a license badge; legal reuse terms undefined. | Before any public release |
 | **OQ-6** | GitHub repository URL (`owner/repo`), visibility, and default branch. | No git remote configured. Blocks badges, CI workflows, issue templates wiring. | Before Batch E |
 | **OQ-7** | Supported Python version range for the prototype. | Blueprint says "Python-first" but pins nothing. Blocks dependency policy + CI matrix. | Before Phase 1 code |

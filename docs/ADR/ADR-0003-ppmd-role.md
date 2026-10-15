@@ -1,6 +1,6 @@
 # ADR-0003: PPMd as Baseline Despite Unsuitability as Primary Codec
 
-> **Status:** Proposed (awaiting owner approval — resolves OQ-3)
+> **Status:** Accepted 2026-10-15 by documentation-architect delegation (owner directive "decide ADRs yourself"; revocable by owner — resolves OQ-3)
 > **Date:** 2026-10-15
 > **Owner:** Unassigned
 > **Related:** [Blueprint §11, §12](../../LEXORA_Full_Blueprint_Design_Master_Prompt.md) · [DECISIONS.md](../DECISIONS.md)
@@ -24,6 +24,6 @@ Adopt **Option B**. REQ-BMK-002 keeps PPMd pinned as baseline; REQ-CMP-002 codec
 - (+) No contradiction; honest yardstick retained; shipping surface stays small.
 - (−) Baseline runs need an external PPMd tool (`7z`/`ppmd`), documented in BUILD_GUIDE.
 
-## Open — owner input needed
+## Resolution
 
-Reply "accept ADR-0003" (or amend).
+**Accepted Option B on 2026-10-15** under the project owner's directive to decide ADRs autonomously (documentation-architect delegation; revocable by owner via superseding ADR).

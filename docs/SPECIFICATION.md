@@ -1,6 +1,6 @@
 # LEXORA Normative Specification
 
-> **Status:** `LEXORA-SPEC-1.0-draft` — PROPOSED, NOT APPROVED. Sections marked *(Proposed)* depend on ADRs not yet accepted.
+> **Status:** `LEXORA-SPEC-1.0-draft` — PROPOSED, NOT APPROVED (rule table, tokenizer details, and format layouts still unfrozen). Gate/baseline/metric sections are normative per Accepted ADR-0001…0004 (2026-10-15).
 > **Owner:** Unassigned
 > **Last verified:** 2026-10-15 (no implementation exists; nothing herein is validated by code)
 > **Related:** [MASTER_BLUEPRINT.md](MASTER_BLUEPRINT.md) · [PRODUCT_REQUIREMENTS.md](PRODUCT_REQUIREMENTS.md) · [DECISIONS.md](DECISIONS.md)
@@ -28,7 +28,7 @@ Earlier informal "v2.2" notes are *not* versions of this specification.
 2.4 **Versioning.** Every archive MUST record the canonicalizer version; decoders/verifiers MUST check and report it. `[REQ-CAN-004]`
 2.5 **Script safety.** Rules MUST NOT decompose or reorder combining marks, ZWJ/ZWNJ in Devanagari or Gujarati sequences. Golden vectors REQUIRED before any rule ships. `[REQ-CAN-005]`
 2.6 **OCR corrections.** Corrections apply only above configured confidence thresholds and MUST be logged with position and before/after values. `[REQ-CAN-006]`
-2.7 **Cleaning quality.** Error rate ≤ 1% under the metric defined in [ADR-0004](ADR/ADR-0004-cleaning-error-metric.md). *(Proposed — ADR pending; requirement currently untestable.)* `[REQ-CAN-007]`
+2.7 **Cleaning quality.** Error rate ≤ 1% under the metric defined in [ADR-0004](ADR/ADR-0004-cleaning-error-metric.md) (Accepted 2026-10-15): rule-audit on stratified seeded sample, point estimate ≤ 1% and 95% bootstrap upper bound ≤ 2%, plus 100% automated invariant checks. `[REQ-CAN-007]`
 
 ## 3. Tokenization (candidate layer)
 
@@ -42,12 +42,12 @@ Earlier informal "v2.2" notes are *not* versions of this specification.
 4.3 **Total-cost accounting.** Selection and reporting MUST count every serialized byte: headers, side tables, embedded dictionaries, grammar stores, block metadata. `[REQ-CMP-004]`
 4.4 **Bounded decode.** Decoding a single document/block MUST NOT require loading the entire archive into memory. `[REQ-CMP-005]`
 4.5 **Unknown features.** An unknown codec ID or unsupported must-understand feature flag MUST cause refusal with a specific error code; partial or best-effort output is FORBIDDEN. `[REQ-CMP-006]`
-4.6 **Baselines vs. codecs.** Brotli q11, XZ, PPMd are measurement baselines only and MUST NOT be emitted as selectable archive codecs. *(Proposed — [ADR-0002](ADR/ADR-0002-brotli-role.md), [ADR-0003](ADR/ADR-0003-ppmd-role.md).)*
+4.6 **Baselines vs. codecs.** Brotli q11, XZ, PPMd are measurement baselines only and MUST NOT be emitted as selectable archive codecs. *(Per Accepted [ADR-0002](ADR/ADR-0002-brotli-role.md), [ADR-0003](ADR/ADR-0003-ppmd-role.md), 2026-10-15.)*
 
 ## 5. Experimental candidates
 
 5.1 Candidates (shared dictionaries, Re-Pair grammar, bounded token PPM, numeric/record coding, template+residual) enter the default pipeline only after passing the promotion gate. `[REQ-EXP-001]`
-5.2 **Gate scope.** *(Proposed — [ADR-0001](ADR/ADR-0001-gate-scope.md): promotion = ≥10% total-size win per category on validation, reproduced on held-out; corpus verdict = Pass ≥10% / Partial ≥3% / Fail <3%.)*
+5.2 **Gate scope.** Promotion gate: a candidate replaces the incumbent for a document category only if total stored size improves ≥10% on the validation split for that category and the win reproduces on held-out. Corpus verdict (held-out, total stored bytes vs. best frozen baseline): Pass ≥10%, Partial ≥3%, Fail <3%. *(Normative per Accepted [ADR-0001](ADR/ADR-0001-gate-scope.md), 2026-10-15.)*
 5.3 Learned structures MUST be induced only from the training split (lineage separation). `[REQ-EXP-002]`
 5.4 Each candidate MUST carry a documented retirement threshold and be re-ablated each benchmark revision. `[REQ-EXP-003]`
 
@@ -82,9 +82,9 @@ Earlier informal "v2.2" notes are *not* versions of this specification.
 
 | Blocker | Section(s) | ADR |
 |---|---|---|
-| Gate scope | §5.2 | ADR-0001 (Proposed) |
-| Baseline roles | §4.6 | ADR-0002, ADR-0003 (Proposed) |
-| Cleaning metric | §2.7 | ADR-0004 (Proposed) |
+| Gate scope | §5.2 | ADR-0001 (Accepted 2026-10-15) |
+| Baseline roles | §4.6 | ADR-0002, ADR-0003 (Accepted 2026-10-15) |
+| Cleaning metric | §2.7 | ADR-0004 (Accepted 2026-10-15) |
 | Rule table freeze | §2.3 | Pending Phase 0 work |
 | Byte layout | §7.2 | Pending format ADR |
 

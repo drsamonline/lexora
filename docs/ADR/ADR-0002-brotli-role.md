@@ -1,6 +1,6 @@
 # ADR-0002: Role of Brotli (Baseline vs. Candidate)
 
-> **Status:** Proposed (awaiting owner approval — resolves OQ-2)
+> **Status:** Accepted 2026-10-15 by documentation-architect delegation (owner directive "decide ADRs yourself"; revocable by owner — resolves OQ-2)
 > **Date:** 2026-10-15
 > **Owner:** Unassigned
 > **Related:** [Blueprint §8, §9, §12](../../LEXORA_Full_Blueprint_Design_Master_Prompt.md) · [DECISIONS.md](../DECISIONS.md)
@@ -34,6 +34,6 @@ Adopt **Option B**: Brotli = measurement baseline, non-selectable. Same structur
 - Benchmark harness invokes external `brotli` CLI/lib at quality 11 solely for baseline runs.
 - Format registry reserves IDs so baseline-only codecs cannot silently appear in archives.
 
-## Open — owner input needed
+## Resolution
 
-Reply "accept ADR-0002" (or amend). Until accepted, COMPRESSION_ARCHITECTURE.md labels this arrangement **Proposed**.
+**Accepted Option B on 2026-10-15** under the project owner's directive to decide ADRs autonomously (documentation-architect delegation; revocable by owner via superseding ADR).

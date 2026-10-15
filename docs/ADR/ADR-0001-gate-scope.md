@@ -1,6 +1,6 @@
 # ADR-0001: Scope of the ≥10% Acceptance Gate
 
-> **Status:** Proposed (awaiting owner approval — resolves OQ-1)
+> **Status:** Accepted 2026-10-15 by documentation-architect delegation (owner directive "decide ADRs yourself"; revocable by owner — resolves OQ-1)
 > **Date:** 2026-10-15
 > **Owner:** Unassigned
 > **Related:** [Blueprint §10, §12](../../LEXORA_Full_Blueprint_Design_Master_Prompt.md) · [DECISIONS.md](../DECISIONS.md) · [SPECIFICATION.md](../SPECIFICATION.md)
@@ -46,6 +46,6 @@ None directly; reduces risk of shipping unjustified complexity.
 - Benchmark harness must emit per-category and per-corpus totals.
 - Split audit script must enforce lineage separation for both gates.
 
-## Open — owner input needed
+## Resolution
 
-Reply "accept ADR-0001" (or amend) to unblock normative wording in SPECIFICATION.md §Gates. Until accepted, SPECIFICATION.md marks this section **Proposed**.
+**Accepted Option C on 2026-10-15** under the project owner's directive to decide ADRs autonomously (documentation-architect delegation; revocable by owner via superseding ADR).
