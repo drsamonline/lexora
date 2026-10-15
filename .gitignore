@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Virtual envs / tool caches
+.tox/
+
+# Benchmark & corpus artifacts (large or private; never commit raw corpora)
+corpus/
+benchmarks/raw/
+benchmarks/*.log
+results/*.tmp
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Local secrets — never commit
+.env
+*.key
+
+# LEXORA archives produced during local testing (reproducible, do not commit)
+*.lxz
+*.lxdb
