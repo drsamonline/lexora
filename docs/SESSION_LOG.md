@@ -131,3 +131,17 @@ Append-only, dated session summaries. Never rewrite history; append a correction
 - **Merge status:** DONE. Closure commit `3ecdfaf` created, then `git checkout main && git merge --ff-only qwen-code-ce7e5bcf-…` succeeded (fast-forward `a220e16..3ecdfaf`, 19 files, +673/-46). Local `main` now contains Batches A–D.
 - **Session 9 outcome:** SUCCESS — Batch D drafted, closed, and merged into local `main`; push blocked on credentials (recorded honestly).
 - **Next action:** Push `main` (`3ecdfaf`) with owner-supplied token (or owner merges PR #2); owner review of Batch D; then Batch E.
+
+---
+## LEXORA Session 10 — 2026-10-15
+
+- **Objective:** Owner said "continue"/"start" — verify state and finish Batch E (GitHub & release polish) closure on local main.
+- **Pre-state (verified):** Local `main` at `aa266a2` ("docs: Add issue templates, contributing guide, and release process") — a prior unlogged session had already committed CONTRIBUTING.md, two issue templates, and docs/RELEASE_PROCESS.md directly onto main. Old working branch tip `7969155` was an ancestor of main (no lost work). `git remote -v` empty.
+- **Actions & results:**
+  1. `python3 scripts/linkcheck.py` on main -> BROKEN: CONTRIBUTING.md links `.github/pull_request_template.md` which did not exist (exit 1).
+  2. Created `.github/pull_request_template.md` (honesty checklist + verification-actually-run table; no fabricated checks).
+  3. Updated docs/index.md (header Batches A-E + new "Contributing & releases" section linking all Batch E files), docs/STATUS.md (Batch E row Drafted, phase text, CI row, next milestone), docs/PROGRESS.md (new P0.8 row, M3c milestone), CHANGELOG.md (Batch E entry under Unreleased/Added), README.md (maturity row, doc-index CONTRIBUTING link, stale "will follow in Batch B" sentence fixed).
+  4. Rewrote docs/NEXT_SESSION.md as Session 11 resume card.
+  5. Re-ran linkcheck -> result recorded below.
+- **Honest notes:** No CI workflows or badges created (nothing runnable exists; placeholders prohibited per master prompt 2.10). RELEASE_PROCESS versioning scheme remains Proposed pending OQ-9. Push to remote still impossible (no credentials); remote main remains at `d6350c0`, so Batches D+E are local-only.
+- **Next action:** Owner review of Batches D+E; push with owner-supplied token; resolve OQ-5/OQ-7 before any P1 code.

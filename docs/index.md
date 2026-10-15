@@ -1,8 +1,8 @@
 # LEXORA Documentation Portal
 
-> **Status:** Active (Batch A — governance & navigation)
+> **Status:** Active (Batches A–E — governance, architecture, engineering, security/operations, GitHub & release polish)
 > **Owner:** Unassigned
-> **Last verified:** 2026-10-15 (commit `816f58f`)
+> **Last verified:** 2026-10-15 (Session 10)
 
 LEXORA = **L**ayered **EX**act-text **O**ptimized... see [PROJECT_CHARTER.md](PROJECT_CHARTER.md) for the authoritative definition and full naming. Core idea: clean text conservatively → canonical UTF-8 bytes → compress with byte-exact recovery.
 
@@ -80,6 +80,13 @@ LEXORA = **L**ayered **EX**act-text **O**ptimized... see [PROJECT_CHARTER.md](PR
 - [ADR/](ADR/) — decision records: [ADR-0001 gate scope](ADR/ADR-0001-gate-scope.md) · [ADR-0002 Brotli role](ADR/ADR-0002-brotli-role.md) · [ADR-0003 PPMd role](ADR/ADR-0003-ppmd-role.md) · [ADR-0004 cleaning metric](ADR/ADR-0004-cleaning-error-metric.md) — all **Accepted** (2026-10-15, owner delegation; see DECISIONS.md note); [template](templates/ADR_TEMPLATE.md)
 - [../CHANGELOG.md](../CHANGELOG.md) — change history
 - [templates/](templates/) — reusable document templates ([session note](templates/SESSION_NOTE_TEMPLATE.md), [ADR](templates/ADR_TEMPLATE.md))
+
+## Contributing & releases *(Batch E)*
+
+- [../CONTRIBUTING.md](../CONTRIBUTING.md) — ground rules (honesty policy), current workflow, branching & PR guidance
+- [.github/pull_request_template.md](../.github/pull_request_template.md) — required PR checklist (verification actually run, decisions affected)
+- Issue templates: [design proposal](../.github/ISSUE_TEMPLATE/design-proposal.yml) · [documentation error report](../.github/ISSUE_TEMPLATE/documentation.yml)
+- [RELEASE_PROCESS.md](RELEASE_PROCESS.md) — release preconditions, proposed versioning scheme (OQ-9 pending), rollback policy; **no releases or tags exist yet**
 
 ---
 

@@ -14,6 +14,7 @@
 | P0.5 Batch C — engineering execution docs | Roadmap, phases, plan, matrix, traceability, acceptance, test strategy, quality, benchmark protocol/results, corpus policy, budgets, limits, build/install/dev-setup | **Complete** (commit `3d98eab`) | ✅ 15 docs created; links verified; no fabricated results/commands | docs/ROADMAP.md … docs/DEVELOPMENT_SETUP.md |
 | P0.6 Merge to main + push | Local `main` current; hosted remote updated | **Complete** | ✅ Session 8: origin discovered (drsamonline/lexora), local main merged with origin/main and pushed — remote `main` at `d6350c0`, verified via ls-remote + contents API | SESSION_LOG Session 8 |
 | P0.7 Batch D — security & operations docs | Security architecture, threat model, privacy policy, error handling, logging, troubleshooting, runbooks, root SECURITY.md, ENCRYPTION_PROFILE (Proposed) | **Drafted; closure complete (`3ecdfaf`); merged into local `main`** | ✅ 12 documents created 2026-10-15; link check ALL INTERNAL LINKS OK (exit 0); no fabricated contacts/SLAs; pending remote push + owner review | docs/SECURITY_ARCHITECTURE.md … docs/runbooks/RECOVERY_RUNBOOK.md, SECURITY.md |
+| P0.8 Batch E — GitHub & release polish | CONTRIBUTING, issue/PR templates, release process (CI/badges deferred until runnable) | **Drafted** (Session 10, on `main`) | ⚠️ 5 files: `aa266a2` (CONTRIBUTING, 2 issue templates, RELEASE_PROCESS) + `.github/pull_request_template.md` (fixes dangling reference); index/continuity updates pending final commit; no CI/badges created (none runnable — per policy) | CONTRIBUTING.md, .github/, docs/RELEASE_PROCESS.md |
 | P1 Core Zstd baseline + harness | Working encode/verify + benchmark scaffolding | Not started | ❌ | — |
 | P2 Ingestion & canonicalization | TXT/PDF (+optional OCR) → versioned canonical bytes + golden vectors | Not started | ❌ | — |
 | P3+ Experimental candidates, `.lxz` freeze, `.lxdb`, encryption | Each gated by measured evidence | Not started | ❌ | — |
@@ -50,6 +51,7 @@
 | M3: SPECIFICATION 1.0-draft published (Batch B) | After M2 | Complete (draft published; approval of formats still pending byte layout + test vectors) |
 | M3a: Batches B+C merged into local `main` | 2026-10-15 | Complete (`3d98eab` fast-forward); pushed to remote in Session 8 (origin/main at `d6350c0`) |
 | M3b: Batch D drafted (security & operations) | 2026-10-15 | Drafted — 12 docs (`301901a`); Session 9 closure (`3ecdfaf`): link check OK, continuity + CHANGELOG updated; ff-merged into local `main`; remote push pending credentials |
+| M3c: Batch E drafted (GitHub & release polish) | 2026-10-15 | Drafted — `aa266a2` on `main` (CONTRIBUTING, issue templates, RELEASE_PROCESS) + PR template added in Session 10; CI/badges deliberately absent until runnable; Phase 0 docs batches A–E all drafted |
 | M4: First reproducible benchmark revision | After P1 + corpus (OQ-8) | Waiting |
 
 ## Metrics

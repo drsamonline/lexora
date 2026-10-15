@@ -41,7 +41,7 @@ Generic compressors (Zstandard, XZ, Brotli) treat text as opaque bytes. Document
 | Status | Capability |
 |---|---|
 | **Implemented** | *(nothing yet — repository contains only the blueprint and documentation)* |
-| **In progress** | Documentation system (Batch A: governance & navigation) |
+| **In progress** | Documentation system (Batches A–E drafted: governance, architecture & spec, engineering execution, security & operations, GitHub & release polish — pending owner review) |
 | **Planned** | Core Zstandard baseline codec; TXT/PDF ingestion; conservative canonicalizer; benchmark harness; `.lxz` archive format (proposed); experimental candidates (dictionaries, Re-Pair, bounded token PPM, numeric/record coding, template+residual); `.lxdb` database mode; optional encryption profile |
 
 ## Architecture overview (proposed)
@@ -52,7 +52,7 @@ TXT/PDF ──▶ Extraction (optional OCR) ──▶ Canonicalization (versione
         ◀── decode ◀── verify: decode(encode(C)) == C enforced at build time
 ```
 
-A normative specification (`docs/SPECIFICATION.md`) and detailed architecture documents will follow in Batch B.
+A normative specification (`docs/SPECIFICATION.md`) and detailed architecture documents exist as drafts (Batch B). To contribute, see [CONTRIBUTING.md](CONTRIBUTING.md); the release process is documented in `docs/RELEASE_PROCESS.md` (no releases exist yet).
 
 ## Supported inputs & current limitations
 
@@ -89,6 +89,7 @@ Start at **[docs/index.md](docs/index.md)**. Key entry points:
 | [docs/PRODUCT_REQUIREMENTS.md](docs/PRODUCT_REQUIREMENTS.md) | Numbered requirements (`REQ-*`) |
 | [docs/GLOSSARY.md](docs/GLOSSARY.md) | Terminology |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | ADR index & open decisions |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Ground rules, workflow, PR guidance |
 | [CHANGELOG.md](CHANGELOG.md) | Change history |
 | [LEXORA_Full_Blueprint_Design_Master_Prompt.md](LEXORA_Full_Blueprint_Design_Master_Prompt.md) | Approved master design blueprint (source of truth) |
 

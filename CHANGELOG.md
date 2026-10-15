@@ -6,6 +6,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-15 — Batch E GitHub & release polish (drafted, Session 10; commit `aa266a2` + PR-template fix):
+  - `CONTRIBUTING.md` — project-status disclaimer, honesty ground rules, current workflow, branching/PR guidance.
+  - `.github/ISSUE_TEMPLATE/design-proposal.yml`, `.github/ISSUE_TEMPLATE/documentation.yml` — structured issue forms (proposal areas, doc-error severity).
+  - `.github/pull_request_template.md` — honesty checklist + "verification actually run" table (resolves the dangling reference from `aa266a2`).
+  - `docs/RELEASE_PROCESS.md` — release preconditions, proposed versioning scheme (OQ-9 pending formal adoption), rollback policy, explicit non-goals. **No releases or tags exist.**
+  - CI workflows and badges intentionally **not created** — no runnable checks exist yet; placeholders prohibited (master prompt §2.10).
 - 2026-10-15 — Batch D security & operations documentation (drafted, pending owner review):
   - `SECURITY.md` (root) — vulnerability reporting process; explicit "no guarantees" status; no fabricated contacts or SLAs.
   - `docs/SECURITY_ARCHITECTURE.md` — trust boundaries, asset inventory, REQ-SEC mechanism map.
