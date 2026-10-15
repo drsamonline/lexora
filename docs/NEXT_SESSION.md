@@ -1,10 +1,10 @@
 # Next Session Resume Card
 
-**Last verified state:** 2026-10-15, Session 9 complete. Batch D drafted + closure committed on working branch `qwen-code-ce7e5bcf-…` (`301901a` + Session 9 closure commit). Link check: ALL INTERNAL LINKS OK (exit 0). Remote `main` (drsamonline/lexora) at `d6350c0` contains Batches A+B+C only — **Batch D not yet merged into local `main` and not pushed** (no remote URL/credentials in container; push NOT attempted — honest outcome recorded in SESSION_LOG Session 9).
-**Current phase:** Phase 0 — documentation foundation. Batches A/B/C complete and pushed; Batch D drafted + closure committed (pending ff-merge to `main`, push, owner review); Batch E not started.
-**Branch/commit:** Working branch at Session 9 closure commit (verify with `git log --oneline -3`). Local `main` grafted at `a220e16` — confirmed ancestor of HEAD, so `git merge --ff-only` will work.
+**Last verified state:** 2026-10-15, Session 9 complete + extended. Batch D drafted, closure committed (`3ecdfaf`), and **fast-forward merged into local `main`** (main now at `3ecdfaf`). Link check: ALL INTERNAL LINKS OK (exit 0). Remote `main` (drsamonline/lexora) still at `d6350c0` per Session 8 — **Batch D not pushed**: anonymous fetch works but push requires credentials; attempted push halted at credential prompt (exit 124 timeout, no auth available). PR #2 exists on remote at `301901a` (pre-closure commit); owner can merge PR #2 or supply a token for a direct push of `3ecdfaf`.
+**Current phase:** Phase 0 — documentation foundation. Batches A/B/C complete and pushed; Batch D drafted, closure committed, merged to local `main` (pending remote push + owner review); Batch E not started.
+**Branch/commit:** Local `main` = working branch = `3ecdfaf` ("docs: Session 9 closure…"). Verify with `git log --oneline -3`.
 **Working-tree state:** Clean after closure commit.
-**Last completed task:** Session 9 Batch D closure: linkcheck passed (exit 0), CHANGELOG Batch D entry added, STATUS/PROGRESS/SESSION_LOG/NEXT_SESSION updated, closure commit created.
+**Last completed task:** Session 9 Batch D closure: linkcheck passed (exit 0), CHANGELOG Batch D entry added, STATUS/PROGRESS/SESSION_LOG/NEXT_SESSION updated, closure commit `3ecdfaf` created, ff-merge into local `main` performed, push attempt made and honestly recorded as failed (no credentials).
 **Current blocker:** This container has **no git remote URL configured** (`git remote -v` empty) and no known credentials — merging Batch D into `main` and pushing requires re-adding origin (`https://github.com/drsamonline/lexora.git`) and an owner-supplied token, or manual push by the owner. Secondary open questions: OQ-5 (license), OQ-7 (Python version), OQ-8 (corpus), OQ-9 (OCR tooling), OQ-10 (semver adoption).
 **First action next session:** `cd /workspace && git status --short && git log --oneline -3 && git remote -v` — confirm the Session 9 closure commit exists and whether a remote was added since.
 
@@ -15,11 +15,10 @@
 - [ ] docs/DECISIONS.md — OQ-5…OQ-10 still open
 
 ## Tasks in order
-1. Merge the Batch D branch into local `main`: `git checkout main && git merge --ff-only qwen-code-ce7e5bcf-e032-4a12-a09d-439519ae29ce` (fast-forward confirmed possible in Session 9; verify with `git log --oneline -3` after). Record actual result.
-2. If owner provides remote access: `git remote add origin https://github.com/drsamonline/lexora.git && git push origin main` (token via env/askpass — NEVER embed tokens in the remote URL or commit them). Verify with `git ls-remote`; record exit code honestly.
-3. Owner review of Batch D → apply corrections or mark accepted; flip statuses in PROGRESS/STATUS accordingly.
-4. Then execute **Batch E — GitHub & release polish**: CONTRIBUTING.md, issue/PR templates, release process doc. CI workflows ONLY when runnable; badges ONLY when real. No placeholder files (master prompt §2.10).
-5. Do NOT start implementation code (blocked by OQ-7 Python version and master prompt §2.10).
+1. Push local `main` (`3ecdfaf`) to remote: owner supplies a token (via env/askpass — NEVER embed tokens in the remote URL or commit them): `git remote add origin https://github.com/drsamonline/lexora.git && GIT_ASKPASS=... git push origin main`. Verify with `git ls-remote`; record exit code honestly. Alternative: owner merges PR #2 on GitHub (note: PR #2 is at `301901a`, one commit behind closure `3ecdfaf`).
+2. Owner review of Batch D → apply corrections or mark accepted; flip statuses in PROGRESS/STATUS accordingly.
+3. Then execute **Batch E — GitHub & release polish**: CONTRIBUTING.md, issue/PR templates, release process doc. CI workflows ONLY when runnable; badges ONLY when real. No placeholder files (master prompt §2.10).
+4. Do NOT start implementation code (blocked by OQ-7 Python version and master prompt §2.10).
 
 ## Acceptance criteria
 - [ ] Batch D present on `main` (local; remote only if push succeeded with exit 0).
