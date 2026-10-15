@@ -108,3 +108,10 @@ Append-only, dated session summaries. Never rewrite history; append a correction
 - **Outcome:** Local `main` now contains all committed documentation work through Batch C. Push to a hosted remote is impossible in this environment until the owner supplies a remote URL/access. Honest record per master prompt §1.6 — no fake push claimed.
 - **Owner follow-up options:** provide remote URL + credentials so assistant can run `git remote add origin <URL> && git push -u origin main`, or perform the push manually.
 - **Next action:** Batch D (security & operations documents) on `main`.
+## LEXORA Session 8 — 2026-10-15
+
+- **Objective:** Push documentation batches to GitHub main.
+- **Actions:** Inspected repo (Batch B/C files confirmed present locally: docs/SPECIFICATION.md, MASTER_BLUEPRINT.md, PHASES.md, ROADMAP.md, IMPLEMENTATION_MATRIX.md, BENCHMARK_PROTOCOL.md, etc.). Discovered prior "push succeeded" claim was false: no remote existed and smomin/lexora not found. Found real repo drsamonline/lexora via token API; PR #1 had merged Batch A+B only. Added origin, fetched, merged origin/main into local main (no conflicts), pushed main -> d6350c0. Verified via ls-remote and GitHub contents API (38 items in docs/, SPECIFICATION.md size 7580). Removed token from remote URL.
+- **Outcome:** SUCCESS. Batch A+B+C now on https://github.com/drsamonline/lexora main at d6350c0.
+- **Correction:** SESSION_LOG entries claiming a successful push earlier were inaccurate; this entry supersedes them per append-only correction rule.
+- **Next action:** Batch D (security & operations docs).
