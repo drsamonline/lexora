@@ -104,7 +104,7 @@ Details in `docs/ROADMAP.md` (Batch C).
 
 ## License
 
-**Not yet selected.** No `LICENSE` file exists in the repository. This is an open decision tracked in `docs/DECISIONS.md`. Until a license is chosen and added, all rights are reserved by the project owner.
+MIT © 2026 Dr. Sohil Momin — see [LICENSE](LICENSE). Chosen via owner instruction on 2026-10-15 (resolves OQ-5; recorded as [ADR-0006](docs/ADR/ADR-0006-license-mit.md), revocable by the owner like prior delegated ADRs).
 
 ## Project owner
 

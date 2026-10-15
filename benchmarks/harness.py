@@ -136,14 +136,22 @@ def cmd_manifest(args: argparse.Namespace) -> int:
             split = "validation"
         else:
             split = "heldout"
+        # Optional sidecar metadata from corpus assembly scripts
+        # (scripts/corpus/assemble_gutenberg.py writes <out>.meta.json keyed by
+        # relative path). Absent sidecar -> honest defaults, never guessed.
+        meta: dict = {}
+        sidecar = Path(str(args.out) + ".meta.json")
+        if sidecar.is_file():
+            meta = json.loads(sidecar.read_text()).get(rel, {})
         entries.append({
             "path": rel,
             "sha256": sha256_file(p),
             "size_bytes": p.stat().st_size,
             "lineage_id": lineage,
             "split": split,
-            "category": "unclassified",   # honest default; fill via corpus policy
-            "language": "unknown",
+            "category": meta.get("category", "unclassified"),
+            "language": meta.get("language", "unknown"),
+            "rights": meta.get("rights", "UNCLASSIFIED"),
         })
     if not entries:
         print("warning: manifest is EMPTY — no corpus supplied (OQ-8 open)", file=sys.stderr)
