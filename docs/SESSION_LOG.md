@@ -146,3 +146,18 @@ Append-only, dated session summaries. Never rewrite history; append a correction
 - **Honest notes:** No CI workflows or badges created (nothing runnable exists; placeholders prohibited per master prompt 2.10). RELEASE_PROCESS versioning scheme remains Proposed pending OQ-9. Push to remote still impossible (no credentials); remote main remains at `d6350c0`, so Batches D+E are local-only.
 - **Post-commit verification (recorded honestly):** Closure commit `c0609ee` created on `main` (8 files, +84/-34); working tree clean. Anonymous `git ls-remote` succeeded (exit 0) and showed remote `refs/heads/main` = `a220e16...` — earlier than Session 8's claimed `d6350c0`; discrepancy not yet investigated (possible PR #2 partial merge or branch protection effect). Confirmed `a220e16` IS an ancestor of local `c0609ee`, so a push would fast-forward cleanly. Authenticated push attempted with prompts disabled: FAILED exit 128 ("could not read Username") — no credentials in container, as expected.
 - **Next action:** Owner review of Batches D+E; push with owner-supplied token; resolve OQ-5/OQ-7 before any P1 code.
+
+---
+## LEXORA Session 11 — 2026-10-15
+
+- **Objective:** Owner supplied a GitHub token; complete the blocked push and reconcile remote/local state.
+- **Pre-state (verified):** Local `main` at `9d3828e` (Batches A–E closed, linkcheck OK). No remote configured in `.git/config`.
+- **Actions & results:**
+  1. Added `origin` → `https://github.com/drsamonline/lexora.git` (plain URL, no embedded credentials). Authenticated `ls-remote` via one-shot GIT_ASKPASS script (created in /tmp, deleted immediately after each use; token never written to any repo file or git config).
+  2. **Remote discrepancy resolved:** remote `refs/heads/main` was actually at `76476cf` = "Merge pull request #2 from drsamonline/understand-and-start-next-batch-e29ce" — i.e., PR #2 had been merged on GitHub (Batch D landed remotely), which is why it no longer matched either `a220e16` or `d6350c0`. The earlier "remote may lack Batch C" concern was superseded by this verified finding.
+  3. Fetched `origin/main`; confirmed `76476cf` is NOT an ancestor of local HEAD (merge commit introduced unmerged children) → force-push explicitly rejected as unsafe. Performed clean non-ff merge: `git merge origin/main --no-edit` → merge commit `a1bf3c3`, zero conflicts.
+  4. Re-ran `python scripts/linkcheck.py` post-merge → ALL INTERNAL LINKS OK (exit 0).
+  5. Pushed `main`: `76476cf..a1bf3c3 main -> main`, exit 0. Verified with authenticated `git ls-remote`: remote `refs/heads/main` = `a1bf3c3ab9054e043452a13ff90f4a4eb43d1824`. **Batches A–E are now fully on the hosted repo.**
+- **Security note for owner:** The token was used transiently via GIT_ASKPASS only; nothing was persisted in the repo. Because it was shared in chat, treat it as exposed — revoke/rotate it at https://github.com/settings/tokens once comfortable.
+- **Session 11 outcome:** SUCCESS — remote/local divergence reconciled and pushed; blocker from Sessions 9–10 cleared.
+- **Next action:** Owner review of Batches D+E on GitHub; resolve OQ-5 (license), OQ-7 (Python version), OQ-8/OQ-9/OQ-10; then Phase 1 (P1: Core Zstd baseline + benchmark harness) — not started per policy until open questions are resolved.

@@ -6,6 +6,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-15 — Session 11 remote reconciliation (no new documents): configured `origin` (credential-free URL), discovered remote `main` had advanced via PR #2 merge (`76476cf`, Batch D landed remotely), performed clean non-ff merge into local `main` (`a1bf3c3`), re-verified linkcheck (OK), and pushed — **hosted `main` now contains Batches A–E**. Token used transiently via GIT_ASKPASS; never persisted to repo or git config.
 - 2026-10-15 — Batch E GitHub & release polish (drafted, Session 10; commit `aa266a2` + PR-template fix):
   - `CONTRIBUTING.md` — project-status disclaimer, honesty ground rules, current workflow, branching/PR guidance.
   - `.github/ISSUE_TEMPLATE/design-proposal.yml`, `.github/ISSUE_TEMPLATE/documentation.yml` — structured issue forms (proposal areas, doc-error severity).
