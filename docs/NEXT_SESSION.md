@@ -2,7 +2,7 @@
 
 **Last verified state:** 2026-10-15, Session 7. Local `main` contains Batches A+B+C (fast-forward merge `816f58f..3d98eab`). Continuity files updated this session; closure commit recorded in SESSION_LOG. Link check: ALL INTERNAL LINKS OK.
 **Current phase:** Phase 0 — documentation foundation. Batches A/B/C complete; Batch D (security & operations) not started.
-**Branch/commit:** `main` @ `3d98eab` plus the Session-7 continuity closure commit (see latest SESSION_LOG entry for its real hash). Verified via `git log --oneline`.
+**Branch/commit:** `main` @ `6f948be` (Batch C at `3d98eab`, Session-7 continuity closure at `6f948be`). Verified via `git log --oneline`.
 **Working-tree state:** Clean after closure commit.
 **Last completed task:** Merged working branch into local `main`; attempted remote push (failed — no origin configured, exit 128); updated continuity records honestly.
 **Current blocker:** No git remote configured (OQ-6). Owner must supply repository URL + access for `git push -u origin main`, or push manually. Secondary open questions: OQ-5 (license), OQ-7 (Python version), OQ-8 (corpus), OQ-9 (OCR tooling), OQ-10 (semver adoption).
