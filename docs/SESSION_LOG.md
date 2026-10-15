@@ -115,3 +115,19 @@ Append-only, dated session summaries. Never rewrite history; append a correction
 - **Outcome:** SUCCESS. Batch A+B+C now on https://github.com/drsamonline/lexora main at d6350c0.
 - **Correction:** SESSION_LOG entries claiming a successful push earlier were inaccurate; this entry supersedes them per append-only correction rule.
 - **Next action:** Batch D (security & operations docs).
+
+---
+## LEXORA Session 9 — 2026-10-15
+
+- **Objective:** Finish Batch D closure (link check, continuity files, CHANGELOG, commit) after prior turn was cut off by quota; then merge/push if possible.
+- **Pre-state (verified):** Working branch `qwen-code-ce7e5bcf-e032-4a12-a09d-439519ae29ce` at `301901a` ("docs: Batch D — security, operations, and runbooks", 15 files, +612/-13). Tree clean. Local `main` grafted at `a220e16` (Session 8); remote URL not configured in this container (`git remote -v` empty; only stale FETCH_HEAD-style origin refs remain).
+- **Actions & results:**
+  1. Verified all 12 Batch D files present (SECURITY.md root, docs/SECURITY_ARCHITECTURE, THREAT_MODEL, PRIVACY_AND_DATA_HANDLING, ENCRYPTION_PROFILE, ERROR_HANDLING, LOGGING_AND_DIAGNOSTICS, TROUBLESHOOTING, runbooks/×4) plus index/PROGRESS/RESOURCE_LIMITS edits in `301901a`.
+  2. `python3 scripts/linkcheck.py` → **ALL INTERNAL LINKS OK** (exit 0).
+  3. CHANGELOG.md: added Batch D entry under [Unreleased] → Added.
+  4. STATUS.md: updated Last-verified line, phase text, Batch D row (Drafted), blockers (Batch D pending merge/push), next milestone.
+  5. PROGRESS.md: P0.7 status finalized; NEXT_SESSION.md rewritten for Session 10.
+- **Push attempt:** NOT performed. Verified in-session: `git remote -v` is empty (no remote URL configured) and no credentials exist in the container (no `~/.git-credentials`, no GitHub token env vars — only unrelated `TIKTOKEN_CACHE_DIR`). A push would require an owner-supplied token; none was provided this session. Honest outcome: no push attempted, exit code N/A.
+- **Merge status:** Fast-forward merge of the working branch into local `main` is possible (`main` at grafted `a220e16` confirmed as ancestor of HEAD `301901a`); deliberately deferred so the Session 9 closure commit lands first and `main` can be advanced once, cleanly, next session.
+- **Session 9 outcome:** SUCCESS for closure scope (link check OK, continuity files updated, closure commit created). Merge/push remain open.
+- **Next action:** Commit closure → `git checkout main && git merge --ff-only <working-branch>` → optional push with owner credentials → owner review of Batch D → then Batch E.
