@@ -115,3 +115,19 @@ Append-only, dated session summaries. Never rewrite history; append a correction
 - **Outcome:** SUCCESS. Batch A+B+C now on https://github.com/drsamonline/lexora main at d6350c0.
 - **Correction:** SESSION_LOG entries claiming a successful push earlier were inaccurate; this entry supersedes them per append-only correction rule.
 - **Next action:** Batch D (security & operations docs).
+
+---
+## LEXORA Session 9 — 2026-10-15
+
+- **Objective:** Finish Batch D closure (link check, continuity files, CHANGELOG, commit) after prior turn was cut off by quota; then merge/push if possible.
+- **Pre-state (verified):** Working branch `qwen-code-ce7e5bcf-e032-4a12-a09d-439519ae29ce` at `301901a` ("docs: Batch D — security, operations, and runbooks", 15 files, +612/-13). Tree clean. Local `main` grafted at `a220e16` (Session 8); remote URL not configured in this container (`git remote -v` empty; only stale FETCH_HEAD-style origin refs remain).
+- **Actions & results:**
+  1. Verified all 12 Batch D files present (SECURITY.md root, docs/SECURITY_ARCHITECTURE, THREAT_MODEL, PRIVACY_AND_DATA_HANDLING, ENCRYPTION_PROFILE, ERROR_HANDLING, LOGGING_AND_DIAGNOSTICS, TROUBLESHOOTING, runbooks/×4) plus index/PROGRESS/RESOURCE_LIMITS edits in `301901a`.
+  2. `python3 scripts/linkcheck.py` → **ALL INTERNAL LINKS OK** (exit 0).
+  3. CHANGELOG.md: added Batch D entry under [Unreleased] → Added.
+  4. STATUS.md: updated Last-verified line, phase text, Batch D row (Drafted), blockers (Batch D pending merge/push), next milestone.
+  5. PROGRESS.md: P0.7 status finalized; NEXT_SESSION.md rewritten for Session 10.
+- **Push attempt:** Performed after closure commit — FAILED (no credentials). `timeout 20 git push <url> …:refs/heads/understand-and-start-next-batch-e29ce` halted at "Username for 'https://github.com':" and was killed (exit 124). Anonymous `git ls-remote` succeeds (exit 0), confirming read access only. PR #2 exists on remote at `301901a` (pre-closure); owner can merge it or supply a token to push `3ecdfaf`.
+- **Merge status:** DONE. Closure commit `3ecdfaf` created, then `git checkout main && git merge --ff-only qwen-code-ce7e5bcf-…` succeeded (fast-forward `a220e16..3ecdfaf`, 19 files, +673/-46). Local `main` now contains Batches A–D.
+- **Session 9 outcome:** SUCCESS — Batch D drafted, closed, and merged into local `main`; push blocked on credentials (recorded honestly).
+- **Next action:** Push `main` (`3ecdfaf`) with owner-supplied token (or owner merges PR #2); owner review of Batch D; then Batch E.

@@ -6,6 +6,16 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-15 — Batch D security & operations documentation (drafted, pending owner review):
+  - `SECURITY.md` (root) — vulnerability reporting process; explicit "no guarantees" status; no fabricated contacts or SLAs.
+  - `docs/SECURITY_ARCHITECTURE.md` — trust boundaries, asset inventory, REQ-SEC mechanism map.
+  - `docs/THREAT_MODEL.md` — STRIDE-based threat register TM-01…TM-13 and attacker profiles.
+  - `docs/PRIVACY_AND_DATA_HANDLING.md` — P0–P3 data classification tiers, dictionary leakage policies.
+  - `docs/ENCRYPTION_PROFILE.md` — proposed optional AEAD encryption blueprint (Phase 9 gate; Proposed status only).
+  - `docs/ERROR_HANDLING.md` — machine-readable error taxonomy, severity levels, fail-closed contract.
+  - `docs/LOGGING_AND_DIAGNOSTICS.md` — privacy-safe logging rules, log levels, run manifest format.
+  - `docs/TROUBLESHOOTING.md` — symptom → cause → action mapping for the designed system.
+  - `docs/runbooks/BENCHMARK_RUNBOOK.md`, `CORRUPTION_TRIAGE.md`, `PERFORMANCE_TRIAGE.md`, `RECOVERY_RUNBOOK.md`.
 - 2026-10-15 — Batch A documentation foundation:
   - `README.md` — project overview with honest Implemented/In progress/Planned split; no badges (none applicable).
   - `docs/index.md` — documentation portal organized by reader need.
