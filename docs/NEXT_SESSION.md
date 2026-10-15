@@ -1,28 +1,50 @@
 # Next Session Resume Card
 
-**Last verified state:** 2026-10-15, after Batch A validation (link check `ALL LINKS OK`, badge grep clean) and Batch A commit `07c1564`. Final continuity-doc updates (this card, STATUS/PROGRESS/SESSION_LOG ticks) are uncommitted on top of `07c1564` — first action below commits them.
-**Current phase:** Phase 0.3 — awaiting owner decisions OQ-1…OQ-10; Batch B drafting queued behind them.
-**Branch/commit:** `main` @ `07c1564` ("docs: Batch A — governance and navigation foundation"), plus a small set of modified continuity docs pending closure commit.
-**Working-tree state (at time of writing):** only `docs/STATUS.md`, `docs/PROGRESS.md`, `docs/SESSION_LOG.md`, `docs/NEXT_SESSION.md` modified post-commit; everything else committed & clean at `07c1564`.
-**Last completed task:** Batch A created, validated, and committed (`07c1564`).
-**Current blocker:** Owner input on OQ-1…OQ-10 ([docs/DECISIONS.md](DECISIONS.md)) blocks the Batch B normative spec.
-**First action next session:** Verify state matches this card, then run `git add -A && git commit -m "docs: close out Batch A continuity records"` to commit the four modified continuity files; record the new hash in SESSION_LOG.
+**Last verified state:** 2026-10-15, after Batch B part 1 commit `91cfbb6` (18 files: ADR-0001…0004 Proposed, SPECIFICATION.md draft, architecture docs, diagrams) plus this session's continuity updates (pending closure commit). Link check: ALL INTERNAL LINKS OK.
+**Current phase:** Phase 0.3/0.4 — Batch B drafted as *Proposed*; owner decisions on OQ-1…OQ-10 still outstanding.
+**Branch/commit:** `qwen-code-44e43b8d-d9cc-4cd1-90cd-3ea52ef8a427` @ `91cfbb6` (note: tooling-created branch; earlier `main` references in old log entries describe pre-session state).
+**Working-tree state (at time of writing):** modified `docs/STATUS.md`, `docs/PROGRESS.md`, `docs/SESSION_LOG.md`, `docs/NEXT_SESSION.md` pending closure commit.
+**Last completed task:** Batch B drafts committed (`91cfbb6`).
+**Current blocker:** Owner accept/amend/reject on ADR-0001…0004 and OQ-5…OQ-10 ([docs/DECISIONS.md](DECISIONS.md)).
+**First action next session:** `git status --short` to confirm only the four continuity files differ from `91cfbb6`; commit them as "docs: close out Batch B continuity records"; record hash here and in SESSION_LOG.
 
 ## Read first
 - [ ] [docs/STATUS.md](STATUS.md)
-- [ ] Latest entry of [docs/SESSION_LOG.md](SESSION_LOG.md) (Session 3)
-- [ ] [docs/DECISIONS.md](DECISIONS.md) — check whether owner answered any OQ-*
+- [ ] Latest entry of [docs/SESSION_LOG.md](SESSION_LOG.md) (Session 5)
+- [ ] [docs/DECISIONS.md](DECISIONS.md) — proposed-ADR table; check for owner verdicts
+- [ ] [docs/SPECIFICATION.md](SPECIFICATION.md) blocker table
 
 ## Tasks in order
-1. Confirm working tree shows only the four modified continuity docs (`git status --short`); commit them as described above.
-2. **If owner has answered any OQs:** draft corresponding ADRs from the template, mark Accepted, update affected docs + CHANGELOG in the same session. Then begin Batch B (MASTER_BLUEPRINT/SPECIFICATION drafts).
-3. **If no answers yet:** optionally draft *Proposed* ADRs recommending resolutions for OQ-1…OQ-4 (do NOT mark accepted), then stop and await owner. Do not start implementation code.
+1. Commit continuity closure (above).
+2. **If owner accepted any ADR:** flip its status to Accepted, move DECISIONS row, unblock corresponding SPECIFICATION sections, update CHANGELOG — same session.
+3. **If rule-table/newline/BOM decisions also approved:** begin Phase 0 golden-vector scaffolding plan (still no compression code until OQ-7 Python version decided).
+4. If no answers yet: proceed with Batch C planning docs that don't depend on open gates (ROADMAP, PHASES, IMPLEMENTATION_MATRIX skeleton, traceability), marking dependency-gated cells honestly. Do not start implementation code.
 
 ## Acceptance criteria
-- [x] Every relative link in every created .md resolves to an existing file (verified 2026-10-15: `ALL LINKS OK`).
-- [x] No badges, no invented commands/results anywhere (verified by grep; re-run below to confirm).
-- [ ] Batch A committed (or non-commit reason recorded in SESSION_LOG).
-- [ ] STATUS/PROGRESS/SESSION_LOG/NEXT_SESSION mutually consistent post-commit.
+- [ ] Closure commit exists; STATUS/PROGRESS/SESSION_LOG/NEXT_SESSION mutually consistent.
+- [ ] No document claims Approved status for SPEC or formats while any ADR remains Proposed.
+- [ ] Link checker re-run → ALL INTERNAL LINKS OK.
+
+## Commands to run
+```text
+cd /workspace
+git status --short
+python3 - <<'PY'   # link checker (same script as Sessions 2–5)
+...see SESSION_LOG Session 5...
+PY
+git add -A && git commit -m "docs: close out Batch B continuity records"
+```
+
+## Do not repeat
+- Batch A (committed `07c1564`) and Batch B part 1 (committed `91cfbb6`) file creation.
+- Audit conflict list already persisted in DECISIONS.md.
+
+## Risks/open decisions
+- ADR-0001…0004 unresolved → SPECIFICATION stays draft; benchmark protocol (Batch C) wording depends on ADR-0001 gate definitions.
+- Branch naming drift documented in Session 5; verify intended long-lived branch with owner before any remote setup (OQ-6).
+
+## Required documentation updates at session end
+- STATUS / PROGRESS / SESSION_LOG / NEXT_SESSION; DECISIONS if any ADR flipped; CHANGELOG if content changed; index.md if new files added.
 
 ## Commands to run
 ```text

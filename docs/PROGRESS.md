@@ -10,7 +10,7 @@
 | P0.1 Documentation audit | Inventory repo, find conflicts, plan batches | **Complete** | ✅ Audit delivered in session 2026-10-15 | [SESSION_LOG.md](SESSION_LOG.md) |
 | P0.2 Batch A — governance docs | README/index/charter/requirements/glossary/decisions/status files | **Complete** | ✅ All checklist items verified; committed `07c1564` | [SESSION_LOG.md](SESSION_LOG.md) Session 2 + commit hash |
 | P0.3 Owner decisions OQ-1…OQ-10 | Resolve blueprint conflicts, license, Python version, corpus | **Not started** | ❌ | Awaiting owner input |
-| P0.4 Batch B — architecture & spec draft | SPECIFICATION `LEXORA-SPEC-1.0-draft`, format proposals, diagrams, conflict ADRs | Blocked on P0.3 (partially) | ❌ | — |
+| P0.4 Batch B — architecture & spec draft | SPECIFICATION `LEXORA-SPEC-1.0-draft`, format proposals, diagrams, conflict ADRs | **Drafted** (commit `91cfbb6`) | ⚠️ Partially — drafts exist; approval blocked on owner accepting ADR-0001…0004 | [DECISIONS.md](DECISIONS.md) proposed-ADR table; docs/MASTER_BLUEPRINT.md, SPECIFICATION.md, CANONICALIZATION.md, TOKENIZER_SPEC.md, OCR_PIPELINE.md, COMPRESSION_ARCHITECTURE.md, COST_MODEL.md, FORMAT_LXZ.md, FORMAT_LXDB.md, diagrams/ |
 | P1 Core Zstd baseline + harness | Working encode/verify + benchmark scaffolding | Not started | ❌ | — |
 | P2 Ingestion & canonicalization | TXT/PDF (+optional OCR) → versioned canonical bytes + golden vectors | Not started | ❌ | — |
 | P3+ Experimental candidates, `.lxz` freeze, `.lxdb`, encryption | Each gated by measured evidence | Not started | ❌ | — |

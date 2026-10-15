@@ -1,11 +1,11 @@
 # LEXORA Project Status
 
 > **Status:** Active — update at every session end
-> **Last verified:** 2026-10-15 (commit `07c1564`, branch `main`, clean working tree after Batch A commit)
+> **Last verified:** 2026-10-15 (Batch B part 1 committed as `91cfbb6`; branch `qwen-code-44e43b8d-d9cc-4cd1-90cd-3ea52ef8a427` — see SESSION_LOG Session 5 note on branch name)
 
 ## Current phase
 
-**Phase 0 — Documentation foundation & decision freeze.** Batch A complete; awaiting owner decisions before Batch B normative spec. No implementation phase has started.
+**Phase 0 — Documentation foundation & decision freeze.** Batch A complete; Batch B drafted as *Proposed* content (commit `91cfbb6`). Spec approval blocked until owner accepts/amends ADR-0001…0004. No implementation phase has started.
 
 ## Verified repository state
 
@@ -25,7 +25,7 @@
 | Batch | Contents | Status |
 |---|---|---|
 | A — Governance & navigation | README, docs index, charter, requirements, glossary, decisions/ADR system, status/progress/session/resume, changelog, templates, editor hygiene files | **Complete** (commit `07c1564`) |
-| B — Architecture & specification | MASTER_BLUEPRINT, SPECIFICATION (LEXORA-SPEC-1.0-draft), canonicalization, tokenizer, compression architecture, cost model, FORMAT_LXZ/LXDB proposals, diagrams, conflict ADRs | Not started |
+| B — Architecture & specification | MASTER_BLUEPRINT, SPECIFICATION (LEXORA-SPEC-1.0-draft), canonicalization, tokenizer, OCR, compression architecture, cost model, FORMAT_LXZ/LXDB proposals, diagrams, conflict ADRs 0001–0004 | **Drafted** (commit `91cfbb6`) — all content marked Proposed/draft; spec approval still blocked on owner accepting ADRs |
 | C — Engineering execution | Roadmap, phases, implementation plan/matrix, traceability, testing strategy, benchmark protocol/corpus policy, build/install/dev setup | Not started |
 | D — Security & operations | Security architecture, threat model, privacy, error handling, logging, resource limits, troubleshooting, runbooks | Not started |
 | E — GitHub & release polish | CONTRIBUTING, issue/PR templates, CI (only when runnable), release process, badges (only when real) | Not started |
