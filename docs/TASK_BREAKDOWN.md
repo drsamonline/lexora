@@ -1,0 +1,60 @@
+# LEXORA Task Breakdown
+
+> **Status:** Draft (planning; tasks reference phases in [PHASES.md](PHASES.md))
+> **Owner:** Documentation architect (delegated)
+> **Last verified:** 2026-10-15 — no implementation task below is started
+> **Related:** [PHASES.md](PHASES.md) · [IMPLEMENTATION_MATRIX.md](IMPLEMENTATION_MATRIX.md) · [ACCEPTANCE_CRITERIA.md](ACCEPTANCE_CRITERIA.md)
+
+## Purpose
+
+Smallest actionable task list per phase so any session can pick a task without re-planning. Each task lists files to touch, acceptance criteria, and verification commands. Owner roles: DOC (documentation), CORE (Python implementation), QA (tests/evidence), OWNER (project-owner decisions).
+
+## Status legend
+
+`Not started` · `Planned` · `In progress` · `Blocked` · `Complete`
+
+## P0 — Foundations
+
+| ID | Task | Role | Files | Acceptance criteria | Status |
+|---|---|---|---|---|---|
+| P0-T1 | Batch A governance docs | DOC | README, docs/index, STATUS/PROGRESS/SESSION/NEXT, charter, requirements, glossary, decisions, changelog | Link-clean, committed (`07c1564`) | Complete |
+| P0-T2 | Batch B architecture/spec drafts + ADRs | DOC | MASTER_BLUEPRINT, SPECIFICATION, CANONICALIZATION, OCR_PIPELINE, TOKENIZER_SPEC, COMPRESSION_ARCHITECTURE, COST_MODEL, FORMAT_LXZ/LXDB, ADR/, diagrams/ | Committed (`91cfbb6`, `5001ab3`) | Complete |
+| P0-T3 | Decide ADR-0001…0004 | OWNER→DOC | docs/ADR/*, DECISIONS.md, SPECIFICATION.md | Accepted via owner delegation directive, commit `86e6b55` | Complete |
+| P0-T4 | Batch C engineering-execution docs | DOC | ROADMAP, PHASES, TASK_BREAKDOWN, IMPLEMENTATION_MATRIX, REQUIREMENTS_TRACEABILITY, ACCEPTANCE_CRITERIA, TEST_STRATEGY, QUALITY_PLAN, BENCHMARK_PROTOCOL, CORPUS_POLICY, PERFORMANCE_BUDGET, RESOURCE_LIMITS, BUILD_GUIDE, INSTALLATION, DEVELOPMENT_SETUP | This batch; link-clean; no fabricated results | In progress |
+| P0-T5 | Answer OQ-5…OQ-10 or record delegated decisions | OWNER/DOC | DECISIONS.md (+ADRs as needed) | Each OQ resolved with dated decision | Blocked (owner input preferred; delegation available on request) |
+| P0-T6 | Freeze canonicalization rule table v0 | DOC/QA | CANONICALIZATION.md, golden-vector plan | Every rule has version, byte-class whitelist, example vectors | Not started |
+| P0-T7 | Spec approval pass → `LEXORA-SPEC-1.0` | DOC | SPECIFICATION.md, ADR-0005 (proposed) | Approved status only when T6 done and formats marked correctly | Not started |
+
+## P1 — Core Zstd pipeline
+
+| ID | Task | Role | Acceptance criteria | Status |
+|---|---|---|---|---|
+| P1-T1 | Package skeleton + build config (after OQ-7) | CORE | `pip install -e .` works offline from vendored wheels or documented index cache | Not started |
+| P1-T2 | Canonicalizer TXT-only with rule table v0 | CORE/QA | Golden vectors byte-exact; invariant tests (untouched byte classes pass through) | Not started |
+| P1-T3 | `.lxz` v0 format freeze | DOC/CORE | Byte layout + test vectors reviewed, FORMAT_LXZ status flipped via ADR | Not started |
+| P1-T4 | Block encoder/decoder (Zstd) | CORE | `decode(encode(C))==C` property tests incl. edge sizes (0 B, block boundary ±1) | Not started |
+| P1-T5 | CLI `pack`/`unpack` | CORE | CLI_REFERENCE documents only real flags; exit codes tested | Not started |
+| P1-T6 | Memory-budget harness run | QA | Peak RSS recorded vs PERFORMANCE_BUDGET numbers | Not started |
+
+## P2 — Benchmark harness
+
+| ID | Task | Role | Acceptance criteria | Status |
+|---|---|---|---|---|
+| P2-T1 | Corpus assembly per CORPUS_POLICY (needs OQ-8) | OWNER/CORE | ≥1 GiB, en/hi/gu mix, manifest hashed | Not started |
+| P2-T2 | Lineage splitter + audit | CORE/QA | 70/10/20 by source lineage; leakage test fails if same-source docs cross splits | Not started |
+| P2-T3 | Baseline runners (Zstd-19, Brotli q11, XZ, PPMd) | CORE | Versions pinned; totals include every serialized byte | Not started |
+| P2-T4 | Verdict report generator | CORE/QA | Per-category + corpus tables; Pass/Partial/Fail per ADR-0001 | Not started |
+
+## P3–P7
+
+Task decomposition deferred until each phase's prerequisites are met (avoids stale planning). Placeholder rows intentionally omitted per master-prompt §2.9.
+
+## Verification commands (current reality)
+
+```text
+cd /workspace
+python3 scripts/linkcheck.py     # ALL INTERNAL LINKS OK expected
+git status --short && git log --oneline -3
+```
+
+No test suite exists yet (no code); `pytest` commands appear only after P1-T1.

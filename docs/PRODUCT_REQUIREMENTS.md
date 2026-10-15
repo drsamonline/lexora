@@ -27,7 +27,7 @@
 | REQ-CAN-004 | Canonicalizer version identifier is recorded in every archive and checked at decode/verify time | M | Format field test | Not started |
 | REQ-CAN-005 | Correct handling of Devanagari and Gujarati text (no mangling of combining marks/ZWJ/ZWNJ) | M | Script-specific golden vectors | Not started |
 | REQ-CAN-006 | OCR-error correction applies only above configured confidence thresholds; corrections are logged | S | Log assertion tests | Not started |
-| REQ-CAN-007 | Cleaning quality measured against approved metric ≤ 1% error rate *(metric definition open — see [DECISIONS.md](DECISIONS.md) OQ-4)* | M | Benchmark harness report | Blocked on OQ-4 |
+| REQ-CAN-007 | Cleaning quality ≤ 1% per [ADR-0004](ADR/ADR-0004-cleaning-error-metric.md) (Accepted 2026-10-15): rule-audit sample + invariant checks | M | Sample-review report + invariant test suite | Not started (metric defined; awaiting P3 run) |
 
 ## 3. Compression core
 
@@ -62,7 +62,7 @@
 | ID | Requirement | Priority | Verification | Status |
 |---|---|---|---|---|
 | REQ-BMK-001 | Frozen corpus manifest ≥ 1 GiB covering English/Hindi/Gujarati with train/val/held-out = 70/10/20 split by source lineage | M | Manifest hash + split audit script | Not started |
-| REQ-BMK-002 | Baselines pinned (exact library versions & settings): Zstd-19, Brotli q11, XZ, PPMd | M | Version capture in results artifact | Not started (conflict OQ-2/OQ-3 open) |
+| REQ-BMK-002 | Baselines pinned (exact library versions & settings): Zstd-19, Brotli q11, XZ, PPMd — measurement-only roles per ADR-0002/0003 | M | Version capture in results artifact | Not started (roles resolved 2026-10-15) |
 | REQ-BMK-003 | Acceptance: Pass ≥ 10%, Partial ≥ 3%, Fail < 3% total-stored-size reduction vs. best frozen baseline | M | Results report gate | Not started |
 | REQ-BMK-004 | Report per-document and per-category results, hardware/software environment, repeated-run variance | M | Report schema check | Not started |
 
