@@ -176,3 +176,17 @@ Append-only, dated session summaries. Never rewrite history; append a correction
 - **Honest caveats:** The CI badge will show "passing/failing" only after GitHub Actions runs the workflow for the first time — result unknown at commit time. The Tests badge is static, not live. Token remains exposed per owner's explicit decision to keep using it.
 - **Next action:** Confirm first CI run on GitHub; capture Zstd baseline metrics once corpus data lands in `data/raw/`; owner review of Batches A–F.
 - **Push attempt (Session 15, post-commit):** Token via GIT_ASKPASS — READS work (`ls-remote` exit 0 → remote main = `b026d15`), but ALL pushes fail: "remote: No anonymous write access" (exit 128; verified with `-v --dry-run` and a test-branch push). Diagnosis: token lacks repo-write scope or was expired server-side despite owner's stated intent to keep using it. Local `main` is ahead of `origin/main` by 4 commits (Phase 1 code `8ee3bef`, `91da0c9`, OQ-5/OQ-8 `743dcd7`, badges `aa09ed9`). Owner action: verify token scopes at https://github.com/settings/tokens (classic token needs `repo`) or provide a fine-grained token with Contents: Read & write.
+
+---
+## LEXORA Session 16 — 2026-10-15
+
+- **Objective:** Owner supplied a new token (`ghp_TIsg…`, saved to vault, not logged here) after the previous one proved read-only; complete the blocked push and confirm CI/badges are live.
+- **Pre-state (verified):** Local `main` at `7259ee3`, 4 commits ahead of `origin/main` (`b026d15`). README badges + `.github/workflows/ci.yml` committed in Session 15 but never pushed; CI had therefore never run.
+- **Actions & results:**
+  1. Saved token to `/workspace/.vault/github_token.txt` (chmod 600; dir already gitignored per earlier session convention). Pushed via GIT_ASKPASS referencing the vault file; verified repo tree contains no `ghp_` strings before committing.
+  2. `git fetch origin` → remote main unchanged (`b026d15`), no divergence. Push succeeded: `b026d15..7259ee3 main -> main`.
+  3. Polled GitHub Actions API ~45 s later: **CI run on `7259ee3` → completed / success.** The README CI badge is now backed by a real passing run (badge-honesty rule satisfied).
+  4. Re-verified locally: `python -m pytest -q` → 35 passed; `python scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+  5. Updated CHANGELOG (Session 16 entry) and this log; rewrote NEXT_SESSION resume card (was stale at Session 11).
+- **Honest caveats:** "Tests 35 passed" badge remains a static snapshot, not live. Token still shared in chat; owner explicitly chose not to revoke — accepted risk, recorded.
+- **Next action:** Capture Zstd baseline metrics once real corpus data lands in `data/raw/`; owner review of Phase 1 prototype code (P1) and remaining OQs (OQ-9 semver, OQ-10 OCR tooling).

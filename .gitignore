@@ -34,3 +34,4 @@ results/*.tmp
 # LEXORA archives produced during local testing (reproducible, do not commit)
 *.lxz
 *.lxdb
+.vault/

@@ -1,56 +1,38 @@
 # Next Session Resume Card
 
-**Last verified state:** 2026-10-15, Session 11 complete. The push blocker is CLEARED: with an owner-supplied token (used transiently via GIT_ASKPASS, never persisted), we found remote `main` was actually at `76476cf` = "Merge pull request #2" (Batch D had landed remotely via PR merge — resolving the earlier a220e16/d6350c0 discrepancy). Since `76476cf` was not an ancestor of local HEAD, we did a clean non-ff `git merge origin/main` (zero conflicts → `a1bf3c3`), re-ran linkcheck (ALL INTERNAL LINKS OK), pushed `76476cf..a1bf3c3`, and verified via authenticated `ls-remote`: **remote `refs/heads/main` = `a1bf3c3` — Batches A–E fully hosted.** Local == remote. Owner should revoke/rotate the chat-shared token.
-**Current phase:** Phase 0 — documentation foundation. Batches A–E all drafted, closed, merged, AND pushed: hosted `main` = `a1bf3c3` contains the complete Phase 0 doc set. Remaining: owner review + open-question resolution. No implementation started (blocked by OQ-7 + master prompt §2.10).
-**Branch/commit:** Working directly on local `main` at `a1bf3c3` (merge of origin/main into Session 10 closure); verify with `git log --oneline -3` after fetching.
-**Working-tree state:** Clean; local `main` == `origin/main`.
-**Last completed task:** Session 11 — reconciled diverged remote (PR #2 merge commit `76476cf`) via clean non-ff merge, pushed Batches A–E to drsamonline/lexora, verified remote head with authenticated ls-remote, re-ran linkcheck post-merge (OK).
-**Current blocker:** No push blocker — `origin` is configured (credential-free URL) and Session 11 pushed successfully. Remaining blockers are owner decisions: OQ-5 (license), OQ-7 (Python version), OQ-8 (corpus), OQ-9 (semver/conventional-commits adoption), OQ-10 (OCR tooling). Also: owner should revoke/rotate the token shared in chat.
+**Last verified state:** 2026-10-15, Session 16 complete. Push blocker CLEARED with owner-supplied token (saved to gitignored `/workspace/.vault/github_token.txt`, mode 600; used via GIT_ASKPASS only). Pushed `b026d15..7259ee3`; **first GitHub Actions CI run on `7259ee3` = completed/success**, so README badges are now live-backed (Tests badge still a static snapshot). Local `main` == `origin/main` after the Session 16 doc commits land.
+**Current phase:** Phase 1 — Core Zstd baseline + benchmark harness (prototype code on `main`: `8ee3bef`, `91da0c9`; OQ-5 MIT + OQ-8 corpus policy resolved in `743dcd7`). Badges/CI added Session 15, hosted+green Session 16.
+**Branch/commit:** local `main` at `7259ee3` (+ Session 16 doc commit); verify with `git fetch origin && git log --oneline -3`.
+**Working-tree state:** Clean after Session 16 commit/push.
+**Last completed task:** Session 16 — pushed Sessions 12–15 work, confirmed CI green via Actions API, re-ran pytest (35 passed) + linkcheck (OK), updated CHANGELOG/SESSION_LOG/NEXT_SESSION.
 
 ## Read first
 - [ ] docs/STATUS.md
-- [ ] Latest entry of docs/SESSION_LOG.md (Session 11)
-- [ ] Batch E documents (owner review): CONTRIBUTING.md, .github/ISSUE_TEMPLATE/*, .github/pull_request_template.md, docs/RELEASE_PROCESS.md
-- [ ] Batch D documents if not yet reviewed (see Session 9 entry)
-- [ ] docs/DECISIONS.md — OQ-5…OQ-10 still open
+- [ ] Latest entry of docs/SESSION_LOG.md (Session 16)
+- [ ] README.md badge-provenance footer
+- [ ] docs/DECISIONS.md — OQ-9 (semver) and OQ-10 (OCR tooling) still open
 
 ## Tasks in order
-1. Owner: revoke/rotate the GitHub token that was shared in chat (used only transiently in Session 11; never persisted to repo or git config).
-2. Owner review of Batches D + E on GitHub (hosted main = `a1bf3c3`) → apply corrections or mark accepted; flip statuses in STATUS/PROGRESS.
-3. Resolve OQ-5 (license file absent) and OQ-7 (Python version) — these gate P1 scaffolding (`pyproject.toml`, first code).
-4. If owner approves starting P1: create benchmark harness scaffold + Core Zstd baseline behind the agreed Python version. Do NOT start without OQ-7 resolved.
-5. Optional later: add CI workflow ONLY when there is something runnable to check (e.g., linkcheck + lint on PRs) — then badges become permissible.
+1. Capture Zstd baseline metrics: run `benchmarks/harness.py` once real corpus data exists in `data/raw/` (owner input needed; tiered fallback in `benchmarks/corpus.py` covers synthetic-only for now).
+2. Record baseline numbers in docs/BENCHMARK_RESULTS.md (only real measured numbers — no placeholders).
+3. Owner review of P1 prototype code + remaining OQs (OQ-9, OQ-10).
+4. Consider replacing the static Tests badge with a live one only if a real artifact source exists (e.g., Actions job summary) — otherwise keep honest label.
 
 ## Acceptance criteria
 - [ ] `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK (exit 0) — re-verify after any edit.
-- [ ] STATUS/PROGRESS/SESSION_LOG/NEXT_SESSION/README/CHANGELOG agree; commit hashes real; push outcome recorded truthfully.
-- [ ] No CI workflows, badges, releases, or tags exist until they are real.
+- [ ] `python -m pytest -q` → 35 passed (current truth).
+- [ ] STATUS/PROGRESS/SESSION_LOG/NEXT_SESSION/README/CHANGELOG agree; commit hashes real; push outcomes recorded truthfully.
+- [ ] No fabricated benchmark numbers; no unsupported badges.
 
 ## Commands to run
 ```text
 cd /workspace
 git status --short
 git log --oneline -3
-git branch --show-current   # expect main
-git remote -v               # origin -> https://github.com/drsamonline/lexora.git (no embedded creds)
-git fetch origin && git status   # local main should equal origin/main at a1bf3c3
-python3 scripts/linkcheck.py
-# pushes need an owner-supplied token via GIT_ASKPASS env only — NEVER embed in URL or commit
+git fetch origin && git status        # local main should equal origin/main
+python -m pytest -q                   # expect 35 passed
+python3 scripts/linkcheck.py          # expect ALL INTERNAL LINKS OK
+# pushes: GIT_ASKPASS script echoing contents of .vault/github_token.txt (NEVER embed in URL/commits)
+curl -s -H "Authorization: Bearer $(cat .vault/github_token.txt)" \
+  https://api.github.com/repos/drsamonline/lexora/actions/runs?per_page=3   # check CI status
 ```
-
-## Do not repeat
-- Batches A/B/C/D/E document creation (all drafted AND pushed; see SESSION_LOG for commit list).
-- Session 8/11 pushes of the doc set (done; hosted main = `a1bf3c3`, verified by authenticated ls-remote).
-- Recreating `.github/pull_request_template.md` (exists since Session 10).
-- Investigating the a220e16/d6350c0 remote discrepancy (resolved in Session 11: PR #2 was merged on GitHub → `76476cf`, cleanly re-merged locally).
-- Branch-vs-main confusion: work happens on local `main`; the old `qwen-code-*` working branches are merged/superseded.
-
-## Risks/open decisions
-- Container has no persistent credentials; each session may need the owner to re-supply a push token via GIT_ASKPASS. Never commit tokens or embed them in remote URLs (Session 8 precedent: token scrubbed; Session 11: used transiently, not persisted).
-- Local `main` == `origin/main` at `a1bf3c3` (Session 11 push) — off-machine backup risk cleared for Batches A–E.
-- OQ-5/OQ-7/OQ-8/OQ-9/OQ-10 remain owner-dependent.
-- Formats (.lxz/.lxdb), ENCRYPTION_PROFILE, and RELEASE_PROCESS versioning scheme stay PROPOSED until approved.
-- Process note: use file-editor tools for multi-line content (heredocs previously corrupted files).
-
-## Required documentation updates at session end
-- docs/SESSION_LOG.md (append dated entry), docs/STATUS.md, docs/PROGRESS.md, docs/NEXT_SESSION.md, CHANGELOG.md (Unreleased), docs/index.md (new links), docs/DECISIONS.md (if flips), README.md only if public-facing state changed.

@@ -6,6 +6,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-15 — Session 16 push unblocked (owner supplied a working token): pushed local `main` (`b026d15..7259ee3`) to GitHub, so Sessions 12–15 work (Phase 1 prototype code, benchmark harness, OQ-5/OQ-8 resolution, README badges + CI workflow) is now hosted. First CI run on GitHub Actions: **CI / 7259ee3 / completed / success** — the CI badge in README is now backed by a live passing run. Token used transiently via GIT_ASKPASS only; never persisted.
 - 2026-10-15 — Session 15 badges & CI (owner request "update readme file with github badges"):
   - `.github/workflows/ci.yml` — **real** CI workflow (Python 3.12, `pip install -e ".[dev]"`, `pytest -q`, linkcheck). Reverses the earlier "no workflows yet" decision because runnable code + tests now exist (Phase 1 prototype). First-run result will be recorded here once Actions executes it.
   - `README.md` — badge row: CI (points at the real workflow), Tests (static snapshot: 35 passed, re-verified locally), Python 3.12 (matches `requires-python`), License MIT (matches `LICENSE`). Footer rewritten from "no badges exist" to explicit badge-provenance statements. Also corrected two stale README blocks ("no implementation code exists yet" and the Features-by-maturity table) that contradicted the Phase 1 code already on `main`.
