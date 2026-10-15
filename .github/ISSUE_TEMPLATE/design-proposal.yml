@@ -1,0 +1,31 @@
+---
+name: Design/spec proposal
+about: Propose a change to the specification, formats, ADRs, or open decisions (OQ-5…OQ-10)
+title: "spec: "
+labels: design
+---
+
+## Decision area
+
+<!-- One of: SPECIFICATION / FORMAT_LXZ / FORMAT_LXDB / CANONICALIZATION / TOKENIZER / OCR / COMPRESSION / COST_MODEL / RESOURCE_LIMITS / ENCRYPTION_PROFILE / an OQ-n from docs/DECISIONS.md / new ADR -->
+
+## Problem or opportunity
+
+<!-- What is underspecified, wrong, impractical, or blocked? Reference requirement IDs (REQ-*) and existing ADRs. -->
+
+## Proposal
+
+<!-- Concrete change. If it affects .lxz/.lxdb bytes, state whether it breaks proposed-format compatibility and how version fields handle it. -->
+
+## Alternatives considered
+
+## Evidence / prior art
+
+<!-- Links, measurements, or reasoning. Do NOT attach fabricated benchmark numbers; unmeasured claims belong in "expected, to be verified". -->
+
+## Impact
+
+- [ ] Requires new/superseding ADR (see docs/templates/ADR_TEMPLATE.md)
+- [ ] Changes REQUIREMENTS_TRACEABILITY / ACCEPTANCE_CRITERIA entries
+- [ ] Unblocks or blocks Phase 1+ work
+- [ ] Owner decision needed (which OQ?)

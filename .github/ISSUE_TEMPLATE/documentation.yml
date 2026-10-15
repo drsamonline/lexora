@@ -1,0 +1,37 @@
+---
+name: Documentation issue
+about: Report an error, contradiction, or honesty violation in docs (the main work of this phase)
+title: "docs: "
+labels: documentation
+---
+
+<!--
+LEXORA is currently a design & documentation project — no implementation code exists.
+Documentation accuracy IS the product quality at this stage. Thanks for reviewing carefully.
+-->
+
+## Which document(s)?
+
+<!-- path + line/section, e.g. docs/FORMAT_LXZ.md §3 -->
+
+## What does it claim vs. what is verifiably true?
+
+<!-- Quote the offending text, then state the verified reality (commit hash, command output, file listing). -->
+
+## Severity
+
+- [ ] Claims something is implemented/tested/benchmarked that isn't (honesty violation — highest priority)
+- [ ] Internal contradiction between documents
+- [ ] Broken or misleading link
+- [ ] Unclear / imprecise wording
+- [ ] Other
+
+## Evidence
+
+```text
+# paste the actual command output / file state that contradicts the doc
+```
+
+## Suggested correction
+
+<!-- Optional. Corrections to session history must be appended per the append-only rule in docs/SESSION_LOG.md, not rewritten. -->
