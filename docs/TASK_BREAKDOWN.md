@@ -29,21 +29,21 @@ Smallest actionable task list per phase so any session can pick a task without r
 
 | ID | Task | Role | Acceptance criteria | Status |
 |---|---|---|---|---|
-| P1-T1 | Package skeleton + build config (after OQ-7) | CORE | `pip install -e .` works offline from vendored wheels or documented index cache | Not started |
-| P1-T2 | Canonicalizer TXT-only with rule table v0 | CORE/QA | Golden vectors byte-exact; invariant tests (untouched byte classes pass through) | Not started |
-| P1-T3 | `.lxz` v0 format freeze | DOC/CORE | Byte layout + test vectors reviewed, FORMAT_LXZ status flipped via ADR | Not started |
-| P1-T4 | Block encoder/decoder (Zstd) | CORE | `decode(encode(C))==C` property tests incl. edge sizes (0 B, block boundary ±1) | Not started |
-| P1-T5 | CLI `pack`/`unpack` | CORE | CLI_REFERENCE documents only real flags; exit codes tested | Not started |
-| P1-T6 | Memory-budget harness run | QA | Peak RSS recorded vs PERFORMANCE_BUDGET numbers | Not started |
+| P1-T1 | Package skeleton + build config (after OQ-7) | CORE | `pip install -e .` works offline from vendored wheels or documented index cache | **Started** — `pyproject.toml` + `src/lexora/` exist (ADR-0005 pins 3.12); editable-install evidence NOT yet captured |
+| P1-T2 | Canonicalizer TXT-only with rule table v0 | CORE/QA | Golden vectors byte-exact; invariant tests (untouched byte classes pass through) | **Partial** — rules CAN-R01/R02/R05 implemented + unit-tested; golden vector files (`tests/vectors/`) still empty |
+| P1-T3 | `.lxz` v0 format freeze | DOC/CORE | Byte layout + test vectors reviewed, FORMAT_LXZ status flipped via ADR | Not started (FORMAT_LXZ remains PROPOSED — not implemented per policy) |
+| P1-T4 | Block encoder/decoder (Zstd) | CORE | `decode(encode(C))==C` property tests incl. edge sizes (0 B, block boundary ±1) | **Frame-level done** — `zstd_core.py` round-trip/determinism/truncation tests pass; block-boundary cases deferred to `.lxz` work |
+| P1-T5 | CLI `pack`/`unpack` | CORE | CLI_REFERENCE documents only real flags; exit codes tested | Not started (shipped CLI is baseline `canon`/`zround` only, exit codes tested in `tests/test_cli.py`; no CLI_REFERENCE doc yet) |
+| P1-T6 | Memory-budget harness run | QA | Peak RSS recorded vs PERFORMANCE_BUDGET numbers | Not started (harness scaffold exists but records no RSS yet; needs corpus anyway) |
 
 ## P2 — Benchmark harness
 
 | ID | Task | Role | Acceptance criteria | Status |
 |---|---|---|---|---|
-| P2-T1 | Corpus assembly per CORPUS_POLICY (needs OQ-8) | OWNER/CORE | ≥1 GiB, en/hi/gu mix, manifest hashed | Not started |
-| P2-T2 | Lineage splitter + audit | CORE/QA | 70/10/20 by source lineage; leakage test fails if same-source docs cross splits | Not started |
-| P2-T3 | Baseline runners (Zstd-19, Brotli q11, XZ, PPMd) | CORE | Versions pinned; totals include every serialized byte | Not started |
-| P2-T4 | Verdict report generator | CORE/QA | Per-category + corpus tables; Pass/Partial/Fail per ADR-0001 | Not started |
+| P2-T1 | Corpus assembly per CORPUS_POLICY (needs OQ-8) | OWNER/CORE | ≥1 GiB, en/hi/gu mix, manifest hashed | Not started (owner blocker; harness `manifest` command ready) |
+| P2-T2 | Lineage splitter + audit | CORE/QA | 70/10/20 by source lineage; leakage test fails if same-source docs cross splits | **Scaffolded** — deterministic lineage-hashed split assignment + `audit-splits` command in `benchmarks/harness.py`; verified on synthetic smoke data only (3 tiny files); needs real corpus to validate fractions |
+| P2-T3 | Baseline runners (Zstd-19, Brotli q11, XZ, PPMd) | CORE | Versions pinned; totals include every serialized byte | **Partial** — zstd19 (python-zstandard 0.25.0) and xz9 (CLI `/usr/bin/xz`) implemented with §4 disk-size assert; brotli & PPMd NOT installed in this environment → absent from registry (never stubbed) |
+| P2-T4 | Verdict report generator | CORE/QA | Per-category + corpus tables; Pass/Partial/Fail per ADR-0001 | Not started (deferred until first valid corpus run — avoids fabricating verdict logic against unmeasured data) |
 
 ## P3–P7
 
@@ -55,6 +55,12 @@ Task decomposition deferred until each phase's prerequisites are met (avoids sta
 cd /workspace
 python3 scripts/linkcheck.py     # ALL INTERNAL LINKS OK expected
 git status --short && git log --oneline -3
+# Tests run with the broken system libtmux pytest plugin disabled (pytest 9.x
+# rejects its marks-on-fixtures usage; verified 2026-10-15):
+python -m pytest tests/ -q -p no:libtmux    # 35 passed expected
+python benchmarks/harness.py env --out /tmp/env.json   # smoke-check tool capture
 ```
 
-No test suite exists yet (no code); `pytest` commands appear only after P1-T1.
+First real test suite exists since Session 12 (`tests/test_canonicalize.py`,
+`test_zstd_core.py`, `test_cli.py`). Benchmark numbers still require a corpus
+(OQ-8); harness refuses empty manifests by design.

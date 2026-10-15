@@ -52,13 +52,25 @@ def decompress(frame: bytes, *, expected_original_size: int | None = None) -> by
     allocation); otherwise relies on the frame content-size field. Frames
     without a content size and without the hint are refused — length-before-
     allocation principle (REQ-SEC-001 intent, applied conservatively here).
+
+    REQ-CMP-006 spirit: never returns partial/best-effort output. python-
+    zstandard's one-shot `decompress()` silently TRUNCATES when max_output_size
+    is smaller than the real payload (verified empirically with zstandard
+    0.25.0), so we detect truncation by re-checking against the hint and raise
+    CodecError instead of returning the prefix.
     """
     dctx = zstd.ZstdDecompressor()
     try:
         if expected_original_size is not None:
-            return dctx.decompress(
+            out = dctx.decompress(
                 frame, max_output_size=max(expected_original_size, 1)
             )
+            if len(out) != expected_original_size:
+                raise CodecError(
+                    f"decoded size {len(out)} != expected {expected_original_size} "
+                    "(truncation or wrong hint; refusing best-effort output)"
+                )
+            return out
         # Read content size from frame header; refuse unknown-length frames.
         size = zstd.frame_content_size(frame)
         if size in (None, -1, zstd.CANNOT_DETERMINE_SIZE if hasattr(zstd, "CANNOT_DETERMINE_SIZE") else -1):

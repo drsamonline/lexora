@@ -1,23 +1,23 @@
 # LEXORA Project Status
 
 > **Status:** Active — update at every session end
-> **Last verified:** 2026-10-15 (Session 10: Batch E drafted on `main` — CONTRIBUTING.md, issue templates, PR template, RELEASE_PROCESS.md; continuity files updated; link check re-run after edits)
+> **Last verified:** 2026-10-15 (Session 13: P1 benchmark-harness scaffold `benchmarks/harness.py` smoke-tested; local commits `8ee3bef` + Session 13 work not yet pushed)
 
 ## Current phase
 
-**Phase 0 — Documentation foundation & decision freeze.** Batches A, B, C complete on `main`/remote. Batch D (security & operations) **drafted**, closed (`3ecdfaf`), merged into local `main`, and landed remotely via PR #2 merge (`76476cf`). Batch E (GitHub & release polish) **drafted in Session 10 directly on `main`** (contributing guide, issue/PR templates, release process; no CI/badges — nothing runnable exists). Session 11 reconciled the diverged histories (clean non-ff merge → `a1bf3c3`) and pushed: **hosted `main` = `a1bf3c3` contains Batches A–E.** ADR-0001…0004 **Accepted** via owner delegation (`86e6b55`), unblocking the spec gates/baselines/metric sections. No implementation phase has started.
+**Phase 1 (P1) — Core Zstd baseline + harness, STARTED.** Phase 0 documentation batches A–E are complete and hosted (`a1bf3c3`). Session 12 closed OQ-7 via ADR-0005 (Python ≥3.12,<4.0 per owner delegation) and landed the first real code: package skeleton (`pyproject.toml`, `src/lexora/`), canonicalizer rules CAN-R01/R02/R05, frame-level Zstd codec with round-trip verification, and a minimal tested CLI (`canon`/`zround`) — commit `8ee3bef`. Session 13 added the benchmark harness scaffold (`env` / `manifest` / `verify` / `audit-splits` / `run`; protocol §1–§4, §6 mechanics) and fixed the truncation-refusal behavior in `decompress()` (REQ-CMP-006 spirit). The `.lxz` container remains unimplemented (FORMAT_LXZ is PROPOSED — policy forbids implementing from it).
 
 ## Verified repository state
 
 | Item | State |
 |---|---|
-| Implementation code | **None** |
-| Tests / test tooling | **None configured** |
-| Build/packaging config (`pyproject.toml` etc.) | **None** |
-| CI/CD workflows | **None** — intentionally not created until there are runnable checks (Batch E policy: no placeholder CI) |
+| Implementation code | **Present (prototype):** `src/lexora/{__init__,canonicalize,zstd_core,cli}.py`, `benchmarks/harness.py` — Phase-1 baseline only, no stable API |
+| Tests / test tooling | **35 tests passing** (`pytest 9.1.1`; must run with `-p no:libtmux` — system libtmux plugin crashes collection under pytest 9). Golden vector dir `tests/vectors/canonicalization/` still empty |
+| Build/packaging config (`pyproject.toml` etc.) | **Present** — version `0.0.1.dev1`, requires-python `>=3.12,<4.0` (ADR-0005), deps pinned to tested versions (zstandard 0.25.0) |
+| CI/CD workflows | **None** — intentionally not created until there are runnable checks; now that tests exist, a CI workflow is a reasonable next step pending owner approval |
 | License file | **Absent** — license not selected (OQ-5) |
-| Git remote | **Not configured** (OQ-6) |
-| Benchmark corpus / results | **None assembled; no validated results** |
+| Git remote | **Configured:** origin → https://github.com/drsamonline/lexora.git (no embedded creds). Local `main` ahead of hosted `a1bf3c3` by Session 12–13 commits; push needs owner token |
+| Benchmark corpus / results | **None assembled; no validated results.** Harness scaffold ready and smoke-tested on synthetic data only |
 | Approved design source of truth | `LEXORA_Full_Blueprint_Design_Master_Prompt.md` (root) |
 
 ## Documentation batches
@@ -32,9 +32,9 @@
 
 ## Blockers
 
-1. ~~Batch D/E not yet on remote~~ — resolved in Session 11: owner-supplied token used transiently (GIT_ASKPASS, never persisted); clean non-ff merge of diverged origin/main → `a1bf3c3`; pushed and verified via authenticated `ls-remote`. Hosted `main` = `a1bf3c3`.
-2. **OQ-7 (Python version)** blocks any Phase 1 code and dependency policy.
-3. **OQ-8 (corpus availability/rights)** blocks benchmark harness work beyond scaffolding.
+1. ~~Batch D/E not yet on remote~~ — resolved in Session 11 (hosted `main` = `a1bf3c3`). **New:** Sessions 12–13 commits (`8ee3bef` + harness/docs) are local-only; push needs an owner-supplied token (container has no persistent credentials).
+2. ~~OQ-7 (Python version)~~ — closed via ADR-0005 (≥3.12,<4.0, owner delegation, Session 12). **OQ-5 (license)** still open and blocks any release/publishing.
+3. **OQ-8 (corpus availability/rights)** blocks the first real benchmark run — harness scaffold is ready but refuses empty manifests by design.
 4. ~~Owner decisions OQ-1…OQ-4~~ — resolved: ADR-0001…0004 Accepted via owner delegation (`86e6b55`).
 
 ## Known risks right now
@@ -45,10 +45,10 @@
 
 ## Health indicators *(verified, not asserted)*
 
-- Build: n/a — nothing to build.
-- Tests: n/a — none exist.
+- Build: `pip install -e .` evidence not yet captured (package config exists; editable install untested).
+- Tests: **35 passed** — `python -m pytest tests/ -q -p no:libtmux` (2026-10-15). Plain `pytest` currently crashes at plugin load due to the system-installed libtmux pytest plugin being incompatible with pytest 9.1.1 (marks-on-fixtures); this is an environment issue, not repo code.
 - Coverage/badges/releases: none; none claimed anywhere in docs.
 
 ## Next milestone
 
-Owner review of Batches D + E on GitHub (hosted `main` = `a1bf3c3`), then resolve OQ-5/OQ-7 (+OQ-8…OQ-10 as convenient). Phase 0 documentation batches A–E are drafted AND hosted; the next gated step is P1 (Core Zstd baseline + harness), which remains blocked by OQ-7 (Python version).
+Push Sessions 12–13 work to remote (needs owner token), then: golden canonicalization vectors (P1-T2 completion), peak-RSS capture in the harness (P1-T6), and the first real benchmark revision once OQ-8 supplies a corpus. Optional approved step now permissible: CI workflow running linkcheck + tests (real runnable checks exist since Session 12).

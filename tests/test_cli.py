@@ -1,0 +1,64 @@
+"""Tests for lexora.cli — exit codes and real behavior (P1-T5 precursor).
+
+Only the two subcommands that actually exist are tested; no fabricated pack/unpack.
+"""
+
+from __future__ import annotations
+
+import pytest
+
+from lexora import cli
+
+
+def test_canon_success(tmp_path):
+    raw = tmp_path / "raw.txt"
+    # U+00AD as UTF-8 bytes (\xc2\xad), plus CRLF -> LF expectation.
+    raw.write_bytes("a\r\nb\u00adc".encode("utf-8"))
+    out = tmp_path / "canon.txt"
+    rc = cli.main(["canon", "--in", str(raw), "--out", str(out)])
+    assert rc == cli.EXIT_OK
+    assert out.read_bytes() == b"a\nbc"  # soft hyphen removed: "b\u00adc" -> "bc"
+
+
+def test_canon_bad_encoding_exit4(tmp_path):
+    raw = tmp_path / "raw.bin"
+    raw.write_bytes(b"\x80\x81 not utf8")
+    rc = cli.main(["canon", "--in", str(raw), "--out", "-"])
+    assert rc == cli.EXIT_CANON
+
+
+def test_canon_missing_file_exit3(tmp_path):
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main(["canon", "--in", str(tmp_path / "nope"), "--out", "-"])
+    assert excinfo.value.code == cli.EXIT_FILE
+
+
+def test_zround_success_writes_frame(tmp_path):
+    data = tmp_path / "canon.txt"
+    data.write_bytes("hello ".encode() * 1000)
+    blob = tmp_path / "frame.zst"
+    rc = cli.main(["zround", "--in", str(data), "--out", str(blob), "--level", "3"])
+    assert rc == cli.EXIT_OK
+    # Frame must be a plain zstd frame: magic 0xFD2FB528 little-endian.
+    assert blob.read_bytes()[:4] == b"\x28\xb5\x2f\xfd"
+    back = cli.decompress(blob.read_bytes(), expected_original_size=data.stat().st_size)
+    assert back == data.read_bytes()
+
+
+def test_zround_empty_input_ok(tmp_path):
+    data = tmp_path / "empty"
+    data.write_bytes(b"")
+    rc = cli.main(["zround", "--in", str(data)])
+    assert rc == cli.EXIT_OK
+
+
+def test_usage_error_exit2():
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main(["nonexistent-command"])
+    assert excinfo.value.code == 2
+
+
+def test_no_subcommand_exit2():
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main([])
+    assert excinfo.value.code == 2

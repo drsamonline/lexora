@@ -15,7 +15,7 @@
 | P0.6 Merge to main + push | Local `main` current; hosted remote updated | **Complete** | ✅ Session 8: origin discovered (drsamonline/lexora), local main merged with origin/main and pushed — remote `main` at `d6350c0`, verified via ls-remote + contents API | SESSION_LOG Session 8 |
 | P0.7 Batch D — security & operations docs | Security architecture, threat model, privacy policy, error handling, logging, troubleshooting, runbooks, root SECURITY.md, ENCRYPTION_PROFILE (Proposed) | **Drafted; closure complete (`3ecdfaf`); on remote** | ✅ 12 documents created 2026-10-15; link check ALL INTERNAL LINKS OK (exit 0); no fabricated contacts/SLAs; landed remotely via PR #2 merge (`76476cf`) + Session 11 push (`a1bf3c3`); pending owner review | docs/SECURITY_ARCHITECTURE.md … docs/runbooks/RECOVERY_RUNBOOK.md, SECURITY.md |
 | P0.8 Batch E — GitHub & release polish | CONTRIBUTING, issue/PR templates, release process (CI/badges deferred until runnable) | **Drafted; on remote since Session 11 push (`a1bf3c3`)** | ✅ 5 files: `aa266a2` (CONTRIBUTING, 2 issue templates, RELEASE_PROCESS) + `.github/pull_request_template.md` (Session 10 closure `c0609ee`, fixes dangling reference); linkcheck OK post-merge; no CI/badges created (none runnable — per policy) | CONTRIBUTING.md, .github/, docs/RELEASE_PROCESS.md |
-| P1 Core Zstd baseline + harness | Working encode/verify + benchmark scaffolding | Not started | ❌ | — |
+| P1 Core Zstd baseline + harness | Working encode/verify + benchmark scaffolding | **Started (Sessions 12–13)** — `zstd_core.py` frame-level codec + tests, baseline CLI (`canon`/`zround`), canonicalizer rules CAN-R01/R02/R05 with unit tests, `benchmarks/harness.py` scaffold (env/manifest/verify/audit-splits/run) | ⚠️ Partial: 35 tests pass (`-p no:libtmux`); `.lxz` container NOT implemented (FORMAT_LXZ still PROPOSED); golden vectors empty; no corpus ⇒ no benchmark numbers | commits `8ee3bef`, Session 13 (harness); SESSION_LOG Sessions 12–13 |
 | P2 Ingestion & canonicalization | TXT/PDF (+optional OCR) → versioned canonical bytes + golden vectors | Not started | ❌ | — |
 | P3+ Experimental candidates, `.lxz` freeze, `.lxdb`, encryption | Each gated by measured evidence | Not started | ❌ | — |
 
@@ -53,11 +53,12 @@
 | M3b: Batch D drafted (security & operations) | 2026-10-15 | Drafted — 12 docs (`301901a`); Session 9 closure (`3ecdfaf`): link check OK, continuity + CHANGELOG updated; ff-merged into local `main`; landed on remote via PR #2 merge (`76476cf`) |
 | M3c: Batch E drafted (GitHub & release polish) | 2026-10-15 | Drafted — `aa266a2` on `main` (CONTRIBUTING, issue templates, RELEASE_PROCESS) + PR template added in Session 10; CI/badges deliberately absent until runnable; Phase 0 docs batches A–E all drafted |
 | M3d: Full Phase 0 doc set pushed to remote | 2026-10-15 | Complete (Session 11) — diverged origin/main (PR #2 merge commit) cleanly re-merged (`a1bf3c3`), linkcheck OK, pushed, verified via authenticated ls-remote; hosted main = `a1bf3c3` |
-| M4: First reproducible benchmark revision | After P1 + corpus (OQ-8) | Waiting |
+| M4: First reproducible benchmark revision | After P1 + corpus (OQ-8) | Waiting — harness scaffold ready (`benchmarks/harness.py`, Session 13); blocked on corpus only |
+| M5: Phase 0 closed; P1 code started | 2026-10-15 | Complete (Session 12: ADR-0005 accepted as delegation for OQ-7, `pyproject.toml` + first tested code `8ee3bef`) |
 
 ## Metrics
 
-- Source files of LEXORA code: **0**
-- Test files: **0**
+- Source files of LEXORA code: **5** (`src/lexora/__init__.py`, `canonicalize.py`, `zstd_core.py`, `cli.py`; `benchmarks/harness.py`) — first code landed Sessions 12–13
+- Test files: **3** (`tests/test_canonicalize.py`, `test_zstd_core.py`, `test_cli.py`) — 35 tests passing (run with `-p no:libtmux`; system libtmux plugin is incompatible with pytest 9)
 - Markdown documents: tracked per batch; Batch A creates 16 files (+3 root hygiene/config files).
 - Validated benchmark results: **0**
