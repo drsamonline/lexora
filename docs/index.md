@@ -34,9 +34,16 @@ LEXORA = **L**ayered **EX**act-text **O**ptimized... see [PROJECT_CHARTER.md](PR
 ## Architecture & specification
 
 - [PROJECT_CHARTER.md](PROJECT_CHARTER.md) — problem, goals, constraints, non-goals
-- `MASTER_BLUEPRINT.md` — *planned, Batch B* (distilled view of the root blueprint file, which remains source of truth)
-- `SPECIFICATION.md` (`LEXORA-SPEC-1.0-draft`) — *planned, Batch B* (normative)
-- `COMPRESSION_ARCHITECTURE.md`, `CANONICALIZATION.md`, `TOKENIZER_SPEC.md`, `COST_MODEL.md`, `FORMAT_LXZ.md`, `FORMAT_LXDB.md` — *planned, Batch B*
+- [MASTER_BLUEPRINT.md](MASTER_BLUEPRINT.md) — distilled architecture view (source-of-truth remains the root blueprint file)
+- [SPECIFICATION.md](SPECIFICATION.md) — `LEXORA-SPEC-1.0-draft`, normative but **not approved** (blocked on ADRs 0001–0004 + rule-table freeze)
+- [CANONICALIZATION.md](CANONICALIZATION.md) — rule table draft; **not frozen**
+- [COMPRESSION_ARCHITECTURE.md](COMPRESSION_ARCHITECTURE.md) — Core Zstd baseline + experimental candidates (none shipping)
+- [COST_MODEL.md](COST_MODEL.md) — total serialized-byte accounting rules
+- [TOKENIZER_SPEC.md](TOKENIZER_SPEC.md) — candidate-layer tokenizer v0 draft
+- [OCR_PIPELINE.md](OCR_PIPELINE.md) — optional OCR flow and failure semantics
+- [FORMAT_LXZ.md](FORMAT_LXZ.md) — ⚠️ PROPOSED, not a stable format
+- [FORMAT_LXDB.md](FORMAT_LXDB.md) — ⚠️ DEFERRED, not designed
+- Diagrams: [pipeline](diagrams/pipeline.mmd) · [system context](diagrams/system-context.mmd) · [session resume](diagrams/session-resume.mmd)
 
 ## Testing & benchmarks
 
@@ -61,8 +68,8 @@ LEXORA = **L**ayered **EX**act-text **O**ptimized... see [PROJECT_CHARTER.md](PR
 
 ## Decisions & history
 
-- [DECISIONS.md](DECISIONS.md) — index of ADRs and open decisions (including four known blueprint conflicts pending resolution)
-- `ADR/` — architecture decision records ([template](ADR/ADR-0001-template.md)); none accepted yet
+- [DECISIONS.md](DECISIONS.md) — index of ADRs and open decisions
+- [ADR/](ADR/) — decision records: [ADR-0001 gate scope](ADR/ADR-0001-gate-scope.md) · [ADR-0002 Brotli role](ADR/ADR-0002-brotli-role.md) · [ADR-0003 PPMd role](ADR/ADR-0003-ppmd-role.md) · [ADR-0004 cleaning metric](ADR/ADR-0004-cleaning-error-metric.md) — all **Proposed**, none accepted; [template](templates/ADR_TEMPLATE.md)
 - [../CHANGELOG.md](../CHANGELOG.md) — change history
 - [templates/](templates/) — reusable document templates ([session note](templates/SESSION_NOTE_TEMPLATE.md), [ADR](templates/ADR_TEMPLATE.md))
 

@@ -9,11 +9,18 @@ This is an **index**, not a substitute for full ADRs. Material decisions require
 
 ## Accepted ADRs
 
-*None yet.* No ADR has been drafted or accepted.
+*None yet.* No ADR has been accepted by the project owner.
 
-## Proposed ADRs
+## Proposed ADRs (drafted 2026-10-15, Batch B — awaiting owner accept/amend/reject)
 
-*None yet.* The open questions below are candidates for ADR-0001…ADR-0007 once the owner engages with them.
+| ADR | Resolves | Recommended resolution (pending approval) |
+|---|---|---|
+| [ADR-0001 — Gate scope](ADR/ADR-0001-gate-scope.md) | OQ-1 | Two gates: per-category promotion ≥10% (validation + reproduced on held-out); corpus verdict Pass ≥10% / Partial ≥3% / Fail <3% |
+| [ADR-0002 — Brotli role](ADR/ADR-0002-brotli-role.md) | OQ-2 | Brotli q11 = frozen measurement baseline only; never a selectable archive codec |
+| [ADR-0003 — PPMd role](ADR/ADR-0003-ppmd-role.md) | OQ-3 | PPMd = measurement-only baseline; excluded from shipping codec registry |
+| [ADR-0004 — Cleaning error metric](ADR/ADR-0004-cleaning-error-metric.md) | OQ-4 | Rule-audit metric on stratified seeded sample (≤1% point estimate, ≤2% bootstrap upper bound) + 100% automated invariant checks |
+
+To approve: reply e.g. "accept ADR-0001" (or amend). On acceptance, flip the ADR status, move its row above to Accepted, and unblock the corresponding SPECIFICATION.md sections.
 
 ## Open questions requiring project-owner input
 

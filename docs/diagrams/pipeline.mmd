@@ -1,0 +1,20 @@
+%% LEXORA ingestion -> canonicalization -> compression pipeline (proposed; no implementation exists)
+flowchart LR
+  subgraph Ingestion
+    TXT[TXT files] --> RD[Reader + encoding detect]
+    PDF[Digital PDF] --> TL[Text-layer extractor]
+    PDF -.scanned pages.-> OCR[Optional OCR\nTesseract-class proposed]
+  end
+  RD --> RAW[Raw extracted text]
+  TL --> RAW
+  OCR --> RAW
+  RAW --> CANON["Canonicalizer (versioned rule table)\nMAY lose fidelity vs source"]
+  CANON --> C[Canonical UTF-8 bytes C]
+  C --> SEL{Codec selector\ncost model}
+  SEL --> ZSTD[Core: Zstandard profile]
+  SEL -.experimental.-> CAND[Candidates: dict / Re-Pair /\ntoken PPM / record coding]
+  ZSTD --> WR[.lxz writer\nPROPOSED format]
+  CAND --> WR
+  WR --> V{Verifier\ndecode(encode(C)) == C}
+  V -->|fail| ERR[Job fails loudly]
+  V -->|pass| ARC[(Archive)]
