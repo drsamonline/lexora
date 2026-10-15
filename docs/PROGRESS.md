@@ -9,8 +9,10 @@
 |---|---|---|---|---|
 | P0.1 Documentation audit | Inventory repo, find conflicts, plan batches | **Complete** | ✅ Audit delivered in session 2026-10-15 | [SESSION_LOG.md](SESSION_LOG.md) |
 | P0.2 Batch A — governance docs | README/index/charter/requirements/glossary/decisions/status files | **Complete** | ✅ All checklist items verified; committed `07c1564` | [SESSION_LOG.md](SESSION_LOG.md) Session 2 + commit hash |
-| P0.3 Owner decisions OQ-1…OQ-10 | Resolve blueprint conflicts, license, Python version, corpus | **Not started** | ❌ | Awaiting owner input |
-| P0.4 Batch B — architecture & spec draft | SPECIFICATION `LEXORA-SPEC-1.0-draft`, format proposals, diagrams, conflict ADRs | **Drafted** (commit `91cfbb6`) | ⚠️ Partially — drafts exist; approval blocked on owner accepting ADR-0001…0004 | [DECISIONS.md](DECISIONS.md) proposed-ADR table; docs/MASTER_BLUEPRINT.md, SPECIFICATION.md, CANONICALIZATION.md, TOKENIZER_SPEC.md, OCR_PIPELINE.md, COMPRESSION_ARCHITECTURE.md, COST_MODEL.md, FORMAT_LXZ.md, FORMAT_LXDB.md, diagrams/ |
+| P0.3 Owner decisions OQ-1…OQ-10 | Resolve blueprint conflicts, license, Python version, corpus | **Partially complete** | ⚠️ OQ-1…OQ-4 resolved — ADR-0001…0004 Accepted via owner delegation (`86e6b55`). OQ-5…OQ-10 still awaiting owner (license, remote/visibility, Python version, corpus, OCR tooling, semver adoption) | [DECISIONS.md](DECISIONS.md); docs/ADR/ADR-0001..0004 |
+| P0.4 Batch B — architecture & spec draft | SPECIFICATION `LEXORA-SPEC-1.0-draft`, format proposals, diagrams, conflict ADRs | **Complete** (commits `91cfbb6`, `5001ab3`; ADRs Accepted `86e6b55`) | ✅ Drafts exist and gate-blocking ADRs accepted; formats remain PROPOSED/not frozen by policy until byte layout + test vectors approved | docs/MASTER_BLUEPRINT.md, SPECIFICATION.md, CANONICALIZATION.md, TOKENIZER_SPEC.md, OCR_PIPELINE.md, COMPRESSION_ARCHITECTURE.md, COST_MODEL.md, FORMAT_LXZ.md, FORMAT_LXDB.md, diagrams/ |
+| P0.5 Batch C — engineering execution docs | Roadmap, phases, plan, matrix, traceability, acceptance, test strategy, quality, benchmark protocol/results, corpus policy, budgets, limits, build/install/dev-setup | **Complete** (commit `3d98eab`) | ✅ 15 docs created; links verified; no fabricated results/commands | docs/ROADMAP.md … docs/DEVELOPMENT_SETUP.md |
+| P0.6 Merge to main + push | Local `main` current; hosted remote updated | **Merge Complete / Push Blocked** | ⚠️ Fast-forward `816f58f..3d98eab` into `main` done 2026-10-15; `git push origin main` failed exit 128 — no remote configured | SESSION_LOG Session 7 |
 | P1 Core Zstd baseline + harness | Working encode/verify + benchmark scaffolding | Not started | ❌ | — |
 | P2 Ingestion & canonicalization | TXT/PDF (+optional OCR) → versioned canonical bytes + golden vectors | Not started | ❌ | — |
 | P3+ Experimental candidates, `.lxz` freeze, `.lxdb`, encryption | Each gated by measured evidence | Not started | ❌ | — |
@@ -43,8 +45,9 @@
 | Milestone | Target | State |
 |---|---|---|
 | M1: Documentation foundation complete (Batch A committed as 07c1564 + closure 4d7583e) | 2026-10-15 | Complete |
-| M2: Open questions resolved or explicitly deferred by owner | Owner-dependent | Waiting |
-| M3: SPECIFICATION 1.0-draft published (Batch B) | After M2 | Waiting |
+| M2: Open questions resolved or explicitly deferred by owner | Owner-dependent | Partial — OQ-1…OQ-4 accepted (`86e6b55`); OQ-5…OQ-10 waiting |
+| M3: SPECIFICATION 1.0-draft published (Batch B) | After M2 | Complete (draft published; approval of formats still pending byte layout + test vectors) |
+| M3a: Batches B+C merged into local `main` | 2026-10-15 | Complete (`3d98eab` fast-forward). Push to remote blocked — no origin configured |
 | M4: First reproducible benchmark revision | After P1 + corpus (OQ-8) | Waiting |
 
 ## Metrics

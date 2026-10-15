@@ -1,45 +1,55 @@
 # Next Session Resume Card
 
-**Last verified state:** 2026-10-15, after Batch B part 1 commit `91cfbb6` and continuity closure commit `5001ab3`. Link check: ALL INTERNAL LINKS OK. Working tree clean at time of writing.
-**Current phase:** Phase 0.4 — Batch B drafted as *Proposed*; owner decisions on OQ-1…OQ-10 still outstanding.
-**Branch/commit:** `qwen-code-44e43b8d-d9cc-4cd1-90cd-3ea52ef8a427` @ `5001ab3` (tooling-created branch; earlier `main` references in old log entries describe pre-session state — confirm intended long-lived branch with owner before any remote setup).
-**Last completed task:** Batch B architecture/spec drafts + ADR-0001…0004 (Proposed) committed (`91cfbb6`), continuity records closed (`5001ab3`).
-**Current blocker:** Owner accept/amend/reject on ADR-0001…0004 and answers to OQ-5…OQ-10 ([docs/DECISIONS.md](DECISIONS.md)).
-**First action next session:** `git status --short && git log --oneline -3` to verify this card matches reality; then check DECISIONS.md for owner verdicts.
+**Last verified state:** 2026-10-15, Session 7. Local `main` contains Batches A+B+C (fast-forward merge `816f58f..3d98eab`). Continuity files updated this session; closure commit recorded in SESSION_LOG. Link check: ALL INTERNAL LINKS OK.
+**Current phase:** Phase 0 — documentation foundation. Batches A/B/C complete; Batch D (security & operations) not started.
+**Branch/commit:** `main` @ `3d98eab` plus the Session-7 continuity closure commit (see latest SESSION_LOG entry for its real hash). Verified via `git log --oneline`.
+**Working-tree state:** Clean after closure commit.
+**Last completed task:** Merged working branch into local `main`; attempted remote push (failed — no origin configured, exit 128); updated continuity records honestly.
+**Current blocker:** No git remote configured (OQ-6). Owner must supply repository URL + access for `git push -u origin main`, or push manually. Secondary open questions: OQ-5 (license), OQ-7 (Python version), OQ-8 (corpus), OQ-9 (OCR tooling), OQ-10 (semver adoption).
+**First action next session:** `cd /workspace && git status --short && git log --oneline -3 && git remote -v` — verify the closure commit exists on `main` and whether a remote was added since.
 
 ## Read first
-- [ ] [docs/STATUS.md](STATUS.md)
-- [ ] Latest entry of [docs/SESSION_LOG.md](SESSION_LOG.md) (Session 5)
-- [ ] [docs/DECISIONS.md](DECISIONS.md) — proposed-ADR table
-- [ ] [docs/SPECIFICATION.md](SPECIFICATION.md) blocker table
+- [ ] docs/STATUS.md
+- [ ] Latest entry of docs/SESSION_LOG.md (Session 7)
+- [ ] docs/DECISIONS.md — OQ-5…OQ-10 still open
+- [ ] docs/PHASES.md + docs/REQUIREMENTS_TRACEABILITY.md (Batch D scope context)
 
 ## Tasks in order
-1. **If owner accepted any ADR:** flip its status to Accepted, move the DECISIONS row, unblock the corresponding SPECIFICATION sections, update CHANGELOG — same session.
-2. **If rule-table/newline/BOM decisions also approved:** begin Phase 0 golden-vector scaffolding plan (still no compression code until OQ-7 Python version decided).
-3. If no answers yet: proceed with Batch C planning docs that don't depend on open gates (ROADMAP, PHASES, IMPLEMENTATION_MATRIX skeleton, REQUIREMENTS_TRACEABILITY), marking dependency-gated cells honestly. Do not start implementation code.
+1. If owner provided a remote URL: `git remote add origin <URL> && git push -u origin main`; record the actual result in SESSION_LOG. Never claim push success without exit code 0.
+2. Execute **Batch D — security & operations**: SECURITY_ARCHITECTURE.md, THREAT_MODEL.md, PRIVACY_AND_DATA_HANDLING.md, ERROR_HANDLING.md, LOGGING_AND_DIAGNOSTICS.md, TROUBLESHOOTING.md, runbooks/ (BENCHMARK_RUNBOOK, CORRUPTION_TRIAGE, PERFORMANCE_TRIAGE, RECOVERY_RUNBOOK), plus root SECURITY.md (reporting instructions only — invent no email/SLA). ENCRYPTION_PROFILE.md only as Proposed/scope-gated per blueprint.
+3. Update docs/index.md links for new files; run `python3 scripts/linkcheck.py` until ALL INTERNAL LINKS OK.
+4. Close out continuity files + CHANGELOG entries; commit with real hash.
+5. Do NOT start implementation code (blocked by OQ-7 Python version and master prompt §2.10).
 
 ## Acceptance criteria
-- [ ] No document claims Approved status for SPEC or formats while any ADR remains Proposed.
-- [ ] Link checker re-run → ALL INTERNAL LINKS OK.
-- [ ] Continuity files updated and committed with real hashes only.
+- [ ] All Batch D documents exist, cross-linked, with Status headers and no fabricated claims/contacts/emails.
+- [ ] `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK (exit 0).
+- [ ] STATUS/PROGRESS/SESSION_LOG/NEXT_SESSION agree; commit hashes real.
+- [ ] Push outcome recorded truthfully (success with exit 0, or blocked with reason).
 
 ## Commands to run
 ```text
 cd /workspace
 git status --short
 git log --oneline -3
-python3 linkcheck.py        # helper script created this session; scans all .md relative links
+git remote -v
+python3 scripts/linkcheck.py
+# if owner supplied URL (proposed — needs owner value):
+# git remote add origin <OWNER_URL> && git push -u origin main
 ```
 
 ## Do not repeat
-- Session 1 audit; Batch A creation (`07c1564`); Batch B part 1 creation (`91cfbb6`) and closure (`5001ab3`).
-- Do not create Batch C–E placeholder files early; master prompt forbids empty placeholders.
-- Do not mark SPECIFICATION.md or FORMAT_LXZ/LXDB as Approved while any of ADR-0001…0004 remains Proposed.
+- Batches A/B/C document creation (complete, on `main`; commits `07c1564`, `91cfbb6`, `5001ab3`, `2e88660`, `86e6b55`, `3d98eab`).
+- ADR-0001…0004 drafting/acceptance (Accepted in `86e6b55`).
+- Session 1 audit.
+- Branch-vs-main confusion: work directly on `main` unless tooling forces another branch; always verify with `git branch --show-current`.
+- Do not create Batch E placeholder files early; master prompt forbids empty placeholders.
 
 ## Risks/open decisions
-- ADR-0001…0004 + OQ-5…OQ-10 unresolved → spec stays `LEXORA-SPEC-1.0-draft`; no implementation code until OQ-7 (Python version) decided.
-- License/repo URL unknown → README stays badge-free; no `.github/` workflows yet.
-- Process note (honest): heredoc-based edits to this resume card twice caused shell-input confusion; use file-editor tools or a scratch script instead of inline heredocs for multi-line doc content.
+- No remote ⇒ no off-machine backup; docs work lives only in this container.
+- OQ-5/OQ-7/OQ-8/OQ-9/OQ-10 remain owner-dependent (license, Python version, corpus rights, OCR availability, semver).
+- Formats (.lxz/.lxdb) must stay PROPOSED until byte layout + test vectors are approved — do not unfreeze during Batch D.
+- Process note (honest): heredoc-based edits previously corrupted this resume card; use file-editor tools for multi-line doc content.
 
 ## Required documentation updates at session end
-- SESSION_LOG.md (new dated entry), STATUS.md, PROGRESS.md, NEXT_SESSION.md, CHANGELOG.md (Unreleased), DECISIONS.md if any ADR flipped, index.md if new files added, README only if public-facing state changed.
+- docs/SESSION_LOG.md (append dated entry), docs/STATUS.md, docs/PROGRESS.md, docs/NEXT_SESSION.md, docs/IMPLEMENTATION_MATRIX.md (if statuses change), CHANGELOG.md (Unreleased), docs/DECISIONS.md (if any decision flips), docs/index.md (new links), README.md only if public-facing state changed.

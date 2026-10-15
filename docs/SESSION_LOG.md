@@ -94,3 +94,17 @@ Append-only, dated session summaries. Never rewrite history; append a correction
 - **Failures/blockers:** owner input still required on OQ-1…OQ-10; SPECIFICATION cannot be Approved until ADRs 0001–0004 resolved + rule table frozen.
 - **Follow-up within Session 5 (recorded honestly):** the closure commit `5001ab3` was created accidentally — a heredoc intended for NEXT_SESSION.md leaked into the persistent shell and executed `git add -A && git commit` (committing the continuity edits described above; no data loss, contents as logged). The same heredoc confusion twice corrupted NEXT_SESSION.md; it has been rewritten cleanly via file tools, and `scripts/linkcheck.py` now replaces inline heredoc link-checking. Re-ran checker → **ALL INTERNAL LINKS OK** (exit 0).
 - **Next action:** Owner reviews/accepts ADRs → flip statuses + unblock spec sections → then Batch C (phases, matrix, traceability, benchmark protocol). Continuity-file updates from this session pending closure commit.
+
+---
+
+## 2026-10-15 — Session 7: Merge working branch into main; remote push blocked
+
+- **Objective:** Owner instruction "push to main branch".
+- **Pre-state (verified):** HEAD on `qwen-code-44e43b8d-d9cc-4cd1-90cd-3ea52ef8a427` at `3d98eab`, clean tree; `main` at `816f58f`; `git remote -v` empty.
+- **Actions & results:**
+  1. `git checkout main` → switched.
+  2. `git merge --ff-only qwen-code-44e43b8d-d9cc-4cd1-90cd-3ea52ef8a427` → fast-forward `816f58f..3d98eab`, 52 files changed, +2711 lines (Batches A/B/C, ADR-0001…0004 Accepted, diagrams, scripts/linkcheck.py). Verified `main` == `3d98eab`, tree clean.
+  3. `git push origin main` → **FAILED, exit 128**: `'origin' does not appear to be a git repository`. No remote configured (OQ-6 still open).
+- **Outcome:** Local `main` now contains all committed documentation work through Batch C. Push to a hosted remote is impossible in this environment until the owner supplies a remote URL/access. Honest record per master prompt §1.6 — no fake push claimed.
+- **Owner follow-up options:** provide remote URL + credentials so assistant can run `git remote add origin <URL> && git push -u origin main`, or perform the push manually.
+- **Next action:** Batch D (security & operations documents) on `main`.
