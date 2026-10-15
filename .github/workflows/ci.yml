@@ -1,0 +1,32 @@
+# Real CI workflow — badges in README.md reference THIS file.
+# If this workflow fails or is removed, the badges must be removed too
+# (repository rule: no unsupported claims).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package + dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run test suite
+        # Skips are allowed (benchmark tests skip without corpus data);
+        # failures fail the job.
+        run: pytest -q
+
+      - name: Internal link check
+        run: python scripts/linkcheck.py

@@ -6,6 +6,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-15 — Session 15 badges & CI (owner request "update readme file with github badges"):
+  - `.github/workflows/ci.yml` — **real** CI workflow (Python 3.12, `pip install -e ".[dev]"`, `pytest -q`, linkcheck). Reverses the earlier "no workflows yet" decision because runnable code + tests now exist (Phase 1 prototype). First-run result will be recorded here once Actions executes it.
+  - `README.md` — badge row: CI (points at the real workflow), Tests (static snapshot: 35 passed, re-verified locally), Python 3.12 (matches `requires-python`), License MIT (matches `LICENSE`). Footer rewritten from "no badges exist" to explicit badge-provenance statements. Also corrected two stale README blocks ("no implementation code exists yet" and the Features-by-maturity table) that contradicted the Phase 1 code already on `main`.
+### Fixed
+- 2026-10-15 — Test-suite environment: container had accumulated a broken third-party pytest plugin (`libtmux`'s auto-registered plugin crashes under pytest 9.x — marks applied to fixtures). Uninstalled `libtmux`; `python -m pytest -q` now passes cleanly (35 passed). Earlier session claims of "39 passed / 4 skipped" could not be reproduced against current `main` (only 3 test files, 35 tests, no skips); corrected honestly in README.
+- 2026-10-15 — Removed dangling "Last verified: commit `816f58f`" reference in README (commit does not exist in this repo's history).
 - 2026-10-15 — Session 11 remote reconciliation (no new documents): configured `origin` (credential-free URL), discovered remote `main` had advanced via PR #2 merge (`76476cf`, Batch D landed remotely), performed clean non-ff merge into local `main` (`a1bf3c3`), re-verified linkcheck (OK), and pushed — **hosted `main` now contains Batches A–E**. Token used transiently via GIT_ASKPASS; never persisted to repo or git config.
 - 2026-10-15 — Batch E GitHub & release polish (drafted, Session 10; commit `aa266a2` + PR-template fix):
   - `CONTRIBUTING.md` — project-status disclaimer, honesty ground rules, current workflow, branching/PR guidance.

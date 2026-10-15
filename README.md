@@ -1,10 +1,19 @@
 # LEXORA
 
+[![CI](https://github.com/drsamonline/lexora/actions/workflows/ci.yml/badge.svg)](https://github.com/drsamonline/lexora/actions/workflows/ci.yml)
+![Tests](https://img.shields.io/badge/tests-35%20passed-informational)
+![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 **Layered EXact-text Repository & Adaptive compression architecture**
 
-> **Project status: In development — design & documentation phase.**
-> No implementation code exists yet. Nothing on this page should be read as a shipped feature.
-> **Last verified:** 2026-10-15 against repository commit `816f58f`.
+> **Project status: Phase 1 prototype in development.** Documentation (Batches A–F) drafted;
+> early implementation code exists (canonicalization, Zstd core baseline, benchmark harness).
+> Nothing here is a shipped or released feature. See [docs/STATUS.md](docs/STATUS.md) for the verified state.
+> **Badge honesty note:** the CI badge reflects the real workflow in `.github/workflows/ci.yml`
+> (added 2026-10-15; its first-run result will be recorded in the session log). The *Tests* badge is a
+> static snapshot of the locally verified suite (35 passed, re-verified 2026-10-15), not a live measurement.
+> **Last verified:** 2026-10-15 against local branch `main` (see git history).
 
 ---
 
@@ -40,9 +49,9 @@ Generic compressors (Zstandard, XZ, Brotli) treat text as opaque bytes. Document
 
 | Status | Capability |
 |---|---|
-| **Implemented** | *(nothing yet — repository contains only the blueprint and documentation)* |
-| **In progress** | Documentation system (Batches A–E drafted: governance, architecture & spec, engineering execution, security & operations, GitHub & release polish — pending owner review) |
-| **Planned** | Core Zstandard baseline codec; TXT/PDF ingestion; conservative canonicalizer; benchmark harness; `.lxz` archive format (proposed); experimental candidates (dictionaries, Re-Pair, bounded token PPM, numeric/record coding, template+residual); `.lxdb` database mode; optional encryption profile |
+| **Implemented** | Early Phase 1 prototype: conservative canonicalizer (`src/lexora/canonicalize.py`), Zstd core baseline (`src/lexora/zstd_core.py`), CLI scaffold, benchmark harness (`benchmarks/harness.py`), test suite (35 passed locally) |
+| **In progress** | Phase 1 baseline metrics on real corpus data; CI first run (workflow added 2026-10-15); documentation Batches A–F pending owner review |
+| **Planned** | TXT/PDF ingestion; `.lxz` archive format (proposed); experimental candidates (dictionaries, Re-Pair, bounded token PPM, numeric/record coding, template+residual); `.lxdb` database mode; optional encryption profile |
 
 ## Architecture overview (proposed)
 
@@ -112,4 +121,7 @@ Dr. Sohil Momin.
 
 ---
 
-*This README makes no claim about tests, CI, coverage, releases, or badges — none exist. Badges will be added only when backed by real workflows and services.*
+*This README's badges are backed by real artifacts: the CI badge points to `.github/workflows/ci.yml`,
+the License badge to [LICENSE](LICENSE), and the Python badge to `requires-python` in `pyproject.toml`.
+No coverage, release, or download badges exist — those claims are not yet true. Badges will be removed
+or corrected if the underlying workflows/services are removed or fail.*
