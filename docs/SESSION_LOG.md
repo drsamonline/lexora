@@ -36,3 +36,21 @@ Append-only, dated session summaries. Never rewrite history; append a correction
 - **Decisions made:** None accepted; this session only *documents* decision needs.
 - **Known gaps:** All planned Batch B–E documents; ADR drafting for OQ-1…OQ-4; commit checkpoint pending owner workflow permission.
 - **Next action:** Commit Batch A (pending owner workflow confirmation), then await owner answers to OQ-1…OQ-10 before drafting Batch B normative spec. Link validation is complete (see commands above).
+
+---
+
+## 2026-10-15 — Session 3: Batch A validation & commit checkpoint
+
+- **Objective:** Close out Batch A per NEXT_SESSION plan: link validation, fabrication grep, commit checkpoint, continuity-doc updates.
+- **Pre-state verified:** `git status --short` showed only the new untracked Batch A files; HEAD `816f58f`.
+- **Actions / files changed:**
+  - Ran relative-link checker over all Markdown → found 1 broken link (`docs/index.md → DEVELOPMENT_SETUP.md`, a planned-but-uncreated file); fixed by converting it to plain text with an OQ-7 reference. Re-ran → **ALL LINKS OK**. Fence-balance check clean.
+  - Badge/CI-URL grep (`img.shields|actions/workflows`) → no actual badges present (one self-referential instruction mention in NEXT_SESSION.md only).
+  - Updated PROGRESS.md (checklist ticks, P0.2 → Complete), STATUS.md (header hash + batch table), SESSION_LOG.md (Session 2 command results + next action), NEXT_SESSION.md (rewritten resume card).
+  - Committed: `git add -A && git commit` → **`07c1564`** "docs: Batch A — governance and navigation foundation"; `git rev-parse --short HEAD` verified; post-commit `git status --short` clean.
+- **Commands run & results:** as listed above, all exit 0.
+- **Tests:** none exist; n/a.
+- **Decisions:** none accepted. Batch A itself committed at pre-hash `816f58f`; this closure session's edits are part of commit `07c1564`'s working set except the final continuity tweaks below (recorded honestly: the last few doc updates were made after creating `07c1564` and remain uncommitted until the next checkpoint or amend).
+- **Failures/blockers encountered:** none technical; owner decisions OQ-1…OQ-10 still outstanding.
+- **Known gaps left open:** Batch B–E documents; proposed ADRs for OQ-1…OQ-4.
+- **Next action:** Await owner answers to OQ-1…OQ-10; then draft proposed ADRs and start Batch B.

@@ -1,11 +1,11 @@
 # LEXORA Project Status
 
 > **Status:** Active — update at every session end
-> **Last verified:** 2026-10-15 (commit `816f58f`, branch `main`, clean working tree before this documentation batch)
+> **Last verified:** 2026-10-15 (commit `07c1564`, branch `main`, clean working tree after Batch A commit)
 
 ## Current phase
 
-**Phase 0 — Documentation foundation & decision freeze.** No implementation phase has started.
+**Phase 0 — Documentation foundation & decision freeze.** Batch A complete; awaiting owner decisions before Batch B normative spec. No implementation phase has started.
 
 ## Verified repository state
 
@@ -24,7 +24,7 @@
 
 | Batch | Contents | Status |
 |---|---|---|
-| A — Governance & navigation | README, docs index, charter, requirements, glossary, decisions/ADR system, status/progress/session/resume, changelog, templates, editor hygiene files | **In progress (this session)** |
+| A — Governance & navigation | README, docs index, charter, requirements, glossary, decisions/ADR system, status/progress/session/resume, changelog, templates, editor hygiene files | **Complete** (commit `07c1564`) |
 | B — Architecture & specification | MASTER_BLUEPRINT, SPECIFICATION (LEXORA-SPEC-1.0-draft), canonicalization, tokenizer, compression architecture, cost model, FORMAT_LXZ/LXDB proposals, diagrams, conflict ADRs | Not started |
 | C — Engineering execution | Roadmap, phases, implementation plan/matrix, traceability, testing strategy, benchmark protocol/corpus policy, build/install/dev setup | Not started |
 | D — Security & operations | Security architecture, threat model, privacy, error handling, logging, resource limits, troubleshooting, runbooks | Not started |

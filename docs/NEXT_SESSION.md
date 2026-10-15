@@ -1,25 +1,22 @@
 # Next Session Resume Card
 
-**Last verified state:** 2026-10-15, after Batch A creation **and link validation** (`ALL LINKS OK`; one broken link in docs/index.md found and fixed). Re-verify with git before trusting.
-**Current phase:** Phase 0.2 — Batch A drafted & validated; only the commit checkpoint remains.
-**Branch/commit:** `main` @ `816f58f` is HEAD; all Batch A files are untracked/uncommitted as of writing this card.
-**Working-tree state (at time of writing):** ~22 new untracked documentation/config files; blueprint untouched.
-**Last completed task:** Created all Batch A documents + ran link/fabrication validation (link-check script, badge grep).
-**Current blocker:** Owner input on OQ-1…OQ-10 ([docs/DECISIONS.md](DECISIONS.md)) blocks Batch B normative spec. Commit itself awaits owner workflow confirmation (§1.6: "if the user's workflow permits").
-**First action next session:** Run the verification commands below and confirm they match this card; if clean, commit Batch A (or record why not), then proceed to "Tasks in order".
+**Last verified state:** 2026-10-15, after Batch A validation (link check `ALL LINKS OK`, badge grep clean) and Batch A commit `07c1564`. Final continuity-doc updates (this card, STATUS/PROGRESS/SESSION_LOG ticks) are uncommitted on top of `07c1564` — first action below commits them.
+**Current phase:** Phase 0.3 — awaiting owner decisions OQ-1…OQ-10; Batch B drafting queued behind them.
+**Branch/commit:** `main` @ `07c1564` ("docs: Batch A — governance and navigation foundation"), plus a small set of modified continuity docs pending closure commit.
+**Working-tree state (at time of writing):** only `docs/STATUS.md`, `docs/PROGRESS.md`, `docs/SESSION_LOG.md`, `docs/NEXT_SESSION.md` modified post-commit; everything else committed & clean at `07c1564`.
+**Last completed task:** Batch A created, validated, and committed (`07c1564`).
+**Current blocker:** Owner input on OQ-1…OQ-10 ([docs/DECISIONS.md](DECISIONS.md)) blocks the Batch B normative spec.
+**First action next session:** Verify state matches this card, then run `git add -A && git commit -m "docs: close out Batch A continuity records"` to commit the four modified continuity files; record the new hash in SESSION_LOG.
 
 ## Read first
 - [ ] [docs/STATUS.md](STATUS.md)
-- [ ] Latest entry of [docs/SESSION_LOG.md](SESSION_LOG.md) (Session 2)
+- [ ] Latest entry of [docs/SESSION_LOG.md](SESSION_LOG.md) (Session 3)
 - [ ] [docs/DECISIONS.md](DECISIONS.md) — check whether owner answered any OQ-*
-- [ ] Skim created Batch A files for link integrity
 
 ## Tasks in order
-1. Confirm working tree still matches this card (`git status --short`).
-2. Commit Batch A with message `docs: Batch A — governance and navigation foundation` (only if owner workflow permits committing; otherwise record the non-commit reason in SESSION_LOG).
-3. Record the new hash (`git rev-parse --short HEAD`) in PROGRESS.md checklist, STATUS.md, and a Session 3 log entry.
-4. **If owner has answered any OQs:** draft corresponding ADRs from the template, mark Accepted, and reflect changes in affected docs. Then begin Batch B planning.
-5. **If no answers yet:** optionally draft *Proposed* ADRs recommending resolutions for OQ-1…OQ-4 (do NOT mark accepted), then stop and await owner.
+1. Confirm working tree shows only the four modified continuity docs (`git status --short`); commit them as described above.
+2. **If owner has answered any OQs:** draft corresponding ADRs from the template, mark Accepted, update affected docs + CHANGELOG in the same session. Then begin Batch B (MASTER_BLUEPRINT/SPECIFICATION drafts).
+3. **If no answers yet:** optionally draft *Proposed* ADRs recommending resolutions for OQ-1…OQ-4 (do NOT mark accepted), then stop and await owner. Do not start implementation code.
 
 ## Acceptance criteria
 - [x] Every relative link in every created .md resolves to an existing file (verified 2026-10-15: `ALL LINKS OK`).
