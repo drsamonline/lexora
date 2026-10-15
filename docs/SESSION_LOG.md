@@ -92,4 +92,5 @@ Append-only, dated session summaries. Never rewrite history; append a correction
 - **Tests:** n/a — none exist. No implementation started (per master prompt §2.10).
 - **Decisions:** none accepted. Four ADRs moved from "would draft" to "Proposed, awaiting owner".
 - **Failures/blockers:** owner input still required on OQ-1…OQ-10; SPECIFICATION cannot be Approved until ADRs 0001–0004 resolved + rule table frozen.
+- **Follow-up within Session 5 (recorded honestly):** the closure commit `5001ab3` was created accidentally — a heredoc intended for NEXT_SESSION.md leaked into the persistent shell and executed `git add -A && git commit` (committing the continuity edits described above; no data loss, contents as logged). The same heredoc confusion twice corrupted NEXT_SESSION.md; it has been rewritten cleanly via file tools, and `scripts/linkcheck.py` now replaces inline heredoc link-checking. Re-ran checker → **ALL INTERNAL LINKS OK** (exit 0).
 - **Next action:** Owner reviews/accepts ADRs → flip statuses + unblock spec sections → then Batch C (phases, matrix, traceability, benchmark protocol). Continuity-file updates from this session pending closure commit.
