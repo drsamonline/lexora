@@ -42,7 +42,7 @@
 
 | Milestone | Target | State |
 |---|---|---|
-| M1: Documentation foundation complete (Batch A committed) | Next commit | In progress |
+| M1: Documentation foundation complete (Batch A committed as 07c1564 + closure 4d7583e) | 2026-10-15 | Complete |
 | M2: Open questions resolved or explicitly deferred by owner | Owner-dependent | Waiting |
 | M3: SPECIFICATION 1.0-draft published (Batch B) | After M2 | Waiting |
 | M4: First reproducible benchmark revision | After P1 + corpus (OQ-8) | Waiting |

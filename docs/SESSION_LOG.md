@@ -54,3 +54,17 @@ Append-only, dated session summaries. Never rewrite history; append a correction
 - **Failures/blockers encountered:** none technical; owner decisions OQ-1…OQ-10 still outstanding.
 - **Known gaps left open:** Batch B–E documents; proposed ADRs for OQ-1…OQ-4.
 - **Next action:** Await owner answers to OQ-1…OQ-10; then draft proposed ADRs and start Batch B.
+
+---
+
+## 2026-10-15 — Session 4: Batch A closure commits & final verification
+
+- **Objective:** Commit the continuity-record updates created in Session 3 and re-verify repository state.
+- **Pre-state verified:** HEAD `07c1564`; modified files limited to docs/STATUS.md, PROGRESS.md, SESSION_LOG.md, NEXT_SESSION.md.
+- **Actions / files changed:** Committed continuity records as **`4d7583e`** ("docs: close out Batch A continuity records (validation results, commit hash 07c1564)"); no content edits beyond those already logged in Session 3. Re-ran relative-link checker → **ALL LINKS OK**; `git status --short` clean afterward.
+- **Commands run & results:** `git add -A && git commit` (exit 0), `git rev-parse --short HEAD` → `4d7583e`, link-check script → ALL LINKS OK, `git log --oneline -4` verified history `816f58f → 07c1564 → 4d7583e`.
+- **Tests:** n/a — none exist.
+- **Decisions:** none accepted.
+- **Failures/blockers encountered:** one stray `sed` attempt against NEXT_SESSION.md was discarded via `git checkout --` before it altered committed content (no impact).
+- **Known gaps left open:** OQ-1…OQ-10 owner answers; Batch B–E documents; proposed ADRs for OQ-1…OQ-4.
+- **Next action:** Per NEXT_SESSION.md — check for owner OQ answers; if any, draft Accepted ADRs and begin Batch B; otherwise draft Proposed ADRs only and stop.
