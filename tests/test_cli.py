@@ -62,3 +62,46 @@ def test_no_subcommand_exit2():
     with pytest.raises(SystemExit) as excinfo:
         cli.main([])
     assert excinfo.value.code == 2
+
+
+# --- pipe: end-to-end baseline flow (canonicalize -> compress -> verify) ---
+
+
+def test_pipe_success_writes_frame(tmp_path):
+    raw = tmp_path / "raw.txt"
+    raw.write_bytes("hello \u00adworld\r\n" .encode("utf-8") * 500)
+    out = tmp_path / "frame.zst"
+    rc = cli.main(["pipe", "--in", str(raw), "--out", str(out), "--level", "3"])
+    assert rc == cli.EXIT_OK
+    assert out.read_bytes()[:4] == b"\x28\xb5\x2f\xfd"  # plain zstd frame
+    # Frame decompresses to the canonical form, not the raw bytes.
+    canon = cli.canonicalize(raw.read_bytes())
+    back = cli.decompress(out.read_bytes(), expected_original_size=len(canon))
+    assert back == canon
+
+
+def test_pipe_empty_input_ok(tmp_path):
+    raw = tmp_path / "empty"
+    raw.write_bytes(b"")
+    rc = cli.main(["pipe", "--in", str(raw)])
+    assert rc == cli.EXIT_OK
+
+
+def test_pipe_bad_encoding_exit4(tmp_path):
+    raw = tmp_path / "raw.bin"
+    raw.write_bytes(b"\x80\x81 not utf8")
+    rc = cli.main(["pipe", "--in", str(raw)])
+    assert rc == cli.EXIT_CANON
+
+
+def test_pipe_declared_encoding_succeeds(tmp_path):
+    raw = tmp_path / "latin.txt"
+    raw.write_bytes("café\r\n".encode("latin-1"))
+    rc = cli.main(["pipe", "--in", str(raw), "--encoding", "latin-1"])
+    assert rc == cli.EXIT_OK
+
+
+def test_pipe_missing_file_exit3(tmp_path):
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main(["pipe", "--in", str(tmp_path / "nope")])
+    assert excinfo.value.code == cli.EXIT_FILE

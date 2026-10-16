@@ -1,10 +1,14 @@
 """Minimal real CLI for the Phase-1 baseline: canonicalize + zstd round-trip.
 
 Honesty note: this is NOT the `.lxz` pack/unpack CLI (P1-T5, not started —
-FORMAT_LXZ.md is PROPOSED and must not be implemented from). These two
-subcommands expose only what is actually implemented and tested:
+FORMAT_LXZ.md is PROPOSED and must not be implemented from; unblock decision
+is OQ-11 / ADR-0007). These subcommands expose only what is actually
+implemented and tested:
   lexora canon  --in RAW --out CANONICAL [--encoding DECLARED]
   lexora zround --in CANONICAL [--level N] [--check]
+  lexora pipe   --in RAW --out FRAME [--encoding DECLARED] [--level N]
+                (end-to-end baseline flow: canonicalize -> compress ->
+                 verify byte-exact round-trip; writes frame only on success)
 
 Exit codes (tested in tests/test_cli.py):
   0 success
@@ -94,6 +98,46 @@ def cmd_zround(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def cmd_pipe(args: argparse.Namespace) -> int:
+    """End-to-end baseline flow: raw bytes -> canonicalize -> compress -> verify.
+
+    This is the Phase-1 pipeline without a container format (the `.lxz` pack
+    path stays blocked on OQ-11/ADR-0007 acceptance). The frame is written
+    only if the byte-exact round-trip check passes (SPEC §8.1 spirit applied
+    at the flow level).
+    """
+    raw = _read(args.infile)
+    try:
+        canon = canonicalize(raw, declared_encoding=args.encoding)
+    except CanonicalizationError as exc:
+        print(f"canonicalization error: {exc}", file=sys.stderr)
+        return EXIT_CANON
+    try:
+        blob = compress(canon, level=args.level)
+    except CodecError as exc:
+        print(f"codec error: {exc}", file=sys.stderr)
+        return EXIT_CODEC
+    try:
+        back = decompress(blob, expected_original_size=len(canon))
+    except CodecError as exc:
+        print(f"codec error on decode: {exc}", file=sys.stderr)
+        return EXIT_CODEC
+    exact = back == canon
+    ratio_raw = (len(blob) / len(raw)) if raw else 1.0
+    ratio_canon = (len(blob) / len(canon)) if canon else 1.0
+    print(
+        f"pipe: raw={len(raw)} canonical={len(canon)} compressed={len(blob)} "
+        f"ratio_vs_raw={ratio_raw:.4f} ratio_vs_canonical={ratio_canon:.4f} "
+        f"roundtrip_exact={exact}",
+        file=sys.stderr,
+    )
+    if not exact:
+        return EXIT_ROUNDTRIP  # REQ-CMP-001 violation: blocker severity
+    if args.outfile != "-":
+        _write(args.outfile, blob)
+    return EXIT_OK
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="lexora",
@@ -115,6 +159,16 @@ def build_parser() -> argparse.ArgumentParser:
     z.add_argument("--out", dest="outfile", default="-", help="'-' to skip writing")
     z.add_argument("--level", type=int, default=19)
     z.set_defaults(func=cmd_zround)
+
+    pp = sub.add_parser(
+        "pipe",
+        help="end-to-end baseline: canonicalize -> compress -> verify roundtrip",
+    )
+    pp.add_argument("--in", dest="infile", required=True)
+    pp.add_argument("--out", dest="outfile", default="-", help="'-' to skip writing")
+    pp.add_argument("--encoding", default=None, help="declared source encoding")
+    pp.add_argument("--level", type=int, default=19)
+    pp.set_defaults(func=cmd_pipe)
     return p
 
 

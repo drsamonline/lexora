@@ -59,6 +59,6 @@
 ## Metrics
 
 - Source files of LEXORA code: **7** (`src/lexora/__init__.py`, `canonicalize.py`, `zstd_core.py`, `cli.py`; `benchmarks/harness.py`, `benchmarks/corpus.py`) — first code landed Sessions 12–13; tiered corpus added Session 16/17
-- Test files: **3** (`tests/test_canonicalize.py`, `test_zstd_core.py`, `test_cli.py`) — 35 tests passing (run with `-p no:libtmux`; system libtmux plugin is incompatible with pytest 9)
+- Test files: **3** (`tests/test_canonicalize.py`, `test_zstd_core.py`, `test_cli.py`) — 40 tests passing (Session 20 added 5 `pipe` end-to-end tests; earlier 35)
 - Markdown documents: tracked per batch; Batch A creates 16 files (+3 root hygiene/config files).
 - Published benchmark revisions: **2 (R1 smoke baseline + R2 manifest regeneration, both Tier T1-gutenberg-p0)**; validated full-corpus results: **0**

@@ -1,7 +1,7 @@
 # LEXORA Project Status
 
 > **Status:** Active — update at every session end
-> **Last verified:** 2026-10-16 (Session 19: English-only scope directive from owner; Sessions 14–18 pushed and merged via PR #4 — hosted `main` at merge commit `0fafef4`, CI green on `e240af0`)
+> **Last verified:** 2026-10-16 (Session 20: `lexora pipe` end-to-end baseline flow added — 40 tests passing; ADR-0007 drafted proposing the minimal `.lxz` v0 layout freeze, tracked as OQ-11 awaiting owner accept/amend/reject. Prior: Session 19 English-only scope directive; Sessions 14–18 merged via PR #4, hosted `main` at `0fafef4` + Session 19 docs `7e31656`)
 
 ## Current phase
 
@@ -12,7 +12,7 @@
 | Item | State |
 |---|---|
 | Implementation code | **Present (prototype):** `src/lexora/{__init__,canonicalize,zstd_core,cli}.py`, `benchmarks/harness.py` — Phase-1 baseline only, no stable API |
-| Tests / test tooling | **35 tests passing** (`pytest 9.1.1`; must run with `-p no:libtmux` — system libtmux plugin crashes collection under pytest 9). Golden vector dir `tests/vectors/canonicalization/` still empty |
+| Tests / test tooling | **40 tests passing** (`pytest 9.1.1`, plain command; Session 20 added 5 `pipe` tests. Earlier container libtmux-plugin issue resolved by uninstalling the plugin). Golden vector dir `tests/vectors/canonicalization/` still empty |
 | Build/packaging config (`pyproject.toml` etc.) | **Present** — version `0.0.1.dev1`, requires-python `>=3.12,<4.0` (ADR-0005), deps pinned to tested versions (zstandard 0.25.0) |
 | CI/CD workflows | **None** — intentionally not created until there are runnable checks; now that tests exist, a CI workflow is a reasonable next step pending owner approval |
 | License file | **Absent** — license not selected (OQ-5) |
@@ -46,7 +46,7 @@
 ## Health indicators *(verified, not asserted)*
 
 - Build: `pip install -e .` evidence not yet captured (package config exists; editable install untested).
-- Tests: **35 passed** — `python -m pytest tests/ -q -p no:libtmux` (2026-10-15). Plain `pytest` currently crashes at plugin load due to the system-installed libtmux pytest plugin being incompatible with pytest 9.1.1 (marks-on-fixtures); this is an environment issue, not repo code.
+- Tests: **40 passed** — `python -m pytest -q` (2026-10-16, Session 20 container after uninstalling the broken system libtmux pytest plugin; earlier sessions recorded 35 before the `pipe` tests were added).
 - Coverage/badges/releases: none; none claimed anywhere in docs.
 
 ## Next milestone
