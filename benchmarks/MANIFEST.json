@@ -1,0 +1,136 @@
+{
+  "corpus_tier": "T1-gutenberg-p0",
+  "files": [
+    {
+      "category": "unclassified",
+      "language": "unknown",
+      "lineage_id": "gutenberg:1184",
+      "path": "gutenberg-1184.txt",
+      "rights": "UNCLASSIFIED",
+      "sha256": "64f8d5cfa51fcecb904abf7312d395d512a71817e7359b91288beb50517c3836",
+      "size_bytes": 2787124,
+      "split": "heldout"
+    },
+    {
+      "category": "unclassified",
+      "language": "unknown",
+      "lineage_id": "gutenberg:1342",
+      "path": "gutenberg-1342.txt",
+      "rights": "UNCLASSIFIED",
+      "sha256": "3f6bb9d6f78e0293b56acd4714dd68cb7d6d1d293402031ce9d5a216bcaf9d75",
+      "size_bytes": 772386,
+      "split": "train"
+    },
+    {
+      "category": "unclassified",
+      "language": "unknown",
+      "lineage_id": "gutenberg:1400",
+      "path": "gutenberg-1400.txt",
+      "rights": "UNCLASSIFIED",
+      "sha256": "9a637118af8e953e9764ec603d9b0a032883384d465acac2e27966a80cf1c6f8",
+      "size_bytes": 1058204,
+      "split": "train"
+    },
+    {
+      "category": "unclassified",
+      "language": "unknown",
+      "lineage_id": "gutenberg:1661",
+      "path": "gutenberg-1661.txt",
+      "rights": "UNCLASSIFIED",
+      "sha256": "922e2a12ccb43a4c9544c260b2166c6ad2097aeb5957faeee113f173bb857cd0",
+      "size_bytes": 607606,
+      "split": "train"
+    },
+    {
+      "category": "unclassified",
+      "language": "unknown",
+      "lineage_id": "gutenberg:2701",
+      "path": "gutenberg-2701.txt",
+      "rights": "UNCLASSIFIED",
+      "sha256": "b5e88b71a1cda068e9ab1d94344c9d932338ba6da1a66def97a1aecd9cfcc87d",
+      "size_bytes": 1276315,
+      "split": "train"
+    },
+    {
+      "category": "unclassified",
+      "language": "unknown",
+      "lineage_id": "gutenberg:76",
+      "path": "gutenberg-76.txt",
+      "rights": "UNCLASSIFIED",
+      "sha256": "d617a37aa7ae1e1a93dcde2634db2bccb86824e31e29a55230bdbf77d6872d59",
+      "size_bytes": 622460,
+      "split": "train"
+    }
+  ],
+  "manifest_sha256": "7d65d09da38640bae9d985d5aa245f8e566200a9976a2a5852f0e47f30d0ceae",
+  "manifest_version": 2,
+  "provenance": {
+    "failures": [
+      {
+        "error": "payload too small (448885 B); discarded",
+        "file": "gutenberg-84.txt"
+      },
+      {
+        "error": "payload too small (434357 B); discarded",
+        "file": "gutenberg-74.txt"
+      }
+    ],
+    "files": [
+      {
+        "file": "gutenberg-1342.txt",
+        "reused_existing": false,
+        "sha256": "3f6bb9d6f78e0293b56acd4714dd68cb7d6d1d293402031ce9d5a216bcaf9d75",
+        "size_bytes": 772386,
+        "source_url": "https://www.gutenberg.org/cache/epub/1342/pg1342.txt"
+      },
+      {
+        "file": "gutenberg-1661.txt",
+        "reused_existing": false,
+        "sha256": "922e2a12ccb43a4c9544c260b2166c6ad2097aeb5957faeee113f173bb857cd0",
+        "size_bytes": 607606,
+        "source_url": "https://www.gutenberg.org/cache/epub/1661/pg1661.txt"
+      },
+      {
+        "file": "gutenberg-2701.txt",
+        "reused_existing": false,
+        "sha256": "b5e88b71a1cda068e9ab1d94344c9d932338ba6da1a66def97a1aecd9cfcc87d",
+        "size_bytes": 1276315,
+        "source_url": "https://www.gutenberg.org/cache/epub/2701/pg2701.txt"
+      },
+      {
+        "file": "gutenberg-1184.txt",
+        "reused_existing": false,
+        "sha256": "64f8d5cfa51fcecb904abf7312d395d512a71817e7359b91288beb50517c3836",
+        "size_bytes": 2787124,
+        "source_url": "https://www.gutenberg.org/cache/epub/1184/pg1184.txt"
+      },
+      {
+        "file": "gutenberg-76.txt",
+        "reused_existing": false,
+        "sha256": "d617a37aa7ae1e1a93dcde2634db2bccb86824e31e29a55230bdbf77d6872d59",
+        "size_bytes": 622460,
+        "source_url": "https://www.gutenberg.org/cache/epub/76/pg76.txt"
+      },
+      {
+        "file": "gutenberg-1400.txt",
+        "reused_existing": false,
+        "sha256": "9a637118af8e953e9764ec603d9b0a032883384d465acac2e27966a80cf1c6f8",
+        "size_bytes": 1058204,
+        "source_url": "https://www.gutenberg.org/cache/epub/1400/pg1400.txt"
+      }
+    ],
+    "host": "https://www.gutenberg.org/cache/epub/",
+    "requested_ids": [
+      1342,
+      84,
+      1661,
+      2701,
+      1184,
+      74,
+      76,
+      1400
+    ],
+    "tier": "T1-gutenberg-p0"
+  },
+  "root": "corpus/gutenberg-r0"
+}
