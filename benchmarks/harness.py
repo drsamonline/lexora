@@ -387,11 +387,15 @@ def cmd_run(args: argparse.Namespace) -> int:
             return None  # non-Linux: no reliable mechanism; report honestly
         pid = os.fork()
         if pid == 0:
+            # Child: exit code 2 signals "encode raised" so the parent can
+            # distinguish failure from success (exit 1 would be ambiguous
+            # with a deliberate failure signal). Pass out_path as Path —
+            # SYSTEMS callables use Path methods (write_bytes / open).
             try:
-                fn(data, str(out_path))
-                raise SystemExit(0)
+                fn(data, out_path)
             except BaseException:
-                raise SystemExit(1)
+                os._exit(2)
+            os._exit(0)
         hwm_kib = None
         status_path = f"/proc/{pid}/status"
         while True:
@@ -462,8 +466,9 @@ def cmd_run(args: argparse.Namespace) -> int:
                 peaks_kib[name] = r
     if not peaks_kib:
         rss_skipped_reason = (
-            "peak-RSS capture unavailable in this environment "
-            "(SIGRUUSAGE support missing); P1-T6 remains open for this run"
+            "peak-RSS capture unavailable or every forked measurement failed "
+            "(VmHWM sampling is Linux-only; child failures are recorded as -1, "
+            "never faked); P1-T6 remains open for this run"
         )
     artifact = {
         "benchmark_revision": args.revision,
