@@ -2,8 +2,8 @@
 
 > **Status:** Implemented-scope reference — documents ONLY the subcommands that exist and are tested. No placeholders for planned commands (master-prompt rule: no misleading docs).
 > **Owner:** Unassigned
-> **Last verified:** 2026-10-16 against `src/lexora/cli.py` + `tests/test_cli.py` (Session 23)
-> **Related:** [CANONICALIZATION.md](CANONICALIZATION.md) · [SPECIFICATION.md §8](SPECIFICATION.md) · [FORMAT_LXZ.md](FORMAT_LXZ.md) (PROPOSED — not implemented) · [STATUS.md](STATUS.md)
+> **Last verified:** 2026-10-16 against `src/lexora/cli.py` + `tests/test_cli.py` + `tests/test_container_lxz.py` (Session 24)
+> **Related:** [CANONICALIZATION.md](CANONICALIZATION.md) · [SPECIFICATION.md §8](SPECIFICATION.md) · [FORMAT_LXZ.md](FORMAT_LXZ.md) (layout now normative per accepted [ADR-0007](ADR/ADR-0007-container-v0-freeze.md)) · [STATUS.md](STATUS.md)
 
 ## Installation & invocation
 
@@ -19,7 +19,7 @@ Version string: `lexora --version` → `lexora 0.0.1.dev1` (prototype; no stable
 
 ## Scope honesty
 
-These three subcommands expose only the Phase-1 baseline flow (canonicalize + plain zstd frames). **There is no `pack`/`unpack` yet**: the `.lxz` container is blocked on owner acceptance of [ADR-0007](ADR/ADR-0007-container-v0-freeze.md) (tracked as OQ-11 in [DECISIONS.md](DECISIONS.md)); policy forbids implementing from PROPOSED FORMAT_LXZ (SPEC §7.2). Any command listed here exists and is covered by tests in `tests/test_cli.py`.
+Five subcommands exist: the three Phase-1 baseline flows (canonicalize + plain zstd frames) plus `pack`/`unpack` for the `.lxz` v0 container, unblocked by ADR-0007 acceptance (Session 24, under standing owner delegation). The container is **experimental** (major 0): byte layout frozen per ADR-0007 but pre-release. Any command listed here exists and is covered by tests (`tests/test_cli.py`, `tests/test_container_lxz.py`).
 
 ## Subcommands
 
@@ -81,6 +81,38 @@ Behavior notes:
 - Frame written only on byte-exact round-trip success.
 - Cost line on stderr: `pipe: raw=N canonical=M compressed=K ratio_vs_raw=… ratio_vs_canonical=… roundtrip_exact=…`.
 
+### `lexora pack` — wrap canonical bytes into a `.lxz` v0 archive
+
+Implements the ADR-0007 frozen layout (LXZ-0.1): 128-byte header (full SHA-256 over bytes [0,96)), blocks each exactly one complete zstd frame, 56-byte index entries `{u64 offset; u64 compressed; u64 uncompressed; sha256[32]}`, 40-byte trailer `{u64 index_offset; u64 index_bytes; sha256-prefix[24]}`. Every block is decode-verified before the archive is written (SPEC §8.1); the write itself is atomic (temp + fsync + rename).
+
+```text
+lexora pack --in CANONICAL --out ARCHIVE.lxz [--level N] [--block-size B]
+```
+
+| Flag | Required | Default | Meaning |
+|---|---|---|---|
+| `--in PATH` | yes | — | payload file (normally `canon` output; `pack` does not canonicalize) |
+| `--out PATH` | yes | — | archive destination; `-` writes to stdout (binary) |
+| `--level N` | no | 19 | zstd level 1..22 (same contract as `zround`) |
+| `--block-size B` | no | 8388608 | max uncompressed bytes per block; declared in header and enforced by readers |
+
+Behavior notes: empty input packs as one zero-length block (exit 0); summary line on stderr.
+
+### `lexora unpack` — decode a `.lxz` archive, refusing unverified output
+
+Validates header hash → limits/index consistency → per-block zstd decode → per-block SHA-256, all *before* any output byte is emitted (REQ-SEC-001/004). Any refusal ⇒ exit 7, **no output file created**.
+
+```text
+lexora unpack --in ARCHIVE.lxz [--out CANONICAL] [--block N] [--meta]
+```
+
+| Flag | Required | Default | Meaning |
+|---|---|---|---|
+| `--in PATH` | yes | — | archive file |
+| `--out PATH` | no | `-` | decoded payload destination; `-` writes to stdout |
+| `--block N` | no | all | bounded single-block decode (REQ-CMP-005) |
+| `--meta` | no | off | print index metadata JSON to stdout instead of payload bytes |
+
 ## Exit codes
 
 Stable per this contract (all paths exercised by `tests/test_cli.py`):
@@ -93,14 +125,15 @@ Stable per this contract (all paths exercised by `tests/test_cli.py`):
 | 4 | canonicalization error | undecodable input without declaration, bad declared codec |
 | 5 | codec error | corrupt/truncated frame, str-instead-of-bytes misuse, level outside 1..22 |
 | 6 | round-trip verification failure | `decode(encode(C)) != C` — REQ-CMP-001 violation, blocker severity |
+| 7 | container refusal | `.lxz` format/integrity/limit refusal with specific `E-*` code (ADR-0007 reader); distinct from 5 so "codec library failed" ≠ "archive refused by format rules" |
 
-Note: these codes belong to the *implemented* CLI. The earlier proposed taxonomy in [ERROR_HANDLING.md](ERROR_HANDLING.md) predates the first real CLI; aligning that document with these codes is an open documentation item (this file is now the normative statement for the shipped commands).
+Reconciliation note (owner ask resolved Session 24): [ERROR_HANDLING.md](ERROR_HANDLING.md)'s proposed taxonomy (0/1/2/3/4/5/6) predates the real CLI and remains a *proposal*; this file's table is normative for shipped behavior. Mapping once ERROR_HANDLING freezes: E-USAGE→2, E-IO→3, E-INPUT-ENC/E-CAN→4, E-CMP(decode-level)→5, E-CMP-001 round-trip→6, E-FMT-*/E-RES-*/E-INTEGRITY-*→7, E-INT→5 reserved-with-panic-log. Codes are carried verbatim in `ContainerError.code`.
 
 ## Planned but NOT implemented
 
-| Command | Blocker |
+| Feature | Status |
 |---|---|
-| `lexora pack` / `lexora unpack` (`.lxz` container, P1-T3/P1-T5) | OQ-11 / [ADR-0007](ADR/ADR-0007-container-v0-freeze.md) owner decision |
-| encryption, dictionaries, index/random-access flags | later phases per [ROADMAP.md](ROADMAP.md) |
+| encryption, dictionaries, multi-document indexes, random access | later phases per [ROADMAP.md](ROADMAP.md) — must-understand flag bits reserved (ADR-0007) |
+| batch/quarantine semantics (per-document runs) | needs SPEC rule-table freeze; `unpack_blocks()` library API already gives per-block granularity |
 
 Do not script against anything not listed above; anything else does not exist.
