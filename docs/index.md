@@ -17,10 +17,9 @@ LEXORA = **L**ayered **EX**act-text **O**ptimized... see [PROJECT_CHARTER.md](PR
 
 ## Users
 
-*No user-facing functionality exists yet.* These documents will be created when commands actually exist:
+The Phase-1 baseline CLI exists and is tested (`canon`, `zround`, `pipe`): see [CLI_REFERENCE.md](CLI_REFERENCE.md) — it documents only implemented commands and their real exit codes. Still not written:
 
 - `USER_GUIDE.md` — not yet written (planned, Batch C)
-- `CLI_REFERENCE.md` — not yet written (planned; must document only implemented commands)
 - [INSTALLATION.md](INSTALLATION.md) / [BUILD_GUIDE.md](BUILD_GUIDE.md) — exist as drafts; no working build/tooling is claimed in them
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — Batch D draft (symptom map for the designed system; no CLI exists yet)
 
