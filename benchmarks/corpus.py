@@ -40,6 +40,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
 GUTENBERG_CACHE_BASE = "https://www.gutenberg.org/cache/epub/"
 
 # Curated public-domain English prose (Project Gutenberg IDs). All items are
@@ -170,6 +172,32 @@ def generate_synthetic_corpus(dest: Path, *, n_files: int = 6, seed: int = 20261
         json.dumps({r["file"]: {"category": "synthetic", "language": "en", "rights": "N/A-generated"}
                     for r in records}, indent=2, sort_keys=True) + "\n")
     return snapshot
+
+
+def commit_sidecars(root: Path) -> dict:
+    """Copy the gitignored provenance sidecars of snapshot `root` into a
+    COMMITTED directory (`<repo>/benchmarks/provenance/<snapshot-name>/`).
+
+    Raw texts stay gitignored; these small JSON files (lineage map, rights /
+    language / category metadata, fetch record) are the evidence chain that
+    lets anyone re-verify or regenerate a manifest from committed state alone.
+    Refuses to overwrite silently unless contents are byte-identical.
+    Returns {basename: committed_path}.
+    """
+    root = Path(root)
+    dest_dir = REPO_ROOT / "benchmarks" / "provenance" / root.name
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    copied: dict = {}
+    for src in sorted(root.parent.glob(root.name + ".*.json")):
+        base = src.name[len(root.name) + 1:]  # e.g. gutenberg-r0.meta.json -> meta.json
+        dst = dest_dir / base
+        data = src.read_bytes()
+        if dst.is_file() and dst.read_bytes() == data:
+            copied[base] = str(dst.relative_to(REPO_ROOT)) + " (unchanged)"
+            continue
+        dst.write_bytes(data)
+        copied[base] = str(dst.relative_to(REPO_ROOT))
+    return copied
 
 
 def read_snapshot_tier(dest: Path) -> str | None:

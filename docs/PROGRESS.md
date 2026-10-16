@@ -53,7 +53,7 @@
 | M3b: Batch D drafted (security & operations) | 2026-10-15 | Drafted — 12 docs (`301901a`); Session 9 closure (`3ecdfaf`): link check OK, continuity + CHANGELOG updated; ff-merged into local `main`; landed on remote via PR #2 merge (`76476cf`) |
 | M3c: Batch E drafted (GitHub & release polish) | 2026-10-15 | Drafted — `aa266a2` on `main` (CONTRIBUTING, issue templates, RELEASE_PROCESS) + PR template added in Session 10; CI/badges deliberately absent until runnable; Phase 0 docs batches A–E all drafted |
 | M3d: Full Phase 0 doc set pushed to remote | 2026-10-15 | Complete (Session 11) — diverged origin/main (PR #2 merge commit) cleanly re-merged (`a1bf3c3`), linkcheck OK, pushed, verified via authenticated ls-remote; hosted main = `a1bf3c3` |
-| M4: First reproducible benchmark revision | 2026-10-16 | **Complete (smoke scope)** — Revision R1 published in BENCHMARK_RESULTS.md from Tier-1 fallback corpus (`908698c` harness v2 + `benchmarks/corpus.py`); Zstd-19 vs XZ-9 baselines measured, no ADR-0001 verdict (corpus ≪ protocol target). Full-scope M4' pending ≥1 GiB multilingual corpus (OQ-8) |
+| M4: First reproducible benchmark revision | 2026-10-16 | **Complete (smoke scope)** — Revision R1 published in BENCHMARK_RESULTS.md from Tier-1 fallback corpus (`908698c` harness v2 + `benchmarks/corpus.py`); Zstd-19 vs XZ-9 baselines measured, no ADR-0001 verdict (corpus ≪ protocol target). Session 18: Revision R2 — manifest regenerated with metadata folded in (hash `a32240d7…`, closes R1 correction note), provenance chain committed. Full-scope M4' pending ≥1 GiB multilingual corpus (OQ-8) |
 | M5: Phase 0 closed; P1 code started | 2026-10-15 | Complete (Session 12: ADR-0005 accepted as delegation for OQ-7, `pyproject.toml` + first tested code `8ee3bef`) |
 
 ## Metrics
@@ -61,4 +61,4 @@
 - Source files of LEXORA code: **7** (`src/lexora/__init__.py`, `canonicalize.py`, `zstd_core.py`, `cli.py`; `benchmarks/harness.py`, `benchmarks/corpus.py`) — first code landed Sessions 12–13; tiered corpus added Session 16/17
 - Test files: **3** (`tests/test_canonicalize.py`, `test_zstd_core.py`, `test_cli.py`) — 35 tests passing (run with `-p no:libtmux`; system libtmux plugin is incompatible with pytest 9)
 - Markdown documents: tracked per batch; Batch A creates 16 files (+3 root hygiene/config files).
-- Published benchmark revisions: **1 (R1, smoke scope — Tier T1-gutenberg-p0)**; validated full-corpus results: **0**
+- Published benchmark revisions: **2 (R1 smoke baseline + R2 manifest regeneration, both Tier T1-gutenberg-p0)**; validated full-corpus results: **0**

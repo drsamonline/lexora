@@ -2,7 +2,7 @@
 
 > **Status:** Active register (append-only per revision)
 > **Owner:** Documentation architect (delegated)
-> **Last verified:** 2026-10-16 (Revision R1 published — smoke baseline, corpus tier T1-gutenberg-p0)
+> **Last verified:** 2026-10-16 (Revision R2 published — manifest regeneration closing R1's correction note; corpus tier T1-gutenberg-p0 unchanged)
 > **Related:** [BENCHMARK_PROTOCOL.md](BENCHMARK_PROTOCOL.md) · [CORPUS_POLICY.md](CORPUS_POLICY.md) · [ADR-0001](ADR/ADR-0001-gate-scope.md)
 
 ## Purpose & scope
@@ -79,3 +79,14 @@ One dated block per completed revision; entries are never edited retroactively e
   - Held-out is a single lineage (1-of-6 files approximates the 20% target due to tiny corpus); statistical strength is nil — treat ratios as smoke-test values only.
   - Correction note (append-only discipline): the committed manifest's per-file `rights`/`language`/`category` fields read UNCLASSIFIED/unknown/unclassified because it was generated before the meta sidecars were applied. The authoritative classification for this snapshot is `corpus/gutenberg-r0.meta.json` (en / prose-books / P0-public-domain). Manifest will be regenerated with metadata folded in for R2.
 - Evidence pointers: `benchmarks/results-r0.json` (artifact, benchmark_revision 1), `benchmarks/MANIFEST.json`, `benchmarks/env.json`, `corpus/gutenberg-r0.*.json` (provenance sidecars; raw texts gitignored).
+
+### Revision R2 — 2026-10-16 — manifest regeneration (metadata folded in); no new measurements
+
+**Corpus tier: T1-gutenberg-p0** (unchanged snapshot bytes — same 6 files, same per-file SHA-256s). This revision **closes the R1 correction note**; it re-publishes the identical measured numbers under a corrected manifest. No new runs were performed and **no ADR-0001 verdict is issued** (scope argument from R1 stands unchanged).
+
+- Manifest hash: `a32240d792c06953465ef71dd9dc30a2033aea976ab23291c326b32014161a5f` (`benchmarks/MANIFEST.json`, v2; content-hash over canonical JSON; `verify` → 6 files, 0 problems; `audit-splits` → train 5 / validation 0 / heldout 1, no lineage straddles splits). Supersedes R1's `7d65d09da386…`.
+- What changed vs R1: per-file `rights` = P0, `language` = en, `category` = prose/books are now folded in from the provenance sidecars at manifest-generation time (R1 shipped them as UNCLASSIFIED/unknown/unclassified because the meta sidecar lookup pointed at the wrong path). Harness fix: sidecar resolution now reads `<root>.meta.json` locally, falling back to the **committed** copy `benchmarks/provenance/gutenberg-r0/meta.json`.
+- Provenance evidence chain is now committed (new subcommand `corpus-commit`; small JSON files only — raw texts remain gitignored): `benchmarks/provenance/gutenberg-r0/{lineage.json, meta.json, sources.json}`. R1's "authoritative classification" pointer (`corpus/gutenberg-r0.meta.json`) referred to gitignored state; that gap is closed.
+- Measured results: **identical to R1** (codec inputs are the corpus file bytes, which are byte-for-byte unchanged; the manifest metadata fields do not enter the measurement path). Aggregate: Zstd-19 stored 2,139,962 B, ratio 0.3004; XZ-9 stored 2,119,756 B, ratio 0.2975 on 7,124,095 B input; held-out (PG#1184) ratios 0.2809 / 0.2786. Per-file table: see R1 block above (values apply verbatim).
+- Anomalies carried forward honestly: 2-of-8 fetch discards (PG#84/#74 size guard); single-lineage held-out; RSS not measured; scope ≪ ≥1 GiB protocol target — smoke values only.
+- Evidence pointers: `benchmarks/MANIFEST.json` (regenerated), `benchmarks/provenance/gutenberg-r0/*` (committed), `benchmarks/results-r0.json` (measurement artifact, benchmark_revision 1 — rerunning with `--revision 2` would produce an identical-numbers artifact under the new manifest hash; deferred until R3 expands the corpus so each published run carries information).

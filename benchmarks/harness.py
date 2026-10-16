@@ -35,6 +35,7 @@ Honesty notes:
 Usage:
   python benchmarks/harness.py env
   python benchmarks/harness.py corpus-fetch [--n 8] [--min-mb 0.5] [--dest corpus/gutenberg-r0]
+  python benchmarks/harness.py corpus-commit [--root corpus/gutenberg-r0]
   python benchmarks/harness.py manifest --root DIR --out MANIFEST.json [--lineage-map lm.json]
   python benchmarks/harness.py verify --manifest MANIFEST.json
   python benchmarks/harness.py audit-splits --manifest MANIFEST.json
@@ -155,6 +156,23 @@ def cmd_corpus_fetch(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_corpus_commit(args: argparse.Namespace) -> int:
+    """Copy a snapshot's provenance sidecars into the COMMITTED evidence dir
+    (benchmarks/provenance/<name>/). Raw texts stay gitignored; only the small
+    JSON files (lineage map, rights metadata, fetch record) are committed."""
+    root = Path(args.root)
+    if not root.is_dir():
+        print(f"error: {root} is not a directory", file=sys.stderr)
+        return 2
+    copied = corpus_mod.commit_sidecars(root)
+    if not copied:
+        print(f"warning: no sidecars found next to {root} — nothing committed", file=sys.stderr)
+        return 1
+    for base, dest in sorted(copied.items()):
+        print(f"committed: {dest}")
+    return 0
+
+
 # ---------- manifest (§1) ----------
 
 def cmd_manifest(args: argparse.Namespace) -> int:
@@ -168,6 +186,9 @@ def cmd_manifest(args: argparse.Namespace) -> int:
     # Corpus tier: explicit flag wins; else read snapshot sidecar; else owner-default label.
     tier = args.tier or corpus_mod.read_snapshot_tier(root) or corpus_mod.TIER_LABEL_T0
     provenance_path = Path(str(root) + ".sources.json")
+    if not provenance_path.is_file():
+        # Committed provenance copy (corpus-commit) is the fallback evidence.
+        provenance_path = REPO_ROOT / "benchmarks" / "provenance" / root.name / "sources.json"
     provenance = json.loads(provenance_path.read_text()) if provenance_path.is_file() else None
     files = sorted(p for p in root.rglob("*") if p.is_file())
     entries = []
@@ -184,12 +205,16 @@ def cmd_manifest(args: argparse.Namespace) -> int:
         else:
             split = "heldout"
         # Optional sidecar metadata from corpus assembly scripts
-        # (scripts/corpus/assemble_gutenberg.py writes <out>.meta.json keyed by
-        # relative path). Absent sidecar -> honest defaults, never guessed.
+        # (corpus-fetch writes <root>.meta.json keyed by relative filename).
+        # Resolution order (Session 18, R2 fix): local gitignored sidecar >
+        # COMMITTED provenance copy (benchmarks/provenance/<snapshot-name>/) >
+        # honest defaults. Absent everywhere -> never guessed.
         meta: dict = {}
-        sidecar = Path(str(args.out) + ".meta.json")
-        if sidecar.is_file():
-            meta = json.loads(sidecar.read_text()).get(rel, {})
+        for sidecar in (Path(str(root) + ".meta.json"),
+                        REPO_ROOT / "benchmarks" / "provenance" / root.name / "meta.json"):
+            if sidecar.is_file():
+                meta = json.loads(sidecar.read_text()).get(rel, {})
+                break
         entries.append({
             "path": rel,
             "sha256": sha256_file(p),
@@ -379,6 +404,8 @@ def build_parser() -> argparse.ArgumentParser:
     cf.add_argument("--tier", choices=["auto", "t1", "t2"], default="auto")
     cf.add_argument("--ids", default=None, help="comma-separated PG ids (default: curated list)")
     cf.add_argument("--min-mb", type=float, default=0.5); cf.set_defaults(func=cmd_corpus_fetch)
+    cc = sub.add_parser("corpus-commit", help="copy snapshot provenance sidecars into committed benchmarks/provenance/")
+    cc.add_argument("--root", default="corpus/gutenberg-r0"); cc.set_defaults(func=cmd_corpus_commit)
     mf = sub.add_parser("manifest"); mf.add_argument("--root", required=True)
     mf.add_argument("--out", required=True); mf.add_argument("--lineage-map", default=None)
     mf.add_argument("--tier", default=None, help="override corpus tier label"); mf.set_defaults(func=cmd_manifest)
