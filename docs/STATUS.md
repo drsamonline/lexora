@@ -1,7 +1,7 @@
 # LEXORA Project Status
 
 > **Status:** Active — update at every session end
-> **Last verified:** 2026-10-15 (Session 13: P1 benchmark-harness scaffold `benchmarks/harness.py` smoke-tested; local commits `8ee3bef` + Session 13 work not yet pushed)
+> **Last verified:** 2026-10-16 (Session 18: benchmark Revision R2 published — manifest regenerated with rights/language/category folded in, hash `a32240d7…`; provenance chain committed under `benchmarks/provenance/`)
 
 ## Current phase
 
@@ -17,7 +17,7 @@
 | CI/CD workflows | **None** — intentionally not created until there are runnable checks; now that tests exist, a CI workflow is a reasonable next step pending owner approval |
 | License file | **Absent** — license not selected (OQ-5) |
 | Git remote | **Configured:** origin → https://github.com/drsamonline/lexora.git (no embedded creds). Local `main` ahead of hosted `a1bf3c3` by Session 12–13 commits; push needs owner token |
-| Benchmark corpus / results | **None assembled; no validated results.** Harness scaffold ready and smoke-tested on synthetic data only |
+| Benchmark corpus / results | **R0 smoke snapshot** (Tier T1-gutenberg-p0, 7.1 MB English P0 texts; owner `data/raw/` still empty). Revisions R1+R2 published in BENCHMARK_RESULTS.md (2026-10-16) — baseline Zstd-19 vs XZ-9 numbers only, **no ADR-0001 verdict**; R2 regenerated the manifest with rights/language/category folded in (hash `a32240d7…`) and committed the provenance chain (`benchmarks/provenance/`); ≥1 GiB multilingual corpus (OQ-8) still outstanding |
 | Approved design source of truth | `LEXORA_Full_Blueprint_Design_Master_Prompt.md` (root) |
 
 ## Documentation batches

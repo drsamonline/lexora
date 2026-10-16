@@ -14,17 +14,28 @@ require the corpus (OQ-8 still open):
     until a valid corpus run exists — honesty constraint §8)
 
 Honesty notes:
-  * NO benchmark numbers exist yet and none can be produced until a corpus is
-    supplied under CORPUS_POLICY terms. `run` on an empty manifest fails loudly.
+  * NO real-corpus benchmark numbers exist yet; they require data assembled
+    under CORPUS_POLICY terms. `run` on an empty manifest fails loudly.
   * Only systems actually importable in this environment are enabled:
     zstd-19 via python-zstandard (installed, tested) and xz via CLI (`xz`,
     present). brotli / PPMd CLIs are NOT installed here -> auto-skipped with a
     recorded reason, never faked.
   * Raw outputs go to benchmarks/raw/ (gitignored); only the aggregated JSON
     artifact path is printed for commit-level references.
+  * Tiered corpus fallback (Session 17): when no owner-supplied corpus exists,
+    `corpus-fetch` assembles a TIER-1 snapshot of public-domain Project
+    Gutenberg books (rights tier P0 per CORPUS_POLICY) into the gitignored
+    `corpus/gutenberg-r0/` tree, with a generated lineage map and rights
+    sidecar. Manifest entries record `corpus_tier: "T1-gutenberg-p0"` so any
+    downstream results artifact states provenance explicitly. Numbers from
+    such a run are *real measurements* but limited scope (English prose only;
+    not the >=1 GiB multilingual REQ-BMK-001 corpus) — they may be published
+    as a smoke baseline, never as the official verdict.
 
 Usage:
   python benchmarks/harness.py env
+  python benchmarks/harness.py corpus-fetch [--n 8] [--min-mb 0.5] [--dest corpus/gutenberg-r0]
+  python benchmarks/harness.py corpus-commit [--root corpus/gutenberg-r0]
   python benchmarks/harness.py manifest --root DIR --out MANIFEST.json [--lineage-map lm.json]
   python benchmarks/harness.py verify --manifest MANIFEST.json
   python benchmarks/harness.py audit-splits --manifest MANIFEST.json
@@ -46,8 +57,11 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT))  # allow `from benchmarks import corpus`
 
-MANIFEST_VERSION = 1
+from benchmarks import corpus as corpus_mod  # noqa: E402
+
+MANIFEST_VERSION = 2  # v2 adds corpus_tier + provenance fields (Session 17)
 SPLIT_FRACTIONS = {"train": 0.70, "validation": 0.10, "heldout": 0.20}
 
 
@@ -112,6 +126,53 @@ def cmd_env(args: argparse.Namespace) -> int:
     return 0
 
 
+# ---------- corpus tiers (Session 17: tiered fallback) ----------
+
+def cmd_corpus_fetch(args: argparse.Namespace) -> int:
+    """Assemble a snapshot corpus under the tiered fallback policy.
+
+    Tier order: owner data in --owner-root (default data/raw/) if non-empty;
+    else Project Gutenberg P0 fetch (--tier t1, default); --tier t2 forces the
+    deterministic synthetic generator (offline CI smoke only).
+    """
+    dest = Path(args.dest)
+    owner_root = Path(args.owner_root)
+    if args.tier == "auto" and owner_root.is_dir() and any(owner_root.rglob("*")):
+        print(f"tier T0: owner-supplied corpus found at {owner_root} — nothing to fetch. "
+              f"Run `manifest --root {owner_root}` directly.")
+        return 0
+    if args.tier == "t2":
+        snap = corpus_mod.generate_synthetic_corpus(dest)
+        print(f"wrote synthetic corpus: {len(snap['files'])} files -> {dest}")
+    else:
+        ids = tuple(int(s) for s in args.ids.split(",")) if args.ids else corpus_mod.DEFAULT_GUTENBERG_IDS
+        snap = corpus_mod.fetch_gutenberg_snapshot(dest, ids=ids, min_mb=args.min_mb)
+        total = sum(r["size_bytes"] for r in snap["files"])
+        print(f"wrote Gutenberg snapshot: {len(snap['files'])} files, {total} bytes -> {dest}")
+        if snap["failures"]:
+            for f in snap["failures"]:
+                print(f"FETCH FAILED (recorded, not hidden): {f['file']}: {f['error']}", file=sys.stderr)
+            return 1
+    return 0
+
+
+def cmd_corpus_commit(args: argparse.Namespace) -> int:
+    """Copy a snapshot's provenance sidecars into the COMMITTED evidence dir
+    (benchmarks/provenance/<name>/). Raw texts stay gitignored; only the small
+    JSON files (lineage map, rights metadata, fetch record) are committed."""
+    root = Path(args.root)
+    if not root.is_dir():
+        print(f"error: {root} is not a directory", file=sys.stderr)
+        return 2
+    copied = corpus_mod.commit_sidecars(root)
+    if not copied:
+        print(f"warning: no sidecars found next to {root} — nothing committed", file=sys.stderr)
+        return 1
+    for base, dest in sorted(copied.items()):
+        print(f"committed: {dest}")
+    return 0
+
+
 # ---------- manifest (§1) ----------
 
 def cmd_manifest(args: argparse.Namespace) -> int:
@@ -122,6 +183,13 @@ def cmd_manifest(args: argparse.Namespace) -> int:
     lineage_map = {}
     if args.lineage_map:
         lineage_map = json.loads(Path(args.lineage_map).read_text())
+    # Corpus tier: explicit flag wins; else read snapshot sidecar; else owner-default label.
+    tier = args.tier or corpus_mod.read_snapshot_tier(root) or corpus_mod.TIER_LABEL_T0
+    provenance_path = Path(str(root) + ".sources.json")
+    if not provenance_path.is_file():
+        # Committed provenance copy (corpus-commit) is the fallback evidence.
+        provenance_path = REPO_ROOT / "benchmarks" / "provenance" / root.name / "sources.json"
+    provenance = json.loads(provenance_path.read_text()) if provenance_path.is_file() else None
     files = sorted(p for p in root.rglob("*") if p.is_file())
     entries = []
     for i, p in enumerate(files):
@@ -137,12 +205,16 @@ def cmd_manifest(args: argparse.Namespace) -> int:
         else:
             split = "heldout"
         # Optional sidecar metadata from corpus assembly scripts
-        # (scripts/corpus/assemble_gutenberg.py writes <out>.meta.json keyed by
-        # relative path). Absent sidecar -> honest defaults, never guessed.
+        # (corpus-fetch writes <root>.meta.json keyed by relative filename).
+        # Resolution order (Session 18, R2 fix): local gitignored sidecar >
+        # COMMITTED provenance copy (benchmarks/provenance/<snapshot-name>/) >
+        # honest defaults. Absent everywhere -> never guessed.
         meta: dict = {}
-        sidecar = Path(str(args.out) + ".meta.json")
-        if sidecar.is_file():
-            meta = json.loads(sidecar.read_text()).get(rel, {})
+        for sidecar in (Path(str(root) + ".meta.json"),
+                        REPO_ROOT / "benchmarks" / "provenance" / root.name / "meta.json"):
+            if sidecar.is_file():
+                meta = json.loads(sidecar.read_text()).get(rel, {})
+                break
         entries.append({
             "path": rel,
             "sha256": sha256_file(p),
@@ -155,7 +227,13 @@ def cmd_manifest(args: argparse.Namespace) -> int:
         })
     if not entries:
         print("warning: manifest is EMPTY — no corpus supplied (OQ-8 open)", file=sys.stderr)
-    out = {"manifest_version": MANIFEST_VERSION, "root": str(root), "files": entries}
+    out = {
+        "manifest_version": MANIFEST_VERSION,
+        "root": str(root),
+        "corpus_tier": tier,
+        "provenance": provenance,  # snapshot record (urls+hashes) when generated by corpus-fetch
+        "files": entries,
+    }
     body = json.dumps(out, indent=2, sort_keys=True)
     mh = hashlib.sha256(body.encode()).hexdigest()
     out["manifest_sha256"] = mh
@@ -301,12 +379,15 @@ def cmd_run(args: argparse.Namespace) -> int:
         "benchmark_revision": args.revision,
         "date": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "manifest_sha256": m["manifest_sha256"],
+        "corpus_tier": m.get("corpus_tier", "UNKNOWN — pre-v2 manifest"),
+        "provenance_present": m.get("provenance") is not None,
         "reps": args.reps,
         "systems_run": systems,
         "systems_skipped": skipped,
         "rows": rows,
         "note": "Harness output. Publication into docs/BENCHMARK_RESULTS.md "
-                "requires owner review per QUALITY_PLAN.",
+                "requires owner review per QUALITY_PLAN. Tier label above is "
+                "MANDATORY alongside any published number from this artifact.",
     }
     Path(args.out).write_text(json.dumps(artifact, indent=2, sort_keys=True) + "\n")
     print(f"wrote {args.out}: {len(rows)} measurement rows ({len(m['files'])} files x {len(systems)} systems)")
@@ -317,8 +398,17 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="harness", description=__doc__.splitlines()[0])
     sub = p.add_subparsers(dest="cmd", required=True)
     e = sub.add_parser("env"); e.add_argument("--out", default="benchmarks/env.json"); e.set_defaults(func=cmd_env)
+    cf = sub.add_parser("corpus-fetch", help="tiered corpus fallback (T0 owner > T1 Gutenberg P0 > T2 synthetic)")
+    cf.add_argument("--dest", default="corpus/gutenberg-r0")
+    cf.add_argument("--owner-root", default="data/raw")
+    cf.add_argument("--tier", choices=["auto", "t1", "t2"], default="auto")
+    cf.add_argument("--ids", default=None, help="comma-separated PG ids (default: curated list)")
+    cf.add_argument("--min-mb", type=float, default=0.5); cf.set_defaults(func=cmd_corpus_fetch)
+    cc = sub.add_parser("corpus-commit", help="copy snapshot provenance sidecars into committed benchmarks/provenance/")
+    cc.add_argument("--root", default="corpus/gutenberg-r0"); cc.set_defaults(func=cmd_corpus_commit)
     mf = sub.add_parser("manifest"); mf.add_argument("--root", required=True)
-    mf.add_argument("--out", required=True); mf.add_argument("--lineage-map", default=None); mf.set_defaults(func=cmd_manifest)
+    mf.add_argument("--out", required=True); mf.add_argument("--lineage-map", default=None)
+    mf.add_argument("--tier", default=None, help="override corpus tier label"); mf.set_defaults(func=cmd_manifest)
     v = sub.add_parser("verify"); v.add_argument("--manifest", required=True); v.set_defaults(func=cmd_verify)
     a = sub.add_parser("audit-splits"); a.add_argument("--manifest", required=True); a.set_defaults(func=cmd_audit_splits)
     r = sub.add_parser("run"); r.add_argument("--manifest", required=True)
