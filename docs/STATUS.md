@@ -1,7 +1,7 @@
 # LEXORA Project Status
 
 > **Status:** Active — update at every session end
-> **Last verified:** 2026-10-16 (Session 22: P1-T2 golden vectors + P1-T6 peak-RSS capture landed and verified — 60 tests passing; first real RSS numbers in harness artifact `benchmarks/results-r3.json` (not yet published as a revision). Prior: Session 20 `lexora pipe` flow + ADR-0007 drafted (OQ-11, awaiting owner accept/amend/reject); Session 19 English-only scope directive; Sessions 14–18 merged via PR #4, hosted `main` at `7e31656`)
+> **Last verified:** 2026-10-16 (Session 23: CLI_REFERENCE.md written + P1-T2 invariant tests landed — 68 tests passing; Session 22: P1-T2 golden vectors + P1-T6 peak-RSS capture landed and verified; first real RSS numbers in harness artifact `benchmarks/results-r3.json` (not yet published as a revision). Prior: Session 20 `lexora pipe` flow + ADR-0007 drafted (OQ-11, awaiting owner accept/amend/reject); Session 19 English-only scope directive; Sessions 14–18 merged via PR #4, hosted `main` at `7e31656`)
 
 ## Current phase
 
@@ -12,7 +12,7 @@
 | Item | State |
 |---|---|
 | Implementation code | **Present (prototype):** `src/lexora/{__init__,canonicalize,zstd_core,cli}.py`, `benchmarks/harness.py` — Phase-1 baseline only, no stable API |
-| Tests / test tooling | **60 tests passing** (`pytest 9.1.1`, plain command; Sessions 20–21 added `pipe` tests + golden-vector conformance suite. Earlier container libtmux-plugin issue resolved by uninstalling the plugin). Golden vectors: 9 byte-exact scenarios under `tests/vectors/canonicalization/` (P1-T2) |
+| Tests / test tooling | **68 tests passing** (`pytest`, `-p no:libtmux` in this container — a stale third-party libtmux plugin crashes pytest 9.x collection; CI is unaffected. Sessions 20–23: `pipe` tests, golden-vector conformance suite, whitelist-invariant property tests. Golden vectors: 9 byte-exact scenarios under `tests/vectors/canonicalization/` (P1-T2) |
 | Build/packaging config (`pyproject.toml` etc.) | **Present** — version `0.0.1.dev1`, requires-python `>=3.12,<4.0` (ADR-0005), deps pinned to tested versions (zstandard 0.25.0) |
 | CI/CD workflows | **None** — intentionally not created until there are runnable checks; now that tests exist, a CI workflow is a reasonable next step pending owner approval |
 | License file | **Absent** — license not selected (OQ-5) |
@@ -46,7 +46,7 @@
 ## Health indicators *(verified, not asserted)*
 
 - Build: `pip install -e .` evidence not yet captured (package config exists; editable install untested).
-- Tests: **60 passed** — `python -m pytest -q` (2026-10-16, Session 22 re-verification after P1-T2/P1-T6 work; progression: 35 → 40 (Session 20 `pipe`) → 60 (Sessions 21–22 vectors + conformance)).
+- Tests: **68 passed** — `python -m pytest -q` (2026-10-16, Session 23 re-verification after CLI_REFERENCE + invariant-test work; progression: 35 → 40 (Session 20 `pipe`) → 60 (Sessions 21–22 vectors + conformance) → 68 (Session 23 invariants).
 - Coverage/badges/releases: none; none claimed anywhere in docs.
 
 ## Next milestone

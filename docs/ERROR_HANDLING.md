@@ -15,7 +15,7 @@ Defines the error taxonomy, severity levels, and behavioral contract every LEXOR
 2. **Fail bounded on resources.** Any limit breach ([RESOURCE_LIMITS.md](RESOURCE_LIMITS.md)) ⇒ abort *before* allocation where possible; report which LIM-id tripped and observed vs. allowed size.
 3. **Determinism preserved.** Canonicalization is deterministic even under error: a document that fails rule validation is quarantined whole; it never produces partial canonical bytes.
 4. **Errors are identifiers, not prose.** Machine-readable codes below; human text is generated at display time only. Log lines reference IDs + hashes, never document bodies ([PRIVACY_AND_DATA_HANDLING.md](PRIVACY_AND_DATA_HANDLING.md)).
-5. **Exit codes stable per CLI contract** once CLI exists (CLI_REFERENCE.md, Batch E+): 0 success; 1 usage; 2 input error; 3 integrity; 4 resource limit; 5 internal bug; 6 environment/IO. (Proposed — freeze with first implemented CLI.)
+5. **Exit codes stable per CLI contract** once CLI exists (CLI_REFERENCE.md, Batch E+): 0 success; 1 usage; 2 input error; 3 integrity; 4 resource limit; 5 internal bug; 6 environment/IO. (Proposed — freeze with first implemented CLI.) **Update 2026-10-16:** the first real CLI shipped with a *different* tested scheme (0/2/3/4/5/6 = ok/usage/file/canonicalization/codec/round-trip); [CLI_REFERENCE.md](CLI_REFERENCE.md) is now normative for the implemented commands and this taxonomy must be reconciled with it before any release.
 
 ## Severity levels
 
