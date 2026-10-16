@@ -1,7 +1,7 @@
 # LEXORA Project Status
 
 > **Status:** Active — update at every session end
-> **Last verified:** 2026-10-16 (Session 19: English-only scope directive from owner; Sessions 14–18 pushed and merged via PR #4 — hosted `main` at merge commit `0fafef4`, CI green on `e240af0`)
+> **Last verified:** 2026-10-16 (Session 22: P1-T2 golden vectors + P1-T6 peak-RSS capture landed and verified — 60 tests passing; first real RSS numbers in harness artifact `benchmarks/results-r3.json` (not yet published as a revision). Prior: Session 20 `lexora pipe` flow + ADR-0007 drafted (OQ-11, awaiting owner accept/amend/reject); Session 19 English-only scope directive; Sessions 14–18 merged via PR #4, hosted `main` at `7e31656`)
 
 ## Current phase
 
@@ -12,7 +12,7 @@
 | Item | State |
 |---|---|
 | Implementation code | **Present (prototype):** `src/lexora/{__init__,canonicalize,zstd_core,cli}.py`, `benchmarks/harness.py` — Phase-1 baseline only, no stable API |
-| Tests / test tooling | **35 tests passing** (`pytest 9.1.1`; must run with `-p no:libtmux` — system libtmux plugin crashes collection under pytest 9). Golden vector dir `tests/vectors/canonicalization/` still empty |
+| Tests / test tooling | **60 tests passing** (`pytest 9.1.1`, plain command; Sessions 20–21 added `pipe` tests + golden-vector conformance suite. Earlier container libtmux-plugin issue resolved by uninstalling the plugin). Golden vectors: 9 byte-exact scenarios under `tests/vectors/canonicalization/` (P1-T2) |
 | Build/packaging config (`pyproject.toml` etc.) | **Present** — version `0.0.1.dev1`, requires-python `>=3.12,<4.0` (ADR-0005), deps pinned to tested versions (zstandard 0.25.0) |
 | CI/CD workflows | **None** — intentionally not created until there are runnable checks; now that tests exist, a CI workflow is a reasonable next step pending owner approval |
 | License file | **Absent** — license not selected (OQ-5) |
@@ -46,9 +46,9 @@
 ## Health indicators *(verified, not asserted)*
 
 - Build: `pip install -e .` evidence not yet captured (package config exists; editable install untested).
-- Tests: **35 passed** — `python -m pytest tests/ -q -p no:libtmux` (2026-10-15). Plain `pytest` currently crashes at plugin load due to the system-installed libtmux pytest plugin being incompatible with pytest 9.1.1 (marks-on-fixtures); this is an environment issue, not repo code.
+- Tests: **60 passed** — `python -m pytest -q` (2026-10-16, Session 22 re-verification after P1-T2/P1-T6 work; progression: 35 → 40 (Session 20 `pipe`) → 60 (Sessions 21–22 vectors + conformance)).
 - Coverage/badges/releases: none; none claimed anywhere in docs.
 
 ## Next milestone
 
-Push Sessions 12–13 work to remote (needs owner token), then: golden canonicalization vectors (P1-T2 completion), peak-RSS capture in the harness (P1-T6), and the first real benchmark revision once OQ-8 supplies a corpus. Optional approved step now permissible: CI workflow running linkcheck + tests (real runnable checks exist since Session 12).
+Push Sessions 12–22 work to remote (needs owner token — `.vault/github_token.txt` absent in this container), then: owner verdict on ADR-0007/OQ-11 unblocks the `.lxz` container (P1-T3/P1-T5); golden vectors (P1-T2) and peak-RSS capture (P1-T6) are now landed. First *published* benchmark revision beyond R2 requires corpus growth toward ≥1 GiB (OQ-8). CI workflow running linkcheck + tests is already live since Session 15.

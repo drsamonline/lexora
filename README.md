@@ -12,7 +12,7 @@
 > Nothing here is a shipped or released feature. See [docs/STATUS.md](docs/STATUS.md) for the verified state.
 > **Badge honesty note:** the CI badge reflects the real workflow in `.github/workflows/ci.yml`
 > (added 2026-10-15; its first-run result will be recorded in the session log). The *Tests* badge is a
-> static snapshot of the locally verified suite (35 passed, re-verified 2026-10-15), not a live measurement.
+> static snapshot of the locally verified suite (60 passed, re-verified 2026-10-16), not a live measurement.
 > **Last verified:** 2026-10-15 against local branch `main` (see git history).
 
 ---
@@ -49,7 +49,7 @@ Generic compressors (Zstandard, XZ, Brotli) treat text as opaque bytes. Document
 
 | Status | Capability |
 |---|---|
-| **Implemented** | Early Phase 1 prototype: conservative canonicalizer (`src/lexora/canonicalize.py`), Zstd core baseline (`src/lexora/zstd_core.py`), CLI scaffold, benchmark harness (`benchmarks/harness.py`), test suite (35 passed locally) |
+| **Implemented** | Early Phase 1 prototype: conservative canonicalizer (`src/lexora/canonicalize.py`), Zstd core baseline (`src/lexora/zstd_core.py`), baseline CLI (`canon`/`zround`/`pipe`), benchmark harness (`benchmarks/harness.py`), test suite (60 passed locally) |
 | **In progress** | Phase 1 baseline metrics on real corpus data; CI first run (workflow added 2026-10-15); documentation Batches A–F pending owner review |
 | **Planned** | TXT/PDF ingestion; `.lxz` archive format (proposed); experimental candidates (dictionaries, Re-Pair, bounded token PPM, numeric/record coding, template+residual); `.lxdb` database mode; optional encryption profile |
 

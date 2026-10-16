@@ -1,0 +1,13 @@
+{
+  "id": "v004_softhyphen_only",
+  "description": "CAN-R05: U+00AD deleted everywhere; other chars unchanged",
+  "canonicalizer_version": "lexcan-0.1",
+  "applied_rules": [
+    "CAN-R01",
+    "CAN-R02",
+    "CAN-R05"
+  ],
+  "declared_encoding": null,
+  "input_bytes": 28,
+  "expected_output_bytes": 22
+}

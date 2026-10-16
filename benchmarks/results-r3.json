@@ -1,0 +1,166 @@
+{
+  "benchmark_revision": 3,
+  "corpus_tier": "T1-gutenberg-p0",
+  "date": "2026-10-16T11:20:42Z",
+  "manifest_sha256": "a32240d792c06953465ef71dd9dc30a2033aea976ab23291c326b32014161a5f",
+  "note": "Harness output. Publication into docs/BENCHMARK_RESULTS.md requires owner review per QUALITY_PLAN. Tier label above is MANDATORY alongside any published number from this artifact.",
+  "peak_rss_kib_by_system": {
+    "xz9": 35348,
+    "zstd19": 85956
+  },
+  "peak_rss_method": "forked child runs the identical encode call; parent samples /proc/<pid>/status VmHWM (KiB, Linux) until exit; measured once per system on the largest manifest file",
+  "peak_rss_skipped_reason": null,
+  "provenance_present": true,
+  "reps": 3,
+  "rows": [
+    {
+      "encode_s_max": 1.6029937129999325,
+      "encode_s_median": 1.5831471010001223,
+      "encode_s_min": 1.5253037700001641,
+      "input_bytes": 2787124,
+      "path": "gutenberg-1184.txt",
+      "split": "heldout",
+      "stored_bytes_max": 782892,
+      "stored_bytes_median": 782892,
+      "stored_bytes_min": 782892,
+      "system": "zstd19"
+    },
+    {
+      "encode_s_max": 1.9120009820001087,
+      "encode_s_median": 1.8633189399999992,
+      "encode_s_min": 1.8328522440001507,
+      "input_bytes": 2787124,
+      "path": "gutenberg-1184.txt",
+      "split": "heldout",
+      "stored_bytes_max": 776472,
+      "stored_bytes_median": 776472,
+      "stored_bytes_min": 776472,
+      "system": "xz9"
+    },
+    {
+      "encode_s_max": 0.3786825529998623,
+      "encode_s_median": 0.327199882000059,
+      "encode_s_min": 0.32555644399985795,
+      "input_bytes": 772386,
+      "path": "gutenberg-1342.txt",
+      "split": "train",
+      "stored_bytes_max": 226028,
+      "stored_bytes_median": 226028,
+      "stored_bytes_min": 226028,
+      "system": "zstd19"
+    },
+    {
+      "encode_s_max": 0.4419781010001316,
+      "encode_s_median": 0.4075696060001519,
+      "encode_s_min": 0.4073053909999089,
+      "input_bytes": 772386,
+      "path": "gutenberg-1342.txt",
+      "split": "train",
+      "stored_bytes_max": 223512,
+      "stored_bytes_median": 223512,
+      "stored_bytes_min": 223512,
+      "system": "xz9"
+    },
+    {
+      "encode_s_max": 0.5056436649999796,
+      "encode_s_median": 0.5003907249999884,
+      "encode_s_min": 0.48879815999998755,
+      "input_bytes": 1058204,
+      "path": "gutenberg-1400.txt",
+      "split": "train",
+      "stored_bytes_max": 324526,
+      "stored_bytes_median": 324526,
+      "stored_bytes_min": 324526,
+      "system": "zstd19"
+    },
+    {
+      "encode_s_max": 0.7083617779999258,
+      "encode_s_median": 0.6786240980000002,
+      "encode_s_min": 0.5687553830000525,
+      "input_bytes": 1058204,
+      "path": "gutenberg-1400.txt",
+      "split": "train",
+      "stored_bytes_max": 321664,
+      "stored_bytes_median": 321664,
+      "stored_bytes_min": 321664,
+      "system": "xz9"
+    },
+    {
+      "encode_s_max": 0.29530089100012447,
+      "encode_s_median": 0.28249982300008014,
+      "encode_s_min": 0.28069675200003985,
+      "input_bytes": 607606,
+      "path": "gutenberg-1661.txt",
+      "split": "train",
+      "stored_bytes_max": 191034,
+      "stored_bytes_median": 191034,
+      "stored_bytes_min": 191034,
+      "system": "zstd19"
+    },
+    {
+      "encode_s_max": 0.36489321599992763,
+      "encode_s_median": 0.3489269400001831,
+      "encode_s_min": 0.3307193329999336,
+      "input_bytes": 607606,
+      "path": "gutenberg-1661.txt",
+      "split": "train",
+      "stored_bytes_max": 188860,
+      "stored_bytes_median": 188860,
+      "stored_bytes_min": 188860,
+      "system": "xz9"
+    },
+    {
+      "encode_s_max": 0.7816391569999723,
+      "encode_s_median": 0.7591792190000888,
+      "encode_s_min": 0.7010489649999272,
+      "input_bytes": 1276315,
+      "path": "gutenberg-2701.txt",
+      "split": "train",
+      "stored_bytes_max": 422220,
+      "stored_bytes_median": 422220,
+      "stored_bytes_min": 422220,
+      "system": "zstd19"
+    },
+    {
+      "encode_s_max": 0.9423573469998701,
+      "encode_s_median": 0.8946339609999541,
+      "encode_s_min": 0.8018946069998947,
+      "input_bytes": 1276315,
+      "path": "gutenberg-2701.txt",
+      "split": "train",
+      "stored_bytes_max": 418184,
+      "stored_bytes_median": 418184,
+      "stored_bytes_min": 418184,
+      "system": "xz9"
+    },
+    {
+      "encode_s_max": 0.28062014900001486,
+      "encode_s_median": 0.2638635200000863,
+      "encode_s_min": 0.2541136810000353,
+      "input_bytes": 622460,
+      "path": "gutenberg-76.txt",
+      "split": "train",
+      "stored_bytes_max": 193262,
+      "stored_bytes_median": 193262,
+      "stored_bytes_min": 193262,
+      "system": "zstd19"
+    },
+    {
+      "encode_s_max": 0.3454046560000279,
+      "encode_s_median": 0.33109168600003613,
+      "encode_s_min": 0.3114293640001051,
+      "input_bytes": 622460,
+      "path": "gutenberg-76.txt",
+      "split": "train",
+      "stored_bytes_max": 191064,
+      "stored_bytes_median": 191064,
+      "stored_bytes_min": 191064,
+      "system": "xz9"
+    }
+  ],
+  "systems_run": [
+    "zstd19",
+    "xz9"
+  ],
+  "systems_skipped": {}
+}

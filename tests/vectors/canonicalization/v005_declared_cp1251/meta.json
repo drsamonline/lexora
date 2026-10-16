@@ -1,0 +1,13 @@
+{
+  "id": "v005_declared_cp1251",
+  "description": "CAN-R01: declared non-UTF-8 encoding transcoded to canonical UTF-8",
+  "canonicalizer_version": "lexcan-0.1",
+  "applied_rules": [
+    "CAN-R01",
+    "CAN-R02",
+    "CAN-R05"
+  ],
+  "declared_encoding": "cp1251",
+  "input_bytes": 12,
+  "expected_output_bytes": 21
+}

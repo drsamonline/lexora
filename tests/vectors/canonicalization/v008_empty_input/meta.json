@@ -1,0 +1,13 @@
+{
+  "id": "v008_empty_input",
+  "description": "Edge case: empty input maps to empty output",
+  "canonicalizer_version": "lexcan-0.1",
+  "applied_rules": [
+    "CAN-R01",
+    "CAN-R02",
+    "CAN-R05"
+  ],
+  "declared_encoding": null,
+  "input_bytes": 0,
+  "expected_output_bytes": 0
+}

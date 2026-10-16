@@ -1,0 +1,13 @@
+{
+  "id": "v009_passthrough_ascii",
+  "description": "Invariant: pure ASCII with LF-only newlines passes through unchanged",
+  "canonicalizer_version": "lexcan-0.1",
+  "applied_rules": [
+    "CAN-R01",
+    "CAN-R02",
+    "CAN-R05"
+  ],
+  "declared_encoding": null,
+  "input_bytes": 39,
+  "expected_output_bytes": 39
+}
