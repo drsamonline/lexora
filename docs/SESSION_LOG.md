@@ -219,3 +219,17 @@ Append-only, dated session summaries. Never rewrite history; append a correction
   6. Verification: `python -m pytest -q` → **35 passed**; `python3 scripts/linkcheck.py` → OK; harness `--help` parses with new subcommand.
 - **Honest caveats:** R2 adds no new measurements — its value is a corrected, fully-committed evidence chain; numbers remain smoke-scope (7.1 MB English, ≪ ≥1 GiB protocol target). Deferred a `run --revision 2` artifact deliberately: rerunning on identical bytes would produce identical numbers under the new hash; better folded into R3 when the corpus expands. Push still blocked: no `.vault/github_token.txt` in this container.
 - **Next action:** Corpus expansion toward protocol scope (more lineages + hi/gu sources or owner Tier-0 data), then run R3 with real new measurements; push Sessions 14–18 commits once token available; owner review of P1 code + OQ-9/OQ-10.
+
+---
+## LEXORA Session 19 — 2026-10-16
+
+- **Objective:** Owner said "continue", then gave a scope decision: *"keep other languages as future-can-be-done implementations, not a required part; first build the whole app and get it working using English only so it becomes fast and rapid and a better app."* Then supplied a GitHub token to unblock pushes.
+- **Pre-state (verified):** Local branch tip `e240af0` (Session 18 work) with Sessions 14–18 commits unpushed; docs still listed Hindi/Gujarati corpus coverage as an open requirement in NEXT_SESSION task 1 / CORPUS_POLICY / STATUS.
+- **Actions & results:**
+  1. **English-only scoping applied** (commit `e240af0`, "Prioritize English-only core implementation…"): multilingual corpora moved from requirements to deferred/future capability across NEXT_SESSION, CORPUS_POLICY, STATUS, PROGRESS, README, CHANGELOG per owner directive.
+  2. **Push unblocked.** Token saved to gitignored `.vault/github_token.txt` (chmod 600). First push attempt to `adb17-ai/lexora-dev` failed ("Repository not found") — corrected by querying the token's identity via the GitHub API: owner account is `drsamonline`, hosted repo is `drsamonline/lexora`. Pushed branch `qwen-code-b1f3ec47-…` successfully.
+  3. **CI verified green** on pushed commit `e240af0` (run completed, conclusion `success`).
+  4. **Delivery closed:** PR #4 merged on GitHub (`origin/main` now at merge commit `0fafef4`, containing `e240af0`). Local `main` reset to `origin/main`; re-verified on main: `pytest -q` → **35 passed**, linkcheck → OK.
+  5. **Secret hygiene checked:** repo tree scanned for `ghp_` strings — only pre-existing masked/partial references in SESSION_LOG history (`ghp_TIsg…` prefix notation); no full token ever committed or pushed. Full token lives only in the gitignored vault file.
+- **Honest caveats:** The vault file persists inside this container's workspace (gitignored, never pushed) — owner should revoke the token if container egress matters. No new measurements taken this session; benchmark numbers unchanged. Merge of PR #4 was performed outside this container (by owner or automated flow) — verified here only via `git fetch` + CI API, not reconstructed.
+- **Next action:** Per owner directive, drive Phase-1→app-build velocity on English-only scope: implement the `.lxz` container path once FORMAT_LXZ is accepted (currently PROPOSED — policy forbids implementing ahead of acceptance), CLI end-to-end compress/decompress flows, and grow the English corpus toward BENCHMARK_PROTOCOL scale opportunistically. Multilingual (hi/gu) corpus work is explicitly deferred, not blocking.
