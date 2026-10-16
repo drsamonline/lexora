@@ -42,7 +42,7 @@ Generic compressors (Zstandard, XZ, Brotli) treat text as opaque bytes. Document
 ## Non-goals (current scope)
 
 - Reconstructing original OCR output or source PDF layout bit-for-bit.
-- Claiming any performance advantage over Zstd/Brotli/XZ/PPMd before reproducible benchmark evidence exists (**none exists yet**).
+- Claiming any performance advantage over Zstd/Brotli/XZ/PPMd before reproducible benchmark evidence exists (**no LEXORA-vs-baseline evidence exists**; the only published numbers, Revision R1, are baseline-vs-baseline on a Tier-1 smoke corpus — see [docs/BENCHMARK_RESULTS.md](docs/BENCHMARK_RESULTS.md)).
 - Being a general-purpose archive format.
 
 ## Features by maturity
@@ -78,7 +78,7 @@ None exist yet. Do not run assumed commands. Verified commands will be added to 
 
 ## Benchmarks
 
-**No validated benchmark results exist.** The acceptance gates are defined in the blueprint (Pass ≥ 10%, Partial ≥ 3% smaller total stored size vs. best frozen baseline) and will be formalized in `docs/BENCHMARK_PROTOCOL.md`. Baselines: Zstandard level 19, plus pinned Brotli/XZ/PPMd comparisons per protocol.
+**No validated LEXORA-vs-baseline results exist.** The acceptance gates are defined in the blueprint (Pass ≥ 10%, Partial ≥ 3% smaller total stored size vs. best frozen baseline) and formalized in `docs/BENCHMARK_PROTOCOL.md`. Baselines: Zstandard level 19, plus pinned Brotli/XZ/PPMd comparisons per protocol. First published figures — Revision R1 in [docs/BENCHMARK_RESULTS.md](docs/BENCHMARK_RESULTS.md) (2026-10-16) — are a **Tier T1-gutenberg-p0 smoke baseline** (7.1 MB public-domain English text; Zstd-19 ratio 0.3004 vs XZ-9 0.2975 on that snapshot), not gate verdicts.
 
 ## Security & privacy notes
 

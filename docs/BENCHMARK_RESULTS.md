@@ -2,7 +2,7 @@
 
 > **Status:** Active register (append-only per revision)
 > **Owner:** Documentation architect (delegated)
-> **Last verified:** 2026-10-15
+> **Last verified:** 2026-10-16 (Revision R1 published — smoke baseline, corpus tier T1-gutenberg-p0)
 > **Related:** [BENCHMARK_PROTOCOL.md](BENCHMARK_PROTOCOL.md) · [CORPUS_POLICY.md](CORPUS_POLICY.md) · [ADR-0001](ADR/ADR-0001-gate-scope.md)
 
 ## Purpose & scope
@@ -11,11 +11,11 @@ The single place where measured compression/cleaning/performance results are pub
 
 ## Current state
 
-**No validated benchmark results yet.**
+**One smoke-baseline revision published (R1, 2026-10-16).** It is explicitly **not** an ADR-0001 Pass/Partial/Fail verdict run: the corpus is a Tier-1 fallback snapshot (~7.1 MB, English books only), far below the ≥1 GiB multi-language target in [CORPUS_POLICY.md](CORPUS_POLICY.md). Every number below carries the mandatory tier label **T1-gutenberg-p0**. The pre-R1 statement stands for anything beyond this scope: no validated full-corpus benchmark results exist.
 
-- No corpus assembled (OQ-8 open; see CORPUS_POLICY "Current status").
-- No encoder/harness implemented (Phase P1/P2 not started).
-- Consequently: no verdicts, no ratios, no timing or RSS figures exist. Any such number appearing anywhere in this repository before a recorded run would be fabricated and must be treated as a defect (QUALITY_PLAN S2).
+- Corpus: none supplied by owner (`data/raw/` empty) → deterministic fallback fetched public-domain (P0) Project Gutenberg texts; provenance sidecars recorded (`corpus/gutenberg-r0.*.json`).
+- Harness: committed (`benchmarks/harness.py`, manifest v2 + `benchmarks/corpus.py`); round-trip verified per BENCHMARK_PROTOCOL §3 mechanics.
+- Verdicts per ADR-0001: **not issued** — prerequisites (≥1 GiB corpus, hi/gu coverage, OQ-8 closure) unmet.
 
 ## Register format (for future revisions — template, contains no data)
 
@@ -42,4 +42,40 @@ The single place where measured compression/cleaning/performance results are pub
 
 ## Historical entries
 
-*None.* This section receives one dated block per completed revision; entries are never edited retroactively except via an appended correction note (master-prompt §4.6 discipline).
+One dated block per completed revision; entries are never edited retroactively except via an appended correction note (master-prompt §4.6 discipline).
+
+### Revision R1 — 2026-10-16 — commit `908698c` (harness v2 + tiered corpus)
+
+**Corpus tier: T1-gutenberg-p0** (mandatory label for every number below). Smoke baseline only — **no ADR-0001 verdict issued** (scope ≪ protocol target; see Current state).
+
+- Manifest hash: `7d65d09da38640bae9d985d5aa245f8e566200a9976a2a5852f0e47f30d0ceae` (`benchmarks/MANIFEST.json`, v2; content-hash over canonical JSON, re-verified at publication time).
+- Environment (`benchmarks/env.json`): Linux x86_64, Intel Xeon @ 2.50 GHz, ~2.05 GiB RAM, Python 3.12.10, zstandard 0.25.0, xz (XZ Utils) 5.4.1; CLI `zstd`/`brotli`/`7z` absent → those baselines could not run; the recorded artifact ran the two available systems (zstd19 via bindings, xz9 via subprocess).
+- Corpus: 6 files, 7,124,095 B total raw UTF-8 text (baseline-system measurements on raw bytes; full-pipeline canonicalization of the corpus is pending), English prose/books, rights P0 (public domain), split by lineage: 5 train (4,336,971 B) / 1 heldout (2,787,124 B, PG#1184). Reps = 3; stored-size figures are min-over-reps (deterministic codecs: min = median = max in all rows).
+- Results table (aggregate, tier **T1-gutenberg-p0**):
+
+| System | Input B | Stored B (min reps) | Ratio | Held-out ratio | Median encode s (largest file) |
+|---|---|---|---|---|---|
+| Zstd level 19 | 7,124,095 | 2,139,962 | 0.3004 | 0.2809 | 1.487 |
+| XZ level 9 | 7,124,095 | 2,119,756 | 0.2975 | 0.2786 | 1.858 |
+
+  Relative: XZ-9 stores ≈0.9% fewer bytes than Zstd-19 overall (≈0.8% on held-out) while encoding ≈25% slower on the largest file. These are baseline-vs-baseline observations; the LEXORA candidate codec does not exist yet, so no Pass/Partial/Fail row can be filled.
+
+- Per-file detail (stored bytes, ratio; tier T1-gutenberg-p0):
+
+| File | Split | Input B | Zstd-19 | XZ-9 |
+|---|---|---|---|---|
+| gutenberg-1184.txt | heldout | 2,787,124 | 782,892 (0.2809) | 776,472 (0.2786) |
+| gutenberg-1342.txt | train | 772,386 | 226,028 (0.2926) | 223,512 (0.2894) |
+| gutenberg-1400.txt | train | 1,058,204 | 324,526 (0.3067) | 321,664 (0.3040) |
+| gutenberg-1661.txt | train | 607,606 | 191,034 (0.3144) | 188,860 (0.3108) |
+| gutenberg-2701.txt | train | 1,276,315 | 422,220 (0.3308) | 418,184 (0.3276) |
+| gutenberg-76.txt | train | 622,460 | 193,262 (0.3105) | 191,064 (0.3069) |
+
+- Per-category promotion table: N/A — single category (prose/books), single language (en); validation→held-out reproduction across categories requires a compliant corpus.
+- Timing & peak-RSS vs PERFORMANCE_BUDGET: RSS **not measured** in this harness revision (recorded honestly as absent); timings above are wall-clock seconds on the environment described.
+- Cleaning-quality pointer (ADR-0004): N/A — no OCR fixtures yet.
+- Anomalies / failed runs (recorded honestly):
+  - 2 of 8 requested Gutenberg titles discarded by the fetch guard (< 0.5 MB payload after boilerplate strip): PG#84 (448,885 B), PG#74 (434,357 B). See `corpus/gutenberg-r0.sources.json`.
+  - Held-out is a single lineage (1-of-6 files approximates the 20% target due to tiny corpus); statistical strength is nil — treat ratios as smoke-test values only.
+  - Correction note (append-only discipline): the committed manifest's per-file `rights`/`language`/`category` fields read UNCLASSIFIED/unknown/unclassified because it was generated before the meta sidecars were applied. The authoritative classification for this snapshot is `corpus/gutenberg-r0.meta.json` (en / prose-books / P0-public-domain). Manifest will be regenerated with metadata folded in for R2.
+- Evidence pointers: `benchmarks/results-r0.json` (artifact, benchmark_revision 1), `benchmarks/MANIFEST.json`, `benchmarks/env.json`, `corpus/gutenberg-r0.*.json` (provenance sidecars; raw texts gitignored).
