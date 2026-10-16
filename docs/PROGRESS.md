@@ -1,7 +1,7 @@
 # LEXORA Progress
 
 > **Status:** Active — update at every session end
-> **Last verified:** 2026-10-15 (commit `816f58f`)
+> **Last verified:** 2026-10-16 (Session 22 — see STATUS.md header for current state)
 
 ## Phase completion
 
@@ -15,7 +15,7 @@
 | P0.6 Merge to main + push | Local `main` current; hosted remote updated | **Complete** | ✅ Session 8: origin discovered (drsamonline/lexora), local main merged with origin/main and pushed — remote `main` at `d6350c0`, verified via ls-remote + contents API | SESSION_LOG Session 8 |
 | P0.7 Batch D — security & operations docs | Security architecture, threat model, privacy policy, error handling, logging, troubleshooting, runbooks, root SECURITY.md, ENCRYPTION_PROFILE (Proposed) | **Drafted; closure complete (`3ecdfaf`); on remote** | ✅ 12 documents created 2026-10-15; link check ALL INTERNAL LINKS OK (exit 0); no fabricated contacts/SLAs; landed remotely via PR #2 merge (`76476cf`) + Session 11 push (`a1bf3c3`); pending owner review | docs/SECURITY_ARCHITECTURE.md … docs/runbooks/RECOVERY_RUNBOOK.md, SECURITY.md |
 | P0.8 Batch E — GitHub & release polish | CONTRIBUTING, issue/PR templates, release process (CI/badges deferred until runnable) | **Drafted; on remote since Session 11 push (`a1bf3c3`)** | ✅ 5 files: `aa266a2` (CONTRIBUTING, 2 issue templates, RELEASE_PROCESS) + `.github/pull_request_template.md` (Session 10 closure `c0609ee`, fixes dangling reference); linkcheck OK post-merge; no CI/badges created (none runnable — per policy) | CONTRIBUTING.md, .github/, docs/RELEASE_PROCESS.md |
-| P1 Core Zstd baseline + harness | Working encode/verify + benchmark scaffolding | **Started (Sessions 12–13)** — `zstd_core.py` frame-level codec + tests, baseline CLI (`canon`/`zround`), canonicalizer rules CAN-R01/R02/R05 with unit tests, `benchmarks/harness.py` scaffold (env/manifest/verify/audit-splits/run) | ⚠️ Partial: 35 tests pass (`-p no:libtmux`); `.lxz` container NOT implemented (FORMAT_LXZ still PROPOSED); golden vectors empty; no corpus ⇒ no benchmark numbers | commits `8ee3bef`, Session 13 (harness); SESSION_LOG Sessions 12–13 |
+| P1 Core Zstd baseline + harness | Working encode/verify + benchmark scaffolding | **Started (Sessions 12–22)** — `zstd_core.py` frame-level codec + tests, CLI (`canon`/`zround`/`pipe`), canonicalizer rules CAN-R01/R02/R05 with unit tests + 9 byte-exact golden vectors (P1-T2), `benchmarks/harness.py` (env/manifest/verify/audit-splits/run/corpus-fetch/corpus-commit) incl. working peak-RSS capture (P1-T6) | ⚠️ Partial: 60 tests pass; `.lxz` container NOT implemented (awaiting owner verdict on ADR-0007/OQ-11); corpus is smoke-scope only (R1+R2 published; no ADR-0001 verdict) | commits `8ee3bef`, `3e94d57`, `88286b1`, `38bc99d`; SESSION_LOG Sessions 12–22 |
 | P2 Ingestion & canonicalization | TXT/PDF (+optional OCR) → versioned canonical bytes + golden vectors | Not started | ❌ | — |
 | P3+ Experimental candidates, `.lxz` freeze, `.lxdb`, encryption | Each gated by measured evidence | Not started | ❌ | — |
 
@@ -58,7 +58,7 @@
 
 ## Metrics
 
-- Source files of LEXORA code: **7** (`src/lexora/__init__.py`, `canonicalize.py`, `zstd_core.py`, `cli.py`; `benchmarks/harness.py`, `benchmarks/corpus.py`) — first code landed Sessions 12–13; tiered corpus added Session 16/17
-- Test files: **3** (`tests/test_canonicalize.py`, `test_zstd_core.py`, `test_cli.py`) — 40 tests passing (Session 20 added 5 `pipe` end-to-end tests; earlier 35)
+- Source files of LEXORA code: **9** (`src/lexora/__init__.py`, `canonicalize.py`, `zstd_core.py`, `cli.py`; `benchmarks/harness.py`, `benchmarks/corpus.py`; `scripts/gen_canon_vectors.py`, `scripts/linkcheck.py`) — first code landed Sessions 12–13; tiered corpus added Session 16/17; vector generator Session 21
+- Test files: **4** (`tests/test_canonicalize.py`, `test_zstd_core.py`, `test_cli.py`, `test_canon_vectors.py`) — **60 tests passing** (progression: 35 → 40 after Session 20 `pipe` tests → 60 after Sessions 21–22 golden-vector conformance suite)
 - Markdown documents: tracked per batch; Batch A creates 16 files (+3 root hygiene/config files).
 - Published benchmark revisions: **2 (R1 smoke baseline + R2 manifest regeneration, both Tier T1-gutenberg-p0)**; validated full-corpus results: **0**

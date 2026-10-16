@@ -234,3 +234,39 @@ Append-only, dated session summaries. Never rewrite history; append a correction
 - **Honest caveats:** The vault file persists inside this container's workspace (gitignored, never pushed) — owner should revoke the token if container egress matters. No new measurements taken this session; benchmark numbers unchanged. Merge of PR #4 was performed outside this container (by owner or automated flow) — verified here only via `git fetch` + CI API, not reconstructed.
 - **Next action:** Per owner directive, drive Phase-1→app-build velocity on English-only scope: implement the `.lxz` container path once FORMAT_LXZ is accepted (currently PROPOSED — policy forbids implementing ahead of acceptance), CLI end-to-end compress/decompress flows, and grow the English corpus toward BENCHMARK_PROTOCOL scale opportunistically. Multilingual (hi/gu) corpus work is explicitly deferred, not blocking.
 - **Post-entry correction (same session, honest note):** item 2's claim that the token was saved to `.vault/github_token.txt` was inaccurate at commit time — the vault file did not exist in this container; the push instead used a temporary GIT_ASKPASS script. The remote URL briefly carried embedded credentials during diagnosis and was immediately reset to the credential-free `https://github.com/drsamonline/lexora.git`; the token was then stored in `.vault/github_token.txt` (chmod 600, gitignored) for future sessions. Session 19 docs commit `7e31656` pushed directly to hosted `main` (`0fafef4..7e31656`); CI verified **completed/success** on `7e31656`.
+
+---
+## LEXORA Session 20 — 2026-10-16
+
+- **Objective:** Owner said "continue". Baseline verification + container unblock drafting + app-build velocity on English-only scope (owner directive from Session 19).
+- **Pre-state (verified):** Clean baseline at `3e94d57` parent state; `pytest -q` → **35 passed**; linkcheck OK; hosted `main` at `7e31656`.
+- **Actions & results:**
+  1. **ADR-0007 drafted** (`docs/ADR/ADR-0007-container-v0-freeze.md`, commit `3e94d57`): proposed minimal `.lxz` v0 byte-layout freeze (blocks = plain zstd frames, trailer index, in-archive limits) with exact layout + verification plan so owner acceptance is a one-word reply. Tracked as **OQ-11** in DECISIONS.md. Status: Proposed — nothing implemented from it (SPEC §7.2 policy).
+  2. **`lexora pipe` CLI subcommand** (same commit): end-to-end baseline flow canon → compress → verify-decompress in one command with a cost-accounting line (`raw/canonical/compressed` bytes); deliberately container-free. 5 new tests → suite **40 passed**.
+  3. Continuity docs updated (STATUS/PROGRESS/NEXT_SESSION headers for the new test count and task-0 owner decision).
+- **Honest caveats:** CHANGELOG entry for this session was not written within quota limits at the time (backfilled in Session 22's CHANGELOG entry). No push attempted (see Session 22 caveat re: token).
+- **Next action:** Golden canonicalization vectors (P1-T2) and peak-RSS capture (P1-T6) — both independent of pending format decisions.
+
+---
+## LEXORA Session 21 — 2026-10-16
+
+- **Objective:** Owner said "continue". Land P1-T2 golden vectors and implement P1-T6 peak-RSS capture in the benchmark harness.
+- **Pre-state (verified):** Working tree clean at `3e94d57`; 40 tests passing.
+- **Actions & results:**
+  1. **P1-T2 vectors landed** (commit `88286b1`): `scripts/gen_canon_vectors.py` generates 9 deterministic vectors under `tests/vectors/canonicalization/` (input.bin / expected_output.bin / meta.json each); `tests/test_canon_vectors.py` locks them byte-exact and checks metadata consistency against the current rule set (CAN-R01/R02/R05). Suite grew toward 60.
+  2. **P1-T6 mechanism implemented** (same commit): `harness.py run` forks a child that executes the identical encode call while the parent samples `/proc/<pid>/status` VmHWM until exit (Linux only; honest skip reason otherwise; failures recorded as −1, never faked). Artifact fields added: `peak_rss_kib_by_system`, `peak_rss_method`, `peak_rss_skipped_reason`.
+- **Failures discovered (honest):** Two issues surfaced at the end of this session and were left broken: (a) the forked child received `str(out_path)` but `SYSTEMS` callables need a `Path` → every RSS measurement crashed with AttributeError; (b) two golden-vector expectations had invisible-character typos (missing ZWJ in v002; non-canonicalizable codepoint U+0901 listed in the REQ-CAN-005 expectation set).
+- **Next action:** Fix both failures, re-run full suite + linkcheck, then a real `run --reps 3` to produce a committable artifact.
+
+---
+## LEXORA Session 22 — 2026-10-16
+
+- **Objective:** Owner said "continue". Close out Session 21's known failures, verify everything end-to-end, generate the first artifact containing real peak-RSS numbers, and finish the documentation backlog (CHANGELOG + SESSION_LOG entries for Sessions 20–21, TASK_BREAKDOWN rows, NEXT_SESSION rewrite).
+- **Pre-state (verified):** HEAD `38bc99d` ("Fix peak-RSS forked-child Path handling and Indic corpus size guard") already contained the fixes made late in Session 21's follow-up work: `_peak_rss_kib` passes `Path` + `os._exit(2)` failure signaling; vector expectations corrected; P1-T2 row updated in TASK_BREAKDOWN.
+- **Actions & results:**
+  1. **Verification re-run fresh:** `python -m pytest -q` → **60 passed**; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK (exit 0).
+  2. **Real measurement run:** `python benchmarks/harness.py run --manifest benchmarks/MANIFEST.json --out benchmarks/results-r3.json --reps 3 --revision 3` → 12 rows (6 files × zstd19/xz9), manifest hash `a32240d7…` matches R2's frozen manifest, provenance present, and **first real peak-RSS captures: zstd19 = 85,956 KiB, xz9 = 35,348 KiB** (`peak_rss_skipped_reason: null`). Mechanism confirmed working end-to-end on Linux.
+  3. **Artifact committed as harness output only — deliberately NOT published** as revision R3 in BENCHMARK_RESULTS.md: per BENCHMARK_PROTOCOL §7 a new revision requires a manifest change (corpus bytes here are identical to R2), and publication requires owner review per QUALITY_PLAN. The `--revision 3` label inside the artifact is an internal counter; docs still say "published revisions: R1, R2".
+  4. **Docs closed out:** TASK_BREAKDOWN P1-T6 row flipped to "Mechanism landed + measured"; CHANGELOG gained combined Sessions 20–22 Added entry + Fixed entry (RSS Path bug); SESSION_LOG backfilled (this entry); STATUS/PROGRESS test-count and stale "golden vectors empty" claims refreshed; NEXT_SESSION rewritten for Session 23.
+- **Failures/blockers:** Push still blocked — `.vault/github_token.txt` does not exist in this container (Session 19's post-entry correction pattern repeated: vault file absent despite doc claims). Branch tip `38bc99d` + this session's docs commit remain local-only.
+- **Next action:** Task 0 unchanged — owner accept/amend/reject ADR-0007 (OQ-11). Then either `.lxz` container implementation (if accepted) or `docs/CLI_REFERENCE.md` (independent). Corpus growth toward ≥1 GiB remains the path to a genuine published R3 + first ADR-0001 verdicts. Push when a token is available.

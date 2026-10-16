@@ -34,7 +34,7 @@ Smallest actionable task list per phase so any session can pick a task without r
 | P1-T3 | `.lxz` v0 format freeze | DOC/CORE | Byte layout + test vectors reviewed, FORMAT_LXZ status flipped via ADR | Not started (FORMAT_LXZ remains PROPOSED — not implemented per policy) |
 | P1-T4 | Block encoder/decoder (Zstd) | CORE | `decode(encode(C))==C` property tests incl. edge sizes (0 B, block boundary ±1) | **Frame-level done** — `zstd_core.py` round-trip/determinism/truncation tests pass; block-boundary cases deferred to `.lxz` work |
 | P1-T5 | CLI `pack`/`unpack` | CORE | CLI_REFERENCE documents only real flags; exit codes tested | Not started (shipped CLI is baseline `canon`/`zround` only, exit codes tested in `tests/test_cli.py`; no CLI_REFERENCE doc yet) |
-| P1-T6 | Memory-budget harness run | QA | Peak RSS recorded vs PERFORMANCE_BUDGET numbers | Not started (harness scaffold exists but records no RSS yet; needs corpus anyway) |
+| P1-T6 | Memory-budget harness run | QA | Peak RSS recorded vs PERFORMANCE_BUDGET numbers | **Mechanism landed + measured** — `harness.py run` captures peak RSS per system (forked child runs the identical encode call; parent samples `/proc/<pid>/status` VmHWM, Linux-only, honest skip reason otherwise). Real capture in committed artifact `benchmarks/results-r3.json` (revision 3, reps 3): zstd19 = 85,956 KiB, xz9 = 35,348 KiB on the largest Tier-1 file. Comparison vs PERFORMANCE_BUDGET limits still pending owner verdict (smoke-scope corpus) |
 
 ## P2 — Benchmark harness
 
