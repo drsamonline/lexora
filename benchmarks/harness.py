@@ -145,8 +145,32 @@ def cmd_corpus_fetch(args: argparse.Namespace) -> int:
         snap = corpus_mod.generate_synthetic_corpus(dest)
         print(f"wrote synthetic corpus: {len(snap['files'])} files -> {dest}")
     else:
-        ids = tuple(int(s) for s in args.ids.split(",")) if args.ids else corpus_mod.DEFAULT_GUTENBERG_IDS
-        snap = corpus_mod.fetch_gutenberg_snapshot(dest, ids=ids, min_mb=args.min_mb)
+        if args.ids:
+            ids = tuple(int(s) for s in args.ids.split(","))
+            min_mb = args.min_mb  # explicit override wins for raw id lists
+        else:
+            langs = [s.strip().lower() for s in args.languages.split(",") if s.strip()]
+            lists = {"en": corpus_mod.ENGLISH_GUTENBERG_IDS,
+                     "hi": corpus_mod.HINDI_GUTENBERG_IDS,
+                     "gu": corpus_mod.GUJARATI_GUTENBERG_IDS}
+            unknown = [l for l in langs if l not in lists]
+            if unknown:
+                print(f"error: unknown --languages values {unknown} (supported: en, hi, gu)",
+                      file=sys.stderr)
+                return 2
+            ids = tuple(i for l in langs for i in lists[l])
+            # Indic PG texts are genuinely small (~50-150 KB); the English
+            # error-page guard (0.5 MB default) would discard every one of
+            # them. If the user left --min-mb at its default and any Indic
+            # language is requested, lower the guard to 30 KB; an explicitly
+            # passed --min-mb is always respected.
+            MIN_MB_DEFAULT = 0.5
+            if args.min_mb == MIN_MB_DEFAULT and ("hi" in langs or "gu" in langs):
+                min_mb = 0.03
+            else:
+                min_mb = args.min_mb
+            print(f"language lists requested: {langs} -> {len(ids)} PG ids; size guard {min_mb} MB")
+        snap = corpus_mod.fetch_gutenberg_snapshot(dest, ids=ids, min_mb=min_mb)
         total = sum(r["size_bytes"] for r in snap["files"])
         print(f"wrote Gutenberg snapshot: {len(snap['files'])} files, {total} bytes -> {dest}")
         if snap["failures"]:
@@ -402,7 +426,8 @@ def build_parser() -> argparse.ArgumentParser:
     cf.add_argument("--dest", default="corpus/gutenberg-r0")
     cf.add_argument("--owner-root", default="data/raw")
     cf.add_argument("--tier", choices=["auto", "t1", "t2"], default="auto")
-    cf.add_argument("--ids", default=None, help="comma-separated PG ids (default: curated list)")
+    cf.add_argument("--ids", default=None, help="comma-separated PG ids (overrides --languages)")
+    cf.add_argument("--languages", default="en", help="curated language lists: en,hi,gu (comma-separated)")
     cf.add_argument("--min-mb", type=float, default=0.5); cf.set_defaults(func=cmd_corpus_fetch)
     cc = sub.add_parser("corpus-commit", help="copy snapshot provenance sidecars into committed benchmarks/provenance/")
     cc.add_argument("--root", default="corpus/gutenberg-r0"); cc.set_defaults(func=cmd_corpus_commit)

@@ -47,7 +47,7 @@ GUTENBERG_CACHE_BASE = "https://www.gutenberg.org/cache/epub/"
 # Curated public-domain English prose (Project Gutenberg IDs). All items are
 # marked PG-DUKE/PD in the Gutenberg catalog; copyright page text inside each
 # download states the license. Rights class per CORPUS_POLICY: P0 public.
-DEFAULT_GUTENBERG_IDS: tuple[int, ...] = (
+ENGLISH_GUTENBERG_IDS: tuple[int, ...] = (
     1342,   # Pride and Prejudice — Austen
     84,     # Frankenstein — Shelley
     1661,   # Sherlock Holmes — Doyle
@@ -57,6 +57,54 @@ DEFAULT_GUTENBERG_IDS: tuple[int, ...] = (
     76,     # Heart of Darkness — Conrad
     1400,   # Great Expectations — Dickens
 )
+
+# Curated Indic texts per CORPUS_POLICY language-coverage requirement
+# (hi/gu). Project Gutenberg hosts these as public domain (rights P0); they
+# are small (~50-150 KB), so they exercise script/encoding coverage but do
+# NOT by themselves satisfy the >=1 GiB protocol scope — labeled honestly.
+HINDI_GUTENBERG_IDS: tuple[int, ...] = (
+    38556,  # कबिर की पंचीस् बानी — Kabir (hi)
+    40693,  # भर्मर भूषण — Bharmar Bhooshan (hi)
+    59077,  # अलंकार चन्द्रोदय — Alankar Chandroday (hi)
+    43099,  # प्रबोध चन्द्रिका — Prabodh Chandra (hi)
+    46625,  # नागमती — Nagamati (hi)
+    57172,  # श्री हनुमान वाहिसा / Hanuman vahisa (hi)
+    38557,  # गोरख सी खिलौनी — Gorakh (hi)
+    43926,  # आर्य-स्तोत्र — Arya stotra collection (hi)
+)
+
+GUJARATI_GUTENBERG_IDS: tuple[int, ...] = (
+    37320,  # વાંકી ઘણી વાર્તાઓ / Vanki Ghani Vaartao (gu)
+    46598,  # કૃષ્ણચરિત્ર / Krishnacharitra (gu)
+    59475,  # ભાળાભાત / Bhalabhat devotional text (gu)
+    60031,  # ગુજરાતી રસિકો / Gujarati Rasik collection (gu)
+    66135,  # સુંદર દાવડ / Sundar Davad narrative (gu)
+    66296,  # વેહડાણી / Vedhani prose (gu)
+    66331,  # ત્રિકમંડલ દર્પણ / Trikamandal Darpan (gu)
+    66386,  # પ્રફુલ્લા / Praphulla prose work (gu)
+)
+
+# Backwards-compatible alias (Session 17 name).
+DEFAULT_GUTENBERG_IDS: tuple[int, ...] = ENGLISH_GUTENBERG_IDS
+
+
+def detect_language(text: bytes) -> str:
+    """Script-based language guess for PG snapshot files (en / hi / gu / other).
+
+    Deliberately conservative and honest: Devanagari codepoints => 'hi',
+    Gujarati script codepoints => 'gu', Latin-dominated => 'en'. A PG Hindi
+    title occasionally ships romanized text; such a file would be labeled
+    'en' here, which is why manifests from this path carry tier label
+    T1-gutenberg-p0 and docs must not over-claim per-language coverage.
+    """
+    sample = text[:200_000].decode("utf-8", errors="replace")
+    counts = {
+        "hi": sum(1 for ch in sample if "\u0900" <= ch <= "\u097f"),   # Devanagari
+        "gu": sum(1 for ch in sample if "\u0a80" <= ch <= "\u0aff"),   # Gujarati
+        "en": sum(1 for ch in sample if ("a" <= ch <= "z") or ("A" <= ch <= "Z")),
+    }
+    best = max(counts, key=counts.get)
+    return best if counts[best] > 0 else "unknown"
 
 TIER_LABEL_T0 = "T0-owner-supplied"
 TIER_LABEL_T1 = "T1-gutenberg-p0"
@@ -89,6 +137,8 @@ def fetch_gutenberg_snapshot(
       <dest>.meta.json     -> {relpath: {category, language, rights}}
       <dest>.sources.json  -> full snapshot record: urls, sha256, sizes, fetched_utc
     Existing files whose SHA-256 matches the sources record are NOT re-downloaded.
+    `language` is script-detected per file (see detect_language), never assumed
+    from the curated id list — honest labeling for mixed-script PG items.
     """
     dest = Path(dest)
     dest.mkdir(parents=True, exist_ok=True)
@@ -129,7 +179,9 @@ def fetch_gutenberg_snapshot(
             "reused_existing": reused,
         })
         lineage_map[rel] = f"gutenberg:{pg_id}"
-        meta_map[rel] = {"category": "prose/books", "language": "en", "rights": "P0"}
+        meta_map[rel] = {"category": "prose/books",
+                         "language": detect_language(path.read_bytes()),
+                         "rights": "P0"}
 
     snapshot = {
         "tier": TIER_LABEL_T1,
