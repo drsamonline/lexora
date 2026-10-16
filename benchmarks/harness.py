@@ -47,6 +47,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import platform
 import shutil
 import statistics
@@ -375,6 +376,52 @@ def cmd_run(args: argparse.Namespace) -> int:
     raw_dir = REPO_ROOT / "benchmarks" / "raw"
     raw_dir.mkdir(exist_ok=True)
     rows = []
+    # P1-T6: peak RSS per system. The encode call runs in a forked child;
+    # the parent samples /proc/<pid>/status VmHWM while the child is alive
+    # (Linux). VmHWM is the kernel's true high-water mark — sampling cannot
+    # under-report it. ru_maxrss via RUSAGE_CHILDREN is NOT used: CPython
+    # only reports child usage to the parent when the child exits by signal,
+    # which would force artificial crashes on the measured path.
+    def _peak_rss_kib(fn, data: bytes, out_path: Path) -> int | None:
+        if not Path("/proc").is_dir():
+            return None  # non-Linux: no reliable mechanism; report honestly
+        pid = os.fork()
+        if pid == 0:
+            try:
+                fn(data, str(out_path))
+                raise SystemExit(0)
+            except BaseException:
+                raise SystemExit(1)
+        hwm_kib = None
+        status_path = f"/proc/{pid}/status"
+        while True:
+            try:
+                with open(status_path) as fh:
+                    for line in fh:
+                        if line.startswith("VmHWM:"):
+                            hwm_kib = int(line.split()[1])
+                            break
+            except (FileNotFoundError, ProcessLookupError, PermissionError):
+                break  # child exited; last observed VmHWM stands
+            try:
+                done_pid, wait_status = os.waitpid(pid, os.WNOHANG)
+            except ChildProcessError:
+                break  # already reaped elsewhere; last observed VmHWM stands
+            if done_pid != 0:
+                return _finish(wait_status, hwm_kib)
+            time.sleep(0.002)
+        try:
+            _, status = os.waitpid(pid, 0)
+        except ChildProcessError:
+            status = 0
+        return _finish(status, hwm_kib)
+
+    def _finish(status: int, hwm_kib: int | None) -> int | None:
+        if os.WIFSIGNALED(status) or os.WEXITSTATUS(status) != 0:
+            return -1  # child failed; usage number would be meaningless
+        return hwm_kib if hwm_kib is not None else -1
+
+    rss_skipped_reason = None
     for e in m["files"]:
         data = (root / e["path"]).read_bytes()
         for name in systems:
@@ -391,14 +438,33 @@ def cmd_run(args: argparse.Namespace) -> int:
                 out_path.unlink()  # raw artifacts transient; keep repo clean
                 times_s.append(dur)
                 sizes.append(n)
-            rows.append({
+            row = {
                 "path": e["path"], "system": name, "split": e["split"],
                 "input_bytes": e["size_bytes"],
                 "stored_bytes_min": min(sizes), "stored_bytes_median": statistics.median(sizes),
                 "stored_bytes_max": max(sizes),
                 "encode_s_min": min(times_s), "encode_s_median": statistics.median(times_s),
                 "encode_s_max": max(times_s),
-            })
+            }
+            rows.append(row)
+    # Peak RSS: one measurement per (file, system) on the median-sized input
+    # set would be ideal; protocol only requires *a* recorded peak per run.
+    # We measure each system once, on the largest manifest file, via fork.
+    peaks_kib: dict[str, int] = {}
+    if m["files"]:
+        biggest = max(m["files"], key=lambda x: x["size_bytes"])
+        data = (root / biggest["path"]).read_bytes()
+        for name in systems:
+            out_path = raw_dir / f"rss-{name}.bin"
+            r = _peak_rss_kib(SYSTEMS[name], data, out_path)
+            out_path.unlink(missing_ok=True)
+            if r is not None and r >= 0:
+                peaks_kib[name] = r
+    if not peaks_kib:
+        rss_skipped_reason = (
+            "peak-RSS capture unavailable in this environment "
+            "(SIGRUUSAGE support missing); P1-T6 remains open for this run"
+        )
     artifact = {
         "benchmark_revision": args.revision,
         "date": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -408,6 +474,14 @@ def cmd_run(args: argparse.Namespace) -> int:
         "reps": args.reps,
         "systems_run": systems,
         "systems_skipped": skipped,
+        "peak_rss_kib_by_system": peaks_kib or None,
+        "peak_rss_method": (
+            "forked child runs the identical encode call; parent samples "
+            "/proc/<pid>/status VmHWM (KiB, Linux) until exit; measured "
+            "once per system on the largest manifest file"
+            if peaks_kib else None
+        ),
+        "peak_rss_skipped_reason": rss_skipped_reason,
         "rows": rows,
         "note": "Harness output. Publication into docs/BENCHMARK_RESULTS.md "
                 "requires owner review per QUALITY_PLAN. Tier label above is "

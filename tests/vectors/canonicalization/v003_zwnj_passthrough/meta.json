@@ -1,0 +1,13 @@
+{
+  "id": "v003_zwnj_passthrough",
+  "description": "REQ-CAN-005: ZWJ (U+200D) and ZWNJ (U+200C) pass through unchanged",
+  "canonicalizer_version": "lexcan-0.1",
+  "applied_rules": [
+    "CAN-R01",
+    "CAN-R02",
+    "CAN-R05"
+  ],
+  "declared_encoding": null,
+  "input_bytes": 38,
+  "expected_output_bytes": 36
+}

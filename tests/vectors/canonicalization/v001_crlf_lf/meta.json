@@ -1,0 +1,13 @@
+{
+  "id": "v001_crlf_lf",
+  "description": "CAN-R02: CRLF and lone CR normalize to LF; existing LF untouched",
+  "canonicalizer_version": "lexcan-0.1",
+  "applied_rules": [
+    "CAN-R01",
+    "CAN-R02",
+    "CAN-R05"
+  ],
+  "declared_encoding": null,
+  "input_bytes": 26,
+  "expected_output_bytes": 24
+}

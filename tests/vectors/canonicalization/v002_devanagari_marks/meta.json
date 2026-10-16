@@ -1,0 +1,13 @@
+{
+  "id": "v002_devanagari_marks",
+  "description": "REQ-CAN-005: Devanagari combining marks pass through byte-exact (no decomposition/reordering); soft hyphen still removed",
+  "canonicalizer_version": "lexcan-0.1",
+  "applied_rules": [
+    "CAN-R01",
+    "CAN-R02",
+    "CAN-R05"
+  ],
+  "declared_encoding": null,
+  "input_bytes": 14,
+  "expected_output_bytes": 12
+}

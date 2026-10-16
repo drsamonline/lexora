@@ -1,0 +1,13 @@
+{
+  "id": "v006_utf8_bom_stripped",
+  "description": "CAN-R01: UTF-8 BOM stripped; output has no BOM (REQ-CAN-002)",
+  "canonicalizer_version": "lexcan-0.1",
+  "applied_rules": [
+    "CAN-R01",
+    "CAN-R02",
+    "CAN-R05"
+  ],
+  "declared_encoding": null,
+  "input_bytes": 16,
+  "expected_output_bytes": 12
+}

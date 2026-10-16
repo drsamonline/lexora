@@ -1,0 +1,13 @@
+{
+  "id": "v007_utf16le_bom",
+  "description": "CAN-R01: UTF-16LE BOM detected, transcoded to UTF-8, CRLF -> LF",
+  "canonicalizer_version": "lexcan-0.1",
+  "applied_rules": [
+    "CAN-R01",
+    "CAN-R02",
+    "CAN-R05"
+  ],
+  "declared_encoding": null,
+  "input_bytes": 34,
+  "expected_output_bytes": 34
+}
