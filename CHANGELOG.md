@@ -6,6 +6,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-17 — Session 30 (GUI-M2b panels: G5 preview + G6 diagnostics):
+  - **G5 preview view** in `src/lexora/gui/app.py` — fourth view renders canonicalized text via pure Qt-free `format_preview_text` (canon audit header, line numbers, 64 KiB render cap + truncation note); read errors surface as `[exit 3]` banners through the parity map. Inspector rendering extracted to pure `format_inspect_text` and gained the full per-block index table.
+  - **G6 diagnostics history** — log pane is now an append-only banner history (cap 50, newest last) shared by all views.
+  - Suite **157 → 162 passed** (+2 Qt-free renderer units, +3 offscreen widget tests incl. history-cap and exit-3 banner paths). Continuity docs reconciled (counts 157→162; TASK_BREAKDOWN GUI-M2b → Landed, GUI-M2c row added).
 - 2026-10-17 — Session 29 (GUI-M2 async job runner; code committed as `396d5b4`):
   - **Qt-free job core** in `src/lexora/gui/service.py`: `CancelToken` (cooperative flag), `JobCancelled`, staged cancel-aware work functions `pack_file_job` / `unpack_file_job` (cancel checked before every stage — notably never reaching the write stage after cancellation during read; bounds errors still refuse BEFORE any file I/O, same exit-2 semantics as sync paths) and `JobRunner` (QThread worker adapter with `progressed(int,int)`/finished/cancelled/failed signals, queued connections for widget safety, direct-callable hooks for non-Qt consumers). Exception↔exit-code parity unchanged.
   - **Window shell now async:** pack/unpack run through `JobRunner` so the UI thread never blocks; QProgressBar + Cancel button wired to the job; inspect stays synchronous over the same tested service calls.

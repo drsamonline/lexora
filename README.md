@@ -1,7 +1,7 @@
 # LEXORA
 
 [![CI](https://github.com/drsamonline/lexora/actions/workflows/ci.yml/badge.svg)](https://github.com/drsamonline/lexora/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-157%20passed-informational)
+![Tests](https://img.shields.io/badge/tests-162%20passed-informational)
 ![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 

@@ -267,3 +267,87 @@ def test_cancel_before_start_writes_no_output(window, tmp_path):
         assert not arc.exists(), "cancel raced past write stage yet wrote output"
     else:
         assert "packed" in text or "[exit" in text, text
+
+
+# --- G5 preview + G6 diagnostics history (Session 30, GUI-M2b) --------------
+
+def test_pure_renderers_without_qt():
+    """format_preview_text/format_inspect_text are Qt-free module functions:
+    importable and exercisable without a QApplication (thin-client rule —
+    rendering logic is testable headlessly by construction)."""
+    from lexora.gui.app import format_preview_text
+    from lexora.gui.service import AppService, JobResult
+
+    res = AppService().run_canon_meta(b"hello\r\nworld")
+    text = format_preview_text(res)
+    assert "applied rules:" in text and "CAN-R01" in text
+    assert "     1 | hello" in text and "     2 | world" in text
+    # failure passthrough uses the exit-code banner shape
+    fail = format_preview_text(JobResult(False, error="boom", exit_code=4))
+    assert fail == "[exit 4] boom"
+
+
+def test_truncation_note_only_when_over_cap(tmp_path):
+    from lexora.gui.app import PREVIEW_MAX_BYTES, format_preview_text
+    from lexora.gui.service import AppService
+
+    small = format_preview_text(AppService().run_canon_meta(b"tiny"))
+    assert "truncated" not in small
+    big = format_preview_text(
+        AppService().run_canon_meta(b"a" * (PREVIEW_MAX_BYTES + 10)))
+    assert "truncated" in big
+
+
+def test_preview_view_renders_canonicalized_text(window, tmp_path):
+    src = tmp_path / "raw.txt"
+    src.write_bytes(b"alpha\r\nbeta\r\ngamma")
+    combo = _find(window, QComboBox)
+    in_edit = next(le for le in window.findChildren(QLineEdit)
+                   if "input file" in le.placeholderText())
+    run_btn = _find(window, QPushButton, "Run")
+    log = _find(window, QTextEdit)
+
+    combo.setCurrentText("preview")
+    in_edit.setText(str(src))
+    run_btn.click()
+    text = log.toPlainText()
+    assert "canonicalizer:" in text
+    assert "     1 | alpha" in text and "     3 | gamma" in text
+    assert "input:  18 B" in text and "output: 16 B" in text  # CRLFs folded
+
+
+def test_preview_missing_file_shows_exit3_banner(window, tmp_path):
+    combo = _find(window, QComboBox)
+    in_edit = next(le for le in window.findChildren(QLineEdit)
+                   if "input file" in le.placeholderText())
+    run_btn = _find(window, QPushButton, "Run")
+    log = _find(window, QTextEdit)
+
+    combo.setCurrentText("preview")
+    in_edit.setText(str(tmp_path / "nope.txt"))
+    run_btn.click()
+    assert "[exit 3]" in log.toPlainText()
+
+
+def test_diagnostics_history_accumulates_and_caps(window, tmp_path):
+    """G6: every banner stays in history (newest last), capped at
+    DIAGNOSTICS_HISTORY entries."""
+    from lexora.gui.app import DIAGNOSTICS_HISTORY
+
+    combo = _find(window, QComboBox)
+    lineedits = window.findChildren(QLineEdit)
+    in_edit = next(le for le in lineedits if "input file" in le.placeholderText())
+    run_btn = _find(window, QPushButton, "Run")
+    log = _find(window, QTextEdit)
+
+    combo.setCurrentText("inspect")
+    in_edit.setText("")
+    expected = []
+    for i in range(DIAGNOSTICS_HISTORY + 10):
+        msg = f"choose an input file first #{i}" if i == 0 else "choose an input file first"
+        run_btn.click()
+        expected.append("choose an input file first")
+    text = log.toPlainText()
+    entries = [e for e in text.split("\n\n") if e]
+    assert len(entries) == DIAGNOSTICS_HISTORY, len(entries)
+    assert all(e == "choose an input file first" for e in entries)
