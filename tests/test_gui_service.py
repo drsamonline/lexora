@@ -245,7 +245,7 @@ def test_golden_vector_readable_via_service(tmp_path):
 
 # ---------- Qt isolation guarantees ----------
 
-@pytest.mark.parametrize("mod", ["service.py", "app.py"])
+@pytest.mark.parametrize("mod", ["service.py", "app.py", "crash.py"])
 def test_no_top_level_qt_import_in_service(mod):
     """Qt isolation (ADR-0008 decision 1): PySide6 may only be imported
     inside function bodies in the gui package — never at module level.
@@ -436,3 +436,102 @@ def test_settings_corrupt_or_out_of_range_values_fall_back(tmp_path):
 def test_settings_path_honors_xdg(monkeypatch, tmp_path):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     assert settings_path() == tmp_path / "lexora" / SETTINGS_FILENAME
+
+
+# ---- GUI-M3a: path resolution for file-picker pre-fills (Qt-free) ----------
+
+from lexora.gui.service import resolve_path  # noqa: E402
+
+
+def test_resolve_path_empty_is_noop():
+    assert resolve_path("") == (None, None)
+
+
+def test_resolve_path_directory(tmp_path):
+    got, err = resolve_path(str(tmp_path))
+    assert err is None and got == tmp_path
+
+
+def test_resolve_path_existing_file_seeds_parent(tmp_path):
+    f = tmp_path / "in.txt"
+    f.write_bytes(b"x")
+    got, err = resolve_path(str(f))
+    assert err is None and got == tmp_path
+
+
+def test_resolve_path_missing_file_with_live_parent(tmp_path):
+    got, err = resolve_path(str(tmp_path / "nope.lxz"))
+    assert err is None and got == tmp_path   # seed dialog at parent dir
+
+
+def test_resolve_path_missing_everywhere_errors(tmp_path):
+    got, err = resolve_path(str(tmp_path / "ghost" / "gone.txt"))
+    assert got is None and err and "does not exist" in err
+
+
+def test_resolve_path_tilde_expansion():
+    got, err = resolve_path("~")
+    assert err is None and got is not None and got.is_dir()
+
+
+# ---- GUI-M3a: crash log sink (stdlib-only; no Qt anywhere) ------------------
+
+def test_crash_log_records_and_reads(tmp_path):
+    from lexora.gui.crash import CrashLog
+
+    log = CrashLog(tmp_path / "crash.log.jsonl")
+    assert log.read_records() == []          # absent file -> empty, no raise
+    try:
+        raise ValueError("boom-test")
+    except ValueError as exc:
+        rec = log.record_exception(exc)
+    assert rec["type"] == "ValueError" and "boom-test" in rec["message"]
+    assert "Traceback" in rec["traceback"] or "ValueError" in rec["traceback"]
+    again = log.read_records()
+    assert len(again) == 1 and again[0]["type"] == "ValueError"
+    # append-only: second record keeps the first
+    log.record_exception(RuntimeError("second"))
+    assert [r["type"] for r in log.read_records()] == ["ValueError", "RuntimeError"]
+
+
+def test_crash_excepthook_logs_then_chains(tmp_path, monkeypatch):
+    from lexora.gui.crash import CrashLog
+
+    seen: list[tuple] = []
+    monkeypatch.setattr(sys, "excepthook", lambda *a: seen.append(a),
+                        raising=True)
+    log = CrashLog(tmp_path / "c.jsonl")
+    log.install()
+    assert sys.excepthook.__func__ is CrashLog.excepthook
+    assert sys.excepthook.__self__ is log
+    try:
+        raise KeyError("k")
+    except KeyError as first:
+        exc = first
+        log.excepthook(KeyError, exc, exc.__traceback__)
+    assert seen[0][0] is KeyError and seen[0][1] is exc   # chained to previous
+    assert [r["type"] for r in log.read_records()] == ["KeyError"]
+    # KeyboardInterrupt must NOT be logged as a crash
+    log.excepthook(KeyboardInterrupt, KeyboardInterrupt(), None)
+    assert [r["type"] for r in log.read_records()] == ["KeyError"]
+
+
+def test_crash_install_enables_faulthandler(tmp_path):
+    import faulthandler
+
+    from lexora.gui import crash
+    prev_hook = sys.excepthook
+    try:
+        log = crash.install(tmp_path / "c.jsonl")
+        assert faulthandler.is_enabled()
+        assert sys.excepthook.__func__ is crash.CrashLog.excepthook
+        assert sys.excepthook.__self__ is log
+    finally:
+        sys.excepthook = prev_hook
+
+
+def test_crash_default_path_honors_xdg(monkeypatch, tmp_path):
+    from lexora.gui.crash import crash_log_path
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    assert crash_log_path() == tmp_path / "lexora" / "crash.log.jsonl"

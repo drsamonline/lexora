@@ -19,7 +19,7 @@ point (`lexora-gui`) lands in pyproject only once owner has run the window
 (ADR-0008 decision 2).
 """
 
-__all__ = ["app", "service"]
+__all__ = ["app", "crash", "service"]
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -182,6 +182,32 @@ def save_settings(values: dict[str, Any],
     return p
 
 
+def resolve_path(path: str) -> tuple[Path | None, str | None]:
+    """Resolve a user-supplied path string for file-picker pre-fills.
+
+    Returns ``(resolved_or_None, error_or_None)`` — mirrors the CLI's
+    ``_resolve_input_path`` posture (exit-3 class problems surface as
+    ``FileOpError`` in the run flows; here we only need a lenient
+    resolution to seed dialogs, so failures return ``(None, message)``).
+    Accepts bare names, relative paths, directories, and ``~`` expansion.
+    """
+    if not path:
+        return None, None
+    try:
+        candidate = Path(path).expanduser()
+    except RuntimeError as exc:  # expanduser fails when home is unset
+        return None, f"cannot expand path {path!r}: {exc}"
+    if candidate.is_dir():
+        return candidate, None
+    if candidate.exists():
+        return candidate.parent if candidate.parent.is_dir() else None, None
+    # Missing file: seed the dialog at its parent directory if that exists.
+    parent = candidate.parent
+    if parent != candidate and parent.is_dir():
+        return parent, None
+    return None, f"path does not exist: {path!r}"
+
+
 # ---- GUI-M2 job runner (Qt-free core) --------------------------------------
 # DESIGN_GUI §2: "one thin adapter: async job runner, progress, cancellation"
 # and §3: long operations run on worker threads with cooperative cancellation;
