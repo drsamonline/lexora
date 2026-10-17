@@ -6,6 +6,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-17 — Session 29 (GUI-M2 async job runner; code committed as `396d5b4`):
+  - **Qt-free job core** in `src/lexora/gui/service.py`: `CancelToken` (cooperative flag), `JobCancelled`, staged cancel-aware work functions `pack_file_job` / `unpack_file_job` (cancel checked before every stage — notably never reaching the write stage after cancellation during read; bounds errors still refuse BEFORE any file I/O, same exit-2 semantics as sync paths) and `JobRunner` (QThread worker adapter with `progressed(int,int)`/finished/cancelled/failed signals, queued connections for widget safety, direct-callable hooks for non-Qt consumers). Exception↔exit-code parity unchanged.
+  - **Window shell now async:** pack/unpack run through `JobRunner` so the UI thread never blocks; QProgressBar + Cancel button wired to the job; inspect stays synchronous over the same tested service calls.
+  - Suite **148 → 157 passed** (+9: job-core parity incl. cancellation-before-write race tests, widget-driven runner behavior under offscreen Qt). Docs catch-up landed alongside this entry (STATUS/PROGRESS/README/TASK_BREAKDOWN counts 148→157, GUI-M2 row, SESSION_LOG Session 29).
 - 2026-10-17 — Session 28 (GUI-M1 window shell + launcher fix + docs catch-up):
   - **`src/lexora/gui/app.py`** — G1 main window hosting pack/unpack/inspect views (G2/G3/G4 metadata feed); all Qt imports lazy, widgets contain zero business logic (pure AppService delegation per ADR-0008). `lexora-gui` console script + `python -m lexora.gui` (`__main__.py`) launch it.
   - **Service file-level ops** — `read_file`/`atomic_write` (temp+fsync+rename mirroring CLI), `pack_file` (optional canonicalize-first pre-pass), `unpack_file` (refusal-before-write parity), `inspect_file`, `verify_file`; new `FileOpError` ↔ exit 3 in the parity map; `run_pack` result enriched with byte counts for view summaries.

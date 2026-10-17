@@ -340,3 +340,14 @@ Append-only, dated session summaries. Never rewrite history; append a correction
   4. **Docs catch-up (Session 27 leftovers included):** CHANGELOG entries for S27+S28; STATUS header/rows, PROGRESS phase row + test inventory (7→9 files incl. gui suites), README badge 108→148; obsolete "zero GUI code" claims replaced with accurate M1-shell status everywhere; TASK_BREAKDOWN GUI-M1 row added.
 - **Failures/blockers:** None new. Push still needs owner token; Actions paused (OQ-15).
 - **Next action:** Session 29 — GUI-M2 job runner (QThread/cancel/progress via the `_make_qthread_worker` stub) + G5 preview/G6 diagnostics panels, or backfill remaining M1 evidence items first if owner prefers closure over breadth.
+
+## Session 29 — 2026-10-17 (GUI-M2 async job runner)
+
+- **State at start:** clean tree at `62b7343` (Session 28), 148 tests passing baseline verified live.
+- **What landed (code committed as `396d5b4`; docs catch-up in this follow-on commit):**
+  1. **Qt-free job core** in `src/lexora/gui/service.py`: `CancelToken` (cooperative flag with `check()` raising `JobCancelled`), staged cancel-aware work functions `pack_file_job`/`unpack_file_job` (cancel checked before every stage; never reaches the write stage after cancellation during read; bounds errors still refuse BEFORE any file I/O — exit-2 semantics identical to sync paths), and `JobRunner` — QThread worker adapter emitting `progressed(int,int)`/finished/cancelled/failed signals (queued connections ⇒ widget-safe), with direct-callable hooks for non-Qt consumers. All Qt imports stay lazy inside `_make_qthread_worker` (ADR-0008 decision 1).
+  2. **Window shell made async** (`src/lexora/gui/app.py`): pack/unpack now run through `JobRunner` so the UI thread never blocks; QProgressBar + Cancel button wired to the job; inspect remains synchronous over the same tested service calls.
+  3. **Tests:** suite **148 → 157 passed** (+9: job-core parity incl. cancellation-before-write race coverage, widget-driven runner behavior under offscreen Qt).
+- **Docs catch-up (this commit):** CHANGELOG Session-29 entry; STATUS header/test rows; PROGRESS phase row + test inventory progression; README badge 148→157; TASK_BREAKDOWN GUI-M2 row → Partially landed + new GUI-M2b row (G5 preview/G6 diagnostics pending); NEXT_SESSION rewritten for Session 30.
+- **Failures/blockers:** None new. Push still needs owner token (`.vault/github_token.txt` absent); Actions paused (OQ-15); benchmarks unchanged (R1+R2, no ADR-0001 verdict).
+- **Next action:** Session 30 — GUI-M2b: G5 text-preview pane + G6 diagnostics/log panel in `app.py` (offscreen-tested), then G7 settings/persistence sketch; or grow corpus toward protocol scope for benchmark R3 publication if owner prefers evidence over UI breadth.
