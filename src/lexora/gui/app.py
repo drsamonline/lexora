@@ -35,20 +35,27 @@ def _service():
 
 def build_window():
     """Create the G1 main window with the G2/G3/G4 view stack. Returns a
-    ready-to-show QMainWindow. Raises ImportError with guidance if Qt absent."""
+    ready-to-show QMainWindow. Raises ImportError with guidance if Qt absent.
+
+    GUI-M2: pack/unpack run through `JobRunner` (QThread worker) so the UI
+    thread never blocks; a progress bar + Cancel button drive the job. The
+    views still own no logic — they only wire widgets to service calls."""
     try:
         from PySide6.QtWidgets import (
             QComboBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
-            QPushButton, QTextEdit, QVBoxLayout, QWidget,
+            QProgressBar, QPushButton, QTextEdit, QVBoxLayout, QWidget,
         )
     except ImportError as exc:  # pragma: no cover - depends on environment
         raise ImportError(
             "The LEXORA GUI requires the [gui] extra: pip install 'lexora[gui]'"
         ) from exc
 
+    from lexora.gui.service import JobRunner, pack_file_job, unpack_file_job
+
     svc = _service()
+    runner = JobRunner()
     win = QMainWindow()
-    win.setWindowTitle(f"{APP_TITLE} — archive toolkit (M1 preview)")
+    win.setWindowTitle(f"{APP_TITLE} — archive toolkit (M2 preview)")
 
     central = QWidget(win)
     win.setCentralWidget(central)
@@ -75,16 +82,33 @@ def build_window():
     canon_check = QComboBox()
     canon_check.addItems(["pack input as-is", "canonicalize first"])
     run_btn = QPushButton("Run")
+    cancel_btn = QPushButton("Cancel")
+    cancel_btn.setEnabled(False)
+    progress = QProgressBar()
+    progress.setRange(0, 0)      # busy indicator while hidden/idle
+    progress.setVisible(False)
     log = QTextEdit()
     log.setReadOnly(True)
 
     form = QHBoxLayout()
     for w in (QLabel("in:"), in_edit, QLabel("out:"), out_edit,
               QLabel("level:"), level_edit, QLabel("block:"), block_edit,
-              canon_check, run_btn):
+              canon_check, run_btn, cancel_btn):
         form.addWidget(w)
     root.addLayout(form)
+    root.addWidget(progress)
     root.addWidget(log, stretch=1)
+
+    status = QLabel("ready")
+    win.statusBar().addWidget(status)
+
+    def _job_done(text: str) -> None:
+        progress.setVisible(False)
+        progress.setRange(0, 0)
+        run_btn.setEnabled(True)
+        cancel_btn.setEnabled(False)
+        log.setPlainText(text)
+        status.setText("ready")
 
     def show_inspect_result(res) -> None:
         if res.ok:
@@ -99,6 +123,11 @@ def build_window():
         else:
             log.setPlainText(f"[exit {res.exit_code}] {res.error}")
 
+    def on_progress(done: int, total: int) -> None:
+        if total > 0:
+            progress.setRange(0, total)
+            progress.setValue(done)
+
     def on_run() -> None:
         view = view_box.currentText()
         src, dst = in_edit.text().strip(), out_edit.text().strip()
@@ -111,32 +140,52 @@ def build_window():
         except ValueError:
             log.setPlainText("level and block size must be integers")
             return
-        if view == "pack":
-            if not dst:
-                log.setPlainText("pack needs an output file (.lxz)")
-                return
-            res = svc.pack_file(src, dst, level=level, block_size=block,
-                                canonicalize_first=(canon_check.currentIndex() == 1))
-            log.setPlainText(
-                f"packed {res.value['bytes_in']} B -> {res.value['bytes_out']} B "
-                f"(ratio {res.value['bytes_out'] / max(res.value['bytes_in'], 1):.3f}) -> {dst}"
-                if res.ok else f"[exit {res.exit_code}] {res.error}")
-        elif view == "unpack":
-            if not dst:
-                log.setPlainText("unpack needs an output file")
-                return
-            res = svc.unpack_file(src, dst)
-            log.setPlainText(
-                f"unpacked {res.value['bytes_in']} B -> {res.value['bytes_out']} B -> {dst}"
-                if res.ok else f"[exit {res.exit_code}] {res.error} (no output written)")
-        else:  # inspect (also serves G4 metadata feed; verify button = M2 polish)
+        if view == "inspect":  # metadata-only read: fast, stays synchronous
             res = svc.inspect_file(src)
             show_inspect_result(res)
+            return
+        if not dst:
+            log.setPlainText(f"{view} needs an output file")
+            return
+        # Heavy paths go async through the runner (GUI-M2).
+        run_btn.setEnabled(False)
+        cancel_btn.setEnabled(True)
+        progress.setVisible(True)
+        progress.setRange(0, 0)
+        status.setText(f"{view} running…")
+        if view == "pack":
+            token = runner.start(
+                pack_file_job, svc, src, dst,
+                level=level, block_size=block,
+                canonicalize_first=(canon_check.currentIndex() == 1),
+                progress_cb=on_progress,
+                on_finished=lambda res: _job_done(
+                    f"packed {res.value['bytes_in']} B -> {res.value['bytes_out']} B "
+                    f"(ratio {res.value['bytes_out'] / max(res.value['bytes_in'], 1):.3f}) -> {dst}"
+                    if res.ok else f"[exit {res.exit_code}] {res.error}"),
+                on_cancelled=lambda: _job_done("cancelled (no partial output written)"),
+                on_error=lambda exc: _job_done(f"internal error: {exc!r}"),
+            )
+        else:  # unpack
+            token = runner.start(
+                unpack_file_job, svc, src, dst,
+                progress_cb=on_progress,
+                on_finished=lambda res: _job_done(
+                    f"unpacked {res.value['bytes_in']} B -> {res.value['bytes_out']} B -> {dst}"
+                    if res.ok else f"[exit {res.exit_code}] {res.error} (no output written)"),
+                on_cancelled=lambda: _job_done("cancelled (no partial output written)"),
+                on_error=lambda exc: _job_done(f"internal error: {exc!r}"),
+            )
+        win._lexora_token = token  # keep referenced for GC safety
+
+    def on_cancel() -> None:
+        runner.cancel()
+        cancel_btn.setEnabled(False)
+        status.setText("cancelling…")
 
     run_btn.clicked.connect(on_run)
+    cancel_btn.clicked.connect(on_cancel)
 
-    status = QLabel("ready")
-    win.statusBar().addWidget(status)
     view_box.currentTextChanged.connect(lambda v: status.setText(f"{v} view"))
     return win
 

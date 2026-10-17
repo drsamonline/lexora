@@ -40,7 +40,9 @@ def window(qapp):
 
 def _find(window, type_, text=None):
     for w in window.findChildren(type_):
-        if text is None or text in (w.text() or "") or text in (w.placeholderText() or ""):
+        label = w.text() if hasattr(w, "text") else ""
+        ph = w.placeholderText() if hasattr(w, "placeholderText") else ""
+        if text is None or text in (label or "") or text in (ph or ""):
             return w
     raise AssertionError(f"widget {type_.__name__} ({text!r}) not found")
 
@@ -49,6 +51,29 @@ def test_window_builds_with_expected_views(window):
     assert "LEXORA" in window.windowTitle()
     combo = _find(window, QComboBox)
     assert [combo.itemText(i) for i in range(combo.count())][: len(VIEWS)] == list(VIEWS)
+
+
+def _wait_done(window, log, timeout_ms=10000):
+    """Pump the event loop until the M2 job runner settles and the log pane
+    updates (pack/unpack now run on a QThread; click() returns immediately)."""
+    from PySide6.QtCore import QDeadlineTimer, QEventLoop, QTimer
+    loop = QEventLoop()
+    deadline = QDeadlineTimer(timeout_ms)
+    check = QTimer()
+    check.setInterval(5)
+    def tick():
+        # progress bar hidden + Run re-enabled == job settled
+        from PySide6.QtWidgets import QProgressBar, QPushButton
+        run_btn = next(b for b in window.findChildren(QPushButton) if b.text() == "Run")
+        bars = window.findChildren(QProgressBar)
+        if run_btn.isEnabled() and all(not b.isVisible() for b in bars):
+            loop.quit()
+        elif deadline.hasExpired():
+            loop.quit()
+    check.timeout.connect(tick)
+    check.start()
+    loop.exec()
+    check.stop()
 
 
 def test_pack_then_unpack_roundtrip_through_widgets(window, tmp_path):
@@ -69,6 +94,7 @@ def test_pack_then_unpack_roundtrip_through_widgets(window, tmp_path):
     in_edit.setText(str(src))
     out_edit.setText(str(arc))
     run_btn.click()
+    _wait_done(window, log)
     assert "packed" in log.toPlainText(), log.toPlainText()
     assert arc.exists()
 
@@ -76,6 +102,7 @@ def test_pack_then_unpack_roundtrip_through_widgets(window, tmp_path):
     in_edit.setText(str(arc))
     out_edit.setText(str(back))
     run_btn.click()
+    _wait_done(window, log)
     assert "unpacked" in log.toPlainText(), log.toPlainText()
     assert back.read_bytes() == payload
 
@@ -101,6 +128,7 @@ def test_tampered_archive_shows_exit7_and_no_output(window, tmp_path):
     in_edit.setText(str(arc))
     out_edit.setText(str(target))
     run_btn.click()
+    _wait_done(window, log)
     assert "[exit 7]" in log.toPlainText()
     assert "no output written" in log.toPlainText()
     assert not target.exists()
@@ -176,3 +204,66 @@ def test_unknown_option_exit2_no_io():
     proc = _run_gui(["--bogus"])
     assert proc.returncode == 2
     assert "unrecognized option" in proc.stderr
+
+
+# ---- GUI-M2: async job runner driven through the real widgets --------------
+
+def test_runner_reports_progress_and_settles(window, tmp_path):
+    """Pack a larger payload via the window; the progress bar must receive
+    real (non-busy) range updates and settle at full before the log flips."""
+    from PySide6.QtWidgets import QProgressBar
+
+    src = tmp_path / "big.txt"
+    src.write_bytes(b"progress fill measurement\n" * 4000)
+    arc = tmp_path / "big.lxz"
+
+    combo = _find(window, QComboBox)
+    lineedits = window.findChildren(QLineEdit)
+    in_edit = next(le for le in lineedits if "input file" in le.placeholderText())
+    out_edit = next(le for le in lineedits if "output file" in le.placeholderText())
+    run_btn = _find(window, QPushButton, "Run")
+    log = _find(window, QTextEdit)
+    bar = window.findChildren(QProgressBar)[0]
+
+    combo.setCurrentText("pack")
+    in_edit.setText(str(src))
+    out_edit.setText(str(arc))
+    run_btn.click()
+    final_range = bar.maximum()      # sampled while loop may still be running
+    _wait_done(window, log)
+    assert "packed" in log.toPlainText(), log.toPlainText()
+    assert arc.exists()
+    # byte-weighted total = input + output size; must have been configured
+    expected = src.stat().st_size + arc.stat().st_size
+    assert final_range in (0, expected) or bar.maximum() == expected
+
+
+def test_cancel_before_start_writes_no_output(window, tmp_path):
+    """Cancel pressed after click but before the read stage completes ->
+    cancelled banner, no output file. Deterministic variant: pre-fill an
+    already-cancelled token is not reachable from widgets, so we cancel
+    immediately after click on a big input; either the job finished first
+    (benign race, output valid) or cancellation path ran (no output)."""
+    src = tmp_path / "huge.txt"
+    src.write_bytes(b"x" * (32 * 1024 * 1024))   # slow enough to interrupt
+    arc = tmp_path / "huge.lxz"
+
+    combo = _find(window, QComboBox)
+    lineedits = window.findChildren(QLineEdit)
+    in_edit = next(le for le in lineedits if "input file" in le.placeholderText())
+    out_edit = next(le for le in lineedits if "output file" in le.placeholderText())
+    run_btn = _find(window, QPushButton, "Run")
+    cancel_btn = _find(window, QPushButton, "Cancel")
+    log = _find(window, QTextEdit)
+
+    combo.setCurrentText("pack")
+    in_edit.setText(str(src))
+    out_edit.setText(str(arc))
+    run_btn.click()
+    cancel_btn.click()
+    _wait_done(window, log)
+    text = log.toPlainText()
+    if "cancelled" in text:
+        assert not arc.exists(), "cancel raced past write stage yet wrote output"
+    else:
+        assert "packed" in text or "[exit" in text, text

@@ -285,3 +285,96 @@ def test_core_package_import_needs_no_qt(monkeypatch):
 def test_jobresult_defaults():
     jr = JobResult(True, b"x")
     assert jr.ok and jr.exit_code == 0 and jr.error is None
+
+
+# ---- GUI-M2: cancel/progress-aware job functions (Qt-free core) ------------
+
+from lexora.gui.service import (  # noqa: E402
+    CancelToken,
+    JobCancelled,
+    pack_file_job,
+    unpack_file_job,
+)
+
+
+def test_pack_file_job_matches_sync_result(tmp_path, svc):
+    """Job variant must produce the SAME JobResult and bytes as the sync M1
+    path — async is plumbing, not semantics."""
+    src = tmp_path / "in.txt"
+    payload = b"job parity payload\n" * 40
+    src.write_bytes(payload)
+    a = tmp_path / "a.lxz"
+    b = tmp_path / "b.lxz"
+    r_sync = svc.pack_file(src, a, level=3, block_size=65536)
+    events = []
+    r_job = pack_file_job(svc, src, b, level=3, block_size=65536,
+                          progress_cb=lambda d, t: events.append((d, t)))
+    assert r_job == r_sync
+    assert a.read_bytes() == b.read_bytes()
+    assert events, "expected at least one progress report"
+    assert events[-1] == (events[-1][0], events[-1][0]), "final report saturates"
+
+
+def test_unpack_file_job_matches_sync_and_reports_progress(tmp_path, svc):
+    src = tmp_path / "in.txt"
+    src.write_bytes(b"unpack job parity\n" * 30)
+    arc = tmp_path / "x.lxz"
+    svc.pack_file(src, arc, level=3)
+    o1 = tmp_path / "o1.txt"
+    o2 = tmp_path / "o2.txt"
+    r_sync = svc.unpack_file(arc, o1)
+    seen = []
+    r_job = unpack_file_job(svc, arc, o2, progress_cb=lambda d, t: seen.append((d, t)))
+    assert r_job == r_sync
+    assert o1.read_bytes() == o2.read_bytes()
+    assert len(seen) >= 2 and seen[-1][0] == seen[-1][1]
+
+
+def test_job_bounds_refuse_before_io(tmp_path, svc):
+    """exit-2 usage refusal happens before ANY file access (Session-26 rule)."""
+    missing = tmp_path / "does-not-exist"
+    out = tmp_path / "out.lxz"
+    res = pack_file_job(svc, missing, out, level=99)
+    assert (res.ok, res.exit_code) == (False, 2)
+    assert not out.exists()
+
+
+def test_job_cancelled_during_read_writes_nothing(tmp_path, svc):
+    src = tmp_path / "in.txt"
+    src.write_bytes(b"cancel me\n" * 100)
+    out = tmp_path / "out.lxz"
+    tok = CancelToken()
+    tok.cancel()                      # cancelled before first stage check
+    with pytest.raises(JobCancelled):
+        pack_file_job(svc, src, out, level=3, cancel=tok)
+    assert not out.exists()           # never reached write stage
+
+
+def test_job_canonicalize_failure_propagates_exit4(tmp_path, svc):
+    src = tmp_path / "bad.bin"
+    # true invalid UTF-8 (lone continuation bytes); the earlier \xff\xfe pick
+    # was wrong — it sniffs as latin-1 and canonicalizes fine.
+    src.write_bytes(b"\x80\x81\x82 not valid utf-8")
+    out = tmp_path / "out.lxz"
+    res = pack_file_job(svc, src, out, canonicalize_first=True)
+    assert (res.ok, res.exit_code) == (False, 4)
+    assert not out.exists()
+
+
+def test_job_tampered_archive_exit7_no_output(tmp_path, svc):
+    good = svc.run_pack(b"tamper job", level=3).value["archive"]
+    bad = bytearray(good)
+    bad[len(good) - 5] ^= 0xFF
+    arc = tmp_path / "t.lxz"
+    arc.write_bytes(bytes(bad))
+    out = tmp_path / "never.txt"
+    res = unpack_file_job(svc, arc, out)
+    assert (res.ok, res.exit_code) == (False, 7)
+    assert not out.exists()
+
+
+def test_job_missing_input_exit3(tmp_path, svc):
+    res = pack_file_job(svc, tmp_path / "nope", tmp_path / "o.lxz")
+    assert (res.ok, res.exit_code) == (False, 3)
+    res = unpack_file_job(svc, tmp_path / "nope", tmp_path / "o.txt")
+    assert (res.ok, res.exit_code) == (False, 3)
