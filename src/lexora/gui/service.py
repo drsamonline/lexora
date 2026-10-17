@@ -23,7 +23,11 @@ Exit-code mapping source of truth: docs/CLI_REFERENCE.md + src/lexora/cli.py
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
+import os
+import tempfile
+from pathlib import Path
 from typing import Any, Callable
 
 from lexora import __version__
@@ -58,10 +62,16 @@ class UsageError(ValueError):
     """Bad parameters refused before any I/O — GUI analogue of CLI exit 2."""
 
 
+class FileOpError(OSError):
+    """Input/output file failure — GUI analogue of CLI exit 3 (file errors)."""
+
+
 def exit_code_for(exc: BaseException) -> int:
     """Frozen CLI exit code corresponding to a service-layer exception."""
     if isinstance(exc, UsageError):
         return 2
+    if isinstance(exc, FileOpError):
+        return 3
     for exc_type, code in EXIT_BY_EXC.items():
         if isinstance(exc, exc_type):
             return code
@@ -144,7 +154,9 @@ class AppService:
         try:
             _check_level(level)
             _check_block_size(block_size)
-            return JobResult(True, lxz_pack(canonical, level=level, block_size=block_size))
+            blob = lxz_pack(canonical, level=level, block_size=block_size)
+            return JobResult(True, {"archive": blob, "bytes_in": len(canonical),
+                                    "bytes_out": len(blob)})
         except (UsageError, CodecError, ContainerError) as exc:
             return JobResult(False, error=str(exc), exit_code=exit_code_for(exc))
 
@@ -153,6 +165,94 @@ class AppService:
             return JobResult(True, unpack(archive, only_block=only_block))
         except ContainerError as exc:
             return JobResult(False, error=str(exc), exit_code=exit_code_for(exc))
+
+    # ---- file-level operations (views own dialogs; service owns I/O) ---
+    # Parity note: these mirror the CLI's file handling — read errors map
+    # to exit 3 (CLI_REFERENCE); writes are atomic temp+rename via
+    # `atomic_write` so a failed write never leaves a partial output file
+    # (same guarantee `unpack` gives at CLI level, REQ-SEC-004).
+    @staticmethod
+    def read_file(path: str | os.PathLike[str]) -> bytes:
+        try:
+            return Path(path).read_bytes()
+        except OSError as exc:
+            raise FileOpError(f"cannot read {path}: {exc}") from exc
+
+    @staticmethod
+    def atomic_write(data: bytes, path: str | os.PathLike[str]) -> None:
+        dst = Path(path)
+        fd, tmp_name = tempfile.mkstemp(dir=str(dst.parent or Path(".")),
+                                        prefix=f".{dst.name}.", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "wb") as fh:
+                fh.write(data)
+                fh.flush()
+                os.fsync(fh.fileno())
+            os.replace(tmp_name, dst)
+        except BaseException:
+            with contextlib.suppress(OSError):
+                os.unlink(tmp_name)
+            raise
+
+    def pack_file(self, in_path: str | os.PathLike[str], out_path: str | os.PathLike[str],
+                  *, level: int = 19, block_size: int = MAX_BLOCK_SIZE,
+                  canonicalize_first: bool = False,
+                  declared_encoding: str | None = None) -> JobResult:
+        """G2 one-shot: raw/canonical file -> .lxz file. Mirrors
+        `lexora pack` (+ optional canon pre-pass like `pipe`)."""
+        try:
+            raw = self.read_file(in_path)
+        except FileOpError as exc:
+            return JobResult(False, error=str(exc), exit_code=exit_code_for(exc))
+        if canonicalize_first:
+            canon = self.run_canon(raw, declared_encoding=declared_encoding)
+            if not canon.ok:
+                return canon
+            payload = canon.value
+        else:
+            payload = raw
+        packed = self.run_pack(payload, level=level, block_size=block_size)
+        if not packed.ok:
+            return packed
+        try:
+            self.atomic_write(packed.value["archive"], out_path)
+        except OSError as exc:
+            return JobResult(False, error=f"cannot write {out_path}: {exc}", exit_code=3)
+        return JobResult(True, {"bytes_in": packed.value["bytes_in"],
+                                "bytes_out": packed.value["bytes_out"]})
+
+    def unpack_file(self, in_path: str | os.PathLike[str], out_path: str | os.PathLike[str],
+                    *, only_block: int | None = None) -> JobResult:
+        """G3 one-shot: .lxz file -> payload file. Refusal happens BEFORE
+        any byte is written (parity with CLI exit-7 no-output behavior)."""
+        try:
+            archive = self.read_file(in_path)
+        except FileOpError as exc:
+            return JobResult(False, error=str(exc), exit_code=exit_code_for(exc))
+        res = self.run_unpack(archive, only_block=only_block)
+        if not res.ok:
+            return res
+        try:
+            self.atomic_write(res.value, out_path)
+        except OSError as exc:
+            return JobResult(False, error=f"cannot write {out_path}: {exc}", exit_code=3)
+        return JobResult(True, {"bytes_in": len(archive), "bytes_out": len(res.value)})
+
+    def inspect_file(self, in_path: str | os.PathLike[str]) -> JobResult:
+        """G4 inspector feed for a file on disk."""
+        try:
+            archive = self.read_file(in_path)
+        except FileOpError as exc:
+            return JobResult(False, error=str(exc), exit_code=exit_code_for(exc))
+        return self.run_inspect(archive)
+
+    def verify_file(self, in_path: str | os.PathLike[str]) -> JobResult:
+        """G4 'verify all' button feed for a file on disk."""
+        try:
+            archive = self.read_file(in_path)
+        except FileOpError as exc:
+            return JobResult(False, error=str(exc), exit_code=exit_code_for(exc))
+        return self.run_verify(archive)
 
     def run_inspect(self, archive: bytes) -> JobResult:
         """G4 inspector feed: header+index metadata only (no payload decode)."""

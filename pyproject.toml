@@ -29,6 +29,10 @@ gui = [
 
 [project.scripts]
 lexora = "lexora.cli:main"
+# ADR-0008 decision 2: GUI entry point registered now that the window is
+# demonstrably runnable (offscreen show/exec smoke passed, Session 28).
+# Requires the [gui] extra; without it `lexora-gui` exits 2 with guidance.
+lexora-gui = "lexora.gui.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

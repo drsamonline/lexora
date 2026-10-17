@@ -1,0 +1,158 @@
+"""LEXORA GUI application shell — G1 main window + view stack (GUI-M1).
+
+ADR-0008 compliance:
+* ALL Qt imports are lazy (inside functions). Importing this module without
+  PySide6 installed must succeed and must not touch Qt.
+* Views contain no business logic: every operation delegates to
+  `lexora.gui.service.AppService` (thin-client rule, DESIGN_GUI §2).
+* No console entry point is registered in pyproject yet (ADR-0008 decision 2:
+  entry point lands only when the window is demonstrably runnable; until then
+  launch with `python -m lexora.gui`).
+
+M1 scope (DESIGN_GUI §5 GUI-M1): G1 main window hosting G2 pack, G3 unpack,
+G4 inspector views. File dialogs own path selection; the service owns I/O.
+Progress/cancellation (job runner) lands with GUI-M2 — M1 operations run
+synchronously on the UI thread over the same tested service calls.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover - typing only, never executed at runtime
+    from PySide6.QtWidgets import QMainWindow
+
+APP_TITLE = "LEXORA"
+VIEWS: tuple[str, ...] = ("pack", "unpack", "inspect")
+
+
+def _service():
+    """Single AppService instance per process (stateless facade anyway)."""
+    from lexora.gui.service import AppService
+
+    return AppService()
+
+
+def build_window():
+    """Create the G1 main window with the G2/G3/G4 view stack. Returns a
+    ready-to-show QMainWindow. Raises ImportError with guidance if Qt absent."""
+    try:
+        from PySide6.QtWidgets import (
+            QComboBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
+            QPushButton, QTextEdit, QVBoxLayout, QWidget,
+        )
+    except ImportError as exc:  # pragma: no cover - depends on environment
+        raise ImportError(
+            "The LEXORA GUI requires the [gui] extra: pip install 'lexora[gui]'"
+        ) from exc
+
+    svc = _service()
+    win = QMainWindow()
+    win.setWindowTitle(f"{APP_TITLE} — archive toolkit (M1 preview)")
+
+    central = QWidget(win)
+    win.setCentralWidget(central)
+    root = QVBoxLayout(central)
+
+    # --- action ribbon: view selector -------------------------------------
+    bar = QHBoxLayout()
+    bar.addWidget(QLabel("View:"))
+    view_box = QComboBox()
+    view_box.addItems(VIEWS)
+    bar.addWidget(view_box)
+    bar.addStretch(1)
+    root.addLayout(bar)
+
+    # --- shared form widgets ------------------------------------------------
+    in_edit = QLineEdit()
+    in_edit.setPlaceholderText("input file (raw text or .lxz)")
+    out_edit = QLineEdit()
+    out_edit.setPlaceholderText("output file")
+    level_edit = QLineEdit("3")
+    level_edit.setFixedWidth(60)
+    block_edit = QLineEdit(str(8 * 1024 * 1024))
+    block_edit.setFixedWidth(120)
+    canon_check = QComboBox()
+    canon_check.addItems(["pack input as-is", "canonicalize first"])
+    run_btn = QPushButton("Run")
+    log = QTextEdit()
+    log.setReadOnly(True)
+
+    form = QHBoxLayout()
+    for w in (QLabel("in:"), in_edit, QLabel("out:"), out_edit,
+              QLabel("level:"), level_edit, QLabel("block:"), block_edit,
+              canon_check, run_btn):
+        form.addWidget(w)
+    root.addLayout(form)
+    root.addWidget(log, stretch=1)
+
+    def show_inspect_result(res) -> None:
+        if res.ok:
+            hdr = res.value["header"]
+            lines = [f"header fields: {len(hdr)}", f"compressed:   {res.value['total_compressed']} B",
+                     f"uncompressed: {res.value['total_uncompressed']} B"]
+            for k, v in hdr.items():
+                if isinstance(v, bytes):
+                    v = v.hex()
+                lines.append(f"{k}: {v}")
+            log.setPlainText("\n".join(lines))
+        else:
+            log.setPlainText(f"[exit {res.exit_code}] {res.error}")
+
+    def on_run() -> None:
+        view = view_box.currentText()
+        src, dst = in_edit.text().strip(), out_edit.text().strip()
+        if not src:
+            log.setPlainText("choose an input file first")
+            return
+        try:
+            level = int(level_edit.text())
+            block = int(block_edit.text())
+        except ValueError:
+            log.setPlainText("level and block size must be integers")
+            return
+        if view == "pack":
+            if not dst:
+                log.setPlainText("pack needs an output file (.lxz)")
+                return
+            res = svc.pack_file(src, dst, level=level, block_size=block,
+                                canonicalize_first=(canon_check.currentIndex() == 1))
+            log.setPlainText(
+                f"packed {res.value['bytes_in']} B -> {res.value['bytes_out']} B "
+                f"(ratio {res.value['bytes_out'] / max(res.value['bytes_in'], 1):.3f}) -> {dst}"
+                if res.ok else f"[exit {res.exit_code}] {res.error}")
+        elif view == "unpack":
+            if not dst:
+                log.setPlainText("unpack needs an output file")
+                return
+            res = svc.unpack_file(src, dst)
+            log.setPlainText(
+                f"unpacked {res.value['bytes_in']} B -> {res.value['bytes_out']} B -> {dst}"
+                if res.ok else f"[exit {res.exit_code}] {res.error} (no output written)")
+        else:  # inspect (also serves G4 metadata feed; verify button = M2 polish)
+            res = svc.inspect_file(src)
+            show_inspect_result(res)
+
+    run_btn.clicked.connect(on_run)
+
+    status = QLabel("ready")
+    win.statusBar().addWidget(status)
+    view_box.currentTextChanged.connect(lambda v: status.setText(f"{v} view"))
+    return win
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Launch the GUI. Exit codes mirror CLI conventions (0 ok, 2 usage/env)."""
+    import sys
+
+    try:
+        from PySide6.QtWidgets import QApplication
+    except ImportError:
+        sys.stderr.write(
+            "PySide6 not installed. GUI needs the optional extra: pip install 'lexora[gui]'\n")
+        return 2
+    app = QApplication(list(argv) if argv is not None else sys.argv[1:])
+    win = build_window()
+    win.resize(900, 600)
+    win.show()
+    return app.exec()

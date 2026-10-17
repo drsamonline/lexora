@@ -121,13 +121,89 @@ def test_unpack_garbage_maps_exit7(svc):
 
 
 def test_inspect_and_verify_shapes(svc):
-    packed = svc.run_pack(SAMPLES[2], level=3, block_size=16).value
+    packed = svc.run_pack(SAMPLES[2], level=3, block_size=16).value["archive"]
     info = svc.run_inspect(packed)
     assert info.ok
     hdr = info.value["header"]
     assert hdr["magic"] if "magic" in hdr else True  # ArchiveInfo field naming stable
     ver = svc.run_verify(packed)
     assert ver.ok and ver.value.get("ok", True) is not False
+
+
+# ---------- file-level operations (pack_file/unpack_file/...) ----------
+
+def test_pack_unpack_file_roundtrip(tmp_path, svc):
+    src = tmp_path / "in.txt"
+    payload = b"hello lexora gui file path\n"
+    src.write_bytes(payload)
+    arc = tmp_path / "out.lxz"
+    res = svc.pack_file(src, arc, level=3)
+    assert res.ok, res.error
+    assert res.value["bytes_in"] == len(payload) and res.value["bytes_out"] > 0
+    out = tmp_path / "back.txt"
+    res2 = svc.unpack_file(arc, out)
+    assert res2.ok, res2.error
+    assert out.read_bytes() == payload
+
+
+def test_pack_file_canonicalize_first(tmp_path, svc):
+    """canonicalize_first=True must produce EXACTLY canonicalize(raw) bytes in
+    the archive (delegating to the library's tested rules — no GUI-side NFC
+    assumption; whitelist contract CAN-R05 leaves Latin combining marks)."""
+    from lexora.canonicalize import canonicalize
+    src = tmp_path / "raw.txt"
+    raw = "cafe\u0301 \u2014 dash input".encode()
+    src.write_bytes(raw)
+    arc = tmp_path / "out.lxz"
+    res = svc.pack_file(src, arc, level=3, canonicalize_first=True)
+    assert res.ok, res.error
+    back = svc.unpack_file(arc, tmp_path / "out.txt")
+    assert back.ok
+    assert (tmp_path / "out.txt").read_bytes() == canonicalize(raw)
+
+
+def test_pack_file_missing_input_exit3(tmp_path, svc):
+    res = svc.pack_file(tmp_path / "nope.bin", tmp_path / "out.lxz", level=3)
+    assert not res.ok and res.exit_code == 3
+    assert not (tmp_path / "out.lxz").exists()
+
+
+def test_unpack_file_tampered_refuses_before_write(tmp_path, svc):
+    good = svc.run_pack(b"payload for tamper test", level=3).value["archive"]
+    arc = tmp_path / "t.lxz"
+    arc.write_bytes(good)
+    bad = bytearray(good)
+    bad[len(good) - 5] ^= 0xFF  # corrupt trailer/index digest area
+    arc.write_bytes(bytes(bad))
+    out = tmp_path / "never.txt"
+    res = svc.unpack_file(arc, out)
+    assert not res.ok and res.exit_code in (7,)
+    assert not out.exists(), "partial output written despite refusal (REQ-SEC-004)"
+
+
+def test_atomic_write_leaves_no_temp_on_success(tmp_path, svc):
+    target = tmp_path / "w.bin"
+    svc.atomic_write(b"data", target)
+    assert target.read_bytes() == b"data"
+    assert not list(tmp_path.glob(".w.bin.*.tmp")), "temp file leaked"
+
+
+def test_inspect_verify_file_shapes(tmp_path, svc):
+    seed = tmp_path / "seed"
+    seed.write_bytes(b"0123456789abcdef")
+    arc = tmp_path / "i.lxz"
+    assert svc.pack_file(seed, arc, level=3, block_size=8).ok
+    ins = svc.inspect_file(arc)
+    assert ins.ok and "header" in ins.value
+    ver = svc.verify_file(arc)
+    assert ver.ok
+
+
+def test_run_pack_shape_and_exit3_for_bad_output_dir(tmp_path, svc):
+    src = tmp_path / "s.bin"
+    src.write_bytes(b"x" * 32)
+    res = svc.pack_file(src, tmp_path / "nodir" / "out.lxz", level=3)
+    assert not res.ok and res.exit_code == 3
 
 
 # ---------- golden parity: GUI path == CLI path, byte-for-byte ----------
@@ -154,7 +230,7 @@ def test_gui_pack_bytes_equal_cli_pack_bytes(tmp_path, payload):
     gui_res = AppService().run_pack(payload, level=CLI_LEVEL)
     assert gui_res.ok
     # generator_version is embedded in the header; both paths use library default
-    assert gui_res.value == cli_bytes, "GUI/CLI pack divergence — ADR-0008 parity violated"
+    assert gui_res.value["archive"] == cli_bytes, "GUI/CLI pack divergence — ADR-0008 parity violated"
 
 
 def test_golden_vector_readable_via_service(tmp_path):
@@ -169,14 +245,21 @@ def test_golden_vector_readable_via_service(tmp_path):
 
 # ---------- Qt isolation guarantees ----------
 
-def test_no_top_level_qt_import_in_service():
+@pytest.mark.parametrize("mod", ["service.py", "app.py"])
+def test_no_top_level_qt_import_in_service(mod):
     """Qt isolation (ADR-0008 decision 1): PySide6 may only be imported
-    inside function bodies in service.py — never at module level."""
+    inside function bodies in the gui package — never at module level.
+    TYPE_CHECKING-guarded imports are allowed (never executed at runtime)."""
     import ast
 
-    src = (REPO / "src" / "lexora" / "gui" / "service.py").read_text()
+    src = (REPO / "src" / "lexora" / "gui" / mod).read_text()
     tree = ast.parse(src)
     top_nodes = {id(n) for n in tree.body}
+    tc_nodes: set[int] = set()
+    for node in tree.body:
+        if isinstance(node, ast.If) and getattr(node.test, "id", None) == "TYPE_CHECKING":
+            for sub in ast.walk(node):
+                tc_nodes.add(id(sub))
     qt_at_top = []
     for node in ast.walk(tree):
         mods: list[str] = []
@@ -184,7 +267,8 @@ def test_no_top_level_qt_import_in_service():
             mods = [a.name for a in node.names]
         elif isinstance(node, ast.ImportFrom) and node.module:
             mods = [node.module]
-        if id(node) in top_nodes and any(m.split(".")[0] == "PySide6" for m in mods):
+        if id(node) in top_nodes and id(node) not in tc_nodes \
+                and any(m.split(".")[0] == "PySide6" for m in mods):
             qt_at_top.append(node.lineno)
     assert not qt_at_top, f"module-level Qt imports at lines {qt_at_top}"
 
@@ -195,7 +279,7 @@ def test_core_package_import_needs_no_qt(monkeypatch):
     import importlib
     import lexora.gui
     importlib.reload(lexora.gui)
-    assert lexora.gui.__all__ == ["service"]
+    assert sorted(lexora.gui.__all__) == ["app", "service"]
 
 
 def test_jobresult_defaults():
