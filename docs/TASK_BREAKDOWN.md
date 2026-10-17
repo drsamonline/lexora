@@ -45,6 +45,14 @@ Smallest actionable task list per phase so any session can pick a task without r
 | P2-T3 | Baseline runners (Zstd-19, Brotli q11, XZ, PPMd) | CORE | Versions pinned; totals include every serialized byte | **Partial** — zstd19 (python-zstandard 0.25.0) and xz9 (CLI `/usr/bin/xz`) implemented with §4 disk-size assert; brotli & PPMd NOT installed in this environment → absent from registry (never stubbed) |
 | P2-T4 | Verdict report generator | CORE/QA | Per-category + corpus tables; Pass/Partial/Fail per ADR-0001 | Not started (deferred until first valid corpus run — avoids fabricating verdict logic against unmeasured data) |
 
+## GUI milestones (per docs/DESIGN_GUI.md §5, ADR-0008)
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| GUI-M1 | Service adapter + G1/G2 window shell, golden-parity test, offscreen tests | **Landed (Sessions 27–28)** | `src/lexora/gui/{service,app,__main__}.py`; `[gui]` extra; launcher safe on headless (`--help` before Qt); 40 gui-suite tests |
+| GUI-M2 | Job runner (QThread/cancel/progress via `_make_qthread_worker` stub) + G5 preview / G6 diagnostics panels | Not started | Next session candidate |
+| GUI-M3 | Remaining screens G7/G8 + polish per OQ-14 provisional scope | Not started | Blocked behind M2 |
+
 ## P3–P7
 
 Task decomposition deferred until each phase's prerequisites are met (avoids stale planning). Placeholder rows intentionally omitted per master-prompt §2.9.
@@ -57,7 +65,7 @@ python3 scripts/linkcheck.py     # ALL INTERNAL LINKS OK expected
 git status --short && git log --oneline -3
 # Tests run with the broken system libtmux pytest plugin disabled (pytest 9.x
 # rejects its marks-on-fixtures usage; verified 2026-10-15):
-python -m pytest tests/ -q -p no:libtmux    # 35 passed expected
+python3 -m pytest -q    # 148 passed expected (libtmux neutralized repo-wide via pyproject addopts since S25)
 python benchmarks/harness.py env --out /tmp/env.json   # smoke-check tool capture
 ```
 

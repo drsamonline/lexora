@@ -141,9 +141,41 @@ def build_window():
     return win
 
 
+_GUI_USAGE = """usage: lexora-gui [options]
+
+LEXORA graphical front-end (GUI-M1 shell; see docs/DESIGN_GUI.md).
+
+options:
+  -h, --help          show this message and exit (no Qt loaded)
+  --version           show lexora version and exit (no Qt loaded)
+
+environment:
+  QT_QPA_PLATFORM     Qt platform plugin; auto-set to 'offscreen' when no
+                      display is available (headless machines).
+"""
+
+
 def main(argv: list[str] | None = None) -> int:
     """Launch the GUI. Exit codes mirror CLI conventions (0 ok, 2 usage/env)."""
+    import os
     import sys
+
+    args = list(sys.argv[1:] if argv is None else argv)
+    # Handle non-GUI flags BEFORE any Qt import/construction: on a headless
+    # box QApplication() aborts (SIGABRT) if no platform plugin can start,
+    # so --help/--version must never require one.
+    if "-h" in args or "--help" in args:
+        sys.stdout.write(_GUI_USAGE)
+        return 0
+    if "--version" in args:
+        from lexora import __version__
+        sys.stdout.write(f"lexora {__version__} (gui)\n")
+        return 0
+    unknown = [a for a in args if a.startswith("-")]
+    if unknown:
+        sys.stderr.write(f"lexora-gui: unrecognized option '{unknown[0]}'\n"
+                         "Try 'lexora-gui --help'.\n")
+        return 2
 
     try:
         from PySide6.QtWidgets import QApplication
@@ -151,7 +183,13 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write(
             "PySide6 not installed. GUI needs the optional extra: pip install 'lexora[gui]'\n")
         return 2
-    app = QApplication(list(argv) if argv is not None else sys.argv[1:])
+
+    # Headless fallback: without DISPLAY/WAYLAND_DISPLAY force the offscreen
+    # plugin instead of letting xcb abort the process.
+    if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    app = QApplication(args)
     win = build_window()
     win.resize(900, 600)
     win.show()

@@ -139,3 +139,40 @@ def test_bad_integer_field_refused_without_io(window, tmp_path):
     lvl.setText("abc")
     run_btn.click()
     assert "integers" in log.toPlainText()
+
+
+# --- launcher regression (Session-28 known issue) ---------------------------
+# On a headless box, constructing QApplication without a usable platform
+# plugin aborts the process (SIGABRT). main() must therefore answer
+# --help/--version BEFORE touching Qt, and fall back to offscreen when no
+# display is present. See Session 28 handoff note.
+
+import subprocess  # noqa: E402
+import sys  # noqa: E402
+
+
+def _run_gui(args):
+    return subprocess.run(
+        [sys.executable, "-m", "lexora.gui", *args],
+        capture_output=True, text=True, timeout=60,
+        env={k: v for k, v in os.environ.items()
+             if k not in ("QT_QPA_PLATFORM",)},
+    )
+
+
+def test_help_exits_zero_without_qt_abort():
+    proc = _run_gui(["--help"])
+    assert proc.returncode == 0, f"rc={proc.returncode} (abort?); stderr={proc.stderr}"
+    assert "usage: lexora-gui" in proc.stdout
+
+
+def test_version_exits_zero_without_qt_abort():
+    proc = _run_gui(["--version"])
+    assert proc.returncode == 0, f"rc={proc.returncode}; stderr={proc.stderr}"
+    assert "(gui)" in proc.stdout
+
+
+def test_unknown_option_exit2_no_io():
+    proc = _run_gui(["--bogus"])
+    assert proc.returncode == 2
+    assert "unrecognized option" in proc.stderr

@@ -6,6 +6,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-17 — Session 28 (GUI-M1 window shell + launcher fix + docs catch-up):
+  - **`src/lexora/gui/app.py`** — G1 main window hosting pack/unpack/inspect views (G2/G3/G4 metadata feed); all Qt imports lazy, widgets contain zero business logic (pure AppService delegation per ADR-0008). `lexora-gui` console script + `python -m lexora.gui` (`__main__.py`) launch it.
+  - **Service file-level ops** — `read_file`/`atomic_write` (temp+fsync+rename mirroring CLI), `pack_file` (optional canonicalize-first pre-pass), `unpack_file` (refusal-before-write parity), `inspect_file`, `verify_file`; new `FileOpError` ↔ exit 3 in the parity map; `run_pack` result enriched with byte counts for view summaries.
+  - **Headless launcher bug fixed:** `lexora-gui --help` previously SIGABRT'd on boxes without a display (QApplication constructed before arg handling). `--help`/`--version` now answered BEFORE any Qt import (rc 0), unknown options → rc 2, and `QT_QPA_PLATFORM=offscreen` auto-set when no DISPLAY/WAYLAND_DISPLAY exists. 3 subprocess regression tests added.
+  - Suite **132 → 148 passed** (+7 service file-op tests, +5 offscreen widget-driven e2e tests incl. tampered-archive exit-7 banner, +3 launcher tests). Continuity docs reconciled (this entry also closes the Session-27 doc debt: `[gui]` extra landed, golden-parity test shipped, 108→132).
+- 2026-10-17 — Session 27 (GUI-M1 scaffold; code committed as `3c94d26`):
+  - **Qt probe passed:** PySide6 6.12.0 installs in-container (needs `apt-get install libegl1` for offscreen Qt on Debian 12). GUI-M1 gate satisfied.
+  - **`[gui]` optional extra** added to pyproject.toml (`pyside6>=6.6,<7`) per ADR-0008; core install stays Qt-free. New Qt-free package `src/lexora/gui/` with `service.py`: thin-client **AppService** adapter (pure delegation, JobResult shape, bounds mirrors, exception↔exit-code parity, lazy-only Qt worker stub for M2).
+  - **Golden-parity test landed** (ADR-0008 binding requirement): byte-identical `.lxz` via AppService vs real CLI subprocess across 5 payloads + committed golden archive; AST-enforced Qt isolation; simulated Qt-absence import test. Suite **108 → 132 passed**.
 - 2026-10-17 — Session 26 (P1 closure sweep + GUI decisions):
   - **`pack --block-size` bounds messaging** — out-of-range values (<1 or >LIM-01 8 MiB) now exit 2 with an explicit message before any file is read or written (previously relied on the library silently clamping); CLI_REFERENCE documents the legal range; live-verified both refusals + exact-boundary success.
   - **P1-T5 closed at CLI level** — 7 new `test_cli.py` tests: pack↔unpack round-trip via `cli.main`, block-size bounds (0/negative/>LIM-01/boundary), tampered-archive unpack → exit 7 with no output file (REQ-SEC-004), `unpack --meta` JSON shape. Suite 101 → **108 passed**.
