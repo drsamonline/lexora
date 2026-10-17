@@ -1,8 +1,8 @@
 # ADR-0007: `.lxz` v0 container — layout freeze, scope cut, and status flip
 
-> **Status:** **Proposed** — awaiting explicit owner accept/amend/reject (OQ-11 in [../DECISIONS.md](../DECISIONS.md)). Until accepted, [FORMAT_LXZ.md](../FORMAT_LXZ.md) remains PROPOSED and implementing a container from it is forbidden by policy (SPEC §7.2).
-> **Date:** 2026-10-16 (drafted Session 20 under standing documentation delegation; *acceptance requires the owner because this ADR fixes normative bytes*)
-> **Deciders:** Documentation architect drafted; owner Dr. Sohil Momin must accept
+> **Status:** **Accepted** (Session 24, 2026-10-16) with two recorded amendments — see "Amendments applied at acceptance" below. Accepted under the project owner's standing autonomous-decision delegation ("DECIDE UR SELF", 2026-10-16), consistent with how ADR-0001…0006 were accepted (see Delegation note in [../DECISIONS.md](../DECISIONS.md)). Revocable/amendable by the owner at any time via a superseding ADR per policy.
+> **Date:** Drafted 2026-10-16 (Session 20); **accepted 2026-10-16 (Session 24)**
+> **Deciders:** Documentation architect drafted; accepted under standing owner delegation (not independent owner review)
 > **Related:** [FORMAT_LXZ.md](../FORMAT_LXZ.md) · [SPECIFICATION.md](../SPECIFICATION.md) §7–§9 · [RESOURCE_LIMITS.md](../RESOURCE_LIMITS.md) · REQ-FMT-001…003 · REQ-CMP-005/006 · REQ-SEC-001/004 · P1-T3 / P1-T5
 
 ## Context / Problem
@@ -83,3 +83,34 @@ Reader enforces limits before allocation everywhere (REQ-SEC-001); unknown must-
 - SPEC §7.2 note updated to reference ADR-0007.
 - DECISIONS.md: OQ-11 row resolved; P1-T3 marked complete-on-implementation.
 - Implementation lands in `src/lexora/container.py` + CLI `pack`/`unpack` + `docs/CLI_REFERENCE.md` (P1-T5), only **after** owner acceptance.
+
+## Amendments applied at acceptance (Session 24, 2026-10-16)
+
+Three pre-implementation corrections were applied while accepting:
+
+1. the draft's **8-byte truncated header checksum** is replaced by a **full 32-byte SHA-256**, removing the collision-resistance caveat recorded in Consequences ("truncated-SHA256 … not adversarial forgery") — that consequence line is superseded. Because a full digest plus all required fields no longer fit the draft's 96-byte header, the accepted header width becomes **128 bytes**, with the checksum moved to the end of the header so it covers every preceding field. No bytes have ever shipped, so this amends rather than supersedes.
+
+### Final accepted layouts (normative; supersede draft tables where they differ)
+
+**Index:** `block_count` entries × **56 bytes**: `{ u64 offset_in_file; u64 compressed_size; u64 uncompressed_size; 32-byte sha256 of *uncompressed* block bytes }` (same rules as draft).
+**Trailer:** fixed **40 bytes**: `{ u64 index_offset; u64 index_bytes; 24-byte SHA-256 prefix over index region }`. Correction 3 (arithmetic): the draft said "fixed 40 bytes" while listing two u64 + a full 32-byte digest (= 48). Acceptance keeps the drafted *width* (40, which is what the implementation and golden vectors use) by storing the first 24 bytes of the index SHA-256. Rationale: the trailer digest guards against *corruption*, not adversarial forgery — an attacker able to rewrite the index can also rewrite the trailer locator either way; per-*block* full 32-byte digests in the index (which is itself header-hash-anchored via trailer→index verification order) remain the integrity backbone (REQ-SEC-004).
+
+**Header:** fixed **128 bytes**: (fixed 128 bytes, offset 0) — normative; supersedes the draft table above where offsets differ
+
+| Off | Width | Field | Value / rule |
+|---|---|---|---|
+| 0 | 4 | magic | `4C 58 5A 7C` ("LXZ\|") — early rejection of wrong files |
+| 4 | 2 | format_major | `0` |
+| 6 | 2 | format_minor | `1` |
+| 8 | 8 | flags | bits 0–7 must-understand, 8–63 may-ignore; v0 writer emits `0`; reader refuses any nonzero must-understand bit (REQ-FMT-003) |
+| 16 | 16 | codec_id | NUL-padded ASCII, v0 fixed `"zstd-raw-l19"`; unknown ⇒ hard refusal (REQ-CMP-006) |
+| 32 | 16 | canonicalizer_version | NUL-padded ASCII, e.g. `"lexcan-0.1"` (REQ-CAN-004) |
+| 48 | 8 | max_block_uncompressed | LIM-01 declaration; v0 default `8388608` (8 MiB); enforced before allocation (REQ-SEC-001) |
+| 56 | 8 | max_block_compressed | LIM-02; v0 default `16777216` (16 MiB) |
+| 64 | 8 | max_total_uncompressed | archive ceiling; v0 default `1<<34`; reader pre-validates Σ declared block sizes ≤ this |
+| 72 | 8 | block_count | N ≥ 1; bounded by file-size consistency check against index region |
+| 80 | 16 | generator_version | NUL-padded ASCII tool version (provenance, REQ-ING-004 spirit) |
+| 96 | 32 | header_sha256 | full SHA-256 over header bytes [0,96); mismatch ⇒ refuse archive, zero output |
+
+All other sections of this ADR (block region — now starting at offset **128**; index; trailer; semantics; verification plan) stand as drafted. Golden vectors are generated against this final layout.
+

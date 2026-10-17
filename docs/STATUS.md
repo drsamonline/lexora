@@ -1,7 +1,7 @@
 # LEXORA Project Status
 
 > **Status:** Active — update at every session end
-> **Last verified:** 2026-10-16 (Session 23: CLI_REFERENCE.md written + P1-T2 invariant tests landed — 68 tests passing; Session 22: P1-T2 golden vectors + P1-T6 peak-RSS capture landed and verified; first real RSS numbers in harness artifact `benchmarks/results-r3.json` (not yet published as a revision). Prior: Session 20 `lexora pipe` flow + ADR-0007 drafted (OQ-11, awaiting owner accept/amend/reject); Session 19 English-only scope directive; Sessions 14–18 merged via PR #4, hosted `main` at `7e31656`)
+> **Last verified:** 2026-10-17 (Session 24: ADR-0007 accepted under owner delegation "DECIDE UR SELF" — `.lxz` v0 container implemented (`src/lexora/container.py`) with CLI `pack`/`unpack`, exit code 7, golden-archive vectors; 96 tests passing. GitHub Actions PAUSED by owner (free-tier minutes exhausted; OQ-15) — local verification gate until the whole app is built. GUI design plan drafted: docs/DESIGN_GUI.md (OQ-12…14 open). Prior: Session 23: CLI_REFERENCE.md written + P1-T2 invariant tests landed — 68 tests passing; Session 22: P1-T2 golden vectors + P1-T6 peak-RSS capture landed and verified; first real RSS numbers in harness artifact `benchmarks/results-r3.json` (not yet published as a revision). Prior: Session 20 `lexora pipe` flow + ADR-0007 drafted (OQ-11, awaiting owner accept/amend/reject); Session 19 English-only scope directive; Sessions 14–18 merged via PR #4, hosted `main` at `7e31656`)
 
 ## Current phase
 
@@ -11,10 +11,10 @@
 
 | Item | State |
 |---|---|
-| Implementation code | **Present (prototype):** `src/lexora/{__init__,canonicalize,zstd_core,cli}.py`, `benchmarks/harness.py` — Phase-1 baseline only, no stable API |
-| Tests / test tooling | **68 tests passing** (`pytest`, `-p no:libtmux` in this container — a stale third-party libtmux plugin crashes pytest 9.x collection; CI is unaffected. Sessions 20–23: `pipe` tests, golden-vector conformance suite, whitelist-invariant property tests. Golden vectors: 9 byte-exact scenarios under `tests/vectors/canonicalization/` (P1-T2) |
+| Implementation code | **Present (prototype):** `src/lexora/{__init__,canonicalize,zstd_core,container,cli}.py`, `benchmarks/harness.py` — Phase-1 baseline + `.lxz` v0 container (accepted ADR-0007), no stable API |
+| Tests / test tooling | **96 tests passing** (`python3 -m pytest -q`; environment note: if a stale third-party `libtmux` plugin reappears in a container, add `-p no:libtmux` — it crashed collection in some images. Sessions 20–24: `pipe` tests, golden-vector conformance, whitelist-invariant property tests, `.lxz` container suite (`tests/test_container_lxz.py`). Golden vectors: 9 canonicalization scenarios + lxz format vectors under `tests/vectors/lxz_format/` |
 | Build/packaging config (`pyproject.toml` etc.) | **Present** — version `0.0.1.dev1`, requires-python `>=3.12,<4.0` (ADR-0005), deps pinned to tested versions (zstandard 0.25.0) |
-| CI/CD workflows | **None** — intentionally not created until there are runnable checks; now that tests exist, a CI workflow is a reasonable next step pending owner approval |
+| CI/CD workflows | **Paused by owner decision 2026-10-17 (OQ-15):** `.github/workflows/ci.yml` exists and last ran green on `e240af0` (Session 19); free-tier Actions minutes exhausted → no new runs until the whole app is complete or owner re-enables. Local gate meanwhile: `pytest -q` + linkcheck before every commit |
 | License file | **Absent** — license not selected (OQ-5) |
 | Git remote | **Configured:** origin → https://github.com/drsamonline/lexora.git (no embedded creds). Local `main` ahead of hosted `a1bf3c3` by Session 12–13 commits; push needs owner token |
 | Benchmark corpus / results | **R0 smoke snapshot** (Tier T1-gutenberg-p0, 7.1 MB English P0 texts; owner `data/raw/` still empty). Revisions R1+R2 published in BENCHMARK_RESULTS.md (2026-10-16) — baseline Zstd-19 vs XZ-9 numbers only, **no ADR-0001 verdict**; R2 regenerated the manifest with rights/language/category folded in (hash `a32240d7…`) and committed the provenance chain (`benchmarks/provenance/`); ≥1 GiB corpus (OQ-8) still outstanding. **Owner directive 2026-10-16:** English-only is the build scope; Hindi/Gujarati coverage deferred to a future phase (not blocking)
@@ -45,10 +45,10 @@
 
 ## Health indicators *(verified, not asserted)*
 
-- Build: `pip install -e .` evidence not yet captured (package config exists; editable install untested).
-- Tests: **68 passed** — `python -m pytest -q` (2026-10-16, Session 23 re-verification after CLI_REFERENCE + invariant-test work; progression: 35 → 40 (Session 20 `pipe`) → 60 (Sessions 21–22 vectors + conformance) → 68 (Session 23 invariants).
+- Tests: **96 passed** — `python3 -m pytest -q` (2026-10-17, Session 24 re-verification after `.lxz` container + pack/unpack landed; progression: 35 → 40 (S20 `pipe`) → 60 (S21–22 vectors) → 68 (S23 invariants) → 96 (S24 container suite).
+- Build: `pip install -e .` **verified working** in this container 2026-10-17 (was previously untested).
 - Coverage/badges/releases: none; none claimed anywhere in docs.
 
 ## Next milestone
 
-Push Sessions 12–22 work to remote (needs owner token — `.vault/github_token.txt` absent in this container), then: owner verdict on ADR-0007/OQ-11 unblocks the `.lxz` container (P1-T3/P1-T5); golden vectors (P1-T2) and peak-RSS capture (P1-T6) are now landed. First *published* benchmark revision beyond R2 requires corpus growth toward ≥1 GiB (OQ-8). CI workflow running linkcheck + tests is already live since Session 15.
+Finish the CLI app (remaining P1 items + owner review of ADR-0007 amendments), push when a token is available (Actions runs paused meanwhile per OQ-15 — pushes themselves still fine), then GUI-M1 per docs/DESIGN_GUI.md once the app is complete. ADR-0007 accepted under delegation and `.lxz` container + `pack`/`unpack` landed (P1-T3/T5 core); golden vectors (P1-T2) and peak-RSS capture (P1-T6) landed earlier. First *published* benchmark revision beyond R2 requires corpus growth toward ≥1 GiB (OQ-8). CI workflow running linkcheck + tests is already live since Session 15.
