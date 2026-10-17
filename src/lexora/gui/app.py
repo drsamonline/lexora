@@ -25,10 +25,41 @@ if TYPE_CHECKING:  # pragma: no cover - typing only, never executed at runtime
     from PySide6.QtWidgets import QMainWindow
 
 APP_TITLE = "LEXORA"
-VIEWS: tuple[str, ...] = ("pack", "unpack", "inspect", "preview")
+VIEWS: tuple[str, ...] = ("pack", "unpack", "inspect", "preview", "about")
 
 PREVIEW_MAX_BYTES = 64 * 1024   # render cap for the G5 preview pane
 DIAGNOSTICS_HISTORY = 50        # G6: keep last N banner entries
+
+
+def format_about_text() -> str:
+    """G8 About view rendering (pure, Qt-free — thin-client posture).
+
+    Version + the exact file paths the app reads/writes outside user jobs
+    (G7 settings, crash log) so users can inspect or delete them without
+    hunting through config dirs. Paths come from the same Qt-free helpers
+    the widgets use, so what is shown is what is used.
+    """
+    from lexora import __version__
+    from lexora.gui.crash import crash_log_path
+    from lexora.gui.service import DEFAULT_SETTINGS, settings_path
+
+    s = settings_path()
+    c = crash_log_path()
+    return "\n".join([
+        f"LEXORA {__version__} — archive toolkit GUI",
+        "",
+        "Toolchain: PySide6 (ADR-0008); thin client over the same library",
+        "code paths as the CLI — no business logic in widgets.",
+        "",
+        "Files this app owns:",
+        f"  settings:  {s}",
+        f"  crash log: {c}",
+        "",
+        f"Default level: {DEFAULT_SETTINGS['level']}   "
+        f"Default block size: {DEFAULT_SETTINGS['block_size']} B",
+        "",
+        "Docs: docs/DESIGN_GUI.md · docs/FORMAT_LXZ.md · docs/CLI_REFERENCE.md",
+    ])
 
 
 def format_inspect_text(res) -> str:
@@ -162,6 +193,7 @@ def build_window():
     canon_check.addItems(["pack input as-is", "canonicalize first"])
     browse_in_btn = QPushButton("Browse…")     # G8 native file picker (M3a)
     browse_out_btn = QPushButton("Browse…")
+    crash_btn = QPushButton("Crash log")       # M3b: crash-log viewer action
     run_btn = QPushButton("Run")
     cancel_btn = QPushButton("Cancel")
     cancel_btn.setEnabled(False)
@@ -176,7 +208,7 @@ def build_window():
     for w in (QLabel("in:"), in_edit, browse_in_btn,
               QLabel("out:"), out_edit, browse_out_btn,
               QLabel("level:"), level_edit, QLabel("block:"), block_edit,
-              canon_check, run_btn, cancel_btn, save_btn):
+              canon_check, run_btn, cancel_btn, save_btn, crash_btn):
         form.addWidget(w)
     root.addLayout(form)
     root.addWidget(progress)
@@ -209,6 +241,9 @@ def build_window():
     def on_run() -> None:
         view = view_box.currentText()
         src, dst = in_edit.text().strip(), out_edit.text().strip()
+        if view == "about":  # G8-lite: static info, no file input needed
+            show(format_about_text())
+            return
         if not src:
             show("choose an input file first")
             return
@@ -285,6 +320,16 @@ def build_window():
             return
         show(f"defaults saved to {path}")
 
+    def on_show_crash_log() -> None:
+        """M3b crash-log viewer: render `CrashLog.read_records()` through the
+        pure formatter into the G6 pane (newest first). Test seam:
+        ``win._lexora_crash_log`` may be monkeypatched to a CrashLog bound to
+        a tmp path; production uses the real config-dir sink."""
+        from lexora.gui.crash import CrashLog, format_crash_records
+
+        clog = getattr(win, "_lexora_crash_log", None) or CrashLog()
+        show(format_crash_records(clog.read_records()))
+
     def _seed_dir(line_edit) -> str:
         """Directory to open the picker at, from the field's current text.
 
@@ -328,11 +373,13 @@ def build_window():
     save_btn.clicked.connect(on_save_defaults)
     browse_in_btn.clicked.connect(on_browse_in)
     browse_out_btn.clicked.connect(on_browse_out)
+    crash_btn.clicked.connect(on_show_crash_log)
 
     # Widget handles the browse tests need (kept as attributes, not globals).
     win._lexora_widgets = {
         "in_edit": in_edit, "out_edit": out_edit,
         "browse_in_btn": browse_in_btn, "browse_out_btn": browse_out_btn,
+        "crash_btn": crash_btn, "view_box": view_box, "log": log,
     }
 
     view_box.currentTextChanged.connect(lambda v: status.setText(f"{v} view"))

@@ -476,13 +476,55 @@ def test_window_icon_from_committed_svg(qapp):
     """G8-lite identity: window icon loads from the committed SVG asset."""
     from pathlib import Path
 
-
-def test_window_icon_from_committed_svg(qapp):
-    """G8-lite identity: window icon loads from the committed SVG asset."""
-    from pathlib import Path
-
     svg = Path(__file__).resolve().parent.parent / "src" / "lexora" / "gui" / "assets" / "lexora.svg"
     assert svg.exists() and svg.read_text().lstrip().startswith("<svg")
     win = build_window()
     assert not win.windowIcon().isNull()   # Qt rasterized the SVG
     win.close()
+
+
+# ---- GUI-M3b: About view + crash-log viewer (offscreen) ---------------------
+
+def test_about_view_renders_via_run_button(window):
+    """G8-lite: selecting the 'about' view and clicking Run renders version,
+    config paths and defaults into the diagnostics pane — no file needed."""
+    widgets = window._lexora_widgets
+    widgets["view_box"].setCurrentText("about")
+    run_btn = next(b for b in window.findChildren(QPushButton)
+                   if b.text() == "Run")
+    run_btn.click()
+    text = widgets["log"].toPlainText()
+    from lexora import __version__
+    assert f"LEXORA {__version__}" in text
+    assert "settings:" in text and "crash log:" in text
+
+
+def test_pure_about_formatter_without_qt():
+    from lexora.gui.app import format_about_text
+
+    t = format_about_text()
+    assert t.startswith("LEXORA ")
+    assert "docs/DESIGN_GUI.md" in t
+
+
+def test_crash_log_button_empty_state(window, monkeypatch, tmp_path):
+    from lexora.gui.crash import CrashLog
+
+    widgets = window._lexora_widgets
+    window._lexora_crash_log = CrashLog(tmp_path / "none.jsonl")
+    widgets["crash_btn"].click()
+    assert "no crash records" in widgets["log"].toPlainText()
+
+
+def test_crash_log_button_shows_records_newest_first(window, tmp_path):
+    from lexora.gui.crash import CrashLog
+
+    clog = CrashLog(tmp_path / "c.jsonl")
+    clog.record_exception(ValueError("alpha"))
+    clog.record_exception(RuntimeError("omega"))
+    widgets = window._lexora_widgets
+    window._lexora_crash_log = clog
+    widgets["crash_btn"].click()
+    text = widgets["log"].toPlainText()
+    assert "2 crash record(s), newest first" in text
+    assert text.index("RuntimeError: omega") < text.index("ValueError: alpha")

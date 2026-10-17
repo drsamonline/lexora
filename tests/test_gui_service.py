@@ -537,3 +537,35 @@ def test_crash_default_path_honors_xdg(monkeypatch, tmp_path):
 
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     assert crash_log_path() == tmp_path / "lexora" / "crash.log.jsonl"
+
+
+# ---- GUI-M3b: crash-record renderer (pure, Qt-free) -------------------------
+
+def test_format_crash_records_empty_state():
+    from lexora.gui.crash import format_crash_records
+
+    assert "no crash records" in format_crash_records([])
+
+
+def test_format_crash_records_newest_first_and_caps(tmp_path):
+    from lexora.gui.crash import CrashLog, _MAX_TB_CHARS, format_crash_records
+
+    log = CrashLog(tmp_path / "c.jsonl")
+    log.record_exception(ValueError("first"))
+    try:
+        raise RuntimeError("long-one")
+    except RuntimeError as exc:
+        log.record_exception(exc)
+    text = format_crash_records(log.read_records())
+    lines = text.splitlines()
+    assert lines[0] == "2 crash record(s), newest first"
+    # newest-first: the RuntimeError block appears before the ValueError one
+    assert text.index("#1") < text.index("RuntimeError: long-one") \
+        and text.index("RuntimeError: long-one") < text.index("#2")
+    assert "#2" in text and "ValueError: first" in text
+    # per-record traceback budget: huge stacks are capped, not drowned
+    fat = [{"ts": "t", "version": "v", "type": "X", "message": "m",
+            "traceback": "y" * (_MAX_TB_CHARS + 500)}]
+    capped = format_crash_records(fat)
+    assert "… (truncated)" in capped
+    assert capped.count("y") <= _MAX_TB_CHARS

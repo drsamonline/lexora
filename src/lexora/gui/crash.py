@@ -115,3 +115,30 @@ def install(path: Path | None = None) -> CrashLog:
     log = CrashLog(path)
     log.install()
     return log
+
+
+_MAX_TB_CHARS = 2000  # per-record traceback budget in the rendered view
+
+
+def format_crash_records(records: list[dict], *, newest_first: bool = True) -> str:
+    """Render crash records for the GUI's crash-log viewer (pure, Qt-free —
+    same posture as `format_inspect_text`/`format_preview_text`).
+
+    Newest-first by default (the appender gives oldest-first; the viewer
+    wants the most recent evidence on top). Each record shows timestamp,
+    version, exception type/message and a capped traceback so one huge
+    stack can't drown the pane.
+    """
+    if not records:
+        return "no crash records — nothing logged yet"
+    shown = list(reversed(records)) if newest_first else list(records)
+    blocks = [f"{len(shown)} crash record(s), newest first", ""]
+    for i, rec in enumerate(shown, start=1):
+        tb = str(rec.get("traceback", ""))
+        if len(tb) > _MAX_TB_CHARS:
+            tb = tb[:_MAX_TB_CHARS] + "… (truncated)"
+        blocks.append(
+            f"#{i}  {rec.get('ts', '?')}  lexora {rec.get('version', '?')}\n"
+            f"{rec.get('type', '?')}: {rec.get('message', '')}\n{tb}"
+        )
+    return "\n\n".join(blocks)

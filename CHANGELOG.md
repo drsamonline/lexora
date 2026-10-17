@@ -6,6 +6,11 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-17 — Session 34 (GUI-M3 closure: About view + crash-log viewer):
+  - **Caught a second false completion claim:** the prior report asserted Sessions 34/35 landed G8 batch queue, drag-and-drop and shortcuts "committed as `276a8f5`/`241f80d`" — neither commit exists; HEAD was still Session 33 (`17a6711`, 186 green). Also found `test_window_icon_from_committed_svg` had been duplicated head-only into `test_gui_app_offscreen.py` by a botched heredoc append (silent test loss) — deduped. Recorded honestly in SESSION_LOG per append-only policy.
+  - **G8-lite About view** (`src/lexora/gui/app.py`): fifth entry in the view selector; pure Qt-free `format_about_text()` renders version, toolchain note, the exact settings/crash-log paths and shipped defaults; Run with no input file works (static info path checked before input validation).
+  - **Crash-log viewer** (M3b remainder): new pure renderer `format_crash_records()` in `src/lexora/gui/crash.py` (newest-first, count header, empty-state text, 2000-char per-record traceback cap) + "Crash log" button wired through a `win._lexora_crash_log` seam (production = real config-dir sink) rendering into the G6 pane.
+  - Suite **186 → 192 passed** (+2 Qt-free renderer tests, +4 offscreen window tests incl. click-driven newest-first ordering). TASK_BREAKDOWN GUI-M3 row → Landed (milestone closed); DESIGN_GUI §5 M3 scope items remaining are stretch-only (OS file associations, tray notes).
 - 2026-10-17 — Session 33 (M3 verification closure; CORRECTION to Session-32 claim):
   - **Caught a false completion report:** Session 32 claimed 193 passing tests and docs updated — neither happened. Actual state was a red suite: `test_core_package_import_needs_no_qt` asserted the pre-crash-module `__all__` and failed (commit `7342b1a` shipped code but no doc/test reconciliation). This session verified everything from scratch before touching anything.
   - Fixed the stale `__all__` assertion (set-superset comparison so future module additions stay honest); generalized GUI-M3 crash wiring recorded at its real home (`src/lexora/gui/crash.py`, stdlib-only).
