@@ -450,4 +450,6 @@ What `7342b1a` actually landed (verified via `git show --stat`):
 
 **Gate:** `python3 -m pytest -q` → **192 passed**; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK (both re-run after all edits, same session as this claim).
 
+**Follow-up (same session):** Session-37 commit `e472146` pushed to hosted `main` with the owner-supplied token (fast-forward `6c4ea47..e472146`, verified via ls-remote). Token used inline in one push command — it appeared in chat transcript and this container's shell history; bash history cleared, repo tree re-scanned (zero full-token strings; only pre-existing masked `ghp_TIsg…` references remain). Owner advised again to revoke/rotate.
+
 **Next action:** Session 38 — owner verdict on P1_EVIDENCE_DRAFT (accept → flip PHASES P1 + P1-T1 rows; or request Core-specific RSS run); corpus fetch in a network-capable env if available; GUI stretch only on owner request.
