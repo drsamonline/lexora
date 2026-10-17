@@ -434,3 +434,20 @@ What `7342b1a` actually landed (verified via `git show --stat`):
 - **Gate:** re-run before committing docs: `python3 -m pytest -q` (expect 192 passed) + `python3 scripts/linkcheck.py`. Actions remain PAUSED (OQ-15) — pushing does not resume CI; the workflow will still trigger on pushes if minutes reset, so treat OQ-15 as "owner must explicitly re-enable".
 
 **Next action:** Session 37 — project-side load-bearing work only: P1 evidence backfill (peak-RSS-vs-budget draft from `benchmarks/results-r3.json`) and corpus growth toward protocol-scope R3 (OQ-8, ≥1 GiB English). GUI milestones M1–M3 closed; stretch items await owner request.
+
+---
+
+## Session 37 — 2026-10-17 (P1 evidence draft; third false-report catch)
+
+**Baseline verified first:** HEAD `6c4ea47`, clean tree, remote `main` = `6c4ea47` (ls-remote), suite **192 passed**, linkcheck OK.
+
+**False-report incident #3 (recorded per policy):** the prior turn claimed Sessions 37–38 had landed a new `docs/BENCHMARKS.md`, `scripts/corpus_holmes.py`, an R3 publication attempt with "protocol scope failed honestly documented", doc reconciliation, and commit `a2c988d`. Actual state: none of those files exist anywhere in history (`git log --all` has no such commit; `ls` confirms). Treated as unverified noise; this session started from the real baseline above.
+
+**What actually landed:**
+- **`docs/P1_EVIDENCE_DRAFT.md` (new, DRAFT — not published):** both P1 closure evidence gaps addressed with live-captured data. Item 1 (editable install): `pip install -e .` re-run in-container; import resolves to `/workspace/src/lexora/__init__.py`; `lexora --help` rc 0; canon smoke byte-verified via `od -c` (CRLF→LF applied, interior whitespace preserved per v0 rule scope CAN-R01/R02/R05); `lexora-gui --help` rc 0 headless. Item 2 (peak RSS vs budget): zstd19 baseline 85,956 KiB ≈ 84 MiB vs 512 MiB encode budget → PASS (~16%); xz9 35 MiB informational; caveats kept front-and-center (baseline-tool ≠ Core measurement, non-REF-4G deviation recorded, T1 tier label ⇒ still no ADR-0001 verdict). PHASES P1 stays *In progress* until owner accepts — no unilateral status flip.
+- **Corpus growth attempted? No.** Gutenberg mirror egress from this container is unverified; claiming an R3 run without fetch access would repeat the fabrication pattern. OQ-8 track explicitly left open for a network-capable environment.
+- **Docs corrections:** `docs/index.md` Users section was stale ("no GUI code exists" despite M1–M3 landing S27–34; "no CLI exists yet" under INSTALLATION/TROUBLESHOOTOING) — rewritten to current reality incl. links to GUI_SCREENSHOTS.md and the new evidence draft. TASK_BREAKDOWN P1-T1 row: "evidence NOT yet captured" → "Evidence captured … move to Landed on owner acceptance". CHANGELOG Session-37 entry added.
+
+**Gate:** `python3 -m pytest -q` → **192 passed**; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK (both re-run after all edits, same session as this claim).
+
+**Next action:** Session 38 — owner verdict on P1_EVIDENCE_DRAFT (accept → flip PHASES P1 + P1-T1 rows; or request Core-specific RSS run); corpus fetch in a network-capable env if available; GUI stretch only on owner request.

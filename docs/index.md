@@ -17,11 +17,11 @@ LEXORA = **L**ayered **EX**act-text **O**ptimized... see [PROJECT_CHARTER.md](PR
 
 ## Users
 
-The Phase-1 CLI exists and is tested (`canon`, `zround`, `pipe`, `pack`, `unpack` — `.lxz` v0 per accepted ADR-0007): see [CLI_REFERENCE.md](CLI_REFERENCE.md) — it documents only implemented commands and their real exit codes. A desktop GUI is **planned only** — parts, milestones, and open questions in [DESIGN_GUI.md](DESIGN_GUI.md); no GUI code exists. Still not written:
+The Phase-1 CLI exists and is tested (`canon`, `zround`, `pipe`, `pack`, `unpack` — `.lxz` v0 per accepted ADR-0007): see [CLI_REFERENCE.md](CLI_REFERENCE.md) — it documents only implemented commands and their real exit codes. A desktop GUI exists in experimental milestones M1–M3 (window shell, async job runner, panels, settings persistence, pickers/crash diagnostics — landed Sessions 27–34, offscreen-tested; not yet released): see [DESIGN_GUI.md](DESIGN_GUI.md) and [GUI_SCREENSHOTS.md](GUI_SCREENSHOTS.md). Still not written:
 
 - `USER_GUIDE.md` — not yet written (planned, Batch C)
-- [INSTALLATION.md](INSTALLATION.md) / [BUILD_GUIDE.md](BUILD_GUIDE.md) — exist as drafts; no working build/tooling is claimed in them
-- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — Batch D draft (symptom map for the designed system; no CLI exists yet)
+- [INSTALLATION.md](INSTALLATION.md) / [BUILD_GUIDE.md](BUILD_GUIDE.md) — exist as drafts; the editable install itself is verified (see [P1_EVIDENCE_DRAFT.md](P1_EVIDENCE_DRAFT.md)) but the docs' full instructions await owner review
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — Batch D draft (symptom map for the designed system; partially superseded by the shipped exit-code table in [CLI_REFERENCE.md](CLI_REFERENCE.md))
 
 ## Developers
 
