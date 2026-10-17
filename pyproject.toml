@@ -22,12 +22,25 @@ dependencies = [
 dev = [
     "pytest>=8",
 ]
+# ADR-0008 decision 1: GUI is an opt-in extra; core install stays Qt-free.
+gui = [
+    "pyside6>=6.6,<7",
+]
 
 [project.scripts]
 lexora = "lexora.cli:main"
+# ADR-0008 decision 2: GUI entry point registered now that the window is
+# demonstrably runnable (offscreen show/exec smoke passed, Session 28).
+# Requires the [gui] extra; without it `lexora-gui` exits 2 with guidance.
+lexora-gui = "lexora.gui.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Container images sometimes ship a broken third-party `libtmux` pytest plugin
+# (applies marks to fixtures -> collection crash under pytest>=9). Unregister it
+# so the local gate `python3 -m pytest -q` works with no extra flags.
+# Recorded in docs/NEXT_SESSION.md / SESSION_LOG (Session 23/24 environment notes).
+addopts = "-p no:libtmux"

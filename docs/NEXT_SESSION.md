@@ -1,29 +1,30 @@
 # Next Session Resume Card
 
-**Last verified state:** 2026-10-17, Session 24 complete. **OQ-11 closed by owner delegation ("DECIDE UR SELF"): ADR-0007 accepted with three recorded amendments; `.lxz` v0 container implemented** (`src/lexora/container.py`, CLI `pack`/`unpack`, exit code 7, golden vectors under `tests/vectors/lxz_format/`) — suite **96 passed**, linkcheck OK. **GitHub Actions PAUSED by owner directive** (free-tier minutes exhausted; OQ-15): do NOT push expecting CI runs and do not delete the workflow; local gate is `python3 -m pytest -q` + `python3 scripts/linkcheck.py` before every commit; resume Actions only when the whole app is built or owner says so. **GUI planned only:** `docs/DESIGN_GUI.md` (parts G1–G8, milestones GUI-M1…M3, OQ-12/13/14 open) — zero GUI code, implementation deferred until the CLI app is complete (owner directive). Environment: fresh container images may lack pytest/package — run `pip install -e .` first (verified working 2026-10-17); if a stale `libtmux` plugin reappears add `-p no:libtmux`. Sessions 20–24 commits remain local-only (`.vault/github_token.txt` absent). Published benchmark revisions unchanged: R1 + R2; **no ADR-0001 verdict**; `benchmarks/results-r3.json` is an unpublished harness artifact.
-**Current phase:** Phase 1 — finish the CLI app scope; English-only build scope (owner directive); GUI after "whole app".
+**Last verified state:** 2026-10-17, Session 26 complete. **CLI app scope: all five subcommands (`canon` incl. `--meta`, `zround`, `pipe`, `pack` incl. `--block-size` bounds→exit 2, `unpack` incl. `--meta`) implemented + CLI-level tested; suite 108 passed; linkcheck OK.** Phase 1 posture: **In progress (closure pending two evidence items)** — NOT flatly Complete: (a) editable-install evidence note (STATUS claims verified once), (b) peak-RSS-vs-PERFORMANCE_BUDGET owner verdict. Stale docs corrected this session: FORMAT_LXZ banner (now "v0 EXPERIMENTAL — frozen by ADR-0007"), ADR/README index (full 0001–0008 table), TASK_BREAKDOWN P1-T3 → Landed, PHASES P1 / ROADMAP M1 → In progress. **GUI decisions landed on paper only:** ADR-0008 Accepted (delegated) — PySide6 via optional `[gui]` extra (`pyside6>=6.6,<7`), same repo, thin-client architecture constraints binding, OQ-12/OQ-13 resolved, OQ-14 provisionally format-minimal through GUI-M3. **Zero GUI code** (verified). GitHub Actions PAUSED (OQ-15); local gate = `python3 -m pytest -q` + `python3 scripts/linkcheck.py`. Sessions 20–26 commits remain local-only (`.vault/github_token.txt` absent). Published benchmark revisions unchanged: R1 + R2; no ADR-0001 verdict.
+**Current phase:** P1 evidence backfill → GUI-M1 scaffold decision (Qt availability first). English-only build scope (owner directive).
 **Branch/commit:** working branch (verify with `git log --oneline -3`).
-**Working-tree state:** Clean after Session 24 commit.
+**Working-tree state:** Clean after Session 26 commit.
 
 ## Read first
-- [ ] docs/SESSION_LOG.md (Session 24 last)
-- [ ] docs/DESIGN_GUI.md (plan of record for the GUI; nothing implemented)
-- [ ] docs/CLI_REFERENCE.md (all five real subcommands incl. pack/unpack + exit 7)
-- [ ] docs/ADR/ADR-0007-container-v0-freeze.md (Accepted + amendments section is normative)
-- [ ] docs/STATUS.md (CI row = Paused/OQ-15; Build indicator now evidence-backed)
+- [ ] docs/SESSION_LOG.md (Session 26 last)
+- [ ] docs/ADR/ADR-0008-gui-toolkit-architecture.md (binding GUI constraints BEFORE any GUI code)
+- [ ] docs/DESIGN_GUI.md (Plan v0.2; G1–G4 = MVP; milestones GUI-M1…M3)
+- [ ] docs/ROADMAP.md M1 row (the two remaining closure-evidence items)
+- [ ] docs/CLI_REFERENCE.md (five real subcommands; `--block-size` range contract)
 
 ## Tasks in order
-1. **Finish the CLI app (P1 closure):** remaining polish items — ERROR_HANDLING taxonomy reconciliation vs shipped exit codes 0/2/3/4/5/6/7; block-boundary edge tests beyond current set if any gaps; `canon --meta` JSON audit output (library already has `canonicalize_with_meta`); decide whether to expose public `verify_archive()` (needed later by GUI G4 — keep it library+tests first). Keep CLI_REFERENCE + TASK_BREAKDOWN rows honest as each lands.
-2. **Corpus growth toward a genuine R3 (English-only):** ≥1 GiB Tier-1 expansion via `corpus-fetch` → `corpus-commit` → `manifest` → `verify` → `audit-splits` → `run --revision 3 --reps 3`; owner review before publishing. Track OQ-8.
-3. **Push (when token available):** pushes are still allowed while Actions is paused (they just won't burn minutes if runs are disabled/minutes exhausted — verify cheaply via one small push or repo settings before bulk pushes). GIT_ASKPASS pattern, never embed credentials.
-4. **After the whole CLI app is complete:** start GUI-M1 per DESIGN_GUI.md — first resolve OQ-12/13 (toolkit + packaging) with owner or under standing delegation, then draft a GUI ADR before any code.
-5. Owner review backlog: ADR-0007 amendments revocable; OQ-9 semver; OQ-10 OCR tooling; no ADR-0001 verdict until corpus meets protocol scope.
+1. **Probe Qt availability:** `pip install pyside6` (or `pip download --no-deps pyside6` dry check) in-container. If wheels install AND offscreen import works (`QT_QPA_PLATFORM=offscreen python -c "import PySide6"`), start task 2; otherwise do task 3 instead and record the blocker.
+2. **GUI-M1 scaffold (only if task 1 succeeds):** create `src/lexora/gui/` package skeleton + app-service adapter (job runner over `canonicalize`/`container.pack/unpack/verify_archive`), `[gui]` extra in pyproject, FIRST tests headless/offscreen only, golden-parity test design per ADR-0008 decision 4. No console entry point until a runnable window exists. Keep suite green throughout.
+3. **P1 evidence backfill (either way):** re-run `pip install -e .` capture for the M1 exit-evidence row; draft (do NOT publish) the peak-RSS-vs-budget comparison note from existing `benchmarks/results-r3.json` numbers for owner verdict; then flip PHASES P1 → Complete candidate ONLY if both evidences land.
+4. **Corpus growth toward genuine R3 (English-only):** ≥1 GiB Tier-1 expansion via `corpus-fetch` → `corpus-commit` → `manifest` → `verify` → `audit-splits` → `run --revision 3 --reps 3`; owner review before publishing. Track OQ-8.
+5. **Push (when token available):** pushes allowed while Actions paused. GIT_ASKPASS pattern, never embed credentials.
+6. Owner review backlog: ADR-0007 amendments revocable; **ADR-0008 accepted under delegation — owner may supersede toolkit choice**; OQ-9 semver; OQ-10 OCR tooling; ERROR_HANDLING severity/recovery sections still Draft contract; no ADR-0001 verdict until corpus meets protocol scope.
 
 ## Acceptance criteria
 - [ ] `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK (exit 0) — re-verify after any edit.
-- [ ] `python3 -m pytest -q` → **96 passed** (add `-p no:libtmux` only if that stale plugin reappears).
+- [ ] `python3 -m pytest -q` → **108 passed** baseline (addopts neutralizes libtmux; do not remove unless the plugin is gone from images for good).
 - [ ] No GitHub Actions runs triggered without owner sign-off (OQ-15 pause stands).
-- [ ] Any GUI work starts ONLY after CLI-app-complete + a GUI ADR; DESIGN_GUI stays plan-only meanwhile.
+- [ ] Any GUI code obeys ADR-0008 (thin client, no CLI shelling, offscreen tests, `[gui]` extra keeps core Qt-free) — and only lands after the Qt-availability probe passes.
 - [ ] Any published number carries its corpus-tier label; STATUS/PROGRESS/SESSION_LOG/NEXT_SESSION/README/CHANGELOG agree; commit hashes real.
 - [ ] No ADR-0001 verdict until corpus meets BENCHMARK_PROTOCOL scope; no new *published* revision without a manifest change.
 
@@ -33,11 +34,11 @@ cd /workspace
 git status --short
 git log --oneline -3
 pip install -e .                        # fresh containers lack the package
-python3 -m pytest -q                    # expect 96 passed
+python3 -m pytest -q                    # expect 108 passed
 python3 scripts/linkcheck.py            # expect ALL INTERNAL LINKS OK
-python -m lexora.cli pack --in IN --out OUT.lxz   # smoke the new commands
-python -m lexora.cli unpack --in OUT.lxz --out BACK
+pip install pyside6 && QT_QPA_PLATFORM=offscreen python -c "import PySide6.QtWidgets; print('qt-ok')"   # task 1 probe
+python -m lexora.cli pack --in IN --out OUT.lxz --block-size 0; echo $?    # expect 2 (bounds messaging)
+python -m lexora.cli unpack --in OUT.lxz --meta    # index JSON smoke
 python benchmarks/harness.py verify --manifest benchmarks/MANIFEST.json   # needs corpus/ present
-python benchmarks/harness.py audit-splits --manifest benchmarks/MANIFEST.json
-# NOTE: do not curl Actions run-status casually this session — API checks are fine, but no new CI expectation (OQ-15)
+# NOTE: no CI expectation this session (OQ-15); pushes fine, Actions runs are not.
 ```

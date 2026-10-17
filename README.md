@@ -1,7 +1,7 @@
 # LEXORA
 
 [![CI](https://github.com/drsamonline/lexora/actions/workflows/ci.yml/badge.svg)](https://github.com/drsamonline/lexora/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-96%20passed-informational)
+![Tests](https://img.shields.io/badge/tests-108%20passed-informational)
 ![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -14,7 +14,7 @@
 > **GitHub Actions runs are paused by owner decision 2026-10-17** (free-tier minutes exhausted; OQ-15) —
 > the badge shows the last historical run, not current state; verification gate is local (`pytest -q` + linkcheck
 > before every commit). The *Tests* badge is a
-> static snapshot of the locally verified suite (96 passed, re-verified 2026-10-17), not a live measurement.
+> static snapshot of the locally verified suite (101 passed, re-verified 2026-10-17), not a live measurement.
 > **Last verified:** 2026-10-17 against the current working branch (see git history).
 
 ---

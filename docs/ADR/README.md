@@ -17,4 +17,13 @@ Use [ADR-0001-template.md](ADR-0001-template.md) as the starting point (it doubl
 
 | ID | Title | Status | Date |
 |---|---|---|---|
-| — | *No ADRs yet.* Candidates exist as OQ-1…OQ-10 in [../DECISIONS.md](../DECISIONS.md). | | |
+| [ADR-0001](ADR-0001-gate-scope.md) | Benchmark gate scope | **Accepted** (delegated) | 2026-10-15 |
+| [ADR-0002](ADR-0002-brotli-role.md) | Brotli role | **Accepted** (delegated) | 2026-10-15 |
+| [ADR-0003](ADR-0003-ppmd-role.md) | PPMd role | **Accepted** (delegated) | 2026-10-15 |
+| [ADR-0004](ADR-0004-cleaning-error-metric.md) | Cleaning error metric | **Accepted** (delegated) | 2026-10-15 |
+| [ADR-0005](ADR-0005-python-version.md) | Python version range | **Accepted** (delegated) | 2026-10-15 |
+| [ADR-0006](ADR-0006-license-mit.md) | License = MIT | **Accepted** (delegated) | 2026-10-15 |
+| [ADR-0007](ADR-0007-container-v0-freeze.md) | `.lxz` v0 layout freeze | **Accepted** w/ recorded amendments (delegated) | 2026-10-16 |
+| [ADR-0008](ADR-0008-gui-toolkit-architecture.md) | GUI toolkit, packaging & architecture | **Accepted** (delegated) | 2026-10-17 |
+
+Template location note: the canonical template now lives at [../templates/ADR_TEMPLATE.md](../templates/ADR_TEMPLATE.md); `ADR-0001-template.md` remains for historical continuity only.

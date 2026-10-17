@@ -1,14 +1,14 @@
 # `.lxz` Container Format
 
-> ## ⚠️ PROPOSED — NOT A STABLE FORMAT
-> **Status:** Draft design notes. Byte layout, offsets, field widths, and test vectors are **NOT defined and NOT approved**. Do not implement decoders from this document. Do not cite any field here as normative.
+> ## ⚠️ v0 EXPERIMENTAL — layout frozen by ADR, pre-release
+> **Status (updated Session 24; re-verified Session 26):** The freeze gate below was satisfied by accepted [ADR-0007](ADR/ADR-0007-container-v0-freeze.md) (owner delegation, incl. three recorded amendments that supersede earlier draft numbers: 128-byte header / full 32-byte header checksum, 56-byte index entries, 40-byte trailer with 24-byte index-digest prefix). The **implemented** layout lives in `src/lexora/container.py` and is locked by golden vectors under `tests/vectors/lxz_format/`; the requirements table below remains valid. Format major is still **0**: byte compatibility across revisions is NOT promised until a 1.x ADR (COMPATIBILITY_POLICY). Do not treat v0 archives as long-lived artifacts.
 > **Owner:** Unassigned
-> **Last verified:** 2026-10-15
+> **Last verified:** 2026-10-17 (Session 26)
 > **Related:** [SPECIFICATION.md §7](SPECIFICATION.md) · REQ-FMT-001…003 · [COST_MODEL.md](COST_MODEL.md)
 
 ## Purpose & Scope
 
-Records the *requirements* the eventual `.lxz` format must satisfy, plus high-level structural ideas under discussion. Freezing the layout requires: accepted format ADR + committed test vectors (blueprint Phase 4; `.lxdb` remains deferred until this is validated — REQ-FMT-004).
+Records the *requirements* the eventual `.lxz` format must satisfy, plus high-level structural ideas under discussion. Freezing the layout requires: accepted format ADR + committed test vectors (blueprint Phase 4; `.lxdb` remains deferred until this is validated — REQ-FMT-004). **Gate status:** both conditions met for v0 via ADR-0007 + lxz golden vectors (Sessions 24–26); `.lxdb` deferral stands.
 
 ## Required elements (from SPEC §7.1 — these are requirements, not layouts)
 

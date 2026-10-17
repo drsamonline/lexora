@@ -30,7 +30,7 @@ Phases P0–P7 map to milestones M0–M7 in [ROADMAP.md](ROADMAP.md). Statuses f
 - **Risks:** Delegated ADR acceptance may be overturned by owner → superseding ADRs absorb changes; docs drift from future code → traceability matrix enforces updates.
 - **Rollback:** Docs are additive; revert commits.
 
-## P1 — Core Zstd pipeline (TXT only) — **Not started**
+## P1 — Core Zstd pipeline (TXT only) — **In progress (closure pending evidence backfill)**
 
 - **Objective:** `lxz pack/unpack` for TXT: ingest → canonicalize → blocked Zstd → `.lxz` v0; byte-exact decode of canonical bytes.
 - **Prerequisites:** P0 exit; **OQ-7** (Python version); offline-installable `zstandard` confirmed.

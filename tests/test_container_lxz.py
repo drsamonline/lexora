@@ -204,3 +204,45 @@ class TestDeterminism:
         assert info.flags == 0
         assert info.max_block_compressed == 16 * 1024 * 1024
         assert info.total_uncompressed == 4
+
+
+class TestVerifyArchive:
+    """Public verify_archive() API (Session 25; groundwork for GUI G4 inspector)."""
+
+    def test_valid_archive_all_blocks_ok(self):
+        from lexora.container import verify_archive
+
+        data = b"verify me " * 3000
+        arc = pack(data, level=3, block_size=4096)
+        res = verify_archive(arc)
+        assert res.ok is True
+        assert res.error is None
+        assert res.block_count == len(res.blocks) > 1
+        assert all(ok for _, ok, _ in res.blocks)
+
+    def test_structural_refusal_no_block_detail(self):
+        from lexora.container import verify_archive
+
+        bad = bytearray(pack(b"x" * 100, level=3))
+        bad[0:4] = b"XXXX"  # magic
+        res = verify_archive(bytes(bad))
+        assert res.ok is False
+        assert res.error.startswith("E-FMT-HEAD-001")
+        assert res.block_count == 0 and res.blocks == ()
+
+    def test_per_block_integrity_verdict(self):
+        """One flipped payload byte => exactly that block fails, others pass,
+        and verify produces NO payload (ADR-0007 per-block semantics)."""
+        from lexora.container import verify_archive
+
+        arc = pack(b"A" * 4096 + b"B" * 4096, level=3, block_size=4096)
+        info, _, _ = read_index(arc)
+        b1 = info.blocks[1]
+        tampered = bytearray(arc)
+        tampered[b1.offset + 10] ^= 0xFF
+        res = verify_archive(bytes(tampered))
+        assert res.ok is False
+        assert res.block_count == 2
+        assert res.blocks[0][1] is True
+        assert res.blocks[1][1] is False
+        assert res.blocks[1][2] in ("E-CMP-004", "E-INTEGRITY-001")

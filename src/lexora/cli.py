@@ -39,6 +39,11 @@ from lexora.container import ContainerError, read_index
 from lexora.container import pack as lxz_pack, unpack as lxz_unpack
 from lexora.zstd_core import CodecError, compress, decompress
 
+# LIM-01 ceiling for the pack CLI surface (docs/RESOURCE_LIMITS.md; mirrors
+# container.DEFAULT_MAX_BLOCK_UNCOMPRESSED). Values above this are refused up
+# front with a clear message instead of being silently clamped by the library.
+MAX_BLOCK_SIZE = 8 * 1024 * 1024
+
 EXIT_OK = 0
 EXIT_FILE = 3
 EXIT_CANON = 4
@@ -68,6 +73,24 @@ def _write(path: str, data: bytes) -> None:
 def cmd_canon(args: argparse.Namespace) -> int:
     raw = _read(args.infile)
     try:
+        if args.meta:
+            # Audit mode: JSON metadata (sizes + SHA-256 hashes + rule list)
+            # to stdout INSTEAD of payload bytes; payload goes to --out only.
+            import json
+
+            from lexora.canonicalize import canonicalize_with_meta
+
+            meta = canonicalize_with_meta(raw, declared_encoding=args.encoding)
+            out = meta.pop("canonical")
+            if args.outfile != "-":
+                _write(args.outfile, out)
+            print(json.dumps(meta, indent=2, sort_keys=True))
+            print(
+                f"canon: {meta['input_bytes']} -> {meta['output_bytes']} bytes "
+                f"(rules CAN-R01,R02,R05; lexcAN-0.1; --meta audit)",
+                file=sys.stderr,
+            )
+            return EXIT_OK
         out = canonicalize(raw, declared_encoding=args.encoding)
     except CanonicalizationError as exc:
         print(f"canonicalization error: {exc}", file=sys.stderr)
@@ -171,6 +194,22 @@ def _write_atomic(path: str, data: bytes) -> None:
 
 
 def cmd_pack(args) -> int:
+    # --block-size bounds messaging (Session 26 polish sweep): the library
+    # silently clamps block_size to LIM-01 (8 MiB); the CLI refuses up front
+    # instead of hiding that clamp behind a successful-looking exit.
+    if args.block_size < 1:
+        print(
+            f"usage error: --block-size must be >= 1 (got {args.block_size})",
+            file=sys.stderr,
+        )
+        return 2
+    if args.block_size > MAX_BLOCK_SIZE:
+        print(
+            f"usage error: --block-size {args.block_size} exceeds LIM-01 ceiling "
+            f"{MAX_BLOCK_SIZE} bytes (8 MiB); readers enforce this cap",
+            file=sys.stderr,
+        )
+        return 2
     payload = _read(args.infile)
     try:
         archive = lxz_pack(payload, level=args.level, block_size=args.block_size)
@@ -249,6 +288,8 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--in", dest="infile", required=True)
     c.add_argument("--out", dest="outfile", required=True, help="'-' for stdout")
     c.add_argument("--encoding", default=None, help="declared source encoding")
+    c.add_argument("--meta", action="store_true",
+                   help="print audit JSON (sizes, SHA-256s, rules) to stdout instead of payload")
     c.set_defaults(func=cmd_canon)
 
     z = sub.add_parser("zround", help="zstd compress + verify byte-exact roundtrip")
@@ -272,7 +313,8 @@ def build_parser() -> argparse.ArgumentParser:
     pk.add_argument("--out", dest="outfile", required=True, help="'-' for stdout")
     pk.add_argument("--level", type=int, default=19)
     pk.add_argument("--block-size", type=int, default=8 * 1024 * 1024,
-                    help="max uncompressed bytes per block (default 8 MiB)")
+                    help="max uncompressed bytes per block, 1..8388608 "
+                         "(LIM-01 ceiling; out-of-range -> exit 2)")
     pk.set_defaults(func=cmd_pack)
 
     up = sub.add_parser("unpack", help="decode a .lxz v0 archive (refuses unverified output)")
