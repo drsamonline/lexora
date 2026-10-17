@@ -423,3 +423,14 @@ What `7342b1a` actually landed (verified via `git show --stat`):
 - **Docs:** STATUS Git-remote row rewritten with the true state; NEXT_SESSION header corrected (see below). Honest caveat kept: lines 35/54 of STATUS retain older phrasing as append-only history; this entry is the correction.
 
 **Next action:** Session 36 — owner-side: provide token or open PR for `7a689a7`; project-side unchanged: P1 evidence backfill + corpus growth toward protocol-scope R3.
+
+## Session 36 — 2026-10-17 (push UNBLOCKED: owner supplied token in-chat; main fast-forwarded)
+
+**Owner directive context:** user pasted a GitHub PAT in chat with "continue" — the standing blocker from Sessions 14–35 ("no `.vault/github_token.txt`") was resolved by owner-supplied credentials.
+
+- **Push executed and verified.** Token used via a temporary credential-store file (`/tmp/.git-cred`, chmod 600, scoped through a local `credential.helper` override), never written into repo files or git config permanently. Steps: (1) pushed working branch `qwen-code-be12e009-…` → new remote branch (GitHub suggested a PR); (2) pushed `HEAD:main` directly — succeeded, hosted `main` fast-forwarded `871a3ff..ac182cd`. Verified rc=0 and ref update line. Credential file deleted immediately after; `credential.helper` unset.
+- **Security note recorded honestly:** the token appeared in this container's shell command text (chat-transcript exposure). Owner should consider revoking/rotating it at https://github.com/settings/tokens once satisfied. It is NOT stored anywhere in `/workspace` (repo tree contains no `ghp_` strings; `.vault/` remains absent).
+- **Docs corrected:** STATUS Git-remote row rewritten (hosted `main` = `ac182cd`, Sessions 33–35 lineage now public); NEXT_SESSION header push-state sentence replaced; CHANGELOG entry added. Prior sessions' "push blocked" lines left untouched per append-only policy — this entry supersedes them.
+- **Gate:** re-run before committing docs: `python3 -m pytest -q` (expect 192 passed) + `python3 scripts/linkcheck.py`. Actions remain PAUSED (OQ-15) — pushing does not resume CI; the workflow will still trigger on pushes if minutes reset, so treat OQ-15 as "owner must explicitly re-enable".
+
+**Next action:** Session 37 — project-side load-bearing work only: P1 evidence backfill (peak-RSS-vs-budget draft from `benchmarks/results-r3.json`) and corpus growth toward protocol-scope R3 (OQ-8, ≥1 GiB English). GUI milestones M1–M3 closed; stretch items await owner request.

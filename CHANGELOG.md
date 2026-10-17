@@ -6,6 +6,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-17 — Session 36 (push unblocked; remote state closed out):
+  - **Remote push executed with owner-supplied token:** hosted `main` fast-forwarded `871a3ff..ac182cd`, publishing the full Sessions ~14–35 lineage (S33 picker/icon verification, S34 GUI-M3 closure About view + crash-log viewer, S35 merge + remote-state audit). Working branch mirrored as a remote branch too. Token handled via a temporary credential store, deleted immediately after use, never committed (`git config --unset credential.helper` run; repo tree verified free of `ghp_` strings).
+  - **Security advisory:** the token passed through the chat transcript — owner should revoke/rotate it at GitHub → Settings → Developer settings → Personal access tokens.
+  - Docs: STATUS Git-remote row rewritten to "Push UNBLOCKED"; SESSION_LOG Session-36 entry; NEXT_SESSION push-state header corrected. Actions remain paused (OQ-15) — pushing does not re-enable CI.
 - 2026-10-17 — Session 34 (GUI-M3 closure: About view + crash-log viewer):
   - **Caught a second false completion claim:** the prior report asserted Sessions 34/35 landed G8 batch queue, drag-and-drop and shortcuts "committed as `276a8f5`/`241f80d`" — neither commit exists; HEAD was still Session 33 (`17a6711`, 186 green). Also found `test_window_icon_from_committed_svg` had been duplicated head-only into `test_gui_app_offscreen.py` by a botched heredoc append (silent test loss) — deduped. Recorded honestly in SESSION_LOG per append-only policy.
   - **G8-lite About view** (`src/lexora/gui/app.py`): fifth entry in the view selector; pure Qt-free `format_about_text()` renders version, toolchain note, the exact settings/crash-log paths and shipped defaults; Run with no input file works (static info path checked before input validation).
