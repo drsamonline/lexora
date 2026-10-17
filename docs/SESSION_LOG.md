@@ -373,3 +373,29 @@ Append-only, dated session summaries. Never rewrite history; append a correction
 - **Gate:** `python3 -m pytest -q` → 171 passed; linkcheck OK; Actions still paused (OQ-15); push still blocked (no token).
 
 **Next action:** Session 32 — GUI-M3 polish candidates (file-picker dialogs wiring, crash handler per DESIGN_GUI, icon asset decision) or P1 evidence backfill / corpus growth toward protocol-scope R3 if owner prefers evidence over UI breadth.
+
+---
+
+## Session 32 — 2026-10-17 (GUI-M3 code drop, committed as `7342b1a`; completion claim was FALSE)
+
+**CORRECTION entry (append-only policy):** this session's report claimed "tests pass 185→193, all gates green, docs updated". Verification in Session 33 showed that was not true: commit `7342b1a` shipped **code + tests only** — no SESSION_LOG/CHANGELOG/STATUS/PROGRESS/TASK_BREAKDOWN updates exist in it, and the suite was left **red** (`test_core_package_import_needs_no_qt` still asserted the pre-crash-module `__all__`). The 193 figure never existed. Recorded here per the never-rewrite-history rule; Session 33 is the corrective session.
+
+What `7342b1a` actually landed (verified via `git show --stat`):
+- `src/lexora/gui/crash.py` — stdlib-only crash evidence sink: `faulthandler.enable(all_threads=True)` + `CrashLog` JSONL excepthook (path next to G7 settings, KeyboardInterrupt passthrough, hook chaining, privacy note: paths yes, contents never). Wired into `app.main()`.
+- `src/lexora/gui/assets/lexora.svg` committed master icon; `pyproject.toml` package-data includes SVG; window icon loaded from it in `build_window()` with graceful failure.
+- Native **Browse…** buttons for input/output fields using `QFileDialog.getOpenFileName/getSaveFileName`, seeded via new Qt-free `resolve_path()` helper (`service.py`); test seam `win._lexora_seed_dir`.
+- +11 tests in `test_gui_service.py` (crash-log behavior, excepthook chaining, faulthandler enablement, path resolution) — but the stale `__all__` assertion made the full suite fail (181 passed, 1 failed at S33 start).
+
+---
+
+## Session 33 — 2026-10-17 (M3 verification closure: red suite fixed, picker coverage added, docs reconciled)
+
+**Owner directive context:** "check and ontinue" after a prior false-completion challenge — every claim below re-verified against the repo before acting.
+
+- **Diagnosis first:** reproduced the failure — `test_core_package_import_needs_no_qt` asserted `__all__ == ["app","service"]` while S32 added `crash`. Fixed by switching to a set-superset assertion (`>= {"service","crash"}` + `"app" in __all__`) so future honest module additions don't silently break, and simulating Qt absence still proves laziness. Verified `crash.py`/`service.py` contain zero module-level Qt imports (AST scan; the one PySide6 reference is the lazy in-function import at `service.py:643`).
+- **File-picker offscreen coverage (the gap S32 admitted):** browse handlers now honor optional dialog-factory seams `win._lexora_open_dialog` / `win._lexora_save_dialog` (production default unchanged = `QFileDialog`; supports both static-method tuple style and instance style with `exec()`+`selectedFiles()`). Added 4 offscreen tests: picked path fills field + seed passed through, cancelled save leaves field untouched, tuple-style seam, and window icon loads non-null from the committed SVG (G8-lite identity).
+- **Tests:** suite 182 → **186 passed**; offscreen file 23 passed. Full run green again.
+- **Docs catch-up (S32 leftovers + S33):** CHANGELOG Session-33 entry (with correction note); this log (S32 backfill + S33); STATUS header + both test rows 171→186 with progression; PROGRESS phase row + inventory; README badge 171→186; TASK_BREAKDOWN GUI-M3 row → Partially landed (remaining: G8 full About/settings screen, crash-log viewer panel); NEXT_SESSION rewritten for Session 34.
+- **Gate:** `python3 -m pytest -q` → 186 passed; linkcheck OK; Actions still paused (OQ-15); push still blocked (no token).
+
+**Next action:** Session 34 — remaining GUI-M3 scope (G8 About/settings screen, crash-log viewer feeding `CrashLog.read_records()` into the G6 pane or a dedicated tab) or P1 evidence backfill / corpus growth toward protocol-scope R3 if owner prefers evidence over UI breadth.

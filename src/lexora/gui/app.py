@@ -297,17 +297,29 @@ def build_window():
 
     def on_browse_in() -> None:
         from PySide6.QtWidgets import QFileDialog
-        seed = getattr(win, "_lexora_seed_dir", _seed_dir)(in_edit)  # test seam
-        path, _ = QFileDialog.getOpenFileName(
-            win, "Select input file", seed)
+        # seams for offscreen tests: win._lexora_seed_dir (dir seeding),
+        # win._lexora_open_dialog (dialog factory; production = QFileDialog)
+        seed = getattr(win, "_lexora_seed_dir", _seed_dir)(in_edit)
+        make = getattr(win, "_lexora_open_dialog", None) or QFileDialog
+        dlg = make(win, "Select input file", seed)
+        if isinstance(dlg, tuple):  # static-method style: (path, _sel)
+            path = dlg[0]
+        else:                       # dialog-instance style (testable)
+            dlg.exec()
+            path = dlg.selectedFiles()[0] if dlg.selectedFiles() else ""
         if path:
             in_edit.setText(path)
 
     def on_browse_out() -> None:
         from PySide6.QtWidgets import QFileDialog
-        seed = getattr(win, "_lexora_seed_dir", _seed_dir)(out_edit)  # test seam
-        path, _ = QFileDialog.getSaveFileName(
-            win, "Select output file", seed)
+        seed = getattr(win, "_lexora_seed_dir", _seed_dir)(out_edit)
+        make = getattr(win, "_lexora_save_dialog", None) or QFileDialog
+        dlg = make(win, "Select output file", seed)
+        if isinstance(dlg, tuple):
+            path = dlg[0]
+        else:
+            dlg.exec()
+            path = dlg.selectedFiles()[0] if dlg.selectedFiles() else ""
         if path:
             out_edit.setText(path)
 

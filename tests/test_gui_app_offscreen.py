@@ -414,3 +414,75 @@ def test_screenshot_helper_writes_png(window, tmp_path):
     data = out.read_bytes()
     assert data.startswith(b"\x89PNG\r\n\x1a\n")
     assert len(data) > 1000   # non-trivial render, not an empty pixmap
+
+
+# ---- Session 32/33: M3 polish — file-picker wiring + icon (offscreen) ------
+
+def test_browse_in_dialog_sets_field(qapp, tmp_path):
+    """Browse… (input) drives the dialog seam and writes the picked path."""
+    win = build_window()
+    calls = {}
+
+    class FakeDialog:
+        def __init__(self, parent, title, seed):
+            calls["title"], calls["seed"] = title, seed
+        def exec(self):
+            return 1
+        def selectedFiles(self):
+            return [str(tmp_path / "picked.txt")]
+
+    win._lexora_open_dialog = FakeDialog
+    win._lexora_seed_dir = lambda le: "/seed"
+    widgets = win._lexora_widgets
+    widgets["browse_in_btn"].click()
+    assert calls["seed"] == "/seed"
+    assert widgets["in_edit"].text() == str(tmp_path / "picked.txt")
+    win.close()
+
+
+def test_browse_out_cancel_leaves_field(qapp, tmp_path):
+    """Cancelled save dialog must not touch the output field."""
+    win = build_window()
+
+    class CancelledDialog:
+        def __init__(self, parent, title, seed):
+            pass
+        def exec(self):
+            return 0
+        def selectedFiles(self):
+            return []
+
+    win._lexora_save_dialog = CancelledDialog
+    win._lexora_seed_dir = lambda le: ""
+    widgets = win._lexora_widgets
+    before = widgets["out_edit"].text()
+    widgets["browse_out_btn"].click()
+    assert widgets["out_edit"].text() == before
+    win.close()
+
+
+def test_browse_tuple_style_seam(qapp):
+    """Static-method style seams ((path, filter) tuple) also work."""
+    win = build_window()
+    win._lexora_open_dialog = lambda parent, title, seed: ("/tmp/x.in", "")
+    win._lexora_seed_dir = lambda le: ""
+    widgets = win._lexora_widgets
+    widgets["browse_in_btn"].click()
+    assert widgets["in_edit"].text() == "/tmp/x.in"
+    win.close()
+
+
+def test_window_icon_from_committed_svg(qapp):
+    """G8-lite identity: window icon loads from the committed SVG asset."""
+    from pathlib import Path
+
+
+def test_window_icon_from_committed_svg(qapp):
+    """G8-lite identity: window icon loads from the committed SVG asset."""
+    from pathlib import Path
+
+    svg = Path(__file__).resolve().parent.parent / "src" / "lexora" / "gui" / "assets" / "lexora.svg"
+    assert svg.exists() and svg.read_text().lstrip().startswith("<svg")
+    win = build_window()
+    assert not win.windowIcon().isNull()   # Qt rasterized the SVG
+    win.close()

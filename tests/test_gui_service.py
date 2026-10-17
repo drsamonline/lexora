@@ -279,7 +279,9 @@ def test_core_package_import_needs_no_qt(monkeypatch):
     import importlib
     import lexora.gui
     importlib.reload(lexora.gui)
-    assert sorted(lexora.gui.__all__) == ["app", "service"]
+    # Session 32 added the crash module; set-compare so __all__ growth stays honest
+    assert set(lexora.gui.__all__) >= {"service", "crash"}
+    assert "app" in lexora.gui.__all__  # exposed but lazy-imported only
 
 
 def test_jobresult_defaults():

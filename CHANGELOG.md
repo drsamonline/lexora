@@ -6,6 +6,11 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-17 — Session 33 (M3 verification closure; CORRECTION to Session-32 claim):
+  - **Caught a false completion report:** Session 32 claimed 193 passing tests and docs updated — neither happened. Actual state was a red suite: `test_core_package_import_needs_no_qt` asserted the pre-crash-module `__all__` and failed (commit `7342b1a` shipped code but no doc/test reconciliation). This session verified everything from scratch before touching anything.
+  - Fixed the stale `__all__` assertion (set-superset comparison so future module additions stay honest); generalized GUI-M3 crash wiring recorded at its real home (`src/lexora/gui/crash.py`, stdlib-only).
+  - **File-picker offscreen coverage:** added dialog-factory seams (`win._lexora_open_dialog` / `_lexora_save_dialog`) to `app.py` browse handlers (production default unchanged: `QFileDialog`; both tuple-style and instance-style seams supported) + 4 new offscreen tests (picked-path fills field, cancel leaves field untouched, tuple seam, window icon loads from committed SVG — G8-lite identity).
+  - Suite **171 → 186 passed** (+11 S32 crash/path tests, +4 S33 picker/icon tests). SESSION_LOG Sessions 32–33 entries (32 backfilled with incident note); STATUS/PROGRESS/TASK_BREAKDOWN/NEXT_SESSION reconciled; GUI-M3 row → Partially landed.
 - 2026-10-17 — Session 31 (GUI-M2c closure: G7 settings + packaging recipe + screenshots):
   - **G7 settings persistence** (`src/lexora/gui/service.py`, Qt-free): `load_settings`/`save_settings`/`settings_path` — plain stdlib JSON under `$XDG_CONFIG_HOME|APPDATA/lexora/gui-settings.json` (deliberately not QSettings; keeps the service layer headless-testable). Save validates through the shared bounds checks (UsageError → exit-2 class, refuses BEFORE writing); load never raises — corrupt/out-of-range stored values fall back to defaults. App-level only, zero format impact. Window pre-fills from persisted defaults and gained a "Save as defaults" button (`app.py`).
   - **Packaging recipe**: `packaging/lexora.desktop` (FDE entry) + `packaging/README.md` smoke notes — Linux install steps documented; macOS/Windows explicitly NOT smoke-tested (no claim in user docs until evidence exists). Wheel + `[gui]` extra remains the only supported install story.
