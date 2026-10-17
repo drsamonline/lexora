@@ -412,3 +412,14 @@ What `7342b1a` actually landed (verified via `git show --stat`):
 - **Gate:** `python3 -m pytest -q` → 192 passed; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK; Actions still paused (OQ-15); push still blocked (no token).
 
 **Next action:** Session 35 — GUI stretch items only if owner wants them (batch queue G8-full, drag-and-drop, shortcuts); otherwise P1 evidence backfill (peak-RSS-vs-budget draft from `benchmarks/results-r3.json`) and corpus growth toward protocol-scope R3 are the load-bearing remaining work.
+
+## Session 35 — 2026-10-17 (remote-state audit: "push blocked" was stale; history reconciled via merge)
+
+**Owner directive context:** "check main as nothing is pushed and remaining" — audited the actual remote state instead of trusting continuity notes.
+
+- **Discovery (partially corrects our own docs):** the repo HAS a working remote (`origin` → github.com/drsamonline/lexora.git) and anonymous fetch succeeds. Hosted `main` = `871a3ff` ("Merge pull request #10 from drsamonline/continue-4b9cf") and **contains** our Session-32 commit `7342b1a`. So Sessions ~14–31 work *was* pushed to GitHub by parallel sessions through PRs #9/#10 — the repeated "push blocked, no token" note in STATUS/NEXT_SESSION was stale for that range. What genuinely remains un-pushed: the post-`7342b1a` local lineage (S33 `17a6711`, S34 `cdc2b8a`).
+- **Divergence found & reconciled:** local branch vs hosted main diverged at `7342b1a` (local +2, remote +5 merge commits). Verified zero content conflicts (`git merge-tree` clean), merged `origin/main` into the working branch as `7a689a7`. Post-merge gates re-run live: `pytest -q` → **192 passed**, linkcheck OK. No content lost from either side.
+- **Push verified still impossible from this container:** no `.vault/github_token.txt`, no `gh` CLI, no token env vars; dry-run push fails on credential prompt (exit "could not read Username"). Owner must supply a token (GIT_ASKPASS pattern) or merge the branch themselves — pushes are allowed while Actions stay paused (OQ-15).
+- **Docs:** STATUS Git-remote row rewritten with the true state; NEXT_SESSION header corrected (see below). Honest caveat kept: lines 35/54 of STATUS retain older phrasing as append-only history; this entry is the correction.
+
+**Next action:** Session 36 — owner-side: provide token or open PR for `7a689a7`; project-side unchanged: P1 evidence backfill + corpus growth toward protocol-scope R3.
