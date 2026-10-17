@@ -30,8 +30,9 @@ Phases P0–P7 map to milestones M0–M7 in [ROADMAP.md](ROADMAP.md). Statuses f
 - **Risks:** Delegated ADR acceptance may be overturned by owner → superseding ADRs absorb changes; docs drift from future code → traceability matrix enforces updates.
 - **Rollback:** Docs are additive; revert commits.
 
-## P1 — Core Zstd pipeline (TXT only) — **In progress (closure pending evidence backfill)**
+## P1 — Core Zstd pipeline (TXT only) — **Complete (owner-accepted 2026-10-17, Session 38)**
 
+- **Closure basis:** owner directive "accept and next phase" (in-chat, Session 38). Both evidence gaps closed via [P1_EVIDENCE_DRAFT.md](P1_EVIDENCE_DRAFT.md): item 1 editable install VERIFIED live; item 2 peak RSS 84 MiB vs 512 MiB encode budget = PASS with three recorded caveats (baseline-tool mapping, non-REF-4G machine, T1 smoke-scope corpus ⇒ no ADR-0001 verdict from these numbers). Exit criteria met: round-trip equality + invariant fuzz (P1-T2), `.lxz` v0 frozen via ADR-0007 (P1-T3), CLI pack/unpack tested (P1-T5), README quick-start matches real commands (CLI_REFERENCE.md). Caveat: the RSS figure is zstd-19 baseline-tool memory mapped to the Core encode row — accepted as sufficient under owner delegation; a stricter Core-path streaming measurement remains possible post-P2 if desired.
 - **Objective:** `lxz pack/unpack` for TXT: ingest → canonicalize → blocked Zstd → `.lxz` v0; byte-exact decode of canonical bytes.
 - **Prerequisites:** P0 exit; **OQ-7** (Python version); offline-installable `zstandard` confirmed.
 - **Expected changes:** New package (e.g., `lexora/`), CLI entry points, unit + property tests, format test vectors.
@@ -40,8 +41,9 @@ Phases P0–P7 map to milestones M0–M7 in [ROADMAP.md](ROADMAP.md). Statuses f
 - **Risks:** Format churn late → freeze `.lxz` v0 layout *before* writing encoder (FORMAT_LXZ.md is PROPOSED until then).
 - **Rollback/fallback:** Keep canonicalizer independent of container so a format revision doesn't invalidate cleaning outputs.
 
-## P2 — Benchmark harness & first numbers — **Not started**
+## P2 — Benchmark harness & first numbers — **Started (Session 38; owner directive "next phase")**
 
+- **Opening state:** harness mechanics already landed in P1 (env capture, manifest/verify, split audit, cost accounting, N-repeat runner, peak-RSS sampling — `benchmarks/harness.py`); smoke-scope artifacts R0/R3 exist. Load-bearing gap: **OQ-8 corpus ≥1 GiB** (en/hi/gu per BENCHMARK_PROTOCOL) and the ADR-0001 verdict run at protocol scope. Container network egress to Gutenberg mirrors is unverified (S37 note) — first task is a live fetch probe; if blocked, document precisely which step fails.
 - **Objective:** Reproducible measurement of Core vs frozen baselines.
 - **Prerequisites:** P1; **OQ-8** (corpus rights/assembly); external tools for Brotli/XZ/PPMd baselines installed per BUILD_GUIDE.
 - **Exit criteria:** Frozen manifest + config hashes; 70/10/20 lineage split audited; per-category and corpus totals reported; verdict Pass/Partial/Fail per ADR-0001 written to BENCHMARK_RESULTS.md (replacing "No validated benchmark results yet").
