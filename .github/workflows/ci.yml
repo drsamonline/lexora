@@ -1,6 +1,8 @@
-# Real CI workflow — badges in README.md reference THIS file.
-# If this workflow fails or is removed, the badges must be removed too
-# (repository rule: no unsupported claims).
+# Real CI workflow — README badge references this file (flagged as historical there).
+# PAUSED by owner decision 2026-10-17 (OQ-15): GitHub Actions free-tier minutes are
+# exhausted; do not push/PR expecting runs until the whole app is complete or the owner
+# re-enables Actions. Until then the verification gate is LOCAL: `pytest -q` + linkcheck
+# before every commit. The workflow itself stays unchanged so it resumes working as-is.
 name: CI
 
 on:

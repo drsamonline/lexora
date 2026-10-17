@@ -17,7 +17,7 @@ LEXORA = **L**ayered **EX**act-text **O**ptimized... see [PROJECT_CHARTER.md](PR
 
 ## Users
 
-The Phase-1 baseline CLI exists and is tested (`canon`, `zround`, `pipe`): see [CLI_REFERENCE.md](CLI_REFERENCE.md) — it documents only implemented commands and their real exit codes. Still not written:
+The Phase-1 CLI exists and is tested (`canon`, `zround`, `pipe`, `pack`, `unpack` — `.lxz` v0 per accepted ADR-0007): see [CLI_REFERENCE.md](CLI_REFERENCE.md) — it documents only implemented commands and their real exit codes. A desktop GUI is **planned only** — parts, milestones, and open questions in [DESIGN_GUI.md](DESIGN_GUI.md); no GUI code exists. Still not written:
 
 - `USER_GUIDE.md` — not yet written (planned, Batch C)
 - [INSTALLATION.md](INSTALLATION.md) / [BUILD_GUIDE.md](BUILD_GUIDE.md) — exist as drafts; no working build/tooling is claimed in them

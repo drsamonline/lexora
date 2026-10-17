@@ -1,19 +1,21 @@
 # LEXORA
 
 [![CI](https://github.com/drsamonline/lexora/actions/workflows/ci.yml/badge.svg)](https://github.com/drsamonline/lexora/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-68%20passed-informational)
+![Tests](https://img.shields.io/badge/tests-96%20passed-informational)
 ![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 **Layered EXact-text Repository & Adaptive compression architecture**
 
 > **Project status: Phase 1 prototype in development.** Documentation (Batches A–F) drafted;
-> early implementation code exists (canonicalization, Zstd core baseline, benchmark harness).
+> early implementation code exists (canonicalization, Zstd core baseline, `.lxz` v0 container, benchmark harness).
 > Nothing here is a shipped or released feature. See [docs/STATUS.md](docs/STATUS.md) for the verified state.
-> **Badge honesty note:** the CI badge reflects the real workflow in `.github/workflows/ci.yml`
-> (added 2026-10-15; its first-run result will be recorded in the session log). The *Tests* badge is a
-> static snapshot of the locally verified suite (68 passed, re-verified 2026-10-16), not a live measurement.
-> **Last verified:** 2026-10-16 against the current working branch (see git history).
+> **Badge honesty note:** the CI badge reflects the real workflow in `.github/workflows/ci.yml`, but
+> **GitHub Actions runs are paused by owner decision 2026-10-17** (free-tier minutes exhausted; OQ-15) —
+> the badge shows the last historical run, not current state; verification gate is local (`pytest -q` + linkcheck
+> before every commit). The *Tests* badge is a
+> static snapshot of the locally verified suite (96 passed, re-verified 2026-10-17), not a live measurement.
+> **Last verified:** 2026-10-17 against the current working branch (see git history).
 
 ---
 
