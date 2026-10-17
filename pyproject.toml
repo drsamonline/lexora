@@ -37,6 +37,9 @@ lexora-gui = "lexora.gui.app:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"lexora.gui" = ["assets/*.svg"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # Container images sometimes ship a broken third-party `libtmux` pytest plugin

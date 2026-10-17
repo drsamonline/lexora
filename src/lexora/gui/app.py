@@ -114,15 +114,26 @@ def build_window():
             "The LEXORA GUI requires the [gui] extra: pip install 'lexora[gui]'"
         ) from exc
 
+    from PySide6.QtGui import QIcon
+
     from lexora.gui.service import (
         JobRunner, exit_code_for, load_settings, pack_file_job,
-        save_settings, unpack_file_job,
+        resolve_path, save_settings, unpack_file_job,
     )
+
+    def icon_path():
+        """App icon master (SVG shipped in-package; Qt rasterizes it)."""
+        from pathlib import Path
+        return Path(__file__).parent / "assets" / "lexora.svg"
 
     svc = _service()
     runner = JobRunner()
     win = QMainWindow()
-    win.setWindowTitle(f"{APP_TITLE} — archive toolkit (M2c settings)")
+    win.setWindowTitle(f"{APP_TITLE} — archive toolkit (M3 polish)")
+    try:  # window/taskbar icon; absence must never block startup
+        win.setWindowIcon(QIcon(str(icon_path())))
+    except Exception:  # pragma: no cover - exotic Qt/image-plugin failures
+        pass
 
     central = QWidget(win)
     win.setCentralWidget(central)
@@ -149,6 +160,8 @@ def build_window():
     block_edit.setFixedWidth(120)
     canon_check = QComboBox()
     canon_check.addItems(["pack input as-is", "canonicalize first"])
+    browse_in_btn = QPushButton("Browse…")     # G8 native file picker (M3a)
+    browse_out_btn = QPushButton("Browse…")
     run_btn = QPushButton("Run")
     cancel_btn = QPushButton("Cancel")
     cancel_btn.setEnabled(False)
@@ -160,7 +173,8 @@ def build_window():
     log.setReadOnly(True)        # G6: append-only diagnostics history
 
     form = QHBoxLayout()
-    for w in (QLabel("in:"), in_edit, QLabel("out:"), out_edit,
+    for w in (QLabel("in:"), in_edit, browse_in_btn,
+              QLabel("out:"), out_edit, browse_out_btn,
               QLabel("level:"), level_edit, QLabel("block:"), block_edit,
               canon_check, run_btn, cancel_btn, save_btn):
         form.addWidget(w)
@@ -271,9 +285,43 @@ def build_window():
             return
         show(f"defaults saved to {path}")
 
+    def _seed_dir(line_edit) -> str:
+        """Directory to open the picker at, from the field's current text.
+
+        Test seam: ``win._lexora_seed_dir`` may be monkeypatched (offscreen
+        tests have no real dialog). Production path uses the Qt-free service
+        resolver (same posture as CLI path handling); unresolvable text just
+        falls back to cwd silently."""
+        resolved, _err = resolve_path(line_edit.text().strip())
+        return str(resolved) if resolved else ""
+
+    def on_browse_in() -> None:
+        from PySide6.QtWidgets import QFileDialog
+        seed = getattr(win, "_lexora_seed_dir", _seed_dir)(in_edit)  # test seam
+        path, _ = QFileDialog.getOpenFileName(
+            win, "Select input file", seed)
+        if path:
+            in_edit.setText(path)
+
+    def on_browse_out() -> None:
+        from PySide6.QtWidgets import QFileDialog
+        seed = getattr(win, "_lexora_seed_dir", _seed_dir)(out_edit)  # test seam
+        path, _ = QFileDialog.getSaveFileName(
+            win, "Select output file", seed)
+        if path:
+            out_edit.setText(path)
+
     run_btn.clicked.connect(on_run)
     cancel_btn.clicked.connect(on_cancel)
     save_btn.clicked.connect(on_save_defaults)
+    browse_in_btn.clicked.connect(on_browse_in)
+    browse_out_btn.clicked.connect(on_browse_out)
+
+    # Widget handles the browse tests need (kept as attributes, not globals).
+    win._lexora_widgets = {
+        "in_edit": in_edit, "out_edit": out_edit,
+        "browse_in_btn": browse_in_btn, "browse_out_btn": browse_out_btn,
+    }
 
     view_box.currentTextChanged.connect(lambda v: status.setText(f"{v} view"))
     return win
@@ -343,6 +391,12 @@ def main(argv: list[str] | None = None) -> int:
     # plugin instead of letting xcb abort the process.
     if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
         os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    # GUI-M3: crash evidence sink — faulthandler for hard crashes + JSONL
+    # log for escaped Python exceptions (docs/DESIGN_GUI.md §3). Installed
+    # before QApplication so startup failures are captured too.
+    from lexora.gui.crash import install as install_crash_log
+    install_crash_log()
 
     app = QApplication(args)
     win = build_window()
