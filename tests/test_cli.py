@@ -139,3 +139,87 @@ def test_canon_meta_stdout_payload_suppressed(tmp_path, capsys):
     captured = capsys.readouterr()
     meta = json.loads(captured.out)  # stdout must be parseable JSON alone
     assert meta["output_bytes"] == 5
+
+
+# --- pack / unpack CLI surface (Session 26: P1-T5 closure — CLI-level coverage) ---
+
+
+def test_pack_unpack_roundtrip_cli(tmp_path):
+    payload = tmp_path / "canon.txt"
+    payload.write_bytes(("lexora " * 500).encode())
+    arc = tmp_path / "out.lxz"
+    back = tmp_path / "back.txt"
+    assert cli.main(["pack", "--in", str(payload), "--out", str(arc),
+                     "--level", "3", "--block-size", "4096"]) == cli.EXIT_OK
+    assert arc.read_bytes()[:4] == b"LXZ|"
+    assert cli.main(["unpack", "--in", str(arc), "--out", str(back)]) == cli.EXIT_OK
+    assert back.read_bytes() == payload.read_bytes()
+
+
+def test_pack_block_size_zero_exit2(tmp_path):
+    """--block-size bounds messaging (Session 26 polish): refused up front, exit 2."""
+    payload = tmp_path / "canon.txt"
+    payload.write_bytes(b"hello")
+    arc = tmp_path / "out.lxz"
+    rc = cli.main(["pack", "--in", str(payload), "--out", str(arc), "--block-size", "0"])
+    assert rc == 2
+    assert not arc.exists()  # refusal happens before any write
+
+
+def test_pack_block_size_negative_exit2(tmp_path):
+    payload = tmp_path / "canon.txt"
+    payload.write_bytes(b"hello")
+    rc = cli.main(["pack", "--in", str(payload), "--out", "-", "--block-size", "-5"])
+    assert rc == 2
+
+
+def test_pack_block_size_above_lim01_exit2(tmp_path):
+    payload = tmp_path / "canon.txt"
+    payload.write_bytes(b"hello")
+    arc = tmp_path / "out.lxz"
+    too_big = cli.MAX_BLOCK_SIZE + 1
+    rc = cli.main(["pack", "--in", str(payload), "--out", str(arc),
+                   "--block-size", str(too_big)])
+    assert rc == 2
+    assert not arc.exists()
+
+
+def test_pack_max_block_size_boundary_ok(tmp_path):
+    """Exactly LIM-01 is legal (closed upper bound)."""
+    payload = tmp_path / "canon.txt"
+    payload.write_bytes(b"boundary")
+    arc = tmp_path / "out.lxz"
+    rc = cli.main(["pack", "--in", str(payload), "--out", str(arc),
+                   "--block-size", str(cli.MAX_BLOCK_SIZE), "--level", "1"])
+    assert rc == cli.EXIT_OK
+
+
+def test_unpack_refusal_exit7_no_output(tmp_path):
+    payload = tmp_path / "canon.txt"
+    payload.write_bytes(b"repeat repeat repeat " * 100)
+    arc = tmp_path / "out.lxz"
+    assert cli.main(["pack", "--in", str(payload), "--out", str(arc),
+                    "--level", "1", "--block-size", "64"]) == cli.EXIT_OK
+    tampered = bytearray(arc.read_bytes())
+    tampered[200] ^= 0xFF  # corrupt a block byte -> index SHA-256 mismatch
+    arc.write_bytes(bytes(tampered))
+    out = tmp_path / "back.txt"
+    rc = cli.main(["unpack", "--in", str(arc), "--out", str(out)])
+    assert rc == cli.EXIT_CONTAINER
+    assert not out.exists()  # REQ-SEC-004: no output on refusal
+
+
+def test_unpack_meta_json(tmp_path, capsys):
+    import json
+
+    payload = tmp_path / "canon.txt"
+    payload.write_bytes(b"meta meta meta " * 50)
+    arc = tmp_path / "out.lxz"
+    assert cli.main(["pack", "--in", str(payload), "--out", str(arc),
+                     "--level", "1", "--block-size", "64"]) == cli.EXIT_OK
+    rc = cli.main(["unpack", "--in", str(arc), "--meta"])
+    assert rc == cli.EXIT_OK
+    meta = json.loads(capsys.readouterr().out)
+    assert meta["format"] == "LXZ-0.1"
+    assert len(meta["blocks"]) >= 2
+    assert meta["limits"]["max_block_uncompressed"] <= cli.MAX_BLOCK_SIZE

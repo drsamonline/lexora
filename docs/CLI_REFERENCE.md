@@ -95,7 +95,7 @@ lexora pack --in CANONICAL --out ARCHIVE.lxz [--level N] [--block-size B]
 | `--in PATH` | yes | — | payload file (normally `canon` output; `pack` does not canonicalize) |
 | `--out PATH` | yes | — | archive destination; `-` writes to stdout (binary) |
 | `--level N` | no | 19 | zstd level 1..22 (same contract as `zround`) |
-| `--block-size B` | no | 8388608 | max uncompressed bytes per block; declared in header and enforced by readers |
+| `--block-size B` | no | 8388608 | max uncompressed bytes per block, legal range 1..8388608 (LIM-01); out-of-range → exit 2 before any read/write (Session 26 bounds messaging); declared in header and enforced by readers |
 
 Behavior notes: empty input packs as one zero-length block (exit 0); summary line on stderr.
 

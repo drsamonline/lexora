@@ -1,7 +1,7 @@
 # LEXORA Project Status
 
 > **Status:** Active — update at every session end
-> **Last verified:** 2026-10-17 (Session 24: ADR-0007 accepted under owner delegation "DECIDE UR SELF" — `.lxz` v0 container implemented (`src/lexora/container.py`) with CLI `pack`/`unpack`, exit code 7, golden-archive vectors; 96 tests passing. GitHub Actions PAUSED by owner (free-tier minutes exhausted; OQ-15) — local verification gate until the whole app is built. GUI design plan drafted: docs/DESIGN_GUI.md (OQ-12…14 open). Prior: Session 23: CLI_REFERENCE.md written + P1-T2 invariant tests landed — 68 tests passing; Session 22: P1-T2 golden vectors + P1-T6 peak-RSS capture landed and verified; first real RSS numbers in harness artifact `benchmarks/results-r3.json` (not yet published as a revision). Prior: Session 20 `lexora pipe` flow + ADR-0007 drafted (OQ-11, awaiting owner accept/amend/reject); Session 19 English-only scope directive; Sessions 14–18 merged via PR #4, hosted `main` at `7e31656`)
+> **Last verified:** 2026-10-17 (Session 26: P1 closure sweep — `pack --block-size` bounds messaging (exit 2, LIM-01), CLI-level pack/unpack tests, suite 108; stale FORMAT_LXZ PROPOSED banner + ADR index corrected; **ADR-0008 Accepted** resolving OQ-12/13 (PySide6, `[gui]` extra, architecture constraints) — GUI-M1 unblocked on paper only, zero GUI code. Prior: Session 25: P1 closure polish — `canon --meta`, public `verify_archive()`, exit-code reconciliation, libtmux neutralized; 101 tests. Prior: Session 24: ADR-0007 accepted under owner delegation "DECIDE UR SELF" — `.lxz` v0 container implemented (`src/lexora/container.py`) with CLI `pack`/`unpack`, exit code 7, golden-archive vectors; 96 tests passing. GitHub Actions PAUSED by owner (free-tier minutes exhausted; OQ-15) — local verification gate until the whole app is built. GUI design plan drafted: docs/DESIGN_GUI.md (OQ-12…14 open). Prior: Session 23: CLI_REFERENCE.md written + P1-T2 invariant tests landed — 68 tests passing; Session 22: P1-T2 golden vectors + P1-T6 peak-RSS capture landed and verified; first real RSS numbers in harness artifact `benchmarks/results-r3.json` (not yet published as a revision). Prior: Session 20 `lexora pipe` flow + ADR-0007 drafted (OQ-11, awaiting owner accept/amend/reject); Session 19 English-only scope directive; Sessions 14–18 merged via PR #4, hosted `main` at `7e31656`)
 
 ## Current phase
 
@@ -12,7 +12,7 @@
 | Item | State |
 |---|---|
 | Implementation code | **Present (prototype):** `src/lexora/{__init__,canonicalize,zstd_core,container,cli}.py`, `benchmarks/harness.py` — Phase-1 baseline + `.lxz` v0 container (accepted ADR-0007), no stable API |
-| Tests / test tooling | **96 tests passing** (`python3 -m pytest -q`; environment note: if a stale third-party `libtmux` plugin reappears in a container, add `-p no:libtmux` — it crashed collection in some images. Sessions 20–24: `pipe` tests, golden-vector conformance, whitelist-invariant property tests, `.lxz` container suite (`tests/test_container_lxz.py`). Golden vectors: 9 canonicalization scenarios + lxz format vectors under `tests/vectors/lxz_format/` |
+| Tests / test tooling | **108 tests passing** (`python3 -m pytest -q`; environment note: if a stale third-party `libtmux` plugin reappears in a container, add `-p no:libtmux` — it crashed collection in some images. Sessions 20–24: `pipe` tests, golden-vector conformance, whitelist-invariant property tests, `.lxz` container suite (`tests/test_container_lxz.py`). Golden vectors: 9 canonicalization scenarios + lxz format vectors under `tests/vectors/lxz_format/` |
 | Build/packaging config (`pyproject.toml` etc.) | **Present** — version `0.0.1.dev1`, requires-python `>=3.12,<4.0` (ADR-0005), deps pinned to tested versions (zstandard 0.25.0) |
 | CI/CD workflows | **Paused by owner decision 2026-10-17 (OQ-15):** `.github/workflows/ci.yml` exists and last ran green on `e240af0` (Session 19); free-tier Actions minutes exhausted → no new runs until the whole app is complete or owner re-enables. Local gate meanwhile: `pytest -q` + linkcheck before every commit |
 | License file | **Absent** — license not selected (OQ-5) |
@@ -45,7 +45,7 @@
 
 ## Health indicators *(verified, not asserted)*
 
-- Tests: **101 passed** — `python3 -m pytest -q` (2026-10-17, Session 25 re-verification after `canon --meta` + `verify_archive()` landed; progression: 35 → 40 (S20 `pipe`) → 60 (S21–22 vectors) → 68 (S23 invariants) → 96 (S24 container suite) → 101 (S25). Note: the stale `libtmux` plugin crash is now neutralized repo-wide via `addopts = "-p no:libtmux"` in pyproject.toml, so plain `pytest -q` works again.)
+- Tests: **108 passed** — `python3 -m pytest -q` (2026-10-17, Session 26 re-verification after `--block-size` bounds + CLI-level pack/unpack tests landed; progression: 35 → 40 (S20 `pipe`) → 60 (S21–22 vectors) → 68 (S23 invariants) → 96 (S24 container suite) → 101 (S25) → 108 (S26). Note: the stale `libtmux` plugin crash is now neutralized repo-wide via `addopts = "-p no:libtmux"` in pyproject.toml, so plain `pytest -q` works again.)
 - Build: `pip install -e .` **verified working** in this container 2026-10-17 (was previously untested).
 - Coverage/badges/releases: none; none claimed anywhere in docs.
 

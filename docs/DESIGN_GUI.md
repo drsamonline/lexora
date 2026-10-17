@@ -1,6 +1,6 @@
 # LEXORA Desktop GUI — Design Plan (Draft for owner review)
 
-**Status:** Draft v0.1 (2026-10-17, Session 24). Owner directive: plan the GUI and its parts
+**Status:** Plan v0.2 (Session 26): toolkit/packaging decisions **resolved by accepted [ADR-0008](ADR/ADR-0008-gui-toolkit-architecture.md)** (PySide6; same repo via `[gui]` extra; OQ-14 provisionally format-minimal). §3/§8 below are annotated accordingly. Implementation still deferred until the CLI app is declared complete. Prior: Draft v0.1 (2026-10-17, Session 24). Owner directive: plan the GUI and its parts
 now; implementation is **deferred until the whole CLI app is complete** (see
 [ROADMAP](ROADMAP.md) / [PHASES](PHASES.md)). This document introduces no code and makes no
 implemented claims. All GUI features map to capabilities that already exist or are planned as
@@ -41,7 +41,7 @@ is a later-phase concern, but the design must not preclude it (Unicode-first wid
 
 | Layer | Proposal | Rationale / alternatives |
 |---|---|---|
-| Toolkit | **PySide6 (LGPL)** | Native feel, mature threading, good Unicode/text handling. Tkinter (stdlib, zero deps) is fallback if dependency budget matters; PyQt6 rejected (GPL/commercial licensing friction vs MIT project, cf. ADR-0006 reasoning). Electron/web rejected (size, memory vs RESOURCE_LIMITS ethos). |
+| Toolkit | **PySide6 (LGPL)** — ✅ decided, [ADR-0008](ADR/ADR-0008-gui-toolkit-architecture.md) Accepted (S26) | Native feel, mature threading, good Unicode/text handling. Tkinter (stdlib, zero deps) is fallback if dependency budget matters; PyQt6 rejected (GPL/commercial licensing friction vs MIT project, cf. ADR-0006 reasoning). Electron/web rejected (size, memory vs RESOURCE_LIMITS ethos). |
 | Packaging | `pyproject.toml` optional extra `[gui]` → PyPI wheel unchanged for CLI users; later `pyinstaller` build recipe in BUILD_GUIDE | Keeps core install dependency-free of Qt. |
 | Theming/i18n | Qt Designer `.ui` files or programmatic widgets; all strings through `tr()` from day 1 | Even though Phase 1 UI copy is English-only, this unblocks Indic localization later without rework. |
 
@@ -90,9 +90,9 @@ confirm on overwrite (mirrors CLI atomic-rename discipline); no elevation; no ne
 
 ## 8. Open questions for owner (new OQ candidates)
 
-- **OQ-12:** Confirm toolkit: PySide6 (proposed) vs Tkinter-fallback vs defer decision to GUI-M1 kickoff.
-- **OQ-13:** Should GUI ship in the same repo/package (extra `[gui]`, proposed) or a sibling repo?
-- **OQ-14:** Does the GUI need to expose dictionary/trained-model compression when that arrives post-P1, or stay format-minimal?
+- ~~**OQ-12:** Confirm toolkit~~ — **RESOLVED S26: PySide6** via [ADR-0008](ADR/ADR-0008-gui-toolkit-architecture.md) (Tkinter kept as documented fallback; superseding ADR required to switch).
+- ~~**OQ-13:** Same repo vs sibling~~ — **RESOLVED S26: same repo, optional `[gui]` extra** (core install stays Qt-free).
+- **OQ-14:** Dictionary/trained-model exposure — **provisionally answered in ADR-0008 decision 5: format-minimal through GUI-M3**; revisit when such a library feature actually lands. Owner may override.
 
 ## 9. What will NOT happen until owner says so
 
