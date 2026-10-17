@@ -6,6 +6,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-17 — Session 25 (P1 closure polish per NEXT_SESSION task 1):
+  - **`canon --meta` audit JSON** — canonicalization now exposes the library's `canonicalize_with_meta` through the CLI: version, applied rules, input/output sizes and SHA-256s as sorted JSON on stdout INSTEAD of payload bytes (payload only via `--out`; with `--meta --out -` stdout stays pure JSON). CLI_REFERENCE updated; 2 new tests.
+  - **Public `verify_archive()` API** (`src/lexora/container.py`) — structural+integrity verification without producing payload bytes: reader-rule validation first (REQ-SEC-001), then per-block decode + SHA-256 verdicts (`VerifyResult`). Library-only for now (no CLI surface until requested); groundwork for GUI G4 archive inspector (DESIGN_GUI.md). 3 new tests.
+  - **ERROR_HANDLING ↔ shipped exit codes formally reconciled** (global rule 5 rewritten): shipped space frozen at 0/2/3/4/5/6/7; proposed families mapped onto it (E-USAGE→2 … E-INTEGRITY→7, E-INT→5 reserved); code names retained in `ContainerError.code`. CLI_REFERENCE reconciliation note updated to record adoption + the deliberate argparse deviation (usage exits 2, not 1).
+  - **Environment hardening:** broken third-party `libtmux` pytest plugin (crashes collection under pytest 9) is now disabled repo-wide via `addopts = "-p no:libtmux"` in pyproject.toml — plain `python3 -m pytest -q` works again with no extra flags.
+  - Suite 96 → **101 passed**; linkcheck OK.
+
 - 2026-10-17 — Session 24 (owner delegation + directives "DECIDE UR SELF" / skip Actions / plan GUI):
   - **OQ-11 resolved:** ADR-0007 accepted under the owner's explicit delegation, with three recorded pre-implementation amendments (full 32-byte header checksum ⇒ 128-byte header; 56-byte index entries; 40-byte trailer with 24-byte index digest prefix). `.lxz` v0 container implemented: `src/lexora/container.py` (pack/unpack/read_index; every block zstd-decoded and SHA-256-verified before any output byte; limits enforced pre-allocation; atomic temp+rename writes) + CLI `pack`/`unpack` with new exit code **7** (container refusal), golden-archive vectors under `tests/vectors/lxz_format/`, suite 68 → **96 passed**. `docs/CLI_REFERENCE.md` extended to all five real subcommands. P1-T3/P1-T5 core landed in TASK_BREAKDOWN.
   - **GitHub Actions paused by owner directive** (free-tier minutes exhausted; tracked as OQ-15): `.github/workflows/ci.yml` annotated PAUSED at top (kept intact for later re-enable); README CI badge explicitly flagged as historical; local verification gate (`pytest -q` + linkcheck before every commit) documented in STATUS/README/workflow header.

@@ -332,3 +332,42 @@ def unpack_blocks(archive: bytes) -> tuple[bytes, list[str]]:
         except ContainerError as exc:
             failures.append(f"block {i}: {exc.code}")
     return bytes(ok), failures
+
+
+@dataclass(frozen=True)
+class VerifyResult:
+    """Outcome of verify_archive(): structural verdict + per-block detail.
+
+    `ok` is True only when header+index validated AND every block decoded and
+    matched its index SHA-256. A container-level refusal during structural
+    validation is recorded in `error` (code/message); per-block integrity
+    failures appear in `blocks` with ok=False."""
+    ok: bool
+    error: str | None
+    block_count: int
+    blocks: tuple[tuple[int, bool, str | None], ...]  # (index, ok, code|None)
+
+
+def verify_archive(archive: bytes) -> VerifyResult:
+    """Public structural+integrity verification WITHOUT producing payload
+    bytes. Reader-rule validation runs first (header checksum, flags, codec
+    id, index/trailer consistency, limit checks — REQ-SEC-001); then each
+    block is decoded and hash-checked independently so callers get a
+    per-block verdict (ADR-0007 per-block semantics).
+
+    Added Session 25: needed by the future GUI archive inspector (G4,
+    docs/DESIGN_GUI.md) and any audit tooling; library-only for now — no CLI
+    surface until a flag is actually requested (scope honesty)."""
+    try:
+        info, _, _ = read_index(archive)
+    except ContainerError as exc:
+        return VerifyResult(False, f"{exc.code}: {exc}", 0, ())
+    results: list[tuple[int, bool, str | None]] = []
+    for i, e in enumerate(info.blocks):
+        try:
+            unpack(archive, only_block=i)
+            results.append((i, True, None))
+        except ContainerError as exc:
+            results.append((i, False, exc.code))
+    ok = all(r[1] for r in results)
+    return VerifyResult(ok, None, len(info.blocks), tuple(results))

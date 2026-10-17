@@ -28,7 +28,7 @@ Five subcommands exist: the three Phase-1 baseline flows (canonicalize + plain z
 Applies the v0 rule set CAN-R01 (encoding normalization), CAN-R02 (CRLF/CR → LF), CAN-R05 (soft-hyphen removal); version `lexcan-0.1`. All other byte classes pass through unchanged (whitelist contract, REQ-CAN-003).
 
 ```text
-lexora canon --in RAW --out CANONICAL [--encoding DECLARED]
+lexora canon --in RAW --out CANONICAL [--encoding DECLARED] [--meta]
 ```
 
 | Flag | Required | Default | Meaning |
@@ -36,6 +36,7 @@ lexora canon --in RAW --out CANONICAL [--encoding DECLARED]
 | `--in PATH` | yes | — | raw extracted-bytes file (`-` is not supported for input) |
 | `--out PATH` | yes | — | output file; `-` writes to stdout (binary) |
 | `--encoding NAME` | no | auto-detect | declared source codec; without it detection is BOM-sniff then strict UTF-8 — lossy guessing is refused (REQ-CAN-003) |
+| `--meta` | no | off | print audit JSON (canonicalizer version, applied rules, input/output sizes, SHA-256 of both) to **stdout instead of payload bytes**; payload goes only to `--out` (with `--meta`, `--out -` suppresses payload entirely so stdout stays pure JSON) — added Session 25 |
 
 Behavior notes:
 - Output is always UTF-8 without BOM, LF newlines (REQ-CAN-002).
@@ -127,7 +128,7 @@ Stable per this contract (all paths exercised by `tests/test_cli.py`):
 | 6 | round-trip verification failure | `decode(encode(C)) != C` — REQ-CMP-001 violation, blocker severity |
 | 7 | container refusal | `.lxz` format/integrity/limit refusal with specific `E-*` code (ADR-0007 reader); distinct from 5 so "codec library failed" ≠ "archive refused by format rules" |
 
-Reconciliation note (owner ask resolved Session 24): [ERROR_HANDLING.md](ERROR_HANDLING.md)'s proposed taxonomy (0/1/2/3/4/5/6) predates the real CLI and remains a *proposal*; this file's table is normative for shipped behavior. Mapping once ERROR_HANDLING freezes: E-USAGE→2, E-IO→3, E-INPUT-ENC/E-CAN→4, E-CMP(decode-level)→5, E-CMP-001 round-trip→6, E-FMT-*/E-RES-*/E-INTEGRITY-*→7, E-INT→5 reserved-with-panic-log. Codes are carried verbatim in `ContainerError.code`.
+Reconciliation note (Session 24; **formally adopted into [ERROR_HANDLING.md](ERROR_HANDLING.md) global rule 5, Session 25**): that file's originally proposed taxonomy (0/1/2/3/4/5/6) predates the real CLI; this file's table is normative for shipped behavior. Adopted mapping: E-USAGE→2, E-IO→3, E-INPUT-ENC/E-CAN→4, E-CMP(decode-level)→5, E-CMP-001 round-trip→6, E-FMT-*/E-RES-*/E-INTEGRITY-*→7, E-INT→5 reserved-with-context-log. Codes are carried verbatim in `ContainerError.code`. One deliberate deviation from the original proposal: argparse emits exit 2 for usage errors (not 1), so the shipped space has no exit 1.
 
 ## Planned but NOT implemented
 

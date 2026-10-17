@@ -59,6 +59,6 @@
 ## Metrics
 
 - Source files of LEXORA code: **9** (`src/lexora/__init__.py`, `canonicalize.py`, `zstd_core.py`, `cli.py`; `benchmarks/harness.py`, `benchmarks/corpus.py`; `scripts/gen_canon_vectors.py`, `scripts/linkcheck.py`) — first code landed Sessions 12–13; tiered corpus added Session 16/17; vector generator Session 21
-- Test files: **6** (`tests/test_canonicalize.py`, `test_zstd_core.py`, `test_cli.py`, `test_canon_vectors.py`, `test_canonicalize_invariants.py`, `test_container_lxz.py`) — **96 tests passing** (progression: 35 → 40 (S20 `pipe`) → 60 (S21–22 vectors) → 68 (S23 invariants) → 96 (S24 `.lxz` container suite))
+- Test files: **6** (`tests/test_canonicalize.py`, `test_zstd_core.py`, `test_cli.py`, `test_canon_vectors.py`, `test_canonicalize_invariants.py`, `test_container_lxz.py`) — **101 tests passing** (progression: 35 → 40 (S20 `pipe`) → 60 (S21–22 vectors) → 68 (S23 invariants) → 96 (S24 `.lxz` container suite) → 101 (S25 `canon --meta` + `verify_archive`))
 - Markdown documents: tracked per batch; Batch A creates 16 files (+3 root hygiene/config files).
 - Published benchmark revisions: **2 (R1 smoke baseline + R2 manifest regeneration, both Tier T1-gutenberg-p0)**; validated full-corpus results: **0**

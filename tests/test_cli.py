@@ -105,3 +105,37 @@ def test_pipe_missing_file_exit3(tmp_path):
     with pytest.raises(SystemExit) as excinfo:
         cli.main(["pipe", "--in", str(tmp_path / "nope")])
     assert excinfo.value.code == cli.EXIT_FILE
+
+
+def test_canon_meta_audit_json(tmp_path, capsys):
+    """canon --meta: JSON audit to stdout, payload to --out file, NOT stdout (Session 25)."""
+    import json
+
+    raw = tmp_path / "raw.txt"
+    raw.write_bytes("a\r\nb\u00adc".encode("utf-8"))
+    out = tmp_path / "canon.txt"
+    rc = cli.main(["canon", "--in", str(raw), "--out", str(out), "--meta"])
+    assert rc == cli.EXIT_OK
+    assert out.read_bytes() == b"a\nbc"
+    meta = json.loads(capsys.readouterr().out)
+    assert meta["canonicalizer_version"] == "lexcan-0.1"
+    assert meta["applied_rules"] == ["CAN-R01", "CAN-R02", "CAN-R05"]
+    assert meta["input_bytes"] == raw.stat().st_size
+    assert meta["output_bytes"] == out.stat().st_size
+    import hashlib
+    assert meta["input_sha256"] == hashlib.sha256(raw.read_bytes()).hexdigest()
+    assert meta["output_sha256"] == hashlib.sha256(b"a\nbc").hexdigest()
+    assert "canonical" not in meta  # payload never leaks into the audit JSON
+
+
+def test_canon_meta_stdout_payload_suppressed(tmp_path, capsys):
+    """With --meta and --out -, no payload bytes go to stdout (JSON only)."""
+    import json
+
+    raw = tmp_path / "raw.txt"
+    raw.write_bytes(b"hello")
+    rc = cli.main(["canon", "--in", str(raw), "--out", "-", "--meta"])
+    assert rc == cli.EXIT_OK
+    captured = capsys.readouterr()
+    meta = json.loads(captured.out)  # stdout must be parseable JSON alone
+    assert meta["output_bytes"] == 5

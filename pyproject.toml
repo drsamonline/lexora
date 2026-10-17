@@ -31,3 +31,8 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Container images sometimes ship a broken third-party `libtmux` pytest plugin
+# (applies marks to fixtures -> collection crash under pytest>=9). Unregister it
+# so the local gate `python3 -m pytest -q` works with no extra flags.
+# Recorded in docs/NEXT_SESSION.md / SESSION_LOG (Session 23/24 environment notes).
+addopts = "-p no:libtmux"

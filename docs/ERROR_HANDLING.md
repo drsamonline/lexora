@@ -1,9 +1,9 @@
 # LEXORA Error Handling
 
-> **Status:** Draft (contract for future implementation; no code raises errors yet — verified 2026-10-15)
+> **Status:** Draft (taxonomy reconciled with the shipped CLI 2026-10-17, Session 25 — see Global rule 5; severity/recovery sections remain contract for future implementation)
 > **Owner:** Documentation architect (delegated)
-> **Last verified:** 2026-10-15
-> **Related:** [SPECIFICATION.md](SPECIFICATION.md) · [LOGGING_AND_DIAGNOSTICS.md](LOGGING_AND_DIAGNOSTICS.md) · [RESOURCE_LIMITS.md](RESOURCE_LIMITS.md) · [THREAT_MODEL.md](THREAT_MODEL.md) TM-03/TM-04 · runbooks/
+> **Last verified:** 2026-10-17
+> **Related:** [SPECIFICATION.md](SPECIFICATION.md) · [CLI_REFERENCE.md](CLI_REFERENCE.md) · [LOGGING_AND_DIAGNOSTICS.md](LOGGING_AND_DIAGNOSTICS.md) · [RESOURCE_LIMITS.md](RESOURCE_LIMITS.md) · [THREAT_MODEL.md](THREAT_MODEL.md) TM-03/TM-04 · runbooks/
 
 ## Purpose & scope
 
@@ -15,7 +15,7 @@ Defines the error taxonomy, severity levels, and behavioral contract every LEXOR
 2. **Fail bounded on resources.** Any limit breach ([RESOURCE_LIMITS.md](RESOURCE_LIMITS.md)) ⇒ abort *before* allocation where possible; report which LIM-id tripped and observed vs. allowed size.
 3. **Determinism preserved.** Canonicalization is deterministic even under error: a document that fails rule validation is quarantined whole; it never produces partial canonical bytes.
 4. **Errors are identifiers, not prose.** Machine-readable codes below; human text is generated at display time only. Log lines reference IDs + hashes, never document bodies ([PRIVACY_AND_DATA_HANDLING.md](PRIVACY_AND_DATA_HANDLING.md)).
-5. **Exit codes stable per CLI contract** once CLI exists (CLI_REFERENCE.md, Batch E+): 0 success; 1 usage; 2 input error; 3 integrity; 4 resource limit; 5 internal bug; 6 environment/IO. (Proposed — freeze with first implemented CLI.) **Update 2026-10-16:** the first real CLI shipped with a *different* tested scheme (0/2/3/4/5/6 = ok/usage/file/canonicalization/codec/round-trip); [CLI_REFERENCE.md](CLI_REFERENCE.md) is now normative for the implemented commands and this taxonomy must be reconciled with it before any release.
+5. **Exit codes stable per CLI contract** once CLI exists (CLI_REFERENCE.md, Batch E+): 0 success; 1 usage; 2 input error; 3 integrity; 4 resource limit; 5 internal bug; 6 environment/IO. (Proposed — freeze with first implemented CLI.) **Update 2026-10-16:** the first real CLI shipped with a *different* tested scheme (0/2/3/4/5/6 = ok/usage/file/canonicalization/codec/round-trip); [CLI_REFERENCE.md](CLI_REFERENCE.md) is now normative for the implemented commands and this taxonomy must be reconciled with it before any release. **Reconciliation adopted Session 25 (delegated):** the SHIPPED exit-code space stays frozen at `0/2/3/4/5/6/7` (ok / usage / file-IO / canonicalization / codec / round-trip / container-refusal) because it is already externally observable and test-locked (`tests/test_cli.py`, `tests/test_container_lxz.py`). The proposed families map onto it as follows — E-USAGE→2; E-INPUT-ENC & E-CAN→4; E-CMP decode-level→5; E-CMP-001 round-trip→6; E-FMT-HEAD/E-FMT-IDX/E-RES/E-INTEGRITY→7; E-IO→3; E-INT→5 (reserved-with-context-log). Proposed code *names* are retained verbatim in exception attributes (`ContainerError.code`) so family semantics survive even though they no longer dictate numeric exits. The original 0–6 proposal above is kept only as historical context.
 
 ## Severity levels
 

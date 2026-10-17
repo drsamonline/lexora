@@ -68,6 +68,24 @@ def _write(path: str, data: bytes) -> None:
 def cmd_canon(args: argparse.Namespace) -> int:
     raw = _read(args.infile)
     try:
+        if args.meta:
+            # Audit mode: JSON metadata (sizes + SHA-256 hashes + rule list)
+            # to stdout INSTEAD of payload bytes; payload goes to --out only.
+            import json
+
+            from lexora.canonicalize import canonicalize_with_meta
+
+            meta = canonicalize_with_meta(raw, declared_encoding=args.encoding)
+            out = meta.pop("canonical")
+            if args.outfile != "-":
+                _write(args.outfile, out)
+            print(json.dumps(meta, indent=2, sort_keys=True))
+            print(
+                f"canon: {meta['input_bytes']} -> {meta['output_bytes']} bytes "
+                f"(rules CAN-R01,R02,R05; lexcAN-0.1; --meta audit)",
+                file=sys.stderr,
+            )
+            return EXIT_OK
         out = canonicalize(raw, declared_encoding=args.encoding)
     except CanonicalizationError as exc:
         print(f"canonicalization error: {exc}", file=sys.stderr)
@@ -249,6 +267,8 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--in", dest="infile", required=True)
     c.add_argument("--out", dest="outfile", required=True, help="'-' for stdout")
     c.add_argument("--encoding", default=None, help="declared source encoding")
+    c.add_argument("--meta", action="store_true",
+                   help="print audit JSON (sizes, SHA-256s, rules) to stdout instead of payload")
     c.set_defaults(func=cmd_canon)
 
     z = sub.add_parser("zround", help="zstd compress + verify byte-exact roundtrip")

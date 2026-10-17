@@ -45,7 +45,7 @@
 
 ## Health indicators *(verified, not asserted)*
 
-- Tests: **96 passed** — `python3 -m pytest -q` (2026-10-17, Session 24 re-verification after `.lxz` container + pack/unpack landed; progression: 35 → 40 (S20 `pipe`) → 60 (S21–22 vectors) → 68 (S23 invariants) → 96 (S24 container suite).
+- Tests: **101 passed** — `python3 -m pytest -q` (2026-10-17, Session 25 re-verification after `canon --meta` + `verify_archive()` landed; progression: 35 → 40 (S20 `pipe`) → 60 (S21–22 vectors) → 68 (S23 invariants) → 96 (S24 container suite) → 101 (S25). Note: the stale `libtmux` plugin crash is now neutralized repo-wide via `addopts = "-p no:libtmux"` in pyproject.toml, so plain `pytest -q` works again.)
 - Build: `pip install -e .` **verified working** in this container 2026-10-17 (was previously untested).
 - Coverage/badges/releases: none; none claimed anywhere in docs.
 
