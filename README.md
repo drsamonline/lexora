@@ -1,14 +1,15 @@
 # LEXORA
 
 [![CI](https://github.com/drsamonline/lexora/actions/workflows/ci.yml/badge.svg)](https://github.com/drsamonline/lexora/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-192%20passed-informational)
+![Tests](https://img.shields.io/badge/tests-192%20passed%20(local)%20-informational)
 ![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 **Layered EXact-text Repository & Adaptive compression architecture**
 
-> **Project status: Phase 1 prototype in development.** Documentation (Batches A–F) drafted;
-> early implementation code exists (canonicalization, Zstd core baseline, `.lxz` v0 container, benchmark harness).
+> **Project status: Phase 1 prototype in development.** Documentation (Batches A–E) complete/drafted;
+> early implementation code exists (canonicalization, Zstd core baseline, `.lxz` v0 container, benchmark harness,
+> CLI app, experimental PySide6 GUI milestones M1–M3).
 > Nothing here is a shipped or released feature. See [docs/STATUS.md](docs/STATUS.md) for the verified state.
 > **Badge honesty note:** the CI badge reflects the real workflow in `.github/workflows/ci.yml`, but
 > **GitHub Actions runs are paused by owner decision 2026-10-17** (free-tier minutes exhausted; OQ-15) —
@@ -51,9 +52,9 @@ Generic compressors (Zstandard, XZ, Brotli) treat text as opaque bytes. Document
 
 | Status | Capability |
 |---|---|
-| **Implemented** | Early Phase 1 prototype: conservative canonicalizer (`src/lexora/canonicalize.py`), Zstd core baseline (`src/lexora/zstd_core.py`), baseline CLI (`canon`/`zround`/`pipe`), benchmark harness (`benchmarks/harness.py`), test suite (68 passed locally) |
-| **In progress** | Phase 1 baseline metrics on real corpus data; CI first run (workflow added 2026-10-15); documentation Batches A–F pending owner review |
-| **Planned** | TXT/PDF ingestion; `.lxz` archive format (proposed); experimental candidates (dictionaries, Re-Pair, bounded token PPM, numeric/record coding, template+residual); `.lxdb` database mode; optional encryption profile |
+| **Implemented** | Early Phase 1 prototype: conservative canonicalizer (`src/lexora/canonicalize.py`), Zstd core baseline (`src/lexora/zstd_core.py`), `.lxz` v0 container (`src/lexora/container.py`, ADR-0007), full CLI (`canon`/`zround`/`pipe`/`pack`/`unpack` — see [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)), benchmark harness (`benchmarks/harness.py` + `corpus.py`), test suite (192 passed locally, re-verified 2026-10-17) |
+| **In progress** | GUI milestones M1–M3 landed & offscreen-tested (experimental, not released — PySide6 via `[gui]` extra, ADR-0008; see [docs/DESIGN_GUI.md](docs/DESIGN_GUI.md)); Phase 1 closure evidence awaiting owner verdict ([docs/P1_EVIDENCE_DRAFT.md](docs/P1_EVIDENCE_DRAFT.md)); GitHub Actions paused by owner (OQ-15) — local gate is `pytest -q` + linkcheck |
+| **Planned** | TXT/PDF ingestion; experimental candidates (dictionaries, Re-Pair, bounded token PPM, numeric/record coding, template+residual); `.lxdb` database mode; optional encryption profile; GUI stretch items (batch queue, drag-and-drop, shortcuts) |
 
 ## Architecture overview (proposed)
 
@@ -68,15 +69,29 @@ A normative specification (`docs/SPECIFICATION.md`) and detailed architecture do
 ## Supported inputs & current limitations
 
 - **Design targets:** `.txt` (UTF-8/other encodings), `.pdf` (text-layer first; OCR for scanned pages), scripts: Latin, Devanagari, Gujarati.
-- **Current limitation:** none of this is implemented. The repository contains the approved blueprint and documentation only.
+- **Current reality:** byte-level canonicalization of raw text streams is implemented (rules CAN-R01/R02/R05 of the v0 rule set); TXT/PDF *file ingestion* is not implemented yet. Build scope is English-only per owner directive 2026-10-16 (Hindi/Gujarati deferred, not blocking).
 
 ## Installation / Quick start
 
-Not yet available. There is no package, CLI, or build configuration in this repository. When implementation lands, installation instructions will appear in `docs/INSTALLATION.md` and be verified against real commands before being documented here.
+Install from a source checkout (no published package exists):
+
+```bash
+pip install -e .            # core (Qt-free): zstandard pinned range, Python >=3.12,<4.0
+pip install -e ".[dev]"     # + pytest for the test suite
+pip install -e ".[gui]"     # + PySide6 for the experimental GUI (opt-in extra, ADR-0008)
+```
+
+Then try the CLI: `lexora --help` (subcommands: `canon`, `zround`, `pipe`, `pack`, `unpack` — documented in [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)) or the GUI launcher `lexora-gui` (requires the `[gui]` extra; exits 2 with guidance without it).
 
 ## Build & test commands
 
-None exist yet. Do not run assumed commands. Verified commands will be added to `docs/BUILD_GUIDE.md` and `docs/TESTING_GUIDE.md` only once tooling is actually configured.
+Verified in-container (2026-10-17):
+
+```bash
+python3 -m pytest -q                     # test suite (192 passed; addopts neutralizes a stale libtmux plugin)
+QT_QPA_PLATFORM=offscreen python3 -m pytest -q   # same, incl. offscreen GUI widget tests (needs pyside6 + libegl1)
+python3 scripts/linkcheck.py             # docs integrity gate — ALL INTERNAL LINKS OK
+```
 
 ## Benchmarks
 
@@ -86,7 +101,7 @@ None exist yet. Do not run assumed commands. Verified commands will be added to 
 
 - No security guarantees are claimed. No formal review has been performed.
 - Design intent: decoders enforce resource limits (bounded blocks, memory caps) to survive hostile archives; sensitive/clinical corpora must not train shared dictionaries by default.
-- Vulnerability reporting instructions will live in `SECURITY.md` once contact details are confirmed by the project owner.
+- Vulnerability reporting instructions live in [SECURITY.md](SECURITY.md).
 
 ## Documentation index
 
@@ -106,10 +121,10 @@ Start at **[docs/index.md](docs/index.md)**. Key entry points:
 
 ## Roadmap (summary)
 
-1. **Phase 0 (now):** Documentation foundation, freeze canonicalization decisions & test vectors, resolve open conflicts.
-2. **Phase 1:** Core Zstandard baseline + corpus manifest + benchmark harness.
+1. **Phase 0 (complete):** Documentation foundation, canonicalization decisions & test vectors, open conflicts resolved via delegated ADRs.
+2. **Phase 1 (current):** Core Zstandard baseline + corpus manifest + benchmark harness — code landed; closure evidence awaiting owner verdict. GUI milestones M1–M3 landed experimentally alongside.
 3. **Phase 2:** Ingestion & canonicalization with golden vectors.
-4. **Phase 3+:** Experimental candidates, `.lxz` format proposal, `.lxdb`, optional encryption — each gated by measured evidence.
+4. **Phase 3+:** Experimental candidates, `.lxz` format freeze, `.lxdb`, optional encryption — each gated by measured evidence.
 
 Details in `docs/ROADMAP.md` (Batch C).
 

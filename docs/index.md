@@ -2,7 +2,7 @@
 
 > **Status:** Active (Batches A–E — governance, architecture, engineering, security/operations, GitHub & release polish)
 > **Owner:** Unassigned
-> **Last verified:** 2026-10-15 (Session 10)
+> **Last verified:** 2026-10-17 (reconciled with Session 37+ state: CLI app + `.lxz` v0 container landed, GUI milestones M1–M3 landed experimentally, benchmark revisions R1+R2 published, MIT license per ADR-0006)
 
 LEXORA = **L**ayered **EX**act-text **O**ptimized... see [PROJECT_CHARTER.md](PROJECT_CHARTER.md) for the authoritative definition and full naming. Core idea: clean text conservatively → canonical UTF-8 bytes → compress with byte-exact recovery.
 
@@ -25,7 +25,7 @@ The Phase-1 CLI exists and is tested (`canon`, `zround`, `pipe`, `pack`, `unpack
 
 ## Developers
 
-- `DEVELOPMENT_SETUP.md` — exists as Batch C draft (Python version itself is still an open decision — see [DECISIONS.md](DECISIONS.md) OQ-7)
+- `DEVELOPMENT_SETUP.md` — Batch C draft; Python range resolved by [ADR-0005](ADR/ADR-0005-python-version.md) (`>=3.12,<4.0`; OQ-7 closed Session 12)
 - [PRODUCT_REQUIREMENTS.md](PRODUCT_REQUIREMENTS.md) — numbered requirements (`REQ-*`)
 - [GLOSSARY.md](GLOSSARY.md) — terminology used across all docs
 - [QUALITY_PLAN.md](QUALITY_PLAN.md) — Batch C draft; `TESTING_GUIDE.md` not yet written (deferred to when test tooling exists)
@@ -40,14 +40,14 @@ The Phase-1 CLI exists and is tested (`canon`, `zround`, `pipe`, `pack`, `unpack
 - [COST_MODEL.md](COST_MODEL.md) — total serialized-byte accounting rules
 - [TOKENIZER_SPEC.md](TOKENIZER_SPEC.md) — candidate-layer tokenizer v0 draft
 - [OCR_PIPELINE.md](OCR_PIPELINE.md) — optional OCR flow and failure semantics
-- [FORMAT_LXZ.md](FORMAT_LXZ.md) — ⚠️ PROPOSED, not a stable format
+- [FORMAT_LXZ.md](FORMAT_LXZ.md) — ⚠️ v0 EXPERIMENTAL — byte layout frozen by accepted ADR-0007; implemented in `src/lexora/container.py`; pre-release, not a stable format
 - [FORMAT_LXDB.md](FORMAT_LXDB.md) — ⚠️ DEFERRED, not designed
 - Diagrams: [pipeline](diagrams/pipeline.mmd) · [system context](diagrams/system-context.mmd) · [session resume](diagrams/session-resume.mmd)
 
 ## Testing & benchmarks
 
 - [TEST_STRATEGY.md](TEST_STRATEGY.md), [BENCHMARK_PROTOCOL.md](BENCHMARK_PROTOCOL.md), [CORPUS_POLICY.md](CORPUS_POLICY.md) — Batch C drafts
-- [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) — exists; **holds zero numbers. No validated benchmark results exist.** Any numbers appearing anywhere before a frozen-protocol run are invalid.
+- [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) — active register; **two smoke-scope revisions published (R1 + R2, tier T1-gutenberg-p0)** — baseline-vs-baseline numbers only (Zstd-19 vs XZ-9), **no LEXORA-vs-baseline results and no ADR-0001 verdict exist**. Any number outside a published revision or without its tier label is invalid. Draft closure evidence lives separately in [P1_EVIDENCE_DRAFT.md](P1_EVIDENCE_DRAFT.md) (awaiting owner verdict).
 
 ## Security & privacy
 
@@ -76,7 +76,7 @@ The Phase-1 CLI exists and is tested (`canon`, `zround`, `pipe`, `pack`, `unpack
 ## Decisions & history
 
 - [DECISIONS.md](DECISIONS.md) — index of ADRs and open decisions
-- [ADR/](ADR/) — decision records: [ADR-0001 gate scope](ADR/ADR-0001-gate-scope.md) · [ADR-0002 Brotli role](ADR/ADR-0002-brotli-role.md) · [ADR-0003 PPMd role](ADR/ADR-0003-ppmd-role.md) · [ADR-0004 cleaning metric](ADR/ADR-0004-cleaning-error-metric.md) — all **Accepted** (2026-10-15, owner delegation; see DECISIONS.md note); [template](templates/ADR_TEMPLATE.md)
+- [ADR/](ADR/) — decision records: [ADR-0001 gate scope](ADR/ADR-0001-gate-scope.md) · [ADR-0002 Brotli role](ADR/ADR-0002-brotli-role.md) · [ADR-0003 PPMd role](ADR/ADR-0003-ppmd-role.md) · [ADR-0004 cleaning metric](ADR/ADR-0004-cleaning-error-metric.md) · [ADR-0005 Python version](ADR/ADR-0005-python-version.md) · [ADR-0006 MIT license](ADR/ADR-0006-license-mit.md) · [ADR-0007 `.lxz` v0 container freeze](ADR/ADR-0007-container-v0-freeze.md) · [ADR-0008 GUI toolkit/architecture](ADR/ADR-0008-gui-toolkit-architecture.md) — all **Accepted** (2026-10-15…17, owner delegation; see DECISIONS.md note); [template](templates/ADR_TEMPLATE.md)
 - [../CHANGELOG.md](../CHANGELOG.md) — change history
 - [templates/](templates/) — reusable document templates ([session note](templates/SESSION_NOTE_TEMPLATE.md), [ADR](templates/ADR_TEMPLATE.md))
 

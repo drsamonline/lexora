@@ -2,7 +2,7 @@
 
 > **Status:** Active
 > **Owner:** Unassigned
-> **Last verified:** 2026-10-15 (commit `816f58f`)
+> **Last verified:** 2026-10-17 (reconciliation pass: ADRs 0005–0008 recorded below; OQ-6 effectively resolved in practice — remote `drsamonline/lexora` with default branch `main` is configured and used, formal close-out pending owner confirmation)
 > **Related:** [ADR template](ADR/ADR-0001-template.md) · [Blueprint](../LEXORA_Full_Blueprint_Design_Master_Prompt.md)
 
 This is an **index**, not a substitute for full ADRs. Material decisions require a numbered ADR file in [`ADR/`](ADR/).

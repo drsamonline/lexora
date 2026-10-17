@@ -1,7 +1,7 @@
 # LEXORA Progress
 
 > **Status:** Active — update at every session end
-> **Last verified:** 2026-10-16 (Session 22 — see STATUS.md header for current state)
+> **Last verified:** 2026-10-17 (documentation reconciliation session — both gates re-run live: `pytest -q` → 192 passed, linkcheck OK. Prior: Session 37 P1 evidence draft; see STATUS.md header for full state)
 
 ## Phase completion
 
@@ -9,7 +9,7 @@
 |---|---|---|---|---|
 | P0.1 Documentation audit | Inventory repo, find conflicts, plan batches | **Complete** | ✅ Audit delivered in session 2026-10-15 | [SESSION_LOG.md](SESSION_LOG.md) |
 | P0.2 Batch A — governance docs | README/index/charter/requirements/glossary/decisions/status files | **Complete** | ✅ All checklist items verified; committed `07c1564` | [SESSION_LOG.md](SESSION_LOG.md) Session 2 + commit hash |
-| P0.3 Owner decisions OQ-1…OQ-10 | Resolve blueprint conflicts, license, Python version, corpus | **Partially complete** | ⚠️ OQ-1…OQ-4 resolved — ADR-0001…0004 Accepted via owner delegation (`86e6b55`). OQ-5…OQ-10 still awaiting owner (license, remote/visibility, Python version, corpus, OCR tooling, semver adoption) | [DECISIONS.md](DECISIONS.md); docs/ADR/ADR-0001..0004 |
+| P0.3 Owner decisions OQ-1…OQ-15 | Resolve blueprint conflicts, license, Python version, corpus | **Mostly complete** | ⚠️ Resolved via Accepted ADRs: OQ-1…4 (ADR-0001…0004), OQ-5 license MIT (ADR-0006), OQ-7 Python (ADR-0005), OQ-11 container freeze (ADR-0007), OQ-12/13 GUI toolkit/packaging (ADR-0008). OQ-6 effectively resolved in practice (remote `drsamonline/lexora`, default branch `main` — formal close-out pending). Still open: OQ-8 (corpus ≥1 GiB — smoke scope only), OQ-9 (semver adoption), OQ-10 (OCR tooling); OQ-14 provisionally answered, OQ-15 = Actions paused (process decision) | [DECISIONS.md](DECISIONS.md); docs/ADR/ADR-0001..0008 |
 | P0.4 Batch B — architecture & spec draft | SPECIFICATION `LEXORA-SPEC-1.0-draft`, format proposals, diagrams, conflict ADRs | **Complete** (commits `91cfbb6`, `5001ab3`; ADRs Accepted `86e6b55`) | ✅ Drafts exist and gate-blocking ADRs accepted; formats remain PROPOSED/not frozen by policy until byte layout + test vectors approved | docs/MASTER_BLUEPRINT.md, SPECIFICATION.md, CANONICALIZATION.md, TOKENIZER_SPEC.md, OCR_PIPELINE.md, COMPRESSION_ARCHITECTURE.md, COST_MODEL.md, FORMAT_LXZ.md, FORMAT_LXDB.md, diagrams/ |
 | P0.5 Batch C — engineering execution docs | Roadmap, phases, plan, matrix, traceability, acceptance, test strategy, quality, benchmark protocol/results, corpus policy, budgets, limits, build/install/dev-setup | **Complete** (commit `3d98eab`) | ✅ 15 docs created; links verified; no fabricated results/commands | docs/ROADMAP.md … docs/DEVELOPMENT_SETUP.md |
 | P0.6 Merge to main + push | Local `main` current; hosted remote updated | **Complete** | ✅ Session 8: origin discovered (drsamonline/lexora), local main merged with origin/main and pushed — remote `main` at `d6350c0`, verified via ls-remote + contents API | SESSION_LOG Session 8 |
@@ -40,14 +40,14 @@
 
 ## Requirements satisfied to date
 
-**Zero implementation requirements.** REQ-CAN-007 is additionally *Blocked* pending OQ-4 metric definition. Documentation-process requirements (traceability, decision records, resumability artifacts) are being established now.
+**Partial implementation coverage as of 2026-10-17:** canonicalization (rules CAN-R01/R02/R05 + golden vectors), byte-exact Zstd core, `.lxz` v0 container, CLI, benchmark harness, and experimental GUI are landed and tested — REQ-CAN/REQ-CMP/REQ-FMT partially satisfied by prototype. Full traceability audit lives in [REQUIREMENTS_TRACEABILITY.md](REQUIREMENTS_TRACEABILITY.md). OQ-4 is resolved (ADR-0004 Accepted) — the former "REQ-CAN-007 blocked pending OQ-4" note no longer applies; REQ-CAN-007 itself remains unimplemented until the cleaning-error metric run lands with real corpus data.
 
 ## Milestones
 
 | Milestone | Target | State |
 |---|---|---|
 | M1: Documentation foundation complete (Batch A committed as 07c1564 + closure 4d7583e) | 2026-10-15 | Complete |
-| M2: Open questions resolved or explicitly deferred by owner | Owner-dependent | Partial — OQ-1…OQ-4 accepted (`86e6b55`); OQ-5…OQ-10 waiting |
+| M2: Open questions resolved or explicitly deferred by owner | Owner-dependent | Partial — OQ-1…5, 7, 11, 12, 13 accepted via ADRs 0001–0008; OQ-8 (corpus size), OQ-9 (semver), OQ-10 (OCR) waiting; OQ-15 (Actions pause) recorded as process decision |
 | M3: SPECIFICATION 1.0-draft published (Batch B) | After M2 | Complete (draft published; approval of formats still pending byte layout + test vectors) |
 | M3a: Batches B+C merged into local `main` | 2026-10-15 | Complete (`3d98eab` fast-forward); pushed to remote in Session 8 (origin/main at `d6350c0`) |
 | M3b: Batch D drafted (security & operations) | 2026-10-15 | Drafted — 12 docs (`301901a`); Session 9 closure (`3ecdfaf`): link check OK, continuity + CHANGELOG updated; ff-merged into local `main`; landed on remote via PR #2 merge (`76476cf`) |
@@ -58,7 +58,7 @@
 
 ## Metrics
 
-- Source files of LEXORA code: **9** (`src/lexora/__init__.py`, `canonicalize.py`, `zstd_core.py`, `cli.py`; `benchmarks/harness.py`, `benchmarks/corpus.py`; `scripts/gen_canon_vectors.py`, `scripts/linkcheck.py`) — first code landed Sessions 12–13; tiered corpus added Session 16/17; vector generator Session 21
-- Test files: **8** (`tests/test_canonicalize.py`, `test_zstd_core.py`, `test_cli.py`, `test_canon_vectors.py`, `test_canonicalize_invariants.py`, `test_container_lxz.py`, `test_gui_service.py`, `test_gui_app_offscreen.py`) — **186 tests passing** (progression: 35 → 40 (S20 `pipe`) → 60 (S21–22 vectors) → 68 (S23 invariants) → 96 (S24 `.lxz` container suite) → 101 (S25 `canon --meta` + `verify_archive`) → 108 (S26 CLI pack/unpack surface + `--block-size` bounds) → 132 (S27 GUI service adapter + golden parity) → 148 (S28 file-ops, offscreen widget e2e, launcher regression) → 157 (S29 M2 job core + widget-driven runner tests) → 162 (S30 G5 preview + G6 diagnostics + block-table rendering) → 171 (S31 G7 settings Qt-free + offscreen persist/refill + screenshot helper tests) → 182 (S32 crash-handler/path-resolver tests, committed red then fixed in S33) → 186 (S33 file-picker seam + icon offscreen tests) → 192 (S34 About view + crash-log viewer tests))
+- Source files of LEXORA code: **13** (`src/lexora/__init__.py`, `canonicalize.py`, `zstd_core.py`, `container.py`, `cli.py`; `src/lexora/gui/__init__.py`, `__main__.py`, `app.py`, `service.py`, `crash.py`; `benchmarks/harness.py`, `benchmarks/corpus.py`; `scripts/gen_canon_vectors.py`, `scripts/linkcheck.py`, `scripts/gen_screenshots.py` — 16 incl. all scripts) — first code landed Sessions 12–13; tiered corpus Session 16/17; vector generator Session 21; `.lxz` container Session 24; GUI package Sessions 27–34
+- Test files: **8** (`tests/test_canonicalize.py`, `test_zstd_core.py`, `test_cli.py`, `test_canon_vectors.py`, `test_canonicalize_invariants.py`, `test_container_lxz.py`, `test_gui_service.py`, `test_gui_app_offscreen.py`) — **192 tests passing** (re-verified live 2026-10-17 on the current branch; progression: 35 → 40 (S20 `pipe`) → 60 (S21–22 vectors) → 68 (S23 invariants) → 96 (S24 `.lxz` container suite) → 101 (S25 `canon --meta` + `verify_archive`) → 108 (S26 CLI pack/unpack surface + `--block-size` bounds) → 132 (S27 GUI service adapter + golden parity) → 148 (S28 file-ops, offscreen widget e2e, launcher regression) → 157 (S29 M2 job core + widget-driven runner tests) → 162 (S30 G5 preview + G6 diagnostics + block-table rendering) → 171 (S31 G7 settings Qt-free + offscreen persist/refill + screenshot helper tests) → 182 (S32 crash-handler/path-resolver tests, committed red then fixed in S33) → 186 (S33 file-picker seam + icon offscreen tests) → 192 (S34 About view + crash-log viewer tests))
 - Markdown documents: tracked per batch; Batch A creates 16 files (+3 root hygiene/config files).
 - Published benchmark revisions: **2 (R1 smoke baseline + R2 manifest regeneration, both Tier T1-gutenberg-p0)**; validated full-corpus results: **0**
