@@ -1,18 +1,20 @@
-"""LEXORA GUI application shell — G1 main window + view stack (GUI-M1).
+"""LEXORA GUI application shell — G1 main window + view stack (GUI-M1/M2).
 
 ADR-0008 compliance:
 * ALL Qt imports are lazy (inside functions). Importing this module without
   PySide6 installed must succeed and must not touch Qt.
 * Views contain no business logic: every operation delegates to
   `lexora.gui.service.AppService` (thin-client rule, DESIGN_GUI §2).
-* No console entry point is registered in pyproject yet (ADR-0008 decision 2:
-  entry point lands only when the window is demonstrably runnable; until then
-  launch with `python -m lexora.gui`).
+* Console entry point `lexora-gui` registered once the window was proven
+  runnable (ADR-0008 decision 2); `python -m lexora.gui` works too.
 
-M1 scope (DESIGN_GUI §5 GUI-M1): G1 main window hosting G2 pack, G3 unpack,
-G4 inspector views. File dialogs own path selection; the service owns I/O.
-Progress/cancellation (job runner) lands with GUI-M2 — M1 operations run
-synchronously on the UI thread over the same tested service calls.
+Scope landed so far (DESIGN_GUI §5): G1 main window hosting G2 pack,
+G3 unpack, G4 inspector (M1); async job runner with progress + cancellation
+(M2); preview pane fed by canonicalization metadata + diagnostics log
+history (M2b, this revision). The service owns all I/O; widgets only wire
+signals to tested service calls. Pure rendering helpers are kept as
+module-level functions (`format_inspect_text`, `format_preview_text`) so
+they are testable without Qt.
 """
 
 from __future__ import annotations
@@ -23,7 +25,66 @@ if TYPE_CHECKING:  # pragma: no cover - typing only, never executed at runtime
     from PySide6.QtWidgets import QMainWindow
 
 APP_TITLE = "LEXORA"
-VIEWS: tuple[str, ...] = ("pack", "unpack", "inspect")
+VIEWS: tuple[str, ...] = ("pack", "unpack", "inspect", "preview")
+
+PREVIEW_MAX_BYTES = 64 * 1024   # render cap for the G5 preview pane
+DIAGNOSTICS_HISTORY = 50        # G6: keep last N banner entries
+
+
+def format_inspect_text(res) -> str:
+    """G4 inspector rendering (pure, Qt-free; mirrors prior widget code)."""
+    if not res.ok:
+        return f"[exit {res.exit_code}] {res.error}"
+    hdr = res.value["header"]
+    lines = [f"header fields: {len(hdr)}",
+             f"compressed:   {res.value['total_compressed']} B",
+             f"uncompressed: {res.value['total_uncompressed']} B"]
+    blocks = hdr.get("blocks", [])
+    lines.append(f"blocks: {len(blocks)}")
+    for i, b in enumerate(blocks):
+        sha = b["sha256"]
+        if isinstance(sha, bytes):
+            sha = sha.hex()[:16]
+        lines.append(f"  #{i}: offset={b['offset']} comp={b['compressed_size']}B "
+                     f"raw={b['uncompressed_size']}B sha={sha}")
+    for k, v in hdr.items():
+        if k == "blocks":
+            continue
+        if isinstance(v, bytes):
+            v = v.hex()
+        lines.append(f"{k}: {v}")
+    return "\n".join(lines)
+
+
+def format_preview_text(res) -> str:
+    """G5 text-preview rendering (pure, Qt-free).
+
+    Input JobResult comes from AppService.run_canon_meta. Shows the
+    canonicalized text (UTF-8, lossy-decoded for display), a line-numbered
+    view capped at PREVIEW_MAX_BYTES rendered characters, and the
+    canonicalization audit header (version, applied rules, byte/sha stats)
+    which doubles as the declared-vs-detected encoding warning feed.
+    """
+    if not res.ok:
+        return f"[exit {res.exit_code}] {res.error}"
+    meta = res.value
+    canon: bytes = meta["canonical"]
+    truncated = len(canon) > PREVIEW_MAX_BYTES
+    shown = canon[:PREVIEW_MAX_BYTES].decode("utf-8", errors="replace")
+    lines = [
+        f"canonicalizer: {meta['canonicalizer_version']}",
+        f"applied rules: {', '.join(meta['applied_rules'])}",
+        f"input:  {meta['input_bytes']} B  sha256={meta['input_sha256'][:16]}…",
+        f"output: {meta['output_bytes']} B  sha256={meta['output_sha256'][:16]}…",
+    ]
+    if truncated:
+        lines.append(f"(preview truncated at {PREVIEW_MAX_BYTES} rendered chars)")
+    lines.append("")
+    numbered = []
+    for i, ln in enumerate(shown.split("\n"), start=1):
+        numbered.append(f"{i:>6} | {ln}")
+    lines.extend(numbered)
+    return "\n".join(lines)
 
 
 def _service():
@@ -35,20 +96,33 @@ def _service():
 
 def build_window():
     """Create the G1 main window with the G2/G3/G4 view stack. Returns a
-    ready-to-show QMainWindow. Raises ImportError with guidance if Qt absent."""
+    ready-to-show QMainWindow. Raises ImportError with guidance if Qt absent.
+
+    GUI-M2/M2b: pack/unpack run through `JobRunner` (QThread worker) so the
+    UI thread never blocks; a progress bar + Cancel button drive the job.
+    G5 preview renders canonicalized text with line numbers via the pure
+    `format_preview_text`; the log pane doubles as the G6 diagnostics
+    banner (append-only history, newest last). The views still own no
+    logic — they only wire widgets to service calls."""
     try:
         from PySide6.QtWidgets import (
             QComboBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
-            QPushButton, QTextEdit, QVBoxLayout, QWidget,
+            QProgressBar, QPushButton, QTextEdit, QVBoxLayout, QWidget,
         )
     except ImportError as exc:  # pragma: no cover - depends on environment
         raise ImportError(
             "The LEXORA GUI requires the [gui] extra: pip install 'lexora[gui]'"
         ) from exc
 
+    from lexora.gui.service import (
+        JobRunner, exit_code_for, load_settings, pack_file_job,
+        save_settings, unpack_file_job,
+    )
+
     svc = _service()
+    runner = JobRunner()
     win = QMainWindow()
-    win.setWindowTitle(f"{APP_TITLE} — archive toolkit (M1 preview)")
+    win.setWindowTitle(f"{APP_TITLE} — archive toolkit (M2c settings)")
 
     central = QWidget(win)
     win.setCentralWidget(central)
@@ -64,86 +138,199 @@ def build_window():
     root.addLayout(bar)
 
     # --- shared form widgets ------------------------------------------------
+    settings = load_settings()           # G7: persisted defaults (or shipped)
     in_edit = QLineEdit()
     in_edit.setPlaceholderText("input file (raw text or .lxz)")
     out_edit = QLineEdit()
     out_edit.setPlaceholderText("output file")
-    level_edit = QLineEdit("3")
+    level_edit = QLineEdit(str(settings["level"]))
     level_edit.setFixedWidth(60)
-    block_edit = QLineEdit(str(8 * 1024 * 1024))
+    block_edit = QLineEdit(str(settings["block_size"]))
     block_edit.setFixedWidth(120)
     canon_check = QComboBox()
     canon_check.addItems(["pack input as-is", "canonicalize first"])
     run_btn = QPushButton("Run")
+    cancel_btn = QPushButton("Cancel")
+    cancel_btn.setEnabled(False)
+    save_btn = QPushButton("Save as defaults")   # G7 persist action
+    progress = QProgressBar()
+    progress.setRange(0, 0)      # busy indicator while hidden/idle
+    progress.setVisible(False)
     log = QTextEdit()
-    log.setReadOnly(True)
+    log.setReadOnly(True)        # G6: append-only diagnostics history
 
     form = QHBoxLayout()
     for w in (QLabel("in:"), in_edit, QLabel("out:"), out_edit,
               QLabel("level:"), level_edit, QLabel("block:"), block_edit,
-              canon_check, run_btn):
+              canon_check, run_btn, cancel_btn, save_btn):
         form.addWidget(w)
     root.addLayout(form)
+    root.addWidget(progress)
     root.addWidget(log, stretch=1)
 
-    def show_inspect_result(res) -> None:
-        if res.ok:
-            hdr = res.value["header"]
-            lines = [f"header fields: {len(hdr)}", f"compressed:   {res.value['total_compressed']} B",
-                     f"uncompressed: {res.value['total_uncompressed']} B"]
-            for k, v in hdr.items():
-                if isinstance(v, bytes):
-                    v = v.hex()
-                lines.append(f"{k}: {v}")
-            log.setPlainText("\n".join(lines))
-        else:
-            log.setPlainText(f"[exit {res.exit_code}] {res.error}")
+    status = QLabel("ready")
+    win.statusBar().addWidget(status)
+
+    diagnostics: list[str] = []   # G6 history backing store
+
+    def show(text: str) -> None:
+        """Append one entry to the diagnostics history and render it."""
+        diagnostics.append(text)
+        del diagnostics[:-DIAGNOSTICS_HISTORY]
+        log.setPlainText("\n\n".join(diagnostics))
+
+    def _job_done(text: str) -> None:
+        progress.setVisible(False)
+        progress.setRange(0, 0)
+        run_btn.setEnabled(True)
+        cancel_btn.setEnabled(False)
+        show(text)
+        status.setText("ready")
+
+    def on_progress(done: int, total: int) -> None:
+        if total > 0:
+            progress.setRange(0, total)
+            progress.setValue(done)
 
     def on_run() -> None:
         view = view_box.currentText()
         src, dst = in_edit.text().strip(), out_edit.text().strip()
         if not src:
-            log.setPlainText("choose an input file first")
+            show("choose an input file first")
             return
         try:
             level = int(level_edit.text())
             block = int(block_edit.text())
         except ValueError:
-            log.setPlainText("level and block size must be integers")
+            show("level and block size must be integers")
             return
+        if view == "inspect":  # metadata-only read: fast, stays synchronous
+            show(format_inspect_text(svc.inspect_file(src)))
+            return
+        if view == "preview":  # G5: read + canonicalize, render only (no writes)
+            try:
+                raw = svc.read_file(src)
+            except Exception as exc:  # FileOpError -> exit-3 banner (parity map)
+                show(f"[exit {exit_code_for(exc)}] {exc}")
+                return
+            show(format_preview_text(svc.run_canon_meta(raw)))
+            return
+        if not dst:
+            show(f"{view} needs an output file")
+            return
+        # Heavy paths go async through the runner (GUI-M2).
+        run_btn.setEnabled(False)
+        cancel_btn.setEnabled(True)
+        progress.setVisible(True)
+        progress.setRange(0, 0)
+        status.setText(f"{view} running…")
         if view == "pack":
-            if not dst:
-                log.setPlainText("pack needs an output file (.lxz)")
-                return
-            res = svc.pack_file(src, dst, level=level, block_size=block,
-                                canonicalize_first=(canon_check.currentIndex() == 1))
-            log.setPlainText(
-                f"packed {res.value['bytes_in']} B -> {res.value['bytes_out']} B "
-                f"(ratio {res.value['bytes_out'] / max(res.value['bytes_in'], 1):.3f}) -> {dst}"
-                if res.ok else f"[exit {res.exit_code}] {res.error}")
-        elif view == "unpack":
-            if not dst:
-                log.setPlainText("unpack needs an output file")
-                return
-            res = svc.unpack_file(src, dst)
-            log.setPlainText(
-                f"unpacked {res.value['bytes_in']} B -> {res.value['bytes_out']} B -> {dst}"
-                if res.ok else f"[exit {res.exit_code}] {res.error} (no output written)")
-        else:  # inspect (also serves G4 metadata feed; verify button = M2 polish)
-            res = svc.inspect_file(src)
-            show_inspect_result(res)
+            token = runner.start(
+                pack_file_job, svc, src, dst,
+                level=level, block_size=block,
+                canonicalize_first=(canon_check.currentIndex() == 1),
+                progress_cb=on_progress,
+                on_finished=lambda res: _job_done(
+                    f"packed {res.value['bytes_in']} B -> {res.value['bytes_out']} B "
+                    f"(ratio {res.value['bytes_out'] / max(res.value['bytes_in'], 1):.3f}) -> {dst}"
+                    if res.ok else f"[exit {res.exit_code}] {res.error}"),
+                on_cancelled=lambda: _job_done("cancelled (no partial output written)"),
+                on_error=lambda exc: _job_done(f"internal error: {exc!r}"),
+            )
+        else:  # unpack
+            token = runner.start(
+                unpack_file_job, svc, src, dst,
+                progress_cb=on_progress,
+                on_finished=lambda res: _job_done(
+                    f"unpacked {res.value['bytes_in']} B -> {res.value['bytes_out']} B -> {dst}"
+                    if res.ok else f"[exit {res.exit_code}] {res.error} (no output written)"),
+                on_cancelled=lambda: _job_done("cancelled (no partial output written)"),
+                on_error=lambda exc: _job_done(f"internal error: {exc!r}"),
+            )
+        win._lexora_token = token  # keep referenced for GC safety
+
+    def on_cancel() -> None:
+        runner.cancel()
+        cancel_btn.setEnabled(False)
+        status.setText("cancelling…")
+
+    def on_save_defaults() -> None:
+        """G7: persist current level/block values as app defaults. The
+        service validates (UsageError -> exit-2 banner); nothing is written
+        on refusal, same posture as every other bounds check."""
+        try:
+            level = int(level_edit.text())
+            block = int(block_edit.text())
+        except ValueError:
+            show("level and block size must be integers")
+            return
+        try:
+            path = save_settings({"level": level, "block_size": block})
+        except Exception as exc:  # UsageError (exit 2) or write error (exit 3)
+            show(f"[exit {exit_code_for(exc)}] {exc}")
+            return
+        show(f"defaults saved to {path}")
 
     run_btn.clicked.connect(on_run)
+    cancel_btn.clicked.connect(on_cancel)
+    save_btn.clicked.connect(on_save_defaults)
 
-    status = QLabel("ready")
-    win.statusBar().addWidget(status)
     view_box.currentTextChanged.connect(lambda v: status.setText(f"{v} view"))
     return win
 
 
+_GUI_USAGE = """usage: lexora-gui [options]
+
+LEXORA graphical front-end (GUI-M1 shell; see docs/DESIGN_GUI.md).
+
+options:
+  -h, --help          show this message and exit (no Qt loaded)
+  --version           show lexora version and exit (no Qt loaded)
+
+environment:
+  QT_QPA_PLATFORM     Qt platform plugin; auto-set to 'offscreen' when no
+                      display is available (headless machines).
+"""
+
+
+def save_screenshot(win, path) -> bool:
+    """Capture a window to a PNG. Direct `QWidget.grab()` render — works
+    under the offscreen platform plugin without needing an event loop turn.
+
+    Returns False if saving fails or Qt is absent; never raises. Used by
+    scripts/gen_screenshots.py (docs screenshots, GUI-M2c)."""
+    try:
+        win.show()
+        pixmap = win.grab()
+    except Exception:  # pragma: no cover - environment-dependent Qt failure
+        return False
+    try:
+        return bool(pixmap.save(str(path)))
+    except Exception:  # pragma: no cover
+        return False
+
+
 def main(argv: list[str] | None = None) -> int:
     """Launch the GUI. Exit codes mirror CLI conventions (0 ok, 2 usage/env)."""
+    import os
     import sys
+
+    args = list(sys.argv[1:] if argv is None else argv)
+    # Handle non-GUI flags BEFORE any Qt import/construction: on a headless
+    # box QApplication() aborts (SIGABRT) if no platform plugin can start,
+    # so --help/--version must never require one.
+    if "-h" in args or "--help" in args:
+        sys.stdout.write(_GUI_USAGE)
+        return 0
+    if "--version" in args:
+        from lexora import __version__
+        sys.stdout.write(f"lexora {__version__} (gui)\n")
+        return 0
+    unknown = [a for a in args if a.startswith("-")]
+    if unknown:
+        sys.stderr.write(f"lexora-gui: unrecognized option '{unknown[0]}'\n"
+                         "Try 'lexora-gui --help'.\n")
+        return 2
 
     try:
         from PySide6.QtWidgets import QApplication
@@ -151,7 +338,13 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write(
             "PySide6 not installed. GUI needs the optional extra: pip install 'lexora[gui]'\n")
         return 2
-    app = QApplication(list(argv) if argv is not None else sys.argv[1:])
+
+    # Headless fallback: without DISPLAY/WAYLAND_DISPLAY force the offscreen
+    # plugin instead of letting xcb abort the process.
+    if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    app = QApplication(args)
     win = build_window()
     win.resize(900, 600)
     win.show()

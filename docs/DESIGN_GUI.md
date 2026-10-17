@@ -68,7 +68,10 @@ declared feature-complete for Phase 1 (P1 tasks closed).
   every refusal mode reachable in `tests/test_container_lxz.py` reproducible in the inspector
   with identical messaging; no UI freeze > 50 ms during those ops (worker-thread proof test).
 - **GUI-M2:** G5–G7 + packaging recipe (wheel extra, Linux `.desktop`, basic macOS/Windows
-  smoke builds) + screenshot-driven docs page.
+  smoke builds) + screenshot-driven docs page. *(Status S31: LANDED — G5/G6 panels (M2b),
+  G7 settings + `packaging/` recipe + `scripts/gen_screenshots.py` with committed
+  `docs/assets/` screenshots (M2c). macOS/Windows builds remain documented-but-untested;
+  see packaging/README.md smoke ban.)*
 - **GUI-M3 (optional):** G8 batch queue, OS file associations for `.lxz`, tray completion notes.
 
 Each milestone gets its own ADR/amendment before code (same governance as everything else here).

@@ -285,3 +285,154 @@ def test_core_package_import_needs_no_qt(monkeypatch):
 def test_jobresult_defaults():
     jr = JobResult(True, b"x")
     assert jr.ok and jr.exit_code == 0 and jr.error is None
+
+
+# ---- GUI-M2: cancel/progress-aware job functions (Qt-free core) ------------
+
+from lexora.gui.service import (  # noqa: E402
+    CancelToken,
+    JobCancelled,
+    pack_file_job,
+    unpack_file_job,
+)
+
+# G7 settings helpers (GUI-M2c)
+from lexora.gui.service import (  # noqa: E402
+    DEFAULT_SETTINGS,
+    SETTINGS_FILENAME,
+    load_settings,
+    save_settings,
+    settings_path,
+)
+
+
+def test_pack_file_job_matches_sync_result(tmp_path, svc):
+    """Job variant must produce the SAME JobResult and bytes as the sync M1
+    path — async is plumbing, not semantics."""
+    src = tmp_path / "in.txt"
+    payload = b"job parity payload\n" * 40
+    src.write_bytes(payload)
+    a = tmp_path / "a.lxz"
+    b = tmp_path / "b.lxz"
+    r_sync = svc.pack_file(src, a, level=3, block_size=65536)
+    events = []
+    r_job = pack_file_job(svc, src, b, level=3, block_size=65536,
+                          progress_cb=lambda d, t: events.append((d, t)))
+    assert r_job == r_sync
+    assert a.read_bytes() == b.read_bytes()
+    assert events, "expected at least one progress report"
+    assert events[-1] == (events[-1][0], events[-1][0]), "final report saturates"
+
+
+def test_unpack_file_job_matches_sync_and_reports_progress(tmp_path, svc):
+    src = tmp_path / "in.txt"
+    src.write_bytes(b"unpack job parity\n" * 30)
+    arc = tmp_path / "x.lxz"
+    svc.pack_file(src, arc, level=3)
+    o1 = tmp_path / "o1.txt"
+    o2 = tmp_path / "o2.txt"
+    r_sync = svc.unpack_file(arc, o1)
+    seen = []
+    r_job = unpack_file_job(svc, arc, o2, progress_cb=lambda d, t: seen.append((d, t)))
+    assert r_job == r_sync
+    assert o1.read_bytes() == o2.read_bytes()
+    assert len(seen) >= 2 and seen[-1][0] == seen[-1][1]
+
+
+def test_job_bounds_refuse_before_io(tmp_path, svc):
+    """exit-2 usage refusal happens before ANY file access (Session-26 rule)."""
+    missing = tmp_path / "does-not-exist"
+    out = tmp_path / "out.lxz"
+    res = pack_file_job(svc, missing, out, level=99)
+    assert (res.ok, res.exit_code) == (False, 2)
+    assert not out.exists()
+
+
+def test_job_cancelled_during_read_writes_nothing(tmp_path, svc):
+    src = tmp_path / "in.txt"
+    src.write_bytes(b"cancel me\n" * 100)
+    out = tmp_path / "out.lxz"
+    tok = CancelToken()
+    tok.cancel()                      # cancelled before first stage check
+    with pytest.raises(JobCancelled):
+        pack_file_job(svc, src, out, level=3, cancel=tok)
+    assert not out.exists()           # never reached write stage
+
+
+def test_job_canonicalize_failure_propagates_exit4(tmp_path, svc):
+    src = tmp_path / "bad.bin"
+    # true invalid UTF-8 (lone continuation bytes); the earlier \xff\xfe pick
+    # was wrong — it sniffs as latin-1 and canonicalizes fine.
+    src.write_bytes(b"\x80\x81\x82 not valid utf-8")
+    out = tmp_path / "out.lxz"
+    res = pack_file_job(svc, src, out, canonicalize_first=True)
+    assert (res.ok, res.exit_code) == (False, 4)
+    assert not out.exists()
+
+
+def test_job_tampered_archive_exit7_no_output(tmp_path, svc):
+    good = svc.run_pack(b"tamper job", level=3).value["archive"]
+    bad = bytearray(good)
+    bad[len(good) - 5] ^= 0xFF
+    arc = tmp_path / "t.lxz"
+    arc.write_bytes(bytes(bad))
+    out = tmp_path / "never.txt"
+    res = unpack_file_job(svc, arc, out)
+    assert (res.ok, res.exit_code) == (False, 7)
+    assert not out.exists()
+
+
+def test_job_missing_input_exit3(tmp_path, svc):
+    res = pack_file_job(svc, tmp_path / "nope", tmp_path / "o.lxz")
+    assert (res.ok, res.exit_code) == (False, 3)
+    res = unpack_file_job(svc, tmp_path / "nope", tmp_path / "o.txt")
+    assert (res.ok, res.exit_code) == (False, 3)
+
+
+# ---- G7 settings (GUI-M2c) ---------------------------------------------------
+
+def test_settings_defaults_without_file(tmp_path):
+    s = load_settings(tmp_path / "absent.json")
+    assert s == DEFAULT_SETTINGS
+    assert s["level"] == 3 and s["block_size"] == MAX_BLOCK_SIZE
+
+
+def test_settings_save_load_roundtrip(tmp_path):
+    p = tmp_path / "cfg" / "gui-settings.json"
+    save_settings({"level": 9, "block_size": 4096}, p)
+    assert load_settings(p) == {"level": 9, "block_size": 4096}
+    # plain JSON on disk (no Qt QSettings dependency anywhere in this layer)
+    assert json.loads(p.read_text()) == {"level": 9, "block_size": 4096}
+
+
+def test_settings_save_refuses_out_of_range_before_writing(tmp_path):
+    p = tmp_path / "s.json"
+    with pytest.raises(UsageError):
+        save_settings({"level": 0}, p)
+    with pytest.raises(UsageError):
+        save_settings({"block_size": MAX_BLOCK_SIZE + 1}, p)
+    assert not p.exists()          # refusal wrote nothing
+    assert exit_code_for(_caught(UsageError, save_settings, {"level": 99}, p)) == 2
+
+
+def _caught(exc_type, fn, *a, **k):
+    try:
+        fn(*a, **k)
+    except exc_type as e:
+        return e
+    raise AssertionError("expected " + exc_type.__name__)
+
+
+def test_settings_corrupt_or_out_of_range_values_fall_back(tmp_path):
+    p = tmp_path / "s.json"
+    p.write_text("{not json", encoding="utf-8")
+    assert load_settings(p) == DEFAULT_SETTINGS           # corrupt -> defaults
+    p.write_text('{"level": 999, "block_size": -5}', encoding="utf-8")
+    assert load_settings(p) == DEFAULT_SETTINGS           # out-of-range -> dropped
+    p.write_text('{"level": 7}', encoding="utf-8")
+    assert load_settings(p) == {"level": 7, "block_size": MAX_BLOCK_SIZE}  # partial ok
+
+
+def test_settings_path_honors_xdg(monkeypatch, tmp_path):
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    assert settings_path() == tmp_path / "lexora" / SETTINGS_FILENAME

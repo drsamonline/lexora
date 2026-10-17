@@ -321,3 +321,55 @@ Append-only, dated session summaries. Never rewrite history; append a correction
   5. **Continuity updates:** STATUS header + test rows 101→108; PROGRESS phase row + test inventory; README Tests badge 101→108; CHANGELOG Session-26 entry; NEXT_SESSION rewritten for Session 27.
 - **Failures/blockers:** None new. Push still needs owner token (`.vault/github_token.txt` absent); Actions remains paused per OQ-15. Honest posture kept: Phase 1 NOT declared flatly "Complete" — two exit-criteria evidence items remain (see ROADMAP M1 row); no ADR-0001 verdict (corpus still smoke-scope).
 - **Next action:** Session 27 candidates: (1) verify `pip install pyside6` availability in-container → if yes, scaffold GUI-M1 skeleton (service adapter + G1/G2 shell, offscreen tests only); if no, grow corpus toward genuine R3 (OQ-8) or backfill M1 evidence items. Standing: owner review backlog unchanged (ADR-0007 amendments revocable; ERROR_HANDLING severity/recovery sections Draft).
+
+## LEXORA Session 27 — 2026-10-17
+- **Pre-state (verified):** Clean tree at `b7c077a` (Session-26 resume card landed). Baseline: 108 passed; linkcheck OK. Resume task 1: probe PySide6 installability; task 2: GUI-M1 scaffold if probe passes.
+- **Actions & results:**
+  1. **Qt probe PASSED:** `pip install pyside6` → PySide6 6.12.0 (~673 MB). Initial offscreen import failed on missing `libEGL.so.1`; fixed with `apt-get install -y libegl1` (Debian 12). Full gate check green under `QT_QPA_PLATFORM=offscreen`. Environment note recorded: fresh containers need both steps again.
+  2. **GUI-M1 service layer scaffolded (zero UI code):** `pyproject.toml` gained the `[gui]` optional extra (`pyside6>=6.6,<7`) per ADR-0008; core deps unchanged (install stays Qt-free). New Qt-free package `src/lexora/gui/` with `service.py`: the thin-client **AppService** adapter — pure delegation to `canonicalize`/`zstd_core`/`container` (no subprocess, no reimplementation), `JobResult` shape, bounds mirrors (level 1–22, block-size 1…LIM-01 with exit-2 semantics), exception↔exit-code parity map (4/5/7 + 6 roundtrip), lazy-only Qt import in a `_make_qthread_worker` stub pointing at the M2 job runner.
+  3. **Golden-parity test landed (ADR-0008 binding requirement):** `tests/test_gui_service.py` — 24 tests incl. byte-identical `.lxz` from `AppService.run_pack()` vs real CLI `pack` subprocess across 5 payloads + committed golden archive readable through the service; AST-enforced Qt isolation (no module-level PySide6 imports); simulated Qt-absence import test. Suite **108 → 132 passed**. Three initial failures fixed honestly (invalid-UTF-8 sniff case, latin-1 sample, AST check rewrite).
+- **Failures/blockers:** Quota hit mid-doc-update — continuity edits (STATUS/PROGRESS/README/CHANGELOG counts 108→132, obsolete "zero GUI code" claims) were NOT completed in-session; done in Session 28 catch-up below.
+- **Next action:** finish docs catch-up, then GUI-M1 window shell (G1/G2 views, offscreen tests only).
+
+## LEXORA Session 28 — 2026-10-17
+- **Pre-state (verified):** Uncommitted worktree from Session 27 handoff (service.py extended, app.py window shell, pyproject entry point); commit `fc3adc9` captured the code but left all continuity docs stale at 108/132 and shipped a headless launcher bug.
+- **Actions & results:**
+  1. **GUI-M1 window shell (in `fc3adc9`):** `src/lexora/gui/app.py` — G1 main window hosting pack/unpack/inspect views (G2/G3/G4 metadata feed), all Qt imports lazy, zero business logic in widgets (every action delegates to AppService), no subprocess. Service extended with file-level ops: `read_file`, `atomic_write` (temp+fsync+rename mirroring CLI), `pack_file` (optional canonicalize-first), `unpack_file` (refusal-before-write parity), `inspect_file`, `verify_file`; `FileOpError` ↔ exit 3. Tests 132 → 145 (7 service file-op tests incl. tampered-archive exit-7-no-output, 5 offscreen widget-driven e2e tests).
+  2. **Launcher bug fixed (the Session-28 known issue):** `lexora-gui --help` SIGABRT'd on headless boxes because QApplication was constructed before argument handling. Now `-h/--help` and `--version` are answered BEFORE any Qt import (rc 0), unknown options → rc 2 with guidance, and when no DISPLAY/WAYLAND_DISPLAY exists `QT_QPA_PLATFORM=offscreen` is auto-set instead of letting xcb abort. Added missing `src/lexora/gui/__main__.py` so `python -m lexora.gui` works (previously errored: package not directly executable).
+  3. **Regression tests:** 3 new subprocess tests (`--help` rc 0 + usage text, `--version` rc 0, unknown option rc 2) run WITHOUT QT_QPA_PLATFORM in env to reproduce the bare-headless condition. Suite **145 → 148 passed**; linkcheck OK.
+  4. **Docs catch-up (Session 27 leftovers included):** CHANGELOG entries for S27+S28; STATUS header/rows, PROGRESS phase row + test inventory (7→9 files incl. gui suites), README badge 108→148; obsolete "zero GUI code" claims replaced with accurate M1-shell status everywhere; TASK_BREAKDOWN GUI-M1 row added.
+- **Failures/blockers:** None new. Push still needs owner token; Actions paused (OQ-15).
+- **Next action:** Session 29 — GUI-M2 job runner (QThread/cancel/progress via the `_make_qthread_worker` stub) + G5 preview/G6 diagnostics panels, or backfill remaining M1 evidence items first if owner prefers closure over breadth.
+
+## Session 29 — 2026-10-17 (GUI-M2 async job runner)
+
+- **State at start:** clean tree at `62b7343` (Session 28), 148 tests passing baseline verified live.
+- **What landed (code committed as `396d5b4`; docs catch-up in this follow-on commit):**
+  1. **Qt-free job core** in `src/lexora/gui/service.py`: `CancelToken` (cooperative flag with `check()` raising `JobCancelled`), staged cancel-aware work functions `pack_file_job`/`unpack_file_job` (cancel checked before every stage; never reaches the write stage after cancellation during read; bounds errors still refuse BEFORE any file I/O — exit-2 semantics identical to sync paths), and `JobRunner` — QThread worker adapter emitting `progressed(int,int)`/finished/cancelled/failed signals (queued connections ⇒ widget-safe), with direct-callable hooks for non-Qt consumers. All Qt imports stay lazy inside `_make_qthread_worker` (ADR-0008 decision 1).
+  2. **Window shell made async** (`src/lexora/gui/app.py`): pack/unpack now run through `JobRunner` so the UI thread never blocks; QProgressBar + Cancel button wired to the job; inspect remains synchronous over the same tested service calls.
+  3. **Tests:** suite **148 → 157 passed** (+9: job-core parity incl. cancellation-before-write race coverage, widget-driven runner behavior under offscreen Qt).
+- **Docs catch-up (this commit):** CHANGELOG Session-29 entry; STATUS header/test rows; PROGRESS phase row + test inventory progression; README badge 148→157; TASK_BREAKDOWN GUI-M2 row → Partially landed + new GUI-M2b row (G5 preview/G6 diagnostics pending); NEXT_SESSION rewritten for Session 30.
+- **Failures/blockers:** None new. Push still needs owner token (`.vault/github_token.txt` absent); Actions paused (OQ-15); benchmarks unchanged (R1+R2, no ADR-0001 verdict).
+- **Next action:** Session 30 — GUI-M2b: G5 text-preview pane + G6 diagnostics/log panel in `app.py` (offscreen-tested), then G7 settings/persistence sketch; or grow corpus toward protocol scope for benchmark R3 publication if owner prefers evidence over UI breadth.
+
+## Session 30 — 2026-10-17 (GUI-M2b panels: G5 preview + G6 diagnostics)
+
+*Recorded retrospectively in Session 31 from the Session-30 commit message (`8d16776`) and its diff — see CHANGELOG "Session 30" entry for the full scope.*
+
+- **G5 preview view** — fourth view in `app.py`; pure Qt-free renderers `format_preview_text` (canon audit header + line-numbered canonicalized text, 64 KiB render cap) and `format_inspect_text` (inspector incl. per-block index table). Read errors surface as `[exit 3]` banners via the parity map.
+- **G6 diagnostics** — log pane became an append-only banner history (cap 50, newest last) shared by all views.
+- Suite 157 → **162 passed** (+2 renderer units, +3 offscreen widget tests); docs reconciled (counts, GUI-M2b row → Landed, GUI-M2c row added). Committed as `8d16776`.
+
+## Session 31 — 2026-10-17 (GUI-M2c closure: G7 settings + packaging recipe + screenshots)
+
+**Owner directive context:** "continue check and force create" — verified actual repo state first (clean tree at `8d16776`, 162 passed), then built the queued M2c scope end-to-end.
+
+- **G7 settings persistence (Qt-free core)** in `src/lexora/gui/service.py`: `DEFAULT_SETTINGS` (level 3 / block-size LIM-01 ceiling — mirrors CLI defaults), `load_settings`/`save_settings`/`settings_path` using plain stdlib JSON under `$XDG_CONFIG_HOME|APPDATA` → `lexora/gui-settings.json` (deliberately NOT QSettings — keeps the service layer Qt-free and hermetically testable). Save validates through the same `_check_level`/`_check_block_size` bounds (UsageError → exit-2 class, refuses BEFORE writing); load never raises — corrupt/out-of-range values fall back to defaults so bad settings can't block startup. App-level only; zero format impact (DESIGN_GUI §3 G7 constraint honored).
+- **Window integration** in `app.py`: form pre-fills from `load_settings()`; new "Save as defaults" button with integer-parse guard, `[exit 2]` banner on out-of-range, success banner quoting the written path. Title bumped to "M2c settings".
+- **Packaging recipe**: `packaging/lexora.desktop` (FDE entry, Exec=lexora-gui) + `packaging/README.md` honest smoke notes — Linux `.desktop` install steps, macOS/Windows marked NOT smoke-tested with a documentation ban until real evidence; wheel + `[gui]` extra remains the only supported install story.
+- **Screenshot-driven docs**: `save_screenshot()` helper (direct `QWidget.grab()`, works offscreen without event-loop turns) + `scripts/gen_screenshots.py` (skips cleanly without PySide6). Generated `docs/assets/gui-main.png` (14 KB) and `docs/assets/gui-preview-view.png` (15 KB) in-container and committed.
+- **Tests**: +9 (162 → **171 passed**) — 5 Qt-free settings tests (defaults/roundtrip/refusal-before-write/corrupt-fallback/XDG path) + 4 offscreen window tests (click-persist-refill across two windows, bad-int banner with no file, out-of-range `[exit 2]` with no file, PNG magic-bytes check).
+- **Docs catch-up**: this entry; CHANGELOG Session-31; counts 162→171 in STATUS (header + both rows), PROGRESS (phase row + inventory), README badge, TASK_BREAKDOWN GUI-M2c → Landed + M2 parent closed; DESIGN_GUI §5 status note; NEXT_SESSION rewritten for Session 32.
+- **Gate:** `python3 -m pytest -q` → 171 passed; linkcheck OK; Actions still paused (OQ-15); push still blocked (no token).
+
+**Next action:** Session 32 — GUI-M3 polish candidates (file-picker dialogs wiring, crash handler per DESIGN_GUI, icon asset decision) or P1 evidence backfill / corpus growth toward protocol-scope R3 if owner prefers evidence over UI breadth.
