@@ -6,6 +6,11 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-17 — Session 31 (GUI-M2c closure: G7 settings + packaging recipe + screenshots):
+  - **G7 settings persistence** (`src/lexora/gui/service.py`, Qt-free): `load_settings`/`save_settings`/`settings_path` — plain stdlib JSON under `$XDG_CONFIG_HOME|APPDATA/lexora/gui-settings.json` (deliberately not QSettings; keeps the service layer headless-testable). Save validates through the shared bounds checks (UsageError → exit-2 class, refuses BEFORE writing); load never raises — corrupt/out-of-range stored values fall back to defaults. App-level only, zero format impact. Window pre-fills from persisted defaults and gained a "Save as defaults" button (`app.py`).
+  - **Packaging recipe**: `packaging/lexora.desktop` (FDE entry) + `packaging/README.md` smoke notes — Linux install steps documented; macOS/Windows explicitly NOT smoke-tested (no claim in user docs until evidence exists). Wheel + `[gui]` extra remains the only supported install story.
+  - **Screenshot-driven docs**: `save_screenshot()` helper + `scripts/gen_screenshots.py` (offscreen-safe, skips without PySide6); generated `docs/assets/gui-main.png` + `docs/assets/gui-preview-view.png` committed.
+  - Suite **162 → 171 passed** (+5 Qt-free settings tests, +4 offscreen window tests incl. persist→refill across windows and PNG magic-bytes). TASK_BREAKDOWN GUI-M2c → Landed (M2 milestone closed); SESSION_LOG Sessions 30–31 entries added (S30 recorded retrospectively from commit `8d16776`).
 - 2026-10-17 — Session 30 (GUI-M2b panels: G5 preview + G6 diagnostics):
   - **G5 preview view** in `src/lexora/gui/app.py` — fourth view renders canonicalized text via pure Qt-free `format_preview_text` (canon audit header, line numbers, 64 KiB render cap + truncation note); read errors surface as `[exit 3]` banners through the parity map. Inspector rendering extracted to pure `format_inspect_text` and gained the full per-block index table.
   - **G6 diagnostics history** — log pane is now an append-only banner history (cap 50, newest last) shared by all views.

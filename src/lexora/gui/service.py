@@ -114,6 +114,74 @@ class JobResult:
     exit_code: int = 0         # frozen CLI parity code
 
 
+# ---- G7 settings (GUI-M2c; app-level only, no format impact) ---------------
+# DESIGN_GUI §3 G7: persisted defaults for the pack form. These values never
+# touch the .lxz format — they only pre-fill widgets (ADR-0008 thin-client:
+# even persistence is plain stdlib JSON in a platform config dir, so this
+# module stays Qt-free and headless-testable).
+
+SETTINGS_FILENAME = "gui-settings.json"
+DEFAULT_SETTINGS: dict[str, Any] = {
+    "level": 3,                    # matches the CLI `pack --level` default
+    "block_size": MAX_BLOCK_SIZE,  # LIM-01 ceiling, matches CLI default
+}
+
+
+def _config_root() -> Path:
+    """Platform-appropriate per-user config directory.
+
+    Honors XDG_CONFIG_HOME / APPDATA when set (also makes tests hermetic);
+    falls back to ~/.config (POSIX) or ~/.lexora (other)."""
+    env = os.environ.get("XDG_CONFIG_HOME") or os.environ.get("APPDATA")
+    root = Path(env) if env else (Path.home() / ".config")
+    return root / "lexora"
+
+
+def settings_path() -> Path:
+    return _config_root() / SETTINGS_FILENAME
+
+
+def load_settings(path: str | os.PathLike[str] | None = None) -> dict[str, int]:
+    """Read persisted GUI defaults; missing/corrupt file -> defaults.
+
+    Validation mirrors the bounds contract: any stored value outside the
+    enforced range is discarded silently (defaults win) rather than raising —
+    settings must never block the app from starting."""
+    p = Path(path) if path is not None else settings_path()
+    out = dict(DEFAULT_SETTINGS)
+    try:
+        import json
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return out
+    if isinstance(data, dict):
+        lvl = data.get("level")
+        if isinstance(lvl, int) and not isinstance(lvl, bool) \
+                and MIN_LEVEL <= lvl <= MAX_LEVEL:
+            out["level"] = lvl
+        blk = data.get("block_size")
+        if isinstance(blk, int) and not isinstance(blk, bool) \
+                and MIN_BLOCK_SIZE <= blk <= MAX_BLOCK_SIZE:
+            out["block_size"] = blk
+    return out
+
+
+def save_settings(values: dict[str, Any],
+                  path: str | os.PathLike[str] | None = None) -> Path:
+    """Validate then atomically persist GUI defaults. Raises UsageError
+    (exit-2 class) on out-of-range values — refusing bad settings before
+    writing, same posture as every other bounds refusal here."""
+    level = values.get("level", DEFAULT_SETTINGS["level"])
+    block = values.get("block_size", DEFAULT_SETTINGS["block_size"])
+    _check_level(level)
+    _check_block_size(block)
+    p = Path(path) if path is not None else settings_path()
+    payload = f'{{"level": {int(level)}, "block_size": {int(block)}}}\n'
+    p.parent.mkdir(parents=True, exist_ok=True)
+    AppService.atomic_write(payload.encode("utf-8"), p)
+    return p
+
+
 # ---- GUI-M2 job runner (Qt-free core) --------------------------------------
 # DESIGN_GUI §2: "one thin adapter: async job runner, progress, cancellation"
 # and §3: long operations run on worker threads with cooperative cancellation;

@@ -351,3 +351,25 @@ Append-only, dated session summaries. Never rewrite history; append a correction
 - **Docs catch-up (this commit):** CHANGELOG Session-29 entry; STATUS header/test rows; PROGRESS phase row + test inventory progression; README badge 148→157; TASK_BREAKDOWN GUI-M2 row → Partially landed + new GUI-M2b row (G5 preview/G6 diagnostics pending); NEXT_SESSION rewritten for Session 30.
 - **Failures/blockers:** None new. Push still needs owner token (`.vault/github_token.txt` absent); Actions paused (OQ-15); benchmarks unchanged (R1+R2, no ADR-0001 verdict).
 - **Next action:** Session 30 — GUI-M2b: G5 text-preview pane + G6 diagnostics/log panel in `app.py` (offscreen-tested), then G7 settings/persistence sketch; or grow corpus toward protocol scope for benchmark R3 publication if owner prefers evidence over UI breadth.
+
+## Session 30 — 2026-10-17 (GUI-M2b panels: G5 preview + G6 diagnostics)
+
+*Recorded retrospectively in Session 31 from the Session-30 commit message (`8d16776`) and its diff — see CHANGELOG "Session 30" entry for the full scope.*
+
+- **G5 preview view** — fourth view in `app.py`; pure Qt-free renderers `format_preview_text` (canon audit header + line-numbered canonicalized text, 64 KiB render cap) and `format_inspect_text` (inspector incl. per-block index table). Read errors surface as `[exit 3]` banners via the parity map.
+- **G6 diagnostics** — log pane became an append-only banner history (cap 50, newest last) shared by all views.
+- Suite 157 → **162 passed** (+2 renderer units, +3 offscreen widget tests); docs reconciled (counts, GUI-M2b row → Landed, GUI-M2c row added). Committed as `8d16776`.
+
+## Session 31 — 2026-10-17 (GUI-M2c closure: G7 settings + packaging recipe + screenshots)
+
+**Owner directive context:** "continue check and force create" — verified actual repo state first (clean tree at `8d16776`, 162 passed), then built the queued M2c scope end-to-end.
+
+- **G7 settings persistence (Qt-free core)** in `src/lexora/gui/service.py`: `DEFAULT_SETTINGS` (level 3 / block-size LIM-01 ceiling — mirrors CLI defaults), `load_settings`/`save_settings`/`settings_path` using plain stdlib JSON under `$XDG_CONFIG_HOME|APPDATA` → `lexora/gui-settings.json` (deliberately NOT QSettings — keeps the service layer Qt-free and hermetically testable). Save validates through the same `_check_level`/`_check_block_size` bounds (UsageError → exit-2 class, refuses BEFORE writing); load never raises — corrupt/out-of-range values fall back to defaults so bad settings can't block startup. App-level only; zero format impact (DESIGN_GUI §3 G7 constraint honored).
+- **Window integration** in `app.py`: form pre-fills from `load_settings()`; new "Save as defaults" button with integer-parse guard, `[exit 2]` banner on out-of-range, success banner quoting the written path. Title bumped to "M2c settings".
+- **Packaging recipe**: `packaging/lexora.desktop` (FDE entry, Exec=lexora-gui) + `packaging/README.md` honest smoke notes — Linux `.desktop` install steps, macOS/Windows marked NOT smoke-tested with a documentation ban until real evidence; wheel + `[gui]` extra remains the only supported install story.
+- **Screenshot-driven docs**: `save_screenshot()` helper (direct `QWidget.grab()`, works offscreen without event-loop turns) + `scripts/gen_screenshots.py` (skips cleanly without PySide6). Generated `docs/assets/gui-main.png` (14 KB) and `docs/assets/gui-preview-view.png` (15 KB) in-container and committed.
+- **Tests**: +9 (162 → **171 passed**) — 5 Qt-free settings tests (defaults/roundtrip/refusal-before-write/corrupt-fallback/XDG path) + 4 offscreen window tests (click-persist-refill across two windows, bad-int banner with no file, out-of-range `[exit 2]` with no file, PNG magic-bytes check).
+- **Docs catch-up**: this entry; CHANGELOG Session-31; counts 162→171 in STATUS (header + both rows), PROGRESS (phase row + inventory), README badge, TASK_BREAKDOWN GUI-M2c → Landed + M2 parent closed; DESIGN_GUI §5 status note; NEXT_SESSION rewritten for Session 32.
+- **Gate:** `python3 -m pytest -q` → 171 passed; linkcheck OK; Actions still paused (OQ-15); push still blocked (no token).
+
+**Next action:** Session 32 — GUI-M3 polish candidates (file-picker dialogs wiring, crash handler per DESIGN_GUI, icon asset decision) or P1 evidence backfill / corpus growth toward protocol-scope R3 if owner prefers evidence over UI breadth.

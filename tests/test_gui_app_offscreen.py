@@ -351,3 +351,66 @@ def test_diagnostics_history_accumulates_and_caps(window, tmp_path):
     entries = [e for e in text.split("\n\n") if e]
     assert len(entries) == DIAGNOSTICS_HISTORY, len(entries)
     assert all(e == "choose an input file first" for e in entries)
+
+
+# ---- G7 settings through the window (GUI-M2c) --------------------------------
+
+def test_save_defaults_button_persists_and_refills(qapp, tmp_path, monkeypatch):
+    """Click 'Save as defaults' -> JSON on disk; a NEW window pre-fills from it."""
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    win = build_window()
+    level_edit = next(le for le in win.findChildren(QLineEdit) if le.width() <= 60 + 1
+                      and le.text().isdigit())
+    block_edit = next(le for le in win.findChildren(QLineEdit)
+                      if le.text() == "8388608")
+    level_edit.setText("9")
+    block_edit.setText("4096")
+    _find(win, QPushButton, "Save as defaults").click()
+    saved = tmp_path / "lexora" / "gui-settings.json"
+    assert saved.exists()
+    import json as _json
+    assert _json.loads(saved.read_text()) == {"level": 9, "block_size": 4096}
+    log = _find(win, QTextEdit)
+    assert "defaults saved to" in log.toPlainText()
+    win.close()
+
+    win2 = build_window()
+    l2 = next(le for le in win2.findChildren(QLineEdit) if le.text() == "9")
+    b2 = next(le for le in win2.findChildren(QLineEdit) if le.text() == "4096")
+    assert l2 and b2
+    win2.close()
+
+
+def test_save_defaults_bad_integer_banner_only(qapp, tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    win = build_window()
+    level_edit = next(le for le in win.findChildren(QLineEdit) if le.text() == "3")
+    level_edit.setText("abc")
+    _find(win, QPushButton, "Save as defaults").click()
+    log = _find(win, QTextEdit)
+    assert "must be integers" in log.toPlainText()
+    assert not (tmp_path / "lexora" / "gui-settings.json").exists()
+    win.close()
+
+
+def test_save_defaults_out_of_range_exit2_no_file(qapp, tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    win = build_window()
+    block_edit = next(le for le in win.findChildren(QLineEdit) if le.text() == "8388608")
+    block_edit.setText("99999999999")   # > LIM-01 ceiling
+    _find(win, QPushButton, "Save as defaults").click()
+    log = _find(win, QTextEdit)
+    assert "[exit 2]" in log.toPlainText()
+    assert not (tmp_path / "lexora" / "gui-settings.json").exists()
+    win.close()
+
+
+def test_screenshot_helper_writes_png(window, tmp_path):
+    """save_screenshot must produce a real PNG file offscreen (docs shots)."""
+    from lexora.gui.app import save_screenshot
+
+    out = tmp_path / "shot.png"
+    assert save_screenshot(window, out) is True
+    data = out.read_bytes()
+    assert data.startswith(b"\x89PNG\r\n\x1a\n")
+    assert len(data) > 1000   # non-trivial render, not an empty pixmap

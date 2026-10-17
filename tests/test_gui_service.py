@@ -296,6 +296,15 @@ from lexora.gui.service import (  # noqa: E402
     unpack_file_job,
 )
 
+# G7 settings helpers (GUI-M2c)
+from lexora.gui.service import (  # noqa: E402
+    DEFAULT_SETTINGS,
+    SETTINGS_FILENAME,
+    load_settings,
+    save_settings,
+    settings_path,
+)
+
 
 def test_pack_file_job_matches_sync_result(tmp_path, svc):
     """Job variant must produce the SAME JobResult and bytes as the sync M1
@@ -378,3 +387,52 @@ def test_job_missing_input_exit3(tmp_path, svc):
     assert (res.ok, res.exit_code) == (False, 3)
     res = unpack_file_job(svc, tmp_path / "nope", tmp_path / "o.txt")
     assert (res.ok, res.exit_code) == (False, 3)
+
+
+# ---- G7 settings (GUI-M2c) ---------------------------------------------------
+
+def test_settings_defaults_without_file(tmp_path):
+    s = load_settings(tmp_path / "absent.json")
+    assert s == DEFAULT_SETTINGS
+    assert s["level"] == 3 and s["block_size"] == MAX_BLOCK_SIZE
+
+
+def test_settings_save_load_roundtrip(tmp_path):
+    p = tmp_path / "cfg" / "gui-settings.json"
+    save_settings({"level": 9, "block_size": 4096}, p)
+    assert load_settings(p) == {"level": 9, "block_size": 4096}
+    # plain JSON on disk (no Qt QSettings dependency anywhere in this layer)
+    assert json.loads(p.read_text()) == {"level": 9, "block_size": 4096}
+
+
+def test_settings_save_refuses_out_of_range_before_writing(tmp_path):
+    p = tmp_path / "s.json"
+    with pytest.raises(UsageError):
+        save_settings({"level": 0}, p)
+    with pytest.raises(UsageError):
+        save_settings({"block_size": MAX_BLOCK_SIZE + 1}, p)
+    assert not p.exists()          # refusal wrote nothing
+    assert exit_code_for(_caught(UsageError, save_settings, {"level": 99}, p)) == 2
+
+
+def _caught(exc_type, fn, *a, **k):
+    try:
+        fn(*a, **k)
+    except exc_type as e:
+        return e
+    raise AssertionError("expected " + exc_type.__name__)
+
+
+def test_settings_corrupt_or_out_of_range_values_fall_back(tmp_path):
+    p = tmp_path / "s.json"
+    p.write_text("{not json", encoding="utf-8")
+    assert load_settings(p) == DEFAULT_SETTINGS           # corrupt -> defaults
+    p.write_text('{"level": 999, "block_size": -5}', encoding="utf-8")
+    assert load_settings(p) == DEFAULT_SETTINGS           # out-of-range -> dropped
+    p.write_text('{"level": 7}', encoding="utf-8")
+    assert load_settings(p) == {"level": 7, "block_size": MAX_BLOCK_SIZE}  # partial ok
+
+
+def test_settings_path_honors_xdg(monkeypatch, tmp_path):
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    assert settings_path() == tmp_path / "lexora" / SETTINGS_FILENAME

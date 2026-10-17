@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=LEXORA
+GenericName=Archive toolkit
+Comment=Canonicalize, compress, and pack text into .lxz archives
+Exec=lexora-gui
+Icon=lexora
+Terminal=false
+Categories=Utility;Archiving;Compression;TextEditor;
+Keywords=archive;compression;zstd;lxz;canonicalization;
+StartupNotify=true

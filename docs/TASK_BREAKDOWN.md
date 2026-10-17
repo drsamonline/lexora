@@ -52,7 +52,7 @@ Smallest actionable task list per phase so any session can pick a task without r
 | GUI-M1 | Service adapter + G1/G2 window shell, golden-parity test, offscreen tests | **Landed (Sessions 27–28)** | `src/lexora/gui/{service,app,__main__}.py`; `[gui]` extra; launcher safe on headless (`--help` before Qt); 40 gui-suite tests |
 | GUI-M2 | Job runner (QThread/cancel/progress via `_make_qthread_worker` stub) + G5 preview / G6 diagnostics panels | **Partially landed** — job runner (`JobRunner`/`CancelToken`/staged jobs) + async pack/unpack wiring shipped & tested (S29, commit `396d5b4`); G5 preview / G6 diagnostics panels pending | Next session candidate |
 | GUI-M2b | G5 text-preview pane + G6 diagnostics/log panel in `app.py` | **Landed** — preview view (pure renderers, offscreen-tested incl. exit-3 banner + truncation cap), G6 append-only history (cap 50), inspector block table (S30) | G7 settings + packaging recipe remain for M2 closure |
-| GUI-M2c | G7 settings (default level/block-size persistence) + packaging recipe (wheel extra, `.desktop`) | Not started | Session 31 candidate |
+| GUI-M2c | G7 settings (default level/block-size persistence) + packaging recipe (wheel extra, `.desktop`) | **Landed** — Qt-free `load_settings`/`save_settings` (JSON under XDG/APPDATA, bounds-validated save refuses before writing, corrupt load falls back to defaults), "Save as defaults" button, `packaging/lexora.desktop` + smoke notes, screenshot generator + committed `docs/assets/*.png` (S31) | M2 milestone CLOSED; M3 polish (G8, file pickers, crash handler) pending |
 | GUI-M3 | Remaining screens G7/G8 + polish per OQ-14 provisional scope | Not started | Blocked behind M2 |
 
 ## P3–P7

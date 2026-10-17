@@ -115,13 +115,14 @@ def build_window():
         ) from exc
 
     from lexora.gui.service import (
-        JobRunner, exit_code_for, pack_file_job, unpack_file_job,
+        JobRunner, exit_code_for, load_settings, pack_file_job,
+        save_settings, unpack_file_job,
     )
 
     svc = _service()
     runner = JobRunner()
     win = QMainWindow()
-    win.setWindowTitle(f"{APP_TITLE} — archive toolkit (M2b preview)")
+    win.setWindowTitle(f"{APP_TITLE} — archive toolkit (M2c settings)")
 
     central = QWidget(win)
     win.setCentralWidget(central)
@@ -137,19 +138,21 @@ def build_window():
     root.addLayout(bar)
 
     # --- shared form widgets ------------------------------------------------
+    settings = load_settings()           # G7: persisted defaults (or shipped)
     in_edit = QLineEdit()
     in_edit.setPlaceholderText("input file (raw text or .lxz)")
     out_edit = QLineEdit()
     out_edit.setPlaceholderText("output file")
-    level_edit = QLineEdit("3")
+    level_edit = QLineEdit(str(settings["level"]))
     level_edit.setFixedWidth(60)
-    block_edit = QLineEdit(str(8 * 1024 * 1024))
+    block_edit = QLineEdit(str(settings["block_size"]))
     block_edit.setFixedWidth(120)
     canon_check = QComboBox()
     canon_check.addItems(["pack input as-is", "canonicalize first"])
     run_btn = QPushButton("Run")
     cancel_btn = QPushButton("Cancel")
     cancel_btn.setEnabled(False)
+    save_btn = QPushButton("Save as defaults")   # G7 persist action
     progress = QProgressBar()
     progress.setRange(0, 0)      # busy indicator while hidden/idle
     progress.setVisible(False)
@@ -159,7 +162,7 @@ def build_window():
     form = QHBoxLayout()
     for w in (QLabel("in:"), in_edit, QLabel("out:"), out_edit,
               QLabel("level:"), level_edit, QLabel("block:"), block_edit,
-              canon_check, run_btn, cancel_btn):
+              canon_check, run_btn, cancel_btn, save_btn):
         form.addWidget(w)
     root.addLayout(form)
     root.addWidget(progress)
@@ -251,8 +254,26 @@ def build_window():
         cancel_btn.setEnabled(False)
         status.setText("cancelling…")
 
+    def on_save_defaults() -> None:
+        """G7: persist current level/block values as app defaults. The
+        service validates (UsageError -> exit-2 banner); nothing is written
+        on refusal, same posture as every other bounds check."""
+        try:
+            level = int(level_edit.text())
+            block = int(block_edit.text())
+        except ValueError:
+            show("level and block size must be integers")
+            return
+        try:
+            path = save_settings({"level": level, "block_size": block})
+        except Exception as exc:  # UsageError (exit 2) or write error (exit 3)
+            show(f"[exit {exit_code_for(exc)}] {exc}")
+            return
+        show(f"defaults saved to {path}")
+
     run_btn.clicked.connect(on_run)
     cancel_btn.clicked.connect(on_cancel)
+    save_btn.clicked.connect(on_save_defaults)
 
     view_box.currentTextChanged.connect(lambda v: status.setText(f"{v} view"))
     return win
@@ -270,6 +291,23 @@ environment:
   QT_QPA_PLATFORM     Qt platform plugin; auto-set to 'offscreen' when no
                       display is available (headless machines).
 """
+
+
+def save_screenshot(win, path) -> bool:
+    """Capture a window to a PNG. Direct `QWidget.grab()` render — works
+    under the offscreen platform plugin without needing an event loop turn.
+
+    Returns False if saving fails or Qt is absent; never raises. Used by
+    scripts/gen_screenshots.py (docs screenshots, GUI-M2c)."""
+    try:
+        win.show()
+        pixmap = win.grab()
+    except Exception:  # pragma: no cover - environment-dependent Qt failure
+        return False
+    try:
+        return bool(pixmap.save(str(path)))
+    except Exception:  # pragma: no cover
+        return False
 
 
 def main(argv: list[str] | None = None) -> int:
