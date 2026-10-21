@@ -29,7 +29,6 @@ Canonicalize text conservatively, then compress it with guaranteed byte-exact re
 
 ---
 
-# LEXORA
 
 [![CI](https://github.com/drsamonline/lexora/actions/workflows/ci.yml/badge.svg)](https://github.com/drsamonline/lexora/actions/workflows/ci.yml)
 ![Tests](https://img.shields.io/badge/tests-192%20passed%20(local)%20-informational)
