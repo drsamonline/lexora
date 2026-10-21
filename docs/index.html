@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LEXORA — Byte-exact compression for document collections</title>
+<meta name="description" content="LEXORA is a text-cleaning and exact-compression architecture for document collections: conservative, versioned canonicalization followed by compression with guaranteed byte-exact recovery, decode(encode(C)) == C. Phase 1 prototype, MIT licensed.">
+<meta name="keywords" content="LEXORA, byte-exact compression, lossless compression, canonicalization, zstandard, zstd, .lxz container, document collections, text compression, Dr. Sohil Momin, Python, CLI">
+<meta name="author" content="Dr. Sohil Momin">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0a0a0b">
+<script>document.documentElement.className += " js";</script>
+<link rel="canonical" href="https://drsamonline.github.io/lexora/">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LEXORA">
+<meta property="og:title" content="LEXORA — Byte-exact compression for document collections">
+<meta property="og:description" content="Conservative, versioned canonicalization followed by compression with guaranteed byte-exact recovery. A Phase 1 prototype for exact-text document archives.">
+<meta property="og:url" content="https://drsamonline.github.io/lexora/">
+<meta property="og:image" content="https://socialify.git.ci/drsamonline/lexora/image?name=1&amp;owner=1&amp;description=1&amp;language=1&amp;theme=Dark&amp;font=Inter">
+<meta property="og:image:alt" content="LEXORA repository card">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LEXORA — Byte-exact compression for document collections">
+<meta name="twitter:description" content="Conservative, versioned canonicalization followed by compression with guaranteed byte-exact recovery. A Phase 1 prototype for exact-text document archives.">
+<meta name="twitter:image" content="https://socialify.git.ci/drsamonline/lexora/image?name=1&amp;owner=1&amp;description=1&amp;language=1&amp;theme=Dark&amp;font=Inter">
+
+<style>
+  :root{
+    --bg:#0a0a0b;
+    --bg-2:#0d0e10;
+    --panel:#101113;
+    --panel-2:#141518;
+    --line:#1d1f23;
+    --line-2:#26282d;
+    --green:#84cc16;
+    --green-2:#a3e635;
+    --green-dim:#3f6212;
+    --green-glow:rgba(132,204,22,.14);
+    --text:#e9e9ea;
+    --muted:#8b8c93;
+    --muted-2:#65666d;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    --maxw:1120px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(rgba(132,204,22,.035) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(132,204,22,.035) 1px,transparent 1px);
+    background-size:44px 44px;
+  }
+  a{color:var(--green);text-decoration:none}
+  a:hover{color:var(--green-2)}
+  code,kbd,pre,.num{font-family:var(--mono)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+  .num{font-variant-numeric:tabular-nums}
+  h1,h2,h3{line-height:1.15;letter-spacing:-.02em;margin:0}
+  section{padding:74px 0;border-top:1px solid var(--line)}
+  .eyebrow{
+    font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--green);display:inline-flex;align-items:center;gap:9px;margin-bottom:16px;
+  }
+  .eyebrow::before{content:"";width:22px;height:1px;background:var(--green);display:inline-block}
+  h2.sec{font-size:clamp(24px,3.4vw,34px);margin-bottom:10px}
+  .lede{color:var(--muted);max-width:66ch;margin:12px 0 0}
+  .kicker{font-family:var(--mono);font-size:12px;color:var(--muted-2);letter-spacing:.04em}
+
+  /* ---------- nav ---------- */
+  header.nav{
+    position:sticky;top:0;z-index:60;
+    background:rgba(10,10,11,.82);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{display:flex;align-items:center;gap:18px;height:60px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-weight:700;letter-spacing:.06em;color:var(--text)}
+  .brand svg{display:block}
+  .brand b{color:var(--green)}
+  .nav-links{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+  .nav-links a{
+    color:var(--muted);font-size:13.5px;padding:8px 11px;border-radius:7px;
+    font-family:var(--mono);letter-spacing:.02em;
+  }
+  .nav-links a:hover{color:var(--text);background:var(--panel-2)}
+  .nav-links a.active{color:var(--green)}
+  .nav-cta{
+    font-family:var(--mono);font-size:13px;color:#0a0a0b;background:var(--green);
+    padding:8px 14px;border-radius:7px;font-weight:700;white-space:nowrap;
+  }
+  .nav-cta:hover{background:var(--green-2);color:#0a0a0b}
+  .nav-toggle{display:none;background:none;border:1px solid var(--line-2);border-radius:7px;color:var(--text);padding:6px 9px;cursor:pointer;margin-left:auto}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;
+    font-family:var(--mono);font-size:14px;font-weight:600;
+    padding:12px 18px;border-radius:9px;border:1px solid transparent;cursor:pointer;
+    transition:transform .12s ease,background .15s ease,border-color .15s ease;
+  }
+  .btn svg{flex:none}
+  .btn-primary{background:var(--green);color:#0a0a0b}
+  .btn-primary:hover{background:var(--green-2);color:#0a0a0b;transform:translateY(-1px)}
+  .btn-ghost{background:var(--panel);color:var(--text);border-color:var(--line-2)}
+  .btn-ghost:hover{border-color:var(--green);color:var(--green);transform:translateY(-1px)}
+
+  /* ---------- hero ---------- */
+  .hero{border-top:none;padding:64px 0 70px;position:relative;overflow:hidden}
+  .hero::after{
+    content:"";position:absolute;right:-160px;top:-120px;width:520px;height:520px;
+    background:radial-gradient(circle,rgba(132,204,22,.10),transparent 62%);pointer-events:none;
+  }
+  .hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:46px;align-items:center;position:relative;z-index:1}
+  .hero h1{font-size:clamp(40px,7vw,68px);letter-spacing:-.04em;font-family:var(--mono);font-weight:800}
+  .hero h1 span{color:var(--green)}
+  .hero .sub{font-size:clamp(15px,2.2vw,18px);color:var(--muted);margin:16px 0 0;max-width:56ch}
+  .hero .sub b{color:var(--text);font-weight:600}
+  .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+  .tagline{font-family:var(--mono);font-size:12.5px;color:var(--muted-2);margin-top:22px;letter-spacing:.02em}
+  .tagline code{color:var(--green);background:var(--panel-2);padding:2px 6px;border-radius:5px;border:1px solid var(--line)}
+
+  /* ---------- badges ---------- */
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+  .badges img{height:20px;display:block}
+  .cssbadge{
+    display:inline-flex;align-items:center;gap:7px;height:20px;padding:0 9px;
+    font-family:var(--mono);font-size:11px;letter-spacing:.04em;border-radius:5px;
+    background:var(--panel-2);border:1px solid var(--line-2);color:var(--muted);
+  }
+  .cssbadge b{color:var(--green);font-weight:700}
+  .cssbadge .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+
+  /* ---------- panels / viz ---------- */
+  .viz{
+    background:linear-gradient(180deg,var(--panel),var(--bg-2));
+    border:1px solid var(--line);border-radius:14px;padding:18px;position:relative;
+  }
+  .viz-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11px;color:var(--muted-2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+  .viz-head b{color:var(--green)}
+  .strip{display:block;width:100%;height:64px}
+  .sizebar{margin-top:16px}
+  .sizebar .row{display:grid;grid-template-columns:78px 1fr 96px;align-items:center;gap:10px;margin:9px 0;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .sizebar .track{height:12px;background:var(--panel-2);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+  .sizebar .fill{height:100%;background:var(--green);width:0;transition:width .9s cubic-bezier(.2,.7,.2,1)}
+  .sizebar .fill.dim{background:var(--green-dim)}
+  .sizebar .val{text-align:right;color:var(--text);font-variant-numeric:tabular-nums}
+  .sizebar .val b{color:var(--green)}
+
+  /* ---------- cards ---------- */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:34px}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:22px 20px;
+    transition:border-color .15s ease,transform .15s ease;position:relative;overflow:hidden;
+  }
+  .card::before{content:"";position:absolute;inset:0 auto 0 0;width:2px;background:var(--green);opacity:.0;transition:opacity .15s}
+  .card:hover{border-color:var(--line-2);transform:translateY(-2px)}
+  .card:hover::before{opacity:1}
+  .card .ic{width:38px;height:38px;border-radius:9px;display:grid;place-items:center;background:var(--green-glow);border:1px solid rgba(132,204,22,.25);margin-bottom:14px}
+  .card h3{font-size:16.5px;margin-bottom:8px}
+  .card p{color:var(--muted);font-size:14px;margin:0}
+  .card .tag{font-family:var(--mono);font-size:10.5px;color:var(--green);letter-spacing:.08em;text-transform:uppercase;margin-top:14px;display:inline-block}
+
+  /* ---------- pipeline ---------- */
+  .pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:30px 0 6px}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:14px 12px;position:relative}
+  .step .n{font-family:var(--mono);font-size:11px;color:var(--green);letter-spacing:.1em}
+  .step h4{margin:8px 0 4px;font-size:13.5px}
+  .step p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
+  .step:not(:last-child)::after{content:"";position:absolute;right:-7px;top:50%;width:8px;height:1px;background:var(--green);opacity:.6}
+
+  /* ---------- code ---------- */
+  .code{
+    background:#08090a;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:22px;
+  }
+  .code .bar{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .code .bar span{font-family:var(--mono);font-size:11.5px;color:var(--muted-2)}
+  .code .bar .dots{display:flex;gap:5px;margin-right:4px}
+  .code .bar .dots i{width:9px;height:9px;border-radius:50%;background:var(--line-2);display:block}
+  .code pre{margin:0;padding:16px 18px;overflow:auto;font-size:13px;line-height:1.65;color:#d7d7da}
+  .code .c{color:var(--muted-2)}
+  .code .g{color:var(--green)}
+  .code .k{color:#a3e635}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+
+  /* ---------- bench table ---------- */
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin-top:22px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:12.5px}
+  th,td{text-align:right;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  thead th{color:var(--muted-2);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;background:var(--bg-2)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:var(--panel-2)}
+  td b{color:var(--green)}
+  .tier{font-family:var(--mono);font-size:11px;color:var(--green);border:1px solid rgba(132,204,22,.3);background:var(--green-glow);padding:3px 9px;border-radius:5px;display:inline-block}
+  .callout{
+    margin-top:20px;border:1px solid rgba(132,204,22,.28);background:linear-gradient(180deg,rgba(132,204,22,.06),transparent);
+    border-radius:11px;padding:15px 17px;font-size:13.5px;color:var(--muted);
+  }
+  .callout b{color:var(--text)}
+  .gates{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}
+  .gate{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:16px}
+  .gate .big{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums}
+  .gate .lbl{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .gate .st{font-family:var(--mono);font-size:10.5px;color:var(--muted-2);letter-spacing:.08em;text-transform:uppercase;margin-top:10px;display:inline-block;border-top:1px solid var(--line);padding-top:8px}
+
+  /* ---------- faq ---------- */
+  .faq{margin-top:30px;border-top:1px solid var(--line)}
+  details{border-bottom:1px solid var(--line)}
+  summary{
+    cursor:pointer;list-style:none;padding:18px 4px;display:flex;align-items:center;gap:14px;
+    font-size:15.5px;font-weight:600;
+  }
+  summary::-webkit-details-marker{display:none}
+  summary .q{font-family:var(--mono);color:var(--green);font-size:12px;flex:none}
+  summary .chev{margin-left:auto;transition:transform .2s ease;flex:none;color:var(--muted)}
+  details[open] summary .chev{transform:rotate(90deg);color:var(--green)}
+  details .ans{padding:0 4px 20px 42px;color:var(--muted);font-size:14.5px;max-width:78ch}
+  details .ans code{color:var(--green);background:var(--panel-2);padding:1px 6px;border-radius:5px;border:1px solid var(--line)}
+
+  /* ---------- get started ---------- */
+  .dl{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:start;margin-top:28px}
+  .dl-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:22px}
+  .dl-card h3{font-size:15px;margin-bottom:12px;font-family:var(--mono);letter-spacing:.02em}
+  .dl-list{list-style:none;margin:0;padding:0}
+  .dl-list li{display:flex;gap:11px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;color:var(--muted)}
+  .dl-list li:last-child{border-bottom:none}
+  .dl-list svg{flex:none;margin-top:3px;color:var(--green)}
+  .dl-list b{color:var(--text)}
+
+  /* ---------- footer ---------- */
+  footer{border-top:1px solid var(--line);padding:44px 0 60px;background:var(--bg-2)}
+  .foot-grid{display:flex;justify-content:space-between;gap:28px;flex-wrap:wrap;align-items:flex-start}
+  .foot-brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-weight:700;letter-spacing:.06em}
+  .foot-links{display:flex;gap:20px;flex-wrap:wrap;font-family:var(--mono);font-size:13px}
+  .foot-links a{color:var(--muted)}
+  .foot-links a:hover{color:var(--green)}
+  .foot-meta{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted-2);font-size:12.5px;font-family:var(--mono);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .foot-meta b{color:var(--green)}
+
+  /* ---------- reveal ---------- */
+  html.js .reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+  html.js .reveal.in{opacity:1;transform:none}
+
+  /* ---------- responsive ---------- */
+  @media(max-width:900px){
+    .hero-grid{grid-template-columns:1fr;gap:34px}
+    .cards{grid-template-columns:1fr 1fr}
+    .pipeline{grid-template-columns:1fr 1fr}
+    .two-col,.dl{grid-template-columns:1fr}
+    .gates{grid-template-columns:1fr}
+    .nav-links{display:none}
+    .nav-links.open{display:flex;position:absolute;top:60px;left:0;right:0;flex-direction:column;background:var(--bg-2);border-bottom:1px solid var(--line);padding:10px 14px;margin:0}
+    .nav-toggle{display:block}
+  }
+  @media(max-width:560px){
+    .cards{grid-template-columns:1fr}
+    .pipeline{grid-template-columns:1fr}
+    section{padding:56px 0}
+  }
+  @media(prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    html.js .reveal{opacity:1;transform:none;transition:none}
+    .sizebar .fill{transition:none}
+    .btn:hover,.card:hover{transform:none}
+    *{animation:none!important}
+  }
+</style>
+
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"SoftwareApplication",
+  "name":"LEXORA",
+  "alternateName":"Layered EXact-text Repository & Adaptive compression architecture",
+  "applicationCategory":"DeveloperApplication",
+  "operatingSystem":"Linux, macOS, Windows",
+  "description":"LEXORA is a text-cleaning and exact-compression system for document collections: conservative, versioned canonicalization into deterministic UTF-8 bytes, then compression with guaranteed byte-exact recovery (decode(encode(C)) == C).",
+  "url":"https://drsamonline.github.io/lexora/",
+  "codeRepository":"https://github.com/drsamonline/lexora",
+  "license":"https://opensource.org/licenses/MIT",
+  "programmingLanguage":"Python",
+  "author":{"@type":"Person","name":"Dr. Sohil Momin"},
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}
+}
+</script>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top" aria-label="LEXORA home">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="21" height="21" rx="4" stroke="#84cc16" stroke-width="1.4"/>
+        <path d="M6 16.5 9 7.5l3 9 3-9 3 9" stroke="#84cc16" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>LEX<b>ORA</b></span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="#e9e9ea" stroke-width="1.7" stroke-linecap="round"/></svg>
+    </button>
+    <nav class="nav-links" id="navLinks">
+      <a href="#overview">Overview</a>
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#benchmarks">Benchmarks</a>
+      <a href="#start">Get started</a>
+      <a href="#faq">FAQ</a>
+      <a class="nav-cta" href="https://github.com/drsamonline/lexora" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">Phase 1 prototype · exact-text compression</span>
+        <h1>LEX<span>ORA</span></h1>
+        <p class="sub"><b>Layered EXact-text Repository &amp; Adaptive compression architecture.</b>
+        A text-cleaning and exact-compression system for document collections: canonicalize conservatively,
+        then compress with guaranteed byte-exact recovery — <b>decode(encode(C)) == C</b> for every input.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://github.com/drsamonline/lexora" target="_blank" rel="noopener">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49v-1.7c-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.34 1.12 2.91.86.09-.67.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.3 9.3 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.35 4.79-4.58 5.05.36.32.68.94.68 1.9v2.82c0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"/></svg>
+            View on GitHub
+          </a>
+          <a class="btn btn-ghost" href="#start">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Quickstart
+          </a>
+        </div>
+        <div class="badges">
+          <a href="https://github.com/drsamonline/lexora/actions/workflows/ci.yml" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/CI-paused%20by%20owner-informational" alt="CI status" onerror="this.style.display='none'"></a>
+          <img src="https://img.shields.io/badge/tests-192%20passed%20(local)-informational" alt="Tests: 192 passed locally" onerror="this.style.display='none'">
+          <img src="https://img.shields.io/badge/python-3.12-blue" alt="Python 3.12" onerror="this.style.display='none'">
+          <img src="https://img.shields.io/badge/license-MIT-green" alt="License MIT" onerror="this.style.display='none'">
+          <img src="https://img.shields.io/badge/version-0.0.1.dev1-orange" alt="Version 0.0.1.dev1" onerror="this.style.display='none'">
+          <span class="cssbadge"><span class="dot"></span>round-trip <b>byte-exact</b></span>
+          <span class="cssbadge">container <b>.lxz v0</b></span>
+          <span class="cssbadge">RAM budget <b>~4 GiB</b></span>
+        </div>
+        <p class="tagline">No releases yet · no stable API · install from a source checkout · <code>pytest -q</code> is the local gate</p>
+      </div>
+
+      <div class="viz reveal" aria-hidden="true">
+        <div class="viz-head"><span>entropy · canonical byte stream</span><b id="entropyLabel">7.12 MB</b></div>
+        <svg class="strip" viewBox="0 0 340 64" preserveAspectRatio="none" id="entropyStrip"></svg>
+        <div class="sizebar">
+          <div class="row">
+            <span>input</span>
+            <span class="track"><span class="fill dim" data-w="100"></span></span>
+            <span class="val">7,124,095 B</span>
+          </div>
+          <div class="row">
+            <span>zstd-19</span>
+            <span class="track"><span class="fill" data-w="30.04"></span></span>
+            <span class="val"><b>2,139,962</b> B</span>
+          </div>
+          <div class="row">
+            <span>xz-9</span>
+            <span class="track"><span class="fill" data-w="29.75"></span></span>
+            <span class="val"><b>2,119,756</b> B</span>
+          </div>
+        </div>
+        <p class="kicker" style="margin:14px 0 0">Tier T1-gutenberg-p0 · baseline-vs-baseline smoke snapshot (R1/R2) · no LEXORA-vs-baseline verdict</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- OVERVIEW -->
+  <section id="overview">
+    <div class="wrap">
+      <span class="eyebrow">What it is</span>
+      <h2 class="sec">Clean conservatively. Compress exactly.</h2>
+      <p class="lede">LEXORA ingests text, canonicalizes it into deterministic UTF-8 bytes, and then compresses
+      those bytes with a guarantee that holds for every input: the decompressed stream is byte-identical to the
+      canonical stream. The core invariant is deliberate — <b>canonicalization may lose information relative to
+      the original source; compression after canonicalization must never lose a single byte.</b></p>
+
+      <div class="cards">
+        <div class="card reveal">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4Z" stroke="#84cc16" stroke-width="1.5"/><path d="M9 12l2 2 4-4" stroke="#84cc16" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Byte-exact losslessness</h3>
+          <p>The round-trip is verified before anything is written: <code>decode(encode(C)) == C</code>. A failed comparison is a blocker, not a warning.</p>
+          <span class="tag">core invariant</span>
+        </div>
+        <div class="card reveal">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h11M4 12h16M4 17h9" stroke="#84cc16" stroke-width="1.6" stroke-linecap="round"/><circle cx="18" cy="7" r="2" stroke="#84cc16" stroke-width="1.4"/></svg></div>
+          <h3>Conservative canonicalization</h3>
+          <p>Versioned, deterministic rule set (<code>lexcan-0.1</code>: CAN-R01/R02/R05) with golden test vectors and a whitelist contract — non-matching bytes pass through unchanged.</p>
+          <span class="tag">versioned rules</span>
+        </div>
+        <div class="card reveal">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20V10m5 10V4m5 16v-7m5 7V8" stroke="#84cc16" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+          <h3>Cost-driven selection</h3>
+          <p>Candidates compete against pinned baselines under a total-serialized-byte cost model — every byte of header, index and payload counts, not just the compressed stream.</p>
+          <span class="tag">measured, not assumed</span>
+        </div>
+        <div class="card reveal">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="#84cc16" stroke-width="1.5"/><path d="M3 9h18M8 9v11" stroke="#84cc16" stroke-width="1.4"/></svg></div>
+          <h3><code>.lxz</code> v0 container</h3>
+          <p>Frozen v0 layout per ADR-0007: 128-byte header, one complete zstd frame per block, per-block SHA-256, 40-byte trailer. Every block is decode-verified and the write is atomic.</p>
+          <span class="tag">experimental · major 0</span>
+        </div>
+        <div class="card reveal">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="#84cc16" stroke-width="1.5"/><path d="M7 9l3 3-3 3M13 15h4" stroke="#84cc16" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>A real CLI</h3>
+          <p>Five tested subcommands — <code>canon</code>, <code>zround</code>, <code>pipe</code>, <code>pack</code>, <code>unpack</code> — with a stable exit-code contract (0, 2–7) exercised by the test suite.</p>
+          <span class="tag">canon/zround/pipe/pack/unpack</span>
+        </div>
+        <div class="card reveal">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" stroke="#84cc16" stroke-width="1.5"/><rect x="8" y="8" width="8" height="8" rx="1" stroke="#84cc16" stroke-width="1.5"/><path d="M4 8h0M4 12h0M4 16h0" stroke="#84cc16" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <h3>Built for low resources</h3>
+          <p>Designed to run within a ~4 GiB RAM budget using bounded, streaming/block-based processing. Multilingual coverage (English, Hindi, Gujarati) is a design target.</p>
+          <span class="tag">bounded blocks</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="wrap">
+      <span class="eyebrow">How it works</span>
+      <h2 class="sec">A pipeline with one hard boundary</h2>
+      <p class="lede">Extraction and canonicalization are allowed to be lossy relative to the source. Everything
+      after the canonical bytes exist must round-trip exactly. That boundary is where the guarantee lives.</p>
+
+      <div class="pipeline" role="list">
+        <div class="step" role="listitem"><div class="n">01</div><h4>Ingest</h4><p>TXT/PDF files; OCR optional for scanned pages. <span class="kicker">(file ingestion planned)</span></p></div>
+        <div class="step" role="listitem"><div class="n">02</div><h4>Canonicalize</h4><p>Versioned, deterministic UTF-8 bytes. <span class="kicker">may be lossy vs source</span></p></div>
+        <div class="step" role="listitem"><div class="n">03</div><h4>Compress</h4><p>Cost-selected codec; candidate vs pinned baselines.</p></div>
+        <div class="step" role="listitem"><div class="n">04</div><h4>Verify</h4><p><code>decode(encode(C)) == C</code> enforced before writing.</p></div>
+        <div class="step" role="listitem"><div class="n">05</div><h4>Archive</h4><p><code>.lxz</code> v0 container now; <code>.lxdb</code> planned.</p></div>
+      </div>
+
+      <div class="two-col" style="margin-top:34px">
+        <div>
+          <h3 style="font-family:var(--mono);font-size:14px;letter-spacing:.04em;margin-bottom:4px">Quickstart</h3>
+          <p class="kicker">Install from a source checkout — no published package exists yet.</p>
+          <div class="code">
+            <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>bash — install &amp; verify</span></div>
+<pre><span class="c"># editable install (Qt-free core)</span>
+pip install -e .
+<span class="c"># + test suite, or + experimental PySide6 GUI</span>
+pip install -e <span class="g">".[dev]"</span>
+pip install -e <span class="g">".[gui]"</span>
+
+python3 -m pytest -q   <span class="c"># 192 passed locally</span>
+lexora --help          <span class="c"># lexora 0.0.1.dev1</span></pre>
+          </div>
+        </div>
+        <div>
+          <h3 style="font-family:var(--mono);font-size:14px;letter-spacing:.04em;margin-bottom:4px">Run the pipeline</h3>
+          <p class="kicker">canonicalize → compress → verify, then pack into a container.</p>
+          <div class="code">
+            <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>bash — end-to-end</span></div>
+<pre><span class="c"># raw → canonical → zstd frame → verify</span>
+lexora pipe --in raw.txt --out out.zst
+
+<span class="c"># or step by step</span>
+lexora canon  --in raw.txt --out canon.txt
+lexora zround --in canon.txt --out frame.zst
+
+<span class="c"># wrap canonical bytes into .lxz v0</span>
+lexora pack   --in canon.txt --out archive.lxz
+lexora unpack --in archive.lxz --out back.txt</pre>
+          </div>
+        </div>
+      </div>
+      <div class="callout"><b>Exit codes are part of the contract:</b> 0 success · 2 usage · 3 I/O · 4 canonicalization · 5 codec · 6 round-trip failure · 7 container refusal. A round-trip mismatch (<code>6</code>) is a blocker severity.</div>
+    </div>
+  </section>
+
+  <!-- BENCHMARKS -->
+  <section id="benchmarks">
+    <div class="wrap">
+      <span class="eyebrow">Benchmarks</span>
+      <h2 class="sec">Measured results — reported honestly</h2>
+      <p class="lede">There is <b>no validated LEXORA-vs-baseline result yet</b>. The figures below are the only
+      published numbers: a Tier-1 smoke snapshot comparing frozen generic baselines against each other, not a
+      gate verdict. Every number carries its mandatory tier label.</p>
+
+      <p style="margin-top:20px"><span class="tier">Corpus tier: T1-gutenberg-p0</span></p>
+
+      <div class="gates">
+        <div class="gate"><div class="big">7,124,095 B</div><div class="lbl">Corpus input (6 English public-domain texts, 5 train / 1 held-out)</div><span class="st">R1 · R2 · 2026-10-16</span></div>
+        <div class="gate"><div class="big">0.3004</div><div class="lbl">Zstd-19 ratio — 2,139,962 B stored</div><span class="st">baseline</span></div>
+        <div class="gate"><div class="big">0.2975</div><div class="lbl">XZ-9 ratio — 2,119,756 B stored</div><span class="st">baseline</span></div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>File</th><th>Split</th><th>Input B</th><th>Zstd-19 B (ratio)</th><th>XZ-9 B (ratio)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>gutenberg-1184.txt</td><td>heldout</td><td class="num">2,787,124</td><td class="num"><b>782,892</b> (0.2809)</td><td class="num">776,472 (0.2786)</td></tr>
+            <tr><td>gutenberg-1342.txt</td><td>train</td><td class="num">772,386</td><td class="num">226,028 (0.2926)</td><td class="num">223,512 (0.2894)</td></tr>
+            <tr><td>gutenberg-1400.txt</td><td>train</td><td class="num">1,058,204</td><td class="num">324,526 (0.3067)</td><td class="num">321,664 (0.3040)</td></tr>
+            <tr><td>gutenberg-1661.txt</td><td>train</td><td class="num">607,606</td><td class="num">191,034 (0.3144)</td><td class="num">188,860 (0.3108)</td></tr>
+            <tr><td>gutenberg-2701.txt</td><td>train</td><td class="num">1,276,315</td><td class="num">422,220 (0.3308)</td><td class="num">418,184 (0.3276)</td></tr>
+            <tr><td>gutenberg-76.txt</td><td>train</td><td class="num">622,460</td><td class="num">193,262 (0.3105)</td><td class="num">191,064 (0.3069)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="two-col" style="margin-top:26px">
+        <div class="viz reveal" aria-hidden="true">
+          <div class="viz-head"><span>stored size vs input · log-ish</span><b>lower is better</b></div>
+          <svg class="strip" viewBox="0 0 340 64" preserveAspectRatio="none" id="benchStrip"></svg>
+          <div class="sizebar">
+            <div class="row"><span>zstd-19</span><span class="track"><span class="fill" data-w="30.04"></span></span><span class="val">0.3004</span></div>
+            <div class="row"><span>xz-9</span><span class="track"><span class="fill" data-w="29.75"></span></span><span class="val">0.2975</span></div>
+            <div class="row"><span>held-out zstd</span><span class="track"><span class="fill dim" data-w="28.09"></span></span><span class="val">0.2809</span></div>
+            <div class="row"><span>held-out xz</span><span class="track"><span class="fill dim" data-w="27.86"></span></span><span class="val">0.2786</span></div>
+          </div>
+        </div>
+        <div>
+          <h3 style="font-family:var(--mono);font-size:14px;letter-spacing:.04em">Acceptance gates (defined, not yet met)</h3>
+          <p class="kicker" style="margin-top:6px">A candidate codec does not exist yet, so no Pass/Partial/Fail row can be filled.</p>
+          <div class="gates" style="grid-template-columns:1fr 1fr;margin-top:16px">
+            <div class="gate"><div class="big">≥ 10%</div><div class="lbl">Pass — smaller total stored size vs best frozen baseline</div></div>
+            <div class="gate"><div class="big">≥ 3%</div><div class="lbl">Partial — smaller total stored size</div></div>
+          </div>
+          <p class="kicker" style="margin-top:16px">Peak RSS (measured once, R3 artifact): zstd-19 ≈ 85,956 KiB · xz-9 ≈ 35,348 KiB. Budget target ≈ 4 GiB (REF-4G).</p>
+          <p class="kicker" style="margin-top:8px">Known caveats, recorded honestly: 2 of 8 requested texts were discarded by the fetch size guard; held-out is a single lineage, so statistical strength is nil; the corpus (~7.1 MB) is far below the ≥1 GiB protocol target.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GET STARTED -->
+  <section id="start">
+    <div class="wrap">
+      <span class="eyebrow">Get started</span>
+      <h2 class="sec">Clone it, install it, run the gate</h2>
+      <p class="lede">LEXORA is an early Phase 1 prototype. Nothing here is a shipped or released feature —
+      install from source and treat the test suite as the contract.</p>
+
+      <div class="dl">
+        <div class="dl-card">
+          <h3>$ git clone</h3>
+          <div class="code" style="margin-top:0">
+            <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>bash</span></div>
+<pre>git clone https://github.com/drsamonline/lexora.git
+cd lexora
+pip install -e <span class="g">".[dev]"</span>
+python3 -m pytest -q</pre>
+          </div>
+          <p class="kicker" style="margin-top:14px">Python <span class="num">≥3.12,&lt;4.0</span> · dependency <code>zstandard</code> pinned to a tested range · GUI is an opt-in <code>[gui]</code> extra.</p>
+        </div>
+        <div class="dl-card">
+          <h3>What you get</h3>
+          <ul class="dl-list">
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>canonicalize.py</b> — conservative v0 rule set with golden vectors</span></li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>zstd_core.py</b> — frame codec with round-trip verification</span></li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>container.py</b> — <code>.lxz</code> v0 pack/unpack (ADR-0007)</span></li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>cli.py</b> — the five-subcommand CLI with stable exit codes</span></li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>benchmarks/</b> — harness + frozen corpus manifest</span></li>
+          </ul>
+          <p class="kicker" style="margin-top:14px">No releases, no download artifacts, and no coverage/release badges exist — those claims are not yet true.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="wrap">
+      <span class="eyebrow">FAQ</span>
+      <h2 class="sec">Straight answers</h2>
+      <div class="faq">
+        <details open>
+          <summary><span class="q">Q01</span>Is LEXORA released or production-ready?
+            <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <div class="ans">No. It is a <b>Phase 1 prototype in development</b> with no stable API and no releases. Early implementation code exists (canonicalization, a Zstd core baseline, the <code>.lxz</code> v0 container, a benchmark harness, a CLI, and experimental PySide6 GUI milestones).</div>
+        </details>
+        <details>
+          <summary><span class="q">Q02</span>Does LEXORA beat Zstd, Brotli or XZ?
+            <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <div class="ans">No validated evidence exists either way, and the project says so explicitly. The only published numbers are baseline-vs-baseline on a Tier-1 smoke corpus. Claiming any advantage before reproducible benchmark evidence would be out of scope by design.</div>
+        </details>
+        <details>
+          <summary><span class="q">Q03</span>What exactly does "byte-exact" mean here?
+            <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <div class="ans">For the canonical byte stream <code>C</code>, the guarantee is <code>decode(encode(C)) == C</code> for every input. It is enforced at build time — a mismatch is treated as a blocker (exit code 6), not a warning.</div>
+        </details>
+        <details>
+          <summary><span class="q">Q04</span>Can canonicalization lose data?
+            <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <div class="ans">Yes — by design, and conservatively. Canonicalization <i>may</i> be lossy relative to the original source (for example, encoding normalization and line-ending normalization). The hard rule is that compression after canonicalization must never lose a byte. Reconstructing original OCR output or PDF layout bit-for-bit is an explicit non-goal.</div>
+        </details>
+        <details>
+          <summary><span class="q">Q05</span>Which languages and inputs are supported?
+            <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <div class="ans">Design targets are <code>.txt</code> and <code>.pdf</code> (text layer first, OCR optional for scans) across Latin, Devanagari and Gujarati scripts. Current reality: byte-level canonicalization of raw text streams is implemented; TXT/PDF <i>file ingestion</i> is not implemented yet, and the build scope is English-only, with Hindi/Gujarati deferred (not blocking).</div>
+        </details>
+        <details>
+          <summary><span class="q">Q06</span>What is the licence, and who maintains it?
+            <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <div class="ans">MIT © 2026 Dr. Sohil Momin, who owns the project. CI runs are currently paused by owner decision (free-tier minutes exhausted); the verification gate is local — <code>pytest -q</code> plus a docs link check before every commit.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-brand">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="1.5" y="1.5" width="21" height="21" rx="4" stroke="#84cc16" stroke-width="1.4"/>
+            <path d="M6 16.5 9 7.5l3 9 3-9 3 9" stroke="#84cc16" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>LEX<b>ORA</b></span>
+        </div>
+        <p class="kicker" style="margin-top:12px;max-width:40ch">Layered EXact-text Repository &amp; Adaptive compression architecture. Phase 1 prototype — no releases, no stable API.</p>
+      </div>
+      <nav class="foot-links">
+        <a href="https://github.com/drsamonline/lexora" target="_blank" rel="noopener">Repository</a>
+        <a href="https://github.com/drsamonline/lexora/blob/main/README.md" target="_blank" rel="noopener">README</a>
+        <a href="https://github.com/drsamonline/lexora/tree/main/docs" target="_blank" rel="noopener">Docs</a>
+        <a href="https://github.com/drsamonline/lexora/blob/main/LICENSE" target="_blank" rel="noopener">MIT Licence</a>
+      </nav>
+    </div>
+    <div class="foot-meta">
+      <span>Built by <b>Dr. Sohil Momin</b> · LEXORA</span>
+      <span>MIT © 2026 Dr. Sohil Momin</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* mobile nav */
+  var toggle = document.getElementById("navToggle");
+  var links = document.getElementById("navLinks");
+  if(toggle && links){
+    toggle.addEventListener("click", function(){
+      var open = links.classList.toggle("open");
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    links.addEventListener("click", function(e){
+      if(e.target.tagName === "A"){ links.classList.remove("open"); toggle.setAttribute("aria-expanded","false"); }
+    });
+  }
+
+  /* scroll-spy for active nav link */
+  var ids = ["overview","features","how","benchmarks","start","faq"];
+  var navAnchors = Array.prototype.slice.call(document.querySelectorAll(".nav-links a[href^='#']"));
+  function setActive(id){
+    navAnchors.forEach(function(a){ a.classList.toggle("active", a.getAttribute("href") === "#" + id); });
+  }
+  var spy = document.querySelectorAll("section[id]");
+  if("IntersectionObserver" in window && spy.length){
+    var so = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if(en.isIntersecting) setActive(en.target.id); });
+    }, {rootMargin:"-45% 0px -50% 0px", threshold:0});
+    spy.forEach(function(s){ so.observe(s); });
+  }
+
+  /* reveal on scroll */
+  var reveals = Array.prototype.slice.call(document.querySelectorAll(".reveal"));
+  if(reduce || !("IntersectionObserver" in window)){
+    reveals.forEach(function(el){ el.classList.add("in"); });
+  } else {
+    var ro = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ en.target.classList.add("in"); ro.unobserve(en.target); }
+      });
+    }, {threshold:.18});
+    reveals.forEach(function(el){ ro.observe(el); });
+  }
+
+  /* animate size bars once visible */
+  function fillBars(){
+    document.querySelectorAll(".sizebar .fill").forEach(function(f){
+      var w = f.getAttribute("data-w") || "0";
+      f.style.width = (reduce ? parseFloat(w) : parseFloat(w)) + "%";
+    });
+  }
+  if(reduce || !("IntersectionObserver" in window)){
+    fillBars();
+  } else {
+    var bo = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if(en.isIntersecting){ fillBars(); bo.disconnect(); } });
+    }, {threshold:.25});
+    var anyBar = document.querySelector(".sizebar");
+    if(anyBar) bo.observe(anyBar);
+    else fillBars();
+  }
+
+  /* inline-SVG entropy / bar strips (deterministic, no libraries) */
+  function strip(el, seed, tint){
+    if(!el) return;
+    var W = 340, H = 64, n = 68, gap = W / n;
+    var s = seed, out = "";
+    function rnd(){ s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }
+    for(var i=0;i<n;i++){
+      var v = rnd();
+      // smooth-ish envelope so it reads like a signal, not noise
+      var env = 0.45 + 0.55 * Math.abs(Math.sin(i/7.0));
+      var h = Math.max(3, v * env * H * 0.92);
+      var y = H - h;
+      var op = (0.35 + 0.65 * v).toFixed(2);
+      out += '<rect x="' + (i*gap + 0.5).toFixed(2) + '" y="' + y.toFixed(2) + '" width="' + (gap-1.4).toFixed(2) + '" height="' + h.toFixed(2) + '" fill="' + tint + '" opacity="' + op + '"/>';
+    }
+    // baseline
+    out += '<line x1="0" y1="63" x2="' + W + '" y2="63" stroke="#26282d" stroke-width="1"/>';
+    el.innerHTML = out;
+  }
+  strip(document.getElementById("entropyStrip"), 20261021, "#84cc16");
+  strip(document.getElementById("benchStrip"), 77311, "#84cc16");
+})();
+</script>
+</body>
+</html>

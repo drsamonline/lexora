@@ -1,3 +1,34 @@
+<div align="center">
+
+<h1>LEXORA</h1>
+
+<p><b>Layered EXact-text Repository &amp; Adaptive compression architecture</b><br>
+Canonicalize text conservatively, then compress it with guaranteed byte-exact recovery — <code>decode(encode(C)) == C</code> for every input.</p>
+
+<p>
+<a href="https://drsamonline.github.io/lexora/"><img alt="Landing page: live" src="https://img.shields.io/badge/landing%20page-live-84cc16"></a>
+<a href="https://github.com/drsamonline/lexora/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/drsamonline/lexora/actions/workflows/ci.yml/badge.svg"></a>
+<img alt="Tests: 192 passed (local)" src="https://img.shields.io/badge/tests-192%20passed%20(local)-informational">
+<img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-blue">
+<a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green"></a>
+<img alt="Version 0.0.1.dev1" src="https://img.shields.io/badge/version-0.0.1.dev1-orange">
+</p>
+
+<p>
+<a href="https://drsamonline.github.io/lexora/"><b>Landing page</b></a> &nbsp;·&nbsp;
+<a href="https://drsamonline.github.io/lexora/#start">Install from source</a> &nbsp;·&nbsp;
+<a href="https://drsamonline.github.io/lexora/#benchmarks">Benchmarks</a> &nbsp;·&nbsp;
+<a href="https://drsamonline.github.io/lexora/#faq">FAQ</a> &nbsp;·&nbsp;
+<a href="docs/STATUS.md">Status</a> &nbsp;·&nbsp;
+<a href="https://github.com/drsamonline/lexora">Repository</a>
+</p>
+
+<p><sub>Phase 1 prototype — no releases and no stable API yet; install from a source checkout. MIT © 2026 Dr. Sohil Momin.</sub></p>
+
+</div>
+
+---
+
 # LEXORA
 
 [![CI](https://github.com/drsamonline/lexora/actions/workflows/ci.yml/badge.svg)](https://github.com/drsamonline/lexora/actions/workflows/ci.yml)

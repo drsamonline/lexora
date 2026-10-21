@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>404 — Page not found · LEXORA</title>
+<meta name="description" content="The requested page was not found on the LEXORA site. Return to the landing page or the repository.">
+<meta name="robots" content="noindex, follow">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="icon" type="image/svg+xml" href="/lexora/assets/favicon.svg">
+<style>
+  :root{--bg:#0a0a0b;--panel:#101113;--line:#1d1f23;--green:#84cc16;--text:#e9e9ea;--muted:#8b8c93;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--sans);
+    display:grid;place-items:center;padding:28px;
+    background-image:linear-gradient(rgba(132,204,22,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(132,204,22,.035) 1px,transparent 1px);
+    background-size:44px 44px}
+  .box{max-width:560px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:40px 34px;position:relative;overflow:hidden}
+  .box::after{content:"";position:absolute;right:-90px;top:-90px;width:280px;height:280px;background:radial-gradient(circle,rgba(132,204,22,.12),transparent 62%);pointer-events:none}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--green);display:inline-flex;align-items:center;gap:9px}
+  .eyebrow::before{content:"";width:22px;height:1px;background:var(--green);display:inline-block}
+  h1{font-family:var(--mono);font-size:clamp(48px,12vw,84px);margin:14px 0 0;letter-spacing:-.04em;color:var(--green)}
+  h2{font-size:18px;margin:6px 0 0;font-weight:600}
+  p{color:var(--muted);font-size:14.5px;margin:14px 0 0}
+  .bar{display:flex;gap:6px;height:26px;margin:22px 0 6px;align-items:flex-end}
+  .bar i{display:block;width:8px;background:var(--green);border-radius:2px;opacity:.55}
+  .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+  a.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13.5px;font-weight:600;padding:11px 16px;border-radius:9px;text-decoration:none}
+  .primary{background:var(--green);color:#0a0a0b}
+  .ghost{background:transparent;color:var(--text);border:1px solid #26282d}
+  .ghost:hover{border-color:var(--green);color:var(--green)}
+  .foot{margin-top:24px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:12px;color:#65666d}
+  .foot b{color:var(--green)}
+</style>
+</head>
+<body>
+  <main class="box">
+    <span class="eyebrow">Error 404</span>
+    <h1>404</h1>
+    <h2>Byte not found in this stream.</h2>
+    <p>The page you asked for is not part of the LEXORA site. Nothing was lost — the index simply has no entry for this path.</p>
+    <div class="bar" aria-hidden="true">
+      <i style="height:8px"></i><i style="height:18px"></i><i style="height:12px"></i><i style="height:24px"></i><i style="height:10px"></i><i style="height:20px"></i><i style="height:14px"></i><i style="height:26px"></i><i style="height:9px"></i><i style="height:16px"></i>
+    </div>
+    <div class="actions">
+      <a class="btn primary" href="/lexora/">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12l8-8 8 8M6 10v10h12V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back to landing page
+      </a>
+      <a class="btn ghost" href="https://github.com/drsamonline/lexora" target="_blank" rel="noopener">Repository</a>
+    </div>
+    <div class="foot">LEXORA · MIT © 2026 <b>Dr. Sohil Momin</b></div>
+  </main>
+</body>
+</html>
