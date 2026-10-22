@@ -30,14 +30,6 @@ Canonicalize text conservatively, then compress it with guaranteed byte-exact re
 
 ---
 
-
-[![CI](https://github.com/drsamonline/lexora/actions/workflows/ci.yml/badge.svg)](https://github.com/drsamonline/lexora/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-192%20passed%20(local)%20-informational)
-![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
-![License](https://img.shields.io/badge/license-MIT-green)
-
-**Layered EXact-text Repository & Adaptive compression architecture**
-
 > **Project status: Phase 1 prototype in development.** Documentation (Batches A–E) complete/drafted;
 > early implementation code exists (canonicalization, Zstd core baseline, `.lxz` v0 container, benchmark harness,
 > CLI app, experimental PySide6 GUI milestones M1–M3).
