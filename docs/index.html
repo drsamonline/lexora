@@ -297,6 +297,46 @@
 }
 </script>
 <style id="__overflow_fix__"> /* horizontal-overflow fixes */ .two-col>*,.pipeline>*,.hero>*,.steps>*,.dl>*{min-width:0} .table-wrap{overflow-x:auto} </style>
+<style id="__preview_style__">
+  /* ---- interface preview section (additive) ---- */
+  .pv-win{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel);
+    box-shadow:0 26px 60px -36px rgba(0,0,0,.8);margin-top:34px}
+  .pv-win .bar{display:flex;align-items:center;gap:9px;padding:11px 14px;background:var(--bg-2);
+    border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .pv-win .bar .dots{display:flex;gap:6px}
+  .pv-win .bar .dots i{width:10px;height:10px;border-radius:50%;background:var(--line-2);display:block}
+  .pv-body{display:grid;grid-template-columns:1.4fr 1fr}
+  .pv-list{padding:4px 0;border-right:1px solid var(--line);min-width:0}
+  .pv-row{display:grid;grid-template-columns:1.7fr .9fr auto;gap:10px;align-items:center;
+    padding:10px 16px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--text)}
+  .pv-row:last-child{border-bottom:0}
+  .pv-row .fn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pv-row .sp{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+  .pv-row .state{font-family:var(--mono);font-size:10.5px;color:var(--green);white-space:nowrap}
+  .pv-row.pv-head{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted-2);border-bottom:1px solid var(--line-2)}
+  .pv-panel{padding:16px;min-width:0;background:var(--bg-2)}
+  .pv-prog{display:flex;align-items:center;gap:10px}
+  .pv-track{flex:1;height:8px;border-radius:999px;background:var(--line);overflow:hidden;display:block}
+  .pv-fill{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--green-dim),var(--green))}
+  .pv-prog b{font-family:var(--mono);font-size:11px;color:var(--green)}
+  .pv-ratios{margin-top:16px;display:grid;gap:10px}
+  .pv-rrow{display:grid;grid-template-columns:66px 1fr 74px;align-items:center;gap:10px;
+    font-size:11.5px;color:var(--muted)}
+  .pv-rtrack{height:7px;border-radius:999px;background:var(--line);overflow:hidden;display:block}
+  .pv-rfill{display:block;height:100%;background:var(--green)}
+  .pv-rfill.dim{background:var(--line-2)}
+  .pv-rrow .num{color:var(--text)}
+  .pv-summary{margin-top:18px;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:12px 13px}
+  .pv-summary .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
+  .pv-summary .v{font-size:13px;color:var(--text);margin-top:3px}
+  .pv-summary .v b{color:var(--green-2)}
+  .pv-cap{margin-top:16px;font-size:.82rem;color:var(--muted-2);font-family:var(--mono)}
+  @media(max-width:720px){
+    .pv-body{grid-template-columns:1fr}
+    .pv-list{border-right:0;border-bottom:1px solid var(--line)}
+  }
+</style>
 </head>
 <body>
 
@@ -431,6 +471,57 @@
           <span class="tag">bounded blocks</span>
         </div>
       </div>
+    </div>
+  </section>
+
+<!-- INTERFACE PREVIEW -->
+  <section id="preview">
+    <div class="wrap">
+      <span class="eyebrow">Interface</span>
+      <h2 class="sec">What the tool looks like</h2>
+      <p class="lede">The experimental PySide6 GUI (milestones M1&ndash;M3, not released) shows a document
+      collection, the cost-selected codec result and the round-trip verdict in one window. The figures below
+      are the only published numbers &mdash; the Tier-1 smoke snapshot, baseline-vs-baseline.</p>
+
+      <div class="pv-win reveal" role="img" aria-label="Mock LEXORA compression window with a file list, compression ratio bars, a progress bar and a round-trip summary panel">
+        <div class="bar">
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>lexora-gui &mdash; batch compress &middot; corpus T1-gutenberg-p0</span>
+        </div>
+        <div class="pv-body">
+          <div class="pv-list">
+            <div class="pv-row pv-head"><span>File</span><span class="sp">Split</span><span class="state">State</span></div>
+            <div class="pv-row"><span class="fn">gutenberg-1184.txt</span><span class="sp">held-out</span><span class="state">verified</span></div>
+            <div class="pv-row"><span class="fn">gutenberg-2701.txt</span><span class="sp">train</span><span class="state">verified</span></div>
+            <div class="pv-row"><span class="fn">gutenberg-1400.txt</span><span class="sp">train</span><span class="state">verified</span></div>
+            <div class="pv-row"><span class="fn">gutenberg-1342.txt</span><span class="sp">train</span><span class="state">verified</span></div>
+            <div class="pv-row"><span class="fn">gutenberg-76.txt</span><span class="sp">train</span><span class="state">verified</span></div>
+            <div class="pv-row"><span class="fn">gutenberg-1661.txt</span><span class="sp">train</span><span class="state">verified</span></div>
+          </div>
+          <aside class="pv-panel">
+            <div class="pv-prog">
+              <span class="pv-track" aria-hidden="true"><span class="pv-fill"></span></span>
+              <b class="num">100%</b>
+            </div>
+            <p class="kicker" style="margin-top:8px">round-trip verified &middot; decode(encode(C)) == C</p>
+            <div class="pv-ratios">
+              <div class="pv-rrow"><span>input</span><span class="pv-rtrack"><span class="pv-rfill dim" style="width:100%"></span></span><span class="num">7.1 MB</span></div>
+              <div class="pv-rrow"><span>zstd-19</span><span class="pv-rtrack"><span class="pv-rfill" style="width:30.04%"></span></span><span class="num">0.3004</span></div>
+              <div class="pv-rrow"><span>xz-9</span><span class="pv-rtrack"><span class="pv-rfill" style="width:29.75%"></span></span><span class="num">0.2975</span></div>
+            </div>
+            <div class="pv-summary">
+              <div class="k">Output container</div>
+              <div class="v"><b>.lxz</b> v0 &mdash; 128-byte header, per-block SHA-256, atomic write</div>
+            </div>
+            <div class="pv-summary">
+              <div class="k">Gate status</div>
+              <div class="v">No <b>LEXORA-vs-baseline</b> verdict yet &mdash; the numbers above are frozen generic baselines compared with each other.</div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <p class="pv-cap">Interface illustration &mdash; LEXORA is a Phase 1 prototype with no releases and no stable API; the figures shown are the project's published T1-gutenberg-p0 smoke snapshot (baseline-vs-baseline).</p>
     </div>
   </section>
 
