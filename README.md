@@ -20,7 +20,8 @@ Canonicalize text conservatively, then compress it with guaranteed byte-exact re
 <a href="https://drsamonline.github.io/lexora/#benchmarks">Benchmarks</a> &nbsp;·&nbsp;
 <a href="https://drsamonline.github.io/lexora/#faq">FAQ</a> &nbsp;·&nbsp;
 <a href="docs/STATUS.md">Status</a> &nbsp;·&nbsp;
-<a href="https://github.com/drsamonline/lexora">Repository</a>
+<a href="https://github.com/drsamonline/lexora">Repository</a> &nbsp;·&nbsp;
+<a href="https://drsamonline.github.io/">All projects</a>
 </p>
 
 <p><sub>Phase 1 prototype — no releases and no stable API yet; install from a source checkout. MIT © 2026 Dr. Sohil Momin.</sub></p>
