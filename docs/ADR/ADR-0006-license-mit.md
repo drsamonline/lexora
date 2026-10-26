@@ -17,7 +17,7 @@ No `LICENSE` file existed; README said "Not yet selected"; release gate R3 was o
 
 ## Decision
 
-Adopt **A: MIT**, copyright line "Copyright (c) 2026 Dr. Sohil Momin". Canonical text taken verbatim from the OSI/choosealicense MIT template (`github/choosealicense.com`, fetched 2026-10-15) with only the `[year]`/`[fullname]` placeholders replaced. `pyproject.toml` declares `license = "MIT"` (SPDX).
+Adopt **A: MIT**, copyright line "Copyright (c) 2026 Dr. Sohil Momin". Canonical text taken verbatim from the OSI/choosealicense PolyForm Noncommercial template (`github/choosealicense.com`, fetched 2026-10-15) with only the `[year]`/`[fullname]` placeholders replaced. `pyproject.toml` declares `license = "MIT"` (SPDX).
 
 If the owner later prefers Apache-2.0 (e.g., for patent coverage once Rust/PPMd components ship), supersede this ADR; no code changes beyond the LICENSE file and pyproject metadata would be required.
 
