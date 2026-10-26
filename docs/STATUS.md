@@ -33,7 +33,7 @@
 ## Blockers
 
 1. ~~Batch D/E not yet on remote~~ — resolved in Session 11 (hosted `main` = `a1bf3c3`). ~~Sessions 12–35 local-only~~ — resolved in Session 36: push unblocked, hosted `main` fast-forwarded (`ac182cd`, later `e472146` with the Session-37 evidence draft). Current branch tip not re-pushed this reconciliation (no credentials in this container; owner-supplied token required per policy).
-2. ~~OQ-7 (Python version)~~ — closed via ADR-0005 (≥3.12,<4.0, owner delegation, Session 12). ~~OQ-5 (license)~~ — closed via ADR-0006 (MIT, `LICENSE` at repo root, Session 14); still blocks publishing to registries until owner approves a release per RELEASE_PROCESS.md.
+2. ~~OQ-7 (Python version)~~ — closed via ADR-0005 (≥3.12,<4.0, owner delegation, Session 12). ~~OQ-5 (license)~~ — closed via ADR-0006 (PolyForm Noncommercial, `LICENSE` at repo root, Session 14); still blocks publishing to registries until owner approves a release per RELEASE_PROCESS.md.
 3. **OQ-8 (corpus availability/rights)** blocks the first real benchmark run — harness scaffold is ready but refuses empty manifests by design.
 4. ~~Owner decisions OQ-1…OQ-4~~ — resolved: ADR-0001…0004 Accepted via owner delegation (`86e6b55`).
 
