@@ -10,7 +10,7 @@
 The CLI app scope is effectively complete (five subcommands; 108 tests passing, Session 26). DESIGN_GUI.md defines screens G1–G4 as the GUI MVP (GUI-M1) but deliberately left three decisions open: toolkit (OQ-12), packaging location (OQ-13), and whether the GUI exposes future dictionary compression (OQ-14). GUI-M1 cannot start without resolving OQ-12/OQ-13, and repo governance requires an accepted ADR **before** any GUI code exists (DESIGN_GUI §5: "Each milestone gets its own ADR/amendment before code").
 
 Constraints in force:
-- MIT license project (ADR-0006); core install must stay minimal — zstandard is the only runtime dependency today.
+- PolyForm Noncommercial license project (ADR-0006); core install must stay minimal — zstandard is the only runtime dependency today.
 - GitHub Actions paused (OQ-15): all GUI verification must be runnable locally (offscreen Qt).
 - English-only build scope (owner directive); Indic UI text is a later phase but the design must not preclude it.
 - The GUI is a thin client of `src/lexora/*` — never a second implementation of core logic (DESIGN_GUI §2).
