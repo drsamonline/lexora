@@ -9,7 +9,7 @@
 |---|---|---|
 | R1 | Implementation code exists with passing tests in-repo | ❌ No code, no test tooling |
 | R2 | Python version range decided (OQ-7 in [DECISIONS.md](DECISIONS.md)) | ❌ Open |
-| R3 | License chosen and LICENSE file added (OQ-5) | ✅ Done — MIT via ADR-0006, `LICENSE` at root (2026-10-15) |
+| R3 | License chosen and LICENSE file added (OQ-5) | ✅ Done — PolyForm Noncommercial via ADR-0006, `LICENSE` at root (2026-10-15) |
 | R4 | `.lxz` format frozen: byte layout approved + conformance test vectors published ([FORMAT_LXZ.md](FORMAT_LXZ.md) currently PROPOSED) | ❌ Not frozen |
 | R5 | Benchmark protocol executed on a rights-cleared corpus; claims in README/CHANGELOG limited to measured results ([BENCHMARK_PROTOCOL.md](BENCHMARK_PROTOCOL.md), [CORPUS_POLICY.md](CORPUS_POLICY.md)) | ❌ No corpus (OQ-8), no results |
 | R6 | Versioning scheme formally adopted via ADR (OQ-9; SemVer proposed) | ❌ Open |
