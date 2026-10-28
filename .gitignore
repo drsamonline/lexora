@@ -35,3 +35,7 @@ results/*.tmp
 *.lxz
 *.lxdb
 .vault/
+
+# Golden format vectors are normative test fixtures, not local test output
+!tests/vectors/**/*.lxz
+!tests/vectors/**/*.lxdb
