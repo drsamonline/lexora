@@ -1,6 +1,6 @@
 # LEXORA Performance Budget
 
-> **Status:** Draft (targets are *proposed* engineering budgets, not measurements; nothing has been benchmarked — verified 2026-10-15)
+> **Status:** Draft (targets are *proposed* engineering budgets; the memory rows below now carry live measurements — updated 2026-10-28, Session 39)
 > **Owner:** Documentation architect (delegated)
 > **Related:** [RESOURCE_LIMITS.md](RESOURCE_LIMITS.md) · [BENCHMARK_PROTOCOL.md](BENCHMARK_PROTOCOL.md) · [PHASES.md](PHASES.md)
 
@@ -16,11 +16,11 @@ Proposed profile "REF-4G": x86-64 laptop-class CPU, **4 GiB RAM total**, spinnin
 
 | Operation | Proposed budget | Rationale / status |
 |---|---|---|
-| Canonicalize one document (streaming) | ≤ 256 MiB | Sized for multi-MB documents without full-load; Not yet measured |
-| Encode block (Zstd level default core) | ≤ 512 MiB | zstandard per-context memory + block buffer; Not yet measured |
-| Decode single block/document | ≤ 256 MiB | REQ-CMP-005 bounded decoding; Not yet measured |
+| Canonicalize one document (streaming) | ≤ 256 MiB | Sized for multi-MB documents without full-load; Not yet measured (canon path still reads whole input) |
+| Encode block (Zstd level default core) | ≤ 512 MiB | **Measured 2026-10-28:** streaming CLI default plateaus at **~126 MiB** from one full block upward (32 MiB → 126.1, 64 MiB → 126.2 MiB peak RSS), so the budget holds independently of document size. The pre-streaming buffered path (`--no-stream`) grew ~4.8 MiB per MiB of input and would have breached at a ~95 MiB document. Artifact: `benchmarks/results-rss-core.json` |
+| Decode single block/document | ≤ 256 MiB | **Measured 2026-10-28:** PASS at every size tested (28.3 MiB at 1 MiB input → 188.6 MiB at 64 MiB input) **but the default whole-file `unpack` path is still buffered** (~2.9 MiB peak per MiB of input) and would reach the budget around an ~85 MiB document. Bounded `--block N` decode (REQ-CMP-005) is the only streaming read path today — streaming `unpack` is an open item |
 | Benchmark baseline runs (external tools) | tool-dependent, recorded separately | Zstd-19/Brotli q11/XZ -9 can exceed budgets ⇒ run as separate processes with own limits; failures logged honestly |
-| Whole pipeline headroom | peak ≤ 3 GiB of 4 GiB host | OS + Python interpreter allowance; Not yet measured |
+| Whole pipeline headroom | peak ≤ 3 GiB of 4 GiB host | OS + Python interpreter allowance; Not yet measured (encode path alone is ~126 MiB streaming, so headroom is not the binding constraint) |
 
 ## Throughput budgets (soft targets, informational only)
 

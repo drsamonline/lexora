@@ -96,8 +96,11 @@ lexora pack --in CANONICAL --out ARCHIVE.lxz [--level N] [--block-size B]
 | `--out PATH` | yes | — | archive destination; `-` writes to stdout (binary) |
 | `--level N` | no | 19 | zstd level 1..22 (same contract as `zround`) |
 | `--block-size B` | no | 8388608 | max uncompressed bytes per block, legal range 1..8388608 (LIM-01); out-of-range → exit 2 before any read/write (Session 26 bounds messaging); declared in header and enforced by readers |
+| `--no-stream` | no | off (streaming) | buffer the whole input in memory instead of streaming block-by-block. Same output bytes, far higher peak RSS (measured 196.9 MiB vs 126.1 MiB at a 32 MiB input, Session 39) — kept for A/B evidence runs only |
 
 Behavior notes: empty input packs as one zero-length block (exit 0); summary line on stderr.
+
+**Memory behaviour (Session 39).** `pack` streams by default: `container.pack_stream()` holds one block plus its compressed frame, so peak RSS is flat in document size (measured plateau ≈126 MiB at zstd-19/8 MiB blocks, from one full block upward — `benchmarks/results-rss-core.json`). The pre-Session-39 buffered path grew ~4.8 MiB of peak RSS per MiB of input, which put the 512 MiB encode budget (PERFORMANCE_BUDGET.md) at risk on a ~95 MiB document. `--out -` (stdout) still takes the buffered path, because streaming needs a seekable destination for the header backfill.
 
 ### `lexora unpack` — decode a `.lxz` archive, refusing unverified output
 

@@ -1,0 +1,372 @@
+{
+  "block_size": 8388608,
+  "budgets_kib": {
+    "decode_document": 262144,
+    "encode_block": 524288
+  },
+  "corpus_tier": "synthetic-deterministic",
+  "date": "2026-10-28T14:13:40Z",
+  "encode_budget_breach_input_mib": {
+    "buffered": 95.5,
+    "stream": 429.5
+  },
+  "encode_slope_kib_per_mib": {
+    "buffered": 4888.1,
+    "stream": 1039.0
+  },
+  "env": {
+    "cpu_model": ": unknown",
+    "lexora_commit": "1c91f2f8d87144b3f7e03229f9cc8ca0e27d9b6d",
+    "lexora_dirty": true,
+    "machine": "x86_64",
+    "measured_against": "Session-39 working tree on top of 1c91f2f (streaming encoder + probe uncommitted at measurement time); lexora_dirty=true is accurate for that tree",
+    "os": "Linux",
+    "python": "3.12.13",
+    "ram_bytes": 2199912448,
+    "reference_machine": "REF-4G NOT confirmed (OQ-7 related) - deviation recorded",
+    "release": "4.19.0-gvisor",
+    "zstandard": "0.25.0"
+  },
+  "level": 19,
+  "note": "Core-path (real CLI) peak-RSS measurement for P1 evidence item 2. Synthetic seeded English-like input: reproducible, NOT corpus scope, supports no ADR-0001 verdict. Publication into docs/BENCHMARK_RESULTS.md requires owner sign-off (QUALITY_PLAN).",
+  "peak_rss_method": "each run is a fresh `python -m lexora.cli` process; child peak RSS from os.wait4() rusage ru_maxrss (KiB) - kernel high-water mark, not sampled",
+  "probe": "core-path-peak-rss",
+  "runs": [
+    {
+      "archive_bytes": 291742,
+      "decode_budget_kib": 262144,
+      "decode_exit_codes": [
+        0
+      ],
+      "decode_peak_rss_kib": [
+        28940
+      ],
+      "decode_peak_rss_median_kib": 28940,
+      "decode_stderr": [],
+      "decode_wall_s": [
+        0.74
+      ],
+      "decode_within_budget": true,
+      "encode_budget_kib": 524288,
+      "encode_exit_codes": [
+        0
+      ],
+      "encode_peak_rss_kib": [
+        46064
+      ],
+      "encode_peak_rss_median_kib": 46064,
+      "encode_stderr": [],
+      "encode_wall_s": [
+        3.326
+      ],
+      "encode_within_budget": true,
+      "input_bytes": 1048576,
+      "input_mib": 1,
+      "mode": "stream"
+    },
+    {
+      "archive_bytes": 291742,
+      "decode_budget_kib": 262144,
+      "decode_exit_codes": [
+        0
+      ],
+      "decode_peak_rss_kib": [
+        28804
+      ],
+      "decode_peak_rss_median_kib": 28804,
+      "decode_stderr": [],
+      "decode_wall_s": [
+        0.412
+      ],
+      "decode_within_budget": true,
+      "encode_budget_kib": 524288,
+      "encode_exit_codes": [
+        0
+      ],
+      "encode_peak_rss_kib": [
+        44532
+      ],
+      "encode_peak_rss_median_kib": 44532,
+      "encode_stderr": [],
+      "encode_wall_s": [
+        2.096
+      ],
+      "encode_within_budget": true,
+      "input_bytes": 1048576,
+      "input_mib": 1,
+      "mode": "buffered"
+    },
+    {
+      "archive_bytes": 1123350,
+      "decode_budget_kib": 262144,
+      "decode_exit_codes": [
+        0
+      ],
+      "decode_peak_rss_kib": [
+        39276
+      ],
+      "decode_peak_rss_median_kib": 39276,
+      "decode_stderr": [],
+      "decode_wall_s": [
+        0.793
+      ],
+      "decode_within_budget": true,
+      "encode_budget_kib": 524288,
+      "encode_exit_codes": [
+        0
+      ],
+      "encode_peak_rss_kib": [
+        85948
+      ],
+      "encode_peak_rss_median_kib": 85948,
+      "encode_stderr": [],
+      "encode_wall_s": [
+        9.31
+      ],
+      "encode_within_budget": true,
+      "input_bytes": 4194304,
+      "input_mib": 4,
+      "mode": "stream"
+    },
+    {
+      "archive_bytes": 1123350,
+      "decode_budget_kib": 262144,
+      "decode_exit_codes": [
+        0
+      ],
+      "decode_peak_rss_kib": [
+        39492
+      ],
+      "decode_peak_rss_median_kib": 39492,
+      "decode_stderr": [],
+      "decode_wall_s": [
+        0.648
+      ],
+      "decode_within_budget": true,
+      "encode_budget_kib": 524288,
+      "encode_exit_codes": [
+        0
+      ],
+      "encode_peak_rss_kib": [
+        82960
+      ],
+      "encode_peak_rss_median_kib": 82960,
+      "encode_stderr": [],
+      "encode_wall_s": [
+        7.865
+      ],
+      "encode_within_budget": true,
+      "input_bytes": 4194304,
+      "input_mib": 4,
+      "mode": "buffered"
+    },
+    {
+      "archive_bytes": 4431368,
+      "decode_budget_kib": 262144,
+      "decode_exit_codes": [
+        0
+      ],
+      "decode_peak_rss_kib": [
+        72036
+      ],
+      "decode_peak_rss_median_kib": 72036,
+      "decode_stderr": [],
+      "decode_wall_s": [
+        0.86
+      ],
+      "decode_within_budget": true,
+      "encode_budget_kib": 524288,
+      "encode_exit_codes": [
+        0
+      ],
+      "encode_peak_rss_kib": [
+        121416
+      ],
+      "encode_peak_rss_median_kib": 121416,
+      "encode_stderr": [],
+      "encode_wall_s": [
+        41.997
+      ],
+      "encode_within_budget": true,
+      "input_bytes": 16777216,
+      "input_mib": 16,
+      "mode": "stream"
+    },
+    {
+      "archive_bytes": 4431368,
+      "decode_budget_kib": 262144,
+      "decode_exit_codes": [
+        0
+      ],
+      "decode_peak_rss_kib": [
+        71436
+      ],
+      "decode_peak_rss_median_kib": 71436,
+      "decode_stderr": [],
+      "decode_wall_s": [
+        0.859
+      ],
+      "decode_within_budget": true,
+      "encode_budget_kib": 524288,
+      "encode_exit_codes": [
+        0
+      ],
+      "encode_peak_rss_kib": [
+        160108
+      ],
+      "encode_peak_rss_median_kib": 160108,
+      "encode_stderr": [],
+      "encode_wall_s": [
+        28.275
+      ],
+      "encode_within_budget": true,
+      "input_bytes": 16777216,
+      "input_mib": 16,
+      "mode": "buffered"
+    },
+    {
+      "archive_bytes": 8862053,
+      "decode_budget_kib": 262144,
+      "decode_exit_codes": [
+        0
+      ],
+      "decode_peak_rss_kib": [
+        120084
+      ],
+      "decode_peak_rss_median_kib": 120084,
+      "decode_stderr": [],
+      "decode_wall_s": [
+        1.405
+      ],
+      "decode_within_budget": true,
+      "encode_budget_kib": 524288,
+      "encode_exit_codes": [
+        0
+      ],
+      "encode_peak_rss_kib": [
+        129096
+      ],
+      "encode_peak_rss_median_kib": 129096,
+      "encode_stderr": [],
+      "encode_wall_s": [
+        71.684
+      ],
+      "encode_within_budget": true,
+      "input_bytes": 33554432,
+      "input_mib": 32,
+      "mode": "stream"
+    },
+    {
+      "archive_bytes": 8862053,
+      "decode_budget_kib": 262144,
+      "decode_exit_codes": [
+        0
+      ],
+      "decode_peak_rss_kib": [
+        118916
+      ],
+      "decode_peak_rss_median_kib": 118916,
+      "decode_stderr": [],
+      "decode_wall_s": [
+        1.692
+      ],
+      "decode_within_budget": true,
+      "encode_budget_kib": 524288,
+      "encode_exit_codes": [
+        0
+      ],
+      "encode_peak_rss_kib": [
+        201588
+      ],
+      "encode_peak_rss_median_kib": 201588,
+      "encode_stderr": [],
+      "encode_wall_s": [
+        52.662
+      ],
+      "encode_within_budget": true,
+      "input_bytes": 33554432,
+      "input_mib": 32,
+      "mode": "buffered"
+    },
+    {
+      "archive_bytes": 17732047,
+      "decode_budget_kib": 262144,
+      "decode_exit_codes": [
+        0
+      ],
+      "decode_peak_rss_kib": [
+        193120
+      ],
+      "decode_peak_rss_median_kib": 193120,
+      "decode_stderr": [],
+      "decode_wall_s": [
+        1.409
+      ],
+      "decode_within_budget": true,
+      "encode_budget_kib": 524288,
+      "encode_exit_codes": [
+        0
+      ],
+      "encode_peak_rss_kib": [
+        129220
+      ],
+      "encode_peak_rss_median_kib": 129220,
+      "encode_stderr": [],
+      "encode_wall_s": [
+        158.944
+      ],
+      "encode_within_budget": true,
+      "input_bytes": 67108864,
+      "input_mib": 64,
+      "mode": "stream"
+    }
+  ],
+  "summary": {
+    "budgets_kib": {
+      "decode_document": 262144,
+      "encode_block": 524288
+    },
+    "by_mode": {
+      "buffered": {
+        "decode_peak_rss_kib_by_input_mib": {
+          "1": 28804,
+          "16": 71436,
+          "32": 118916,
+          "4": 39492
+        },
+        "decode_within_budget_all_sizes": true,
+        "encode_peak_rss_kib_by_input_mib": {
+          "1": 44532,
+          "16": 160108,
+          "32": 201588,
+          "4": 82960
+        },
+        "encode_plateau_kib": 201588,
+        "encode_plateau_mib": 196.9,
+        "encode_within_budget_all_sizes": true
+      },
+      "stream": {
+        "decode_peak_rss_kib_by_input_mib": {
+          "1": 28940,
+          "16": 72036,
+          "32": 120084,
+          "4": 39276,
+          "64": 193120
+        },
+        "decode_within_budget_all_sizes": true,
+        "encode_peak_rss_kib_by_input_mib": {
+          "1": 46064,
+          "16": 121416,
+          "32": 129096,
+          "4": 85948,
+          "64": 129220
+        },
+        "encode_plateau_kib": 129220,
+        "encode_plateau_mib": 126.2,
+        "encode_within_budget_all_sizes": true
+      }
+    },
+    "generated": "2026-10-28T14:15:38Z",
+    "headline": "Streaming pack holds a flat plateau (~127 MiB) from one full block upward; the buffered path grows with input size and is the reason the 512 MiB encode budget was at risk around a ~95 MiB document. Decode is still buffered (whole-archive residency) and remains the open memory item."
+  }
+}

@@ -453,3 +453,33 @@ What `7342b1a` actually landed (verified via `git show --stat`):
 **Follow-up (same session):** Session-37 commit `e472146` pushed to hosted `main` with the owner-supplied token (fast-forward `6c4ea47..e472146`, verified via ls-remote). Token used inline in one push command — it appeared in chat transcript and this container's shell history; bash history cleared, repo tree re-scanned (zero full-token strings; only pre-existing masked `ghp_TIsg…` references remain). Owner advised again to revoke/rotate.
 
 **Next action:** Session 38 — owner verdict on P1_EVIDENCE_DRAFT (accept → flip PHASES P1 + P1-T1 rows; or request Core-specific RSS run); corpus fetch in a network-capable env if available; GUI stretch only on owner request.
+
+---
+
+## Session 39 — 2026-10-28 (streaming encoder; first real Core-path RSS evidence; golden-vector defect)
+
+**Baseline verified first:** cloned `drsamonline/lexora` at `c0660c1` (hosted `main`), suite **165 passed, 1 skipped, 2 FAILED**. The failures were real, not environment noise — see the defect below. Doc drift found at baseline: `docs/PHASES.md` records P1 **Complete (owner-accepted 2026-10-17, Session 38)** and P2 started, while `docs/STATUS.md`, `docs/PROGRESS.md`, `docs/NEXT_SESSION.md` still said "awaiting owner verdict", and `docs/SESSION_LOG.md` had **no Session-38 entry** even though commit `c7cbac4` ("Expand corpus with 48 new Gutenberg texts and update phase documentation", 2026-10-17) updated PHASES/ROADMAP/TASK_BREAKDOWN/corpus.py. This session therefore logs itself as **39** and reconciles STATUS/PROGRESS/NEXT_SESSION to PHASES (the owner acceptance is treated as authoritative because two files record it; nothing is re-decided here).
+
+**Defect found and fixed (fresh-clone red suite).** `.gitignore` line `*.lxz` — there to keep locally produced archives out of the tree — also matched the normative container fixture `tests/vectors/lxz_format/golden_1byte.lxz`, so the fixture had never been committed. Any fresh clone failed `TestGoldenVectors::test_golden_single_byte_archive` and `test_golden_vector_readable_via_service` with `FileNotFoundError`. Regenerated the vector with the documented recipe (`pack(b"x", level=19, generator_version="lexora-golden")`); SHA-256 = `27877df54dcb024bb9cdc338f37539930c6dde534e7406219c402fb8c4b705e9`, identical to the digest pinned in `tests/vectors/lxz_format/README.md` — proof it is the original fixture, not a new pin. Added `!tests/vectors/**/*.lxz` + `!tests/vectors/**/*.lxdb` negations. Suite 165 → green.
+
+**Measurement (this session's load-bearing work).** Built `benchmarks/rss_probe.py`: each run is a fresh `python -m lexora.cli` child, peak RSS read from `os.wait4()` `ru_maxrss` (kernel high-water mark — note `/proc/self/status` exposes no `VmHWM` in this container, which is why the old sampling approach could not be reused). Input is deterministic seeded English-like prose (synthetic; reproducible; carries no corpus tier). Findings at zstd-19 / 8 MiB blocks:
+
+| Input | `pack` streaming | `pack --no-stream` | `unpack` |
+|---|---|---|---|
+| 1 MiB | 45.0 MiB | 43.5 MiB | 28.3 MiB |
+| 4 MiB | 83.9 MiB | 81.0 MiB | 38.4 MiB |
+| 16 MiB | 118.6 MiB | 156.4 MiB | 70.3 MiB |
+| 32 MiB | 126.1 MiB | 196.9 MiB | 117.3 MiB |
+| 64 MiB | 126.2 MiB | not run | 188.6 MiB |
+
+The buffered encoder's peak grew ~4.8 MiB per MiB of input (linear fit put the 512 MiB breach at a ~95 MiB document) — a genuine budget violation waiting for a large enough file, invisible at the multi-MB sizes the project had measured so far.
+
+**Fix landed.** `container.pack_stream(src, dst, ...)`: reads one block at a time, compresses, decode-verifies it (SPEC §8.1 gate preserved), writes the frame, records the index entry, backfills the 128-byte header at the end, and re-reads header/trailer/index from disk to self-check before returning. Output is byte-identical to `pack()` — enforced by tests across 8 sizes × 3 block sizes, plus the pinned golden vector, plus generator-version truncation parity. Header construction was factored into `_build_header()` so both writers share one source of truth. CLI `pack` now streams by default; `--no-stream` keeps the old path (and `--out -` still uses it, since streaming needs a seekable destination). Atomic write (temp + fsync + rename) preserved via `_write_atomic_stream()`, which also unlinks the temp file on any failure.
+
+**Not claimed:** decode streaming. `unpack` still holds whole-archive + whole-output residency (~2.9 MiB/MiB), so the 256 MiB decode budget is reached near an ~85 MiB archive. Recorded as P1-T8 (open) with the measured numbers. Also not claimed: any throughput statement — wall-clock was inconsistent across passes on this 2-CPU box (an early pass had streaming faster at 16 MiB, 16.8 s vs 37.5 s; the final pass had it slower, 42.0 s vs 28.3 s), so the evidence page states explicitly that memory, not speed, is what was established.
+
+**Owner decision flagged, not taken (licence contradiction).** The tree is now internally inconsistent about licensing: `LICENSE` is **PolyForm Noncommercial 1.0.0** ("Required Notice: Copyright 2026 Dr Sohil Momin") and the README badge says the same, but `pyproject.toml` still declares `license = "MIT"`, `README.md` §License still says "MIT © 2026", `docs/STATUS.md` still lists "MIT", and `docs/ADR/ADR-0006-license-mit.md` remains Accepted. A series of `licence: PolyForm Noncommercial 1.0.0 (…)` commits changed docs and the LICENSE file but not the package metadata or the ADR. Relicensing is the owner's call: recommended follow-up is a superseding ADR (ADR-0009) that revokes ADR-0006 and a sweep of `pyproject.toml` / README §License / STATUS row. Left untouched this session.
+
+**Gate:** `python3 -m pytest -q` → **201 passed, 1 skipped** (skip = GUI offscreen test; PySide6/libegl1 not installed in this container). `python3 scripts/linkcheck.py` → run before commit.
+
+**Push state:** the GitHub App credential available to this session is **read-only** for this repo (`git push` → 403 "Permission to drsamonline/lexora.git denied"; `gh api -X POST …/git/refs` → "Resource not accessible by integration"), even though the account's role on the repo is admin. Session-39 work is therefore committed locally and awaits either a write-scoped credential or an owner push.

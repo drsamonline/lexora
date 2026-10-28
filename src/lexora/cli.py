@@ -36,7 +36,7 @@ import tempfile
 from lexora import __version__
 from lexora.canonicalize import CanonicalizationError, canonicalize
 from lexora.container import ContainerError, read_index
-from lexora.container import pack as lxz_pack, unpack as lxz_unpack
+from lexora.container import pack as lxz_pack, pack_stream as lxz_pack_stream, unpack as lxz_unpack
 from lexora.zstd_core import CodecError, compress, decompress
 
 # LIM-01 ceiling for the pack CLI surface (docs/RESOURCE_LIMITS.md; mirrors
@@ -193,6 +193,38 @@ def _write_atomic(path: str, data: bytes) -> None:
         raise SystemExit(EXIT_FILE)
 
 
+def _write_atomic_stream(path: str, writer) -> None:
+    """temp file + fsync + rename, where `writer(fh)` streams bytes in.
+
+    Same recovery guarantee as _write_atomic() — a crash leaves either the old
+    artifact or the new one, never a hybrid — but without ever holding the
+    whole archive (or the whole input) in memory. Opened w+b because the
+    streamed writer backfills the header and re-reads it to self-check.
+    """
+    d = os.path.dirname(os.path.abspath(path))
+    fd, tmp = tempfile.mkstemp(dir=d, prefix=".lxz-tmp-")
+
+    def _discard() -> None:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+
+    try:
+        with os.fdopen(fd, "wb+") as fh:
+            writer(fh)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+    except OSError as exc:
+        _discard()
+        print(f"error: cannot write {path}: {exc}", file=sys.stderr)
+        raise SystemExit(EXIT_FILE)
+    except BaseException:
+        _discard()  # never leave a half-written .lxz-tmp-* behind
+        raise
+
+
 def cmd_pack(args) -> int:
     # --block-size bounds messaging (Session 26 polish sweep): the library
     # silently clamps block_size to LIM-01 (8 MiB); the CLI refuses up front
@@ -210,23 +242,58 @@ def cmd_pack(args) -> int:
             file=sys.stderr,
         )
         return 2
-    payload = _read(args.infile)
-    try:
-        archive = lxz_pack(payload, level=args.level, block_size=args.block_size)
-    except ContainerError as exc:
-        print(f"container refusal on pack: {exc}", file=sys.stderr)
-        return EXIT_CONTAINER
-    except CodecError as exc:
-        print(f"codec error on pack: {exc}", file=sys.stderr)
-        return EXIT_CODEC
-    if args.outfile == "-":
-        sys.stdout.buffer.write(archive)
+    # Default path is STREAMING: one block resident at a time, so peak RSS is
+    # flat in input size (PERFORMANCE_BUDGET "Encode block" row). --no-stream
+    # keeps the pre-streaming buffered path available for A/B evidence runs and
+    # for the case where the whole payload must be resident anyway.
+    # stdout can only take the buffered path (pack_stream needs a seekable dst).
+    streaming = not args.no_stream and args.outfile != "-"
+
+    if not streaming:
+        payload = _read(args.infile)
+        try:
+            archive = lxz_pack(payload, level=args.level, block_size=args.block_size)
+        except ContainerError as exc:
+            print(f"container refusal on pack: {exc}", file=sys.stderr)
+            return EXIT_CONTAINER
+        except CodecError as exc:
+            print(f"codec error on pack: {exc}", file=sys.stderr)
+            return EXIT_CODEC
+        if args.outfile == "-":
+            sys.stdout.buffer.write(archive)
+        else:
+            _write_atomic(args.outfile, archive)
+        info, _, _ = read_index(archive)
+        in_bytes, archive_bytes = len(payload), len(archive)
     else:
-        _write_atomic(args.outfile, archive)
-    info, _, _ = read_index(archive)
+        try:
+            src = open(args.infile, "rb")
+        except OSError as exc:
+            print(f"error: cannot read {args.infile}: {exc}", file=sys.stderr)
+            return EXIT_FILE
+        with src:
+            in_bytes = os.fstat(src.fileno()).st_size
+            captured: dict = {}
+
+            def _writer(fh) -> None:
+                captured["info"] = lxz_pack_stream(
+                    src, fh, level=args.level, block_size=args.block_size
+                )
+
+            try:
+                _write_atomic_stream(args.outfile, _writer)
+            except ContainerError as exc:
+                print(f"container refusal on pack: {exc}", file=sys.stderr)
+                return EXIT_CONTAINER
+            except CodecError as exc:
+                print(f"codec error on pack: {exc}", file=sys.stderr)
+                return EXIT_CODEC
+            info = captured["info"]
+        archive_bytes = os.path.getsize(args.outfile)
+
     print(
-        f"pack: in={len(payload)} blocks={len(info.blocks)} "
-        f"archive={len(archive)} ratio={(len(archive)/len(payload)) if payload else 1.0:.4f} "
+        f"pack: in={in_bytes} blocks={len(info.blocks)} "
+        f"archive={archive_bytes} ratio={(archive_bytes/in_bytes) if in_bytes else 1.0:.4f} "
         f"verified=yes (LXZ-{info.format_major}.{info.format_minor})",
         file=sys.stderr,
     )
@@ -312,6 +379,9 @@ def build_parser() -> argparse.ArgumentParser:
     pk.add_argument("--in", dest="infile", required=True)
     pk.add_argument("--out", dest="outfile", required=True, help="'-' for stdout")
     pk.add_argument("--level", type=int, default=19)
+    pk.add_argument("--no-stream", action="store_true",
+                    help="buffer the whole input in memory instead of streaming "
+                         "block-by-block (same output bytes, much higher peak RSS)")
     pk.add_argument("--block-size", type=int, default=8 * 1024 * 1024,
                     help="max uncompressed bytes per block, 1..8388608 "
                          "(LIM-01 ceiling; out-of-range -> exit 2)")

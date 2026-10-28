@@ -1,31 +1,27 @@
 # Next Session Resume Card
 
-**Last verified state:** 2026-10-17, Session 37 complete. **P1 closure evidence DRAFTED (`docs/P1_EVIDENCE_DRAFT.md`) — awaiting OWNER VERDICT: accept (flip PHASES P1 + TASK_BREAKDOWN P1-T1 to Landed) or request a Core-specific RSS run first.** Also caught false-report incident #3 (prior turn claimed S37/38 landed BENCHMARKS.md/corpus_holmes.py/R3 publication/commit `a2c988d` — none existed; baseline was still S36 `6c4ea47`). **GUI-M3 milestone CLOSED: G8-lite About view (fifth view `about`, pure `format_about_text()` — version/paths/defaults) + crash-log viewer (`crash.py:format_crash_records` newest-first w/ 2000-char traceback cap; "Crash log" button via `win._lexora_crash_log` seam into the G6 pane); suite 186 → 192 passed.** NOTE: this session caught a SECOND false completion report (claimed Sessions 34/35 landed batch queue/drag-drop/shortcuts as commits `276a8f5`/`241f80d` — neither existed; HEAD was still S33 `17a6711`) and deduped a botched-heredoc test stub in `test_gui_app_offscreen.py`. Prior: Session 33 (`17a6711`) M3 verification closure (fixed red suite from S32, picker seams + icon tests, 186). Sessions 27–32: GUI-M1 shell → M2 job runner → M2b panels → M2c settings/packaging/screenshots → M3a pickers/crash/icon. Environment: PySide6 6.12 installs in-container but fresh containers need `pip install pyside6` AND `apt-get install -y libegl1` (offscreen Qt aborts without it; ~673 MB wheel). Phase 1 posture unchanged: In progress pending two evidence items (editable-install note, peak-RSS-vs-budget owner verdict). GitHub Actions PAUSED (OQ-15); local gate = `python3 -m pytest -q` + `python3 scripts/linkcheck.py`. PUSH STATE (Session 36): UNBLOCKED — owner supplied a PAT in-chat; `HEAD:main` pushed directly, hosted `main` fast-forwarded `871a3ff..ac182cd` (full Sessions ~14–35 lineage now public). Token used via temp credential store, deleted after use, never committed. Owner advised to revoke/rotate the token (it appeared in chat transcript). Published benchmark revisions unchanged: R1 + R2; no ADR-0001 verdict.
-**Current phase:** CLI app scope complete; GUI milestones M1–M3 complete. Remaining per owner directive ("build whole app"): GUI stretch items optional; load-bearing work is P1 evidence backfill + corpus growth. English-only build scope.
+**Last verified state:** 2026-10-28, **Session 39 complete**. Baseline gate now **201 passed, 1 skipped** (`python3 -m pytest -q`) on a fresh clone — Session 39 fixed a defect that made a fresh clone RED (`*.lxz` in `.gitignore` was hiding the normative container golden vector; 2 tests failed with `FileNotFoundError`; vector regenerated to its pinned SHA-256 and re-tracked). **P1 is COMPLETE** (owner-accepted 2026-10-17 per PHASES.md/TASK_BREAKDOWN; STATUS/PROGRESS/NEXT_SESSION were drifted and are reconciled this session). Session 39 landed the **streaming encoder** (`container.pack_stream()` + CLI default, byte-identical output) and the **first Core-path peak-RSS measurements** (`benchmarks/rss_probe.py` → `benchmarks/results-rss-core.json`): encode plateau ≈126 MiB flat in input size vs a buffered path that would have breached the 512 MiB budget near a ~95 MiB document.
+
+**Current phase:** P1 complete; P2 (benchmark harness & first numbers) started. Load-bearing open items: **P1-T8 streaming `unpack`** (decode still buffered, ~2.9 MiB peak per MiB of input), and the P2 corpus track (OQ-8 ≥1 GiB, needs network egress — unverified).
+
 **Branch/commit:** working branch (verify with `git log --oneline -3`).
-**Working-tree state:** Clean after Session 34 commit.
+**Working-tree state:** Session-39 work committed locally; **push blocked** — the GitHub App credential available in-session is read-only (`git push` → 403, `gh api` ref creation → "Resource not accessible by integration") despite admin role on the repo. Needs a write-scoped credential or an owner push.
 
 ## Read first
-- [ ] docs/SESSION_LOG.md (Session 37 last; read BOTH incident notes — treat every prior completion claim as unverified until gates run in YOUR session)
-- [ ] docs/TASK_BREAKDOWN.md GUI milestones table (M1/M2/M2b/M2c/M3 all Landed)
-- [ ] docs/DESIGN_GUI.md §5 (stretch items: G8-full batch queue, OS file associations, tray notes)
-- [ ] benchmarks/results-r3.json + docs/PERFORMANCE_BUDGET.md (P1 evidence item #2 raw material)
-- [ ] docs/ADR/ADR-0008-gui-toolkit-architecture.md (binding GUI constraints — still applies to any stretch work)
+- [ ] `docs/SESSION_LOG.md` Session 39 — including the licence-contradiction note (owner decision pending) and the session-numbering drift note (no Session-38 log entry; S38 = commit `c7cbac4`)
+- [ ] `docs/P1_EVIDENCE_DRAFT.md` — item 2 now carries live Core-path numbers; still a DRAFT (no publication without owner sign-off)
+- [ ] `benchmarks/results-rss-core.json` (`summary` block) + `benchmarks/rss_probe.py` (how to re-measure)
+- [ ] `docs/PERFORMANCE_BUDGET.md` memory table — measured rows, decode scaling limit
+- [ ] `docs/CLI_REFERENCE.md` `lexora pack` — streaming default + `--no-stream`
 
 ## Tasks in order
-1. **Qt env setup check (only if touching GUI):** `QT_QPA_PLATFORM=offscreen python3 -c "import PySide6"` — on ImportError/libEGL error run `apt-get install -y libegl1` and `pip install pyside6`.
-2. **P1 evidence — OWNER VERDICT NEEDED (blocking closure):** present `docs/P1_EVIDENCE_DRAFT.md` to owner. If accepted: flip PHASES.md P1 → Complete, TASK_BREAKDOWN P1-T1 → Landed, adjust STATUS/PROGRESS posture lines. If owner wants stricter evidence: build a Core-path streaming RSS measurement (harness extension measuring `lexora pack` peak RSS vs the 512 MiB encode budget).
-3. **Corpus growth toward genuine R3 (English-only) — needs network-capable env:** container Gutenberg egress unverified this session (fetch was NOT attempted rather than faked). ≥1 GiB Tier-1 expansion via harness `corpus-fetch` → `corpus-commit` → `manifest` → `verify` → `audit-splits` → `run --revision 3 --reps 3`; owner review before publishing. Track OQ-8.
-4. **GUI stretch (only if owner asks):** G8-full batch queue (needs multi-job runner design — current `JobRunner` runs ONE job), drag-and-drop onto G1, keyboard shortcuts. Keep thin-client rule + offscreen coverage for anything built.
-5. **Push (when token available):** pushes allowed while Actions paused. GIT_ASKPASS pattern, never embed credentials.
-6. Owner review backlog: ADR-0007 amendments revocable; ADR-0008 accepted under delegation (supersedeable); OQ-9 semver; OQ-10 OCR tooling; ERROR_HANDLING severity/recovery sections Draft; no ADR-0001 verdict until corpus meets protocol scope.
+1. **Owner decision — licence contradiction (blocking nothing, but legally live):** `LICENSE` + README badge say **PolyForm Noncommercial 1.0.0**; `pyproject.toml` (`license = "MIT"`), README §License, `docs/STATUS.md` and accepted `ADR-0006` all still say **MIT**. Needs a superseding ADR (ADR-0009) + a metadata sweep, or a revert of the PolyForm commits. Do not decide unilaterally.
+2. **P1-T8 — streaming `unpack`.** Same shape as P1-T7: decode block-by-block to the destination, verify per block, keep `--block N` semantics and the "refuse unverified output" guarantee. Re-measure with `python benchmarks/rss_probe.py --mode stream --sizes 32,64` and extend the probe to report decode slope.
+3. **P2 — corpus growth / R3.** `benchmarks/harness.py corpus-fetch` requires Gutenberg egress; probe it first and, if blocked, record exactly which step fails (never fabricate a run).
+4. **Housekeeping:** `docs/STATUS.md` header line still carries a long pre-S39 trail — trim at the next reconciliation pass; `docs/index.md`/`docs/404.html` licence text should follow whatever the owner decides in task 1.
 
-## Acceptance criteria
-- [ ] `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK (exit 0) — re-run after ANY edit, including content-only edits.
-- [ ] `python3 -m pytest -q` → **192 passed** baseline (addopts neutralizes libtmux; do not remove unless the plugin is gone from images for good).
-- [ ] No GitHub Actions runs triggered without owner sign-off (OQ-15 pause stands).
-- [ ] GUI obeys ADR-0008: thin client (no CLI shelling — subprocess only inside TESTS), lazy Qt imports (AST-enforced test must stay green), core install stays Qt-free, every new widget path covered offscreen.
-- [ ] `lexora-gui --help`/`--version` keep working on bare headless boxes (regression tests exist — don't break them).
-- [ ] Any published number carries its corpus-tier label; STATUS/PROGRESS/SESSION_LOG/NEXT_SESSION/README/CHANGELOG agree; commit hashes real.
-- [ ] No ADR-0001 verdict until corpus meets BENCHMARK_PROTOCOL scope; no new *published* revision without a manifest change.
-- [ ] NEVER report completion without running both gates in the same session as the claim (S32 + phantom-S34/35 incidents).
+## Environment notes (this container)
+- `pip install "zstandard>=0.23,<0.26" pytest` then `PYTHONPATH=src python3 -m pytest -q` — no editable install needed for the gate.
+- GUI tests skip without PySide6 (+`libegl1` for offscreen Qt); the 1 skip in the gate is that.
+- This box is 2 vCPU / 2 GiB and noisy: zstd-19 packs at ~1–3 s/MiB with high variance. Peak-RSS numbers are stable; **wall-clock numbers from this box are not quotable**.
+- `/proc/self/status` here exposes no `VmHWM`; use `os.wait4()` `ru_maxrss` (the probe already does).

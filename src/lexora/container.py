@@ -164,19 +164,13 @@ def pack(data: bytes, *, level: int = 19,
     assert len(index) == INDEX_ENTRY_SIZE * len(entries)
 
     index_offset = BLOCK_START + len(blocks_region)
-    header = bytearray(BLOCK_START)
-    header[0:4] = MAGIC
-    struct.pack_into("<HH", header, 4, FORMAT_MAJOR, FORMAT_MINOR)
-    struct.pack_into("<Q", header, 8, 0)  # flags: v0 writer emits 0
-    header[16:32] = _pad(CODEC_ID_ZSTD, 16)
-    header[32:48] = _pad(CANONICALIZER_VERSION, 16)
-    struct.pack_into("<Q", header, 48, block_size)
-    struct.pack_into("<Q", header, 56, max_block_compressed)
-    struct.pack_into("<Q", header, 64, max_total_uncompressed)
-    struct.pack_into("<Q", header, 72, len(entries))
-    header[80:96] = _pad(gen, 16, truncate=True)
-    digest = hashlib.sha256(bytes(header[:CHECKSUM_REGION])).digest()
-    header[CHECKSUM_REGION:HEADER_SIZE] = digest
+    header = _build_header(
+        block_size=block_size,
+        max_block_compressed=max_block_compressed,
+        max_total_uncompressed=max_total_uncompressed,
+        block_count=len(entries),
+        gen=gen,
+    )
 
     trailer = struct.pack("<QQ", index_offset, len(index))
     trailer += hashlib.sha256(bytes(index)).digest()[:TRAILER_SIZE - 16]  # 24-byte prefix (see read_index note)
@@ -187,6 +181,155 @@ def pack(data: bytes, *, level: int = 19,
     if len(verified.blocks) != len(entries):
         raise ContainerError("E-INT-001", "self-verify index mismatch")
     return archive
+
+
+def _build_header(*, block_size: int, max_block_compressed: int,
+                  max_total_uncompressed: int, block_count: int, gen: str) -> bytes:
+    """Serialize the fixed 128-byte header (ADR-0007 layout, flags = 0)."""
+    header = bytearray(BLOCK_START)
+    header[0:4] = MAGIC
+    struct.pack_into("<HH", header, 4, FORMAT_MAJOR, FORMAT_MINOR)
+    struct.pack_into("<Q", header, 8, 0)  # flags: v0 writer emits 0
+    header[16:32] = _pad(CODEC_ID_ZSTD, 16)
+    header[32:48] = _pad(CANONICALIZER_VERSION, 16)
+    struct.pack_into("<Q", header, 48, block_size)
+    struct.pack_into("<Q", header, 56, max_block_compressed)
+    struct.pack_into("<Q", header, 64, max_total_uncompressed)
+    struct.pack_into("<Q", header, 72, block_count)
+    header[80:96] = _pad(gen, 16, truncate=True)
+    header[CHECKSUM_REGION:HEADER_SIZE] = hashlib.sha256(bytes(header[:CHECKSUM_REGION])).digest()
+    return bytes(header)
+
+
+def pack_stream(src, dst, *, level: int = 19,
+                block_size: int = DEFAULT_MAX_BLOCK_UNCOMPRESSED,
+                max_block_compressed: int = DEFAULT_MAX_BLOCK_COMPRESSED,
+                max_total_uncompressed: int = DEFAULT_MAX_TOTAL_UNCOMPRESSED,
+                generator_version: str | None = None) -> ArchiveInfo:
+    """Serialize `src` (binary readable) into `dst` (binary, seekable) with
+    memory bounded by ONE block instead of the whole input.
+
+    Why this exists: `pack()` needs the entire payload in memory, and slicing it
+    into blocks copies it a second time, so peak RSS grows with input size
+    (measured: ~4.6 MiB peak per MiB of input, i.e. the 512 MiB encode budget in
+    docs/PERFORMANCE_BUDGET.md was breached around a ~100 MiB document — see
+    benchmarks/results-rss-core.json). This path holds one block buffer plus one
+    compressed frame, so peak RSS is flat in input size.
+
+    Contract:
+      * Output is BYTE-IDENTICAL to `pack(src.read(), ...)` with the same
+        arguments (same block boundaries, same frames, same index) — the frozen
+        LXZ-0.1 layout is not touched, only how it is produced.
+      * Round-trip gate is preserved: every block is decoded and compared
+        before its frame is kept (SPEC §8.1), so a codec defect never yields a
+        "successful" archive.
+      * On limit violation the archive is abandoned: the caller is expected to
+        write through a temp file and rename (the CLI does), so no partial
+        artifact survives.
+      * `dst` must be seekable — the header carries the block count, which is
+        only known after the last block is written, so the header is backfilled.
+        Non-seekable destinations raise E-USAGE-003.
+    """
+    if block_size < 1:
+        raise ContainerError("E-USAGE-002", "block_size must be >= 1")
+    if not (hasattr(dst, "seek") and hasattr(dst, "tell")):
+        raise ContainerError("E-USAGE-003", "pack_stream() needs a seekable dst")
+
+    gen = generator_version or f"lexora-{__version__}"
+    dst.write(b"\x00" * HEADER_SIZE)  # placeholder; backfilled once the count is known
+
+    entries: list[BlockEntry] = []
+    offset = BLOCK_START
+    total = 0
+    emitted = 0
+
+    def emit(chunk: bytes) -> None:
+        nonlocal offset, emitted
+        frame = compress(chunk, level=level)
+        if len(frame) > max_block_compressed:
+            raise ContainerError(
+                "E-RES-002",
+                f"block compressed {len(frame)} > max_block_compressed {max_block_compressed}",
+            )
+        back = decompress(frame, expected_original_size=len(chunk))
+        if back != chunk:
+            raise CodecError("block round-trip mismatch (should be impossible)")
+        entries.append(BlockEntry(
+            offset=offset,
+            compressed_size=len(frame),
+            uncompressed_size=len(chunk),
+            sha256=hashlib.sha256(chunk).digest(),
+        ))
+        dst.write(frame)
+        offset += len(frame)
+        emitted += 1
+
+    while True:
+        chunk = src.read(block_size)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > max_total_uncompressed:
+            raise ContainerError(
+                "E-RES-003",
+                f"input exceeds max_total_uncompressed {max_total_uncompressed}",
+            )
+        emit(chunk)
+    if emitted == 0:  # empty input keeps pack()'s single empty block
+        emit(b"")
+
+    index = bytearray()
+    for e in entries:
+        index += struct.pack("<QQQ", e.offset, e.compressed_size, e.uncompressed_size)
+        index += e.sha256
+    assert len(index) == INDEX_ENTRY_SIZE * len(entries)
+
+    index_offset = BLOCK_START + (offset - BLOCK_START)
+    trailer = struct.pack("<QQ", index_offset, len(index))
+    trailer += hashlib.sha256(bytes(index)).digest()[:TRAILER_SIZE - 16]
+    dst.write(bytes(index))
+    dst.write(trailer)
+    end = dst.tell()  # true EOF, captured before the header backfill moves the cursor
+
+    header = _build_header(
+        block_size=block_size,
+        max_block_compressed=max_block_compressed,
+        max_total_uncompressed=max_total_uncompressed,
+        block_count=len(entries),
+        gen=gen,
+    )
+    dst.seek(0)
+    dst.write(header)
+    dst.flush()
+
+    # self-check on the bytes actually on disk: header, trailer and index must
+    # agree before we let the caller rename the temp file into place.
+    dst.seek(0)
+    written_header = dst.read(HEADER_SIZE)
+    if written_header != header:
+        raise ContainerError("E-INT-002", "streamed header did not persist")
+    dst.seek(end - TRAILER_SIZE)
+    written_trailer = dst.read(TRAILER_SIZE)
+    if written_trailer != trailer:
+        raise ContainerError("E-INT-003", "streamed trailer did not persist")
+    idx_off, idx_len = struct.unpack_from("<QQ", written_trailer, 0)
+    dst.seek(idx_off)
+    if dst.read(idx_len) != bytes(index):
+        raise ContainerError("E-INT-004", "streamed index did not persist")
+    dst.seek(end)
+
+    return ArchiveInfo(
+        format_major=FORMAT_MAJOR,
+        format_minor=FORMAT_MINOR,
+        flags=0,
+        codec_id=CODEC_ID_ZSTD,
+        canonicalizer_version=CANONICALIZER_VERSION,
+        max_block_uncompressed=block_size,
+        max_block_compressed=max_block_compressed,
+        max_total_uncompressed=max_total_uncompressed,
+        generator_version=gen[:15],
+        blocks=entries,
+    )
 
 
 def unpack_header(archive: bytes) -> ArchiveInfo:
