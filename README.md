@@ -10,7 +10,7 @@ Canonicalize text conservatively, then compress it with guaranteed byte-exact re
 <a href="https://github.com/drsamonline/lexora/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/drsamonline/lexora/actions/workflows/ci.yml/badge.svg"></a>
 <img alt="Tests: 192 passed (local)" src="https://img.shields.io/badge/tests-192%20passed%20(local)-informational">
 <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-blue">
-<a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green"></a>
+<a href="LICENSE"><img alt="License: PolyForm Noncommercial 1.0.0" src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-2e7d32"></a>
 <img alt="Version 0.0.1.dev1" src="https://img.shields.io/badge/version-0.0.1.dev1-orange">
 </p>
 
