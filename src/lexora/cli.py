@@ -12,6 +12,7 @@ Subcommands:
                   ERROR_HANDLING recovery semantics)
   lexora unpack  --in ARCHIVE.lxz --out CANONICAL [--block N] [--meta]
   lexora verify  --in ARCHIVE.lxz [--block N] [--json]
+  lexora inspect --in ARCHIVE.lxz [--verify] [--json] [--blocks N]
   lexora batch   --in DIR --out-dir DIR [--op canon|pack] [--pattern G] [--report F]
                  (writes ONLY verified bytes; refuses with a specific error
                   and zero output on integrity/limit/format failure)
@@ -470,6 +471,34 @@ def cmd_unpack(args) -> int:
     return EXIT_OK
 
 
+def cmd_inspect(args) -> int:
+    """Human-readable summary of one archive; `--verify` adds a full integrity pass.
+
+    Distinct from `unpack --meta` (JSON for scripts) and from `verify` (verdict
+    only): this prints what a person wants to see — what the archive is, how much
+    of it is payload, what the container costs, and whether its accounting closes.
+    """
+    from lexora.inspect import format_report, summarize
+
+    try:
+        src = open(args.infile, "rb")
+    except OSError as exc:
+        print(f"error: cannot read {args.infile}: {exc}", file=sys.stderr)
+        raise SystemExit(EXIT_FILE)
+    with src:
+        try:
+            summary = summarize(src, verify=args.verify)
+        except ContainerError as exc:
+            print(f"container refusal: {exc}", file=sys.stderr)
+            return EXIT_CONTAINER
+    if args.json:
+        print(json.dumps(summary, indent=2, sort_keys=True))
+    else:
+        print(format_report(summary, max_blocks=args.blocks))
+    ok = summary["accounting"]["ok"] and (summary["verified"] is not False)
+    return EXIT_OK if ok else EXIT_CONTAINER
+
+
 def cmd_verify(args) -> int:
     """Audit an archive without writing any payload: structure, then per-block
     integrity. Streaming, so an audit costs one pass and one block of memory.
@@ -709,6 +738,15 @@ def build_parser() -> argparse.ArgumentParser:
     vf.add_argument("--json", action="store_true",
                     help="print the full per-block report as JSON to stdout")
     vf.set_defaults(func=cmd_verify)
+
+    ins = sub.add_parser("inspect", help="print a readable summary of one archive")
+    ins.add_argument("--in", dest="infile", required=True)
+    ins.add_argument("--verify", action="store_true",
+                     help="also decode every block and check its SHA-256 (costs a full read)")
+    ins.add_argument("--json", action="store_true", help="machine-readable summary instead of text")
+    ins.add_argument("--blocks", type=int, default=20,
+                     help="how many block rows to print (default 20; 0 hides the table)")
+    ins.set_defaults(func=cmd_inspect)
 
     bt = sub.add_parser("batch", help="process many files in one invocation (canon or pack)")
     bt.add_argument("--in", dest="infile", required=True,

@@ -685,3 +685,19 @@ The price of the current default, stated plainly: **19 → 3 costs 26.7 % more b
 **Gate:** `python3 -m pytest -q` → **402 passed, 1 skipped** (12 new in `tests/test_batch_cli.py`); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK. End-to-end on a real tree: canon batch → pack batch → every produced archive verified with the Session-47 `verify` command.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–48 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 49 — 2026-10-29 (`lexora inspect`: the readable summary, and the accounting identity)
+
+**Why this stage.** `unpack --meta` emits JSON for scripts and `verify` emits a verdict, but nothing printed what a *person* wants from one archive: what it is, how much of it is payload, what the container costs, and whether its own accounting closes. That is also exactly what the GUI inspector (G4) will render, so the formatting belongs in a Qt-free module rather than in `cli.py` — the same split the GUI service layer already uses.
+
+**What landed.** `src/lexora/inspect.py` with `summarize(handle, verify=False)` and `format_report(summary, max_blocks=20)`, plus `lexora inspect --in ARCHIVE [--verify] [--json] [--blocks N]` as the eighth subcommand.
+
+**The line that earns its place** is the accounting check. `.lxz` v0 makes an exact promise — `header + Σ frames + index + trailer == file length` — which is REQ-CMP-004 ("nothing is free") instantiated for this container, and it can be verified from the index without decoding a single byte. The report prints `OK` or `MISMATCH` and exits 7 on a mismatch, so a file that is not what its own index claims cannot pass quietly. On the smoke archive: `accounting: OK — 474 accounted vs 474 actual`, overhead `336 bytes (header 128 + index 168 [56/block] + trailer 40)`.
+
+**A small honesty decision inside the report:** without `--verify` the integrity line reads "not checked (pass --verify to decode and hash every block)" rather than a bare "OK". Structure and payload integrity are different questions, and a summary that blurs them would be the exact kind of false reassurance this project keeps catching elsewhere.
+
+**Gate:** `python3 -m pytest -q` → **416 passed, 1 skipped** (14 new in `tests/test_inspect_cli.py`); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–49 are delivered as one patch on top of `19cc1a9`.

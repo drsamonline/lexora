@@ -19,7 +19,7 @@ Version string: `lexora --version` → `lexora 0.0.1.dev1` (prototype; no stable
 
 ## Scope honesty
 
-Seven subcommands exist: the three Phase-1 baseline flows (canonicalize + plain zstd frames), `pack`/`unpack` for the `.lxz` v0 container (unblocked by ADR-0007 acceptance, Session 24, under standing owner delegation), `verify` (Session 47) for auditing an archive without producing payload bytes, and `batch` (Session 48) for processing many files in one invocation. The container is **experimental** (major 0): byte layout frozen per ADR-0007 but pre-release. Any command listed here exists and is covered by tests (`tests/test_cli.py`, `tests/test_container_lxz.py`).
+Eight subcommands exist: the three Phase-1 baseline flows (canonicalize + plain zstd frames), `pack`/`unpack` for the `.lxz` v0 container (unblocked by ADR-0007 acceptance, Session 24, under standing owner delegation), `verify` (Session 47) for auditing an archive without producing payload bytes, `batch` (Session 48) for processing many files in one invocation, and `inspect` (Session 49) for a readable summary of one archive. The container is **experimental** (major 0): byte layout frozen per ADR-0007 but pre-release. Any command listed here exists and is covered by tests (`tests/test_cli.py`, `tests/test_container_lxz.py`).
 
 ## Subcommands
 
@@ -173,6 +173,37 @@ everything worked — which is a code this CLI did not previously use. With
 script that wants fail-fast semantics gets exactly what a single-file invocation
 would give it. A failed file never leaves a half-written artifact: the partial
 output is deleted before the failure is recorded.
+
+### `lexora inspect` — a readable summary of one archive
+
+Answers "what is this file, and how much of it is payload?" for a person rather
+than a script. It prints the format and versions, payload vs archive bytes, the
+container's own overhead broken down, a **cost-accounting check**, and a block
+table — optionally with a full integrity pass.
+
+```text
+lexora inspect --in ARCHIVE.lxz [--verify] [--json] [--blocks N]
+```
+
+| Flag | Required | Default | Meaning |
+|---|---|---|---|
+| `--in PATH` | yes | — | archive to summarise |
+| `--verify` | no | off | also decode every block and check its SHA-256 (a full read) |
+| `--json` | no | off | machine-readable summary instead of text |
+| `--blocks N` | no | 20 | block rows to print; `0` hides the table |
+
+The accounting line is the point. `.lxz` v0 promises an exact identity —
+`header + Σ frames + index + trailer == file length` — which is REQ-CMP-004
+("nothing is free") instantiated for this container, and it is checkable from the
+index without decoding a byte. `OK` means the promise holds; `MISMATCH` means the
+file is not what its own index claims, and the exit code is 7.
+
+Without `--verify` the integrity line says **"not checked"** rather than implying
+a pass — structure and payload integrity are different questions.
+
+Library equivalent: `lexora.inspect.summarize(handle, verify=False)` and
+`format_report(summary)` — Qt-free, so the GUI inspector (G4) can render the same
+data instead of re-deriving it.
 
 ## Exit codes
 
