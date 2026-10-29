@@ -2,7 +2,7 @@
 
 > **Status:** Active (Batches A–E — governance, architecture, engineering, security/operations, GitHub & release polish)
 > **Owner:** Unassigned
-> **Last verified:** 2026-10-17 (reconciled with Session 37+ state: CLI app + `.lxz` v0 container landed, GUI milestones M1–M3 landed experimentally, benchmark revisions R1+R2 published, PolyForm Noncommercial license per ADR-0006)
+> **Last verified:** 2026-10-17 (reconciled with Session 37+ state: CLI app + `.lxz` v0 container landed, GUI milestones M1–M3 landed experimentally, benchmark revisions R1+R2 published, PolyForm Noncommercial 1.0.0 license per ADR-0009, superseding ADR-0006's MIT)
 
 LEXORA = **L**ayered **EX**act-text **O**ptimized... see [PROJECT_CHARTER.md](PROJECT_CHARTER.md) for the authoritative definition and full naming. Core idea: clean text conservatively → canonical UTF-8 bytes → compress with byte-exact recovery.
 
@@ -76,7 +76,7 @@ The Phase-1 CLI exists and is tested (`canon`, `zround`, `pipe`, `pack`, `unpack
 ## Decisions & history
 
 - [DECISIONS.md](DECISIONS.md) — index of ADRs and open decisions
-- [ADR/](ADR/) — decision records: [ADR-0001 gate scope](ADR/ADR-0001-gate-scope.md) · [ADR-0002 Brotli role](ADR/ADR-0002-brotli-role.md) · [ADR-0003 PPMd role](ADR/ADR-0003-ppmd-role.md) · [ADR-0004 cleaning metric](ADR/ADR-0004-cleaning-error-metric.md) · [ADR-0005 Python version](ADR/ADR-0005-python-version.md) · [ADR-0006 PolyForm Noncommercial license](ADR/ADR-0006-license-mit.md) · [ADR-0007 `.lxz` v0 container freeze](ADR/ADR-0007-container-v0-freeze.md) · [ADR-0008 GUI toolkit/architecture](ADR/ADR-0008-gui-toolkit-architecture.md) — all **Accepted** (2026-10-15…17, owner delegation; see DECISIONS.md note); [template](templates/ADR_TEMPLATE.md)
+- [ADR/](ADR/) — decision records: [ADR-0001 gate scope](ADR/ADR-0001-gate-scope.md) · [ADR-0002 Brotli role](ADR/ADR-0002-brotli-role.md) · [ADR-0003 PPMd role](ADR/ADR-0003-ppmd-role.md) · [ADR-0004 cleaning metric](ADR/ADR-0004-cleaning-error-metric.md) · [ADR-0005 Python version](ADR/ADR-0005-python-version.md) · [ADR-0006 license = MIT (superseded)](ADR/ADR-0006-license-mit.md) · [ADR-0007 `.lxz` v0 container freeze](ADR/ADR-0007-container-v0-freeze.md) · [ADR-0008 GUI toolkit/architecture](ADR/ADR-0008-gui-toolkit-architecture.md) · [ADR-0009 PolyForm Noncommercial license](ADR/ADR-0009-license-polyform-noncommercial.md) — all **Accepted** (2026-10-15…29, owner delegation / owner decision; see DECISIONS.md note); [template](templates/ADR_TEMPLATE.md)
 - [../CHANGELOG.md](../CHANGELOG.md) — change history
 - [templates/](templates/) — reusable document templates ([session note](templates/SESSION_NOTE_TEMPLATE.md), [ADR](templates/ADR_TEMPLATE.md))
 

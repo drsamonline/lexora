@@ -3,7 +3,7 @@
 > **Status:** **Accepted** (2026-10-17, Session 26) under the project owner's standing autonomous-decision delegation ("DECIDE UR SELF", 2026-10-16), consistent with ADR-0001…0007. Revocable/amendable by the owner at any time via a superseding ADR per policy.
 > **Date:** 2026-10-17
 > **Deciders:** Documentation architect, under standing owner delegation (not independent owner review)
-> **Related:** [DESIGN_GUI.md](../DESIGN_GUI.md) (plan of record) · [CLI_REFERENCE.md](../CLI_REFERENCE.md) · [RESOURCE_LIMITS.md](../RESOURCE_LIMITS.md) · OQ-12 / OQ-13 / OQ-14 · [ADR-0006](ADR-0006-license-mit.md) (MIT) · [ADR-0007](ADR-0007-container-v0-freeze.md)
+> **Related:** [DESIGN_GUI.md](../DESIGN_GUI.md) (plan of record) · [CLI_REFERENCE.md](../CLI_REFERENCE.md) · [RESOURCE_LIMITS.md](../RESOURCE_LIMITS.md) · OQ-12 / OQ-13 / OQ-14 · [ADR-0009](ADR-0009-license-polyform-noncommercial.md) (PolyForm Noncommercial 1.0.0; supersedes ADR-0006's MIT) · [ADR-0007](ADR-0007-container-v0-freeze.md)
 
 ## Context / Problem
 
@@ -18,9 +18,9 @@ Constraints in force:
 ## Options considered
 
 ### Toolkit (OQ-12)
-- **A. PySide6 (LGPL v3 + exception).** Native widgets, mature QThread/worker patterns, strong Unicode/text handling, first-class offscreen testing (`QT_QPA_PLATFORM=offscreen`, pytest-qt). LGPL is compatible with MIT distribution (dynamic linking, no source-taint). **Chosen.**
+- **A. PySide6 (LGPL v3 + exception).** Native widgets, mature QThread/worker patterns, strong Unicode/text handling, first-class offscreen testing (`QT_QPA_PLATFORM=offscreen`, pytest-qt). LGPL permits distribution under other terms while preserving relink rights (dynamic linking, no source-taint). **Chosen.** — the LGPL-vs-PolyForm combination is flagged for a dependency-licence re-read in ADR-0009 Consequences; this ADR's toolkit decision itself is unaffected.
 - **B. Tkinter (stdlib).** Zero dependencies, but weak table/tree views (G4 inspector needs columns + sortable rows), poor high-DPI text rendering, no mainstream worker/cancel idioms, ttk theming dead-end for a productivity app. Kept only as documented fallback if the Qt dependency budget is ever rejected.
-- **C. PyQt6.** Same tech as A but GPL/commercial dual licensing adds friction against the MIT project posture (mirrors ADR-0006 reasoning). Rejected.
+- **C. PyQt6.** Same tech as A but GPL/commercial dual licensing adds friction against the project's noncommercial licence posture (mirrors ADR-0009 reasoning). Rejected.
 - **D. Electron/web stack.** Hundreds of MB of runtime against RESOURCE_LIMITS ethos for a local file tool. Rejected.
 
 ### Packaging (OQ-13)

@@ -5,6 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
+### Changed
+- 2026-10-29 — Session 40 (**licence reconciled to PolyForm Noncommercial 1.0.0**; owner decision "polyform" after S39 recorded the contradiction):
+  - **New [ADR-0009](docs/ADR/ADR-0009-license-polyform-noncommercial.md)** — PolyForm Noncommercial 1.0.0 is the project licence, superseding [ADR-0006](docs/ADR/ADR-0006-license-mit.md)'s MIT. `LICENSE` at repo root is normative, including its `Required Notice:` line, which must travel with every distributed artifact (RELEASE_PROCESS R3).
+  - **Metadata sweep:** `pyproject.toml` `license = "MIT"` → `"PolyForm-Noncommercial-1.0.0"` (SPDX short id; the licence is source-available and `isOsiApproved = false`, not open source); README badge footer + §License rewritten with the actual permissions (noncommercial use free, commercial use needs a separate licence); `docs/index.html` JSON-LD `license` field, licence badge and footer link; `docs/404.html` footer; `docs/index.md`; `docs/STATUS.md` licence row; `docs/PROGRESS.md` OQ-5; `docs/DECISIONS.md` (OQ-5 + ADR table); `docs/RELEASE_PROCESS.md` R3; `docs/ADR/README.md` index; cross-references in `docs/ADR/ADR-0008` and `docs/DESIGN_GUI.md`.
+  - **ADR-0006 marked Superseded** (body unedited per append-only policy; filename retained so existing links resolve).
+  - **Open review items recorded, not silently closed:** PySide6's LGPL-plus-PolyForm combination needs a dependency-licence re-read; PyMuPDF (AGPL) remains a non-dependency requiring its own ADR before adoption; a line about contribution licensing belongs in CONTRIBUTING.md if outside patches are taken.
+  - No code touched; suite unchanged.
+
 ### Added
 - 2026-10-28 — Session 39 (streaming encoder + real Core-path RSS evidence; golden-vector defect fixed):
   - **Defect fixed — the `.lxz` golden vector was never committed.** `.gitignore`'s `*.lxz` (meant for locally produced archives) also matched `tests/vectors/lxz_format/golden_1byte.lxz`, so a fresh clone failed `test_container_lxz::TestGoldenVectors` and `test_gui_service::test_golden_vector_readable_via_service` (2 failed, 163 passed). The vector was regenerated with its documented recipe and its SHA-256 matches the digest pinned in `tests/vectors/lxz_format/README.md` (`27877df5…b705e9`) byte for byte, so it is the original fixture, not a re-pin; a negation now keeps `tests/vectors/**` tracked while test output stays ignored.

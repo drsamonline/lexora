@@ -22,8 +22,9 @@ Use [ADR-0001-template.md](ADR-0001-template.md) as the starting point (it doubl
 | [ADR-0003](ADR-0003-ppmd-role.md) | PPMd role | **Accepted** (delegated) | 2026-10-15 |
 | [ADR-0004](ADR-0004-cleaning-error-metric.md) | Cleaning error metric | **Accepted** (delegated) | 2026-10-15 |
 | [ADR-0005](ADR-0005-python-version.md) | Python version range | **Accepted** (delegated) | 2026-10-15 |
-| [ADR-0006](ADR-0006-license-mit.md) | License = MIT | **Accepted** (delegated) | 2026-10-15 |
+| [ADR-0006](ADR-0006-license-mit.md) | License = MIT | **Superseded** by ADR-0009 | 2026-10-15 |
 | [ADR-0007](ADR-0007-container-v0-freeze.md) | `.lxz` v0 layout freeze | **Accepted** w/ recorded amendments (delegated) | 2026-10-16 |
 | [ADR-0008](ADR-0008-gui-toolkit-architecture.md) | GUI toolkit, packaging & architecture | **Accepted** (delegated) | 2026-10-17 |
+| [ADR-0009](ADR-0009-license-polyform-noncommercial.md) | License = PolyForm Noncommercial 1.0.0 (supersedes ADR-0006) | **Accepted** (owner decision) | 2026-10-29 |
 
 Template location note: the canonical template now lives at [../templates/ADR_TEMPLATE.md](../templates/ADR_TEMPLATE.md); `ADR-0001-template.md` remains for historical continuity only.

@@ -1,6 +1,6 @@
 # ADR-0006: Project license — MIT
 
-> **Status:** Accepted 2026-10-15 under standing owner delegation (resolves OQ-5). Basis: explicit owner instruction "oq5 … start working on them" — the only candidate decision path left after presenting options was to adopt the recommendation and record it honestly as delegated, revocable. Not an independent legal review; the owner may supersede at any time.
+> **Status:** **SUPERSEDED 2026-10-29 by [ADR-0009](ADR-0009-license-polyform-noncommercial.md)** — the project licence is now PolyForm Noncommercial 1.0.0 (owner decision). Kept unedited below per the append-only policy; the filename is retained so existing links keep resolving. Originally accepted 2026-10-15 under standing owner delegation (resolves OQ-5). Basis: explicit owner instruction "oq5 … start working on them" — the only candidate decision path left after presenting options was to adopt the recommendation and record it honestly as delegated, revocable. Not an independent legal review; the owner may supersede at any time.
 > **Date:** 2026-10-15
 > **Deciders:** Documentation architect (delegated); owner Dr. Sohil Momin accountable
 > **Related:** [DECISIONS.md](../DECISIONS.md) OQ-5 · [RELEASE_PROCESS.md](../RELEASE_PROCESS.md) R3 · `LICENSE` (repo root) · `pyproject.toml`

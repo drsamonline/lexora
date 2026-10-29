@@ -41,7 +41,7 @@ is a later-phase concern, but the design must not preclude it (Unicode-first wid
 
 | Layer | Proposal | Rationale / alternatives |
 |---|---|---|
-| Toolkit | **PySide6 (LGPL)** — ✅ decided, [ADR-0008](ADR/ADR-0008-gui-toolkit-architecture.md) Accepted (S26) | Native feel, mature threading, good Unicode/text handling. Tkinter (stdlib, zero deps) is fallback if dependency budget matters; PyQt6 rejected (GPL/commercial licensing friction vs MIT project, cf. ADR-0006 reasoning). Electron/web rejected (size, memory vs RESOURCE_LIMITS ethos). |
+| Toolkit | **PySide6 (LGPL)** — ✅ decided, [ADR-0008](ADR/ADR-0008-gui-toolkit-architecture.md) Accepted (S26) | Native feel, mature threading, good Unicode/text handling. Tkinter (stdlib, zero deps) is fallback if dependency budget matters; PyQt6 rejected (GPL/commercial licensing friction vs the project's noncommercial licence posture, cf. ADR-0009 reasoning). Electron/web rejected (size, memory vs RESOURCE_LIMITS ethos). |
 | Packaging | `pyproject.toml` optional extra `[gui]` → PyPI wheel unchanged for CLI users; later `pyinstaller` build recipe in BUILD_GUIDE | Keeps core install dependency-free of Qt. |
 | Theming/i18n | Qt Designer `.ui` files or programmatic widgets; all strings through `tr()` from day 1 | Even though Phase 1 UI copy is English-only, this unblocks Indic localization later without rework. |
 

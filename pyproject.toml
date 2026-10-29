@@ -7,8 +7,10 @@ name = "lexora"
 version = "0.0.1.dev1"
 description = "LEXORA prototype: canonicalization + Zstd core baseline (Phase 1). No stable API."
 readme = "README.md"
-# MIT per ADR-0006 (OQ-5 resolved by owner instruction 2026-10-15; revocable)
-license = "MIT"
+# PolyForm Noncommercial 1.0.0 per ADR-0009 (2026-10-29, owner decision),
+# superseding ADR-0006's MIT. SPDX short identifier per the SPDX licence list;
+# the licence is source-available, NOT OSI-approved open source.
+license = "PolyForm-Noncommercial-1.0.0"
 license-files = ["LICENSE"]
 # Requires-python set to EXACTLY what has been executed in development (ADR-0005).
 # Container verified: Python 3.12.10. Do not widen without test evidence.

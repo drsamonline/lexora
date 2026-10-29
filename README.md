@@ -24,7 +24,7 @@ Canonicalize text conservatively, then compress it with guaranteed byte-exact re
 <a href="https://drsamonline.github.io/">All projects</a>
 </p>
 
-<p><sub>Phase 1 prototype — no releases and no stable API yet; install from a source checkout. MIT © 2026 Dr. Sohil Momin.</sub></p>
+<p><sub>Phase 1 prototype — no releases and no stable API yet; install from a source checkout. PolyForm Noncommercial 1.0.0 © 2026 Dr. Sohil Momin.</sub></p>
 
 </div>
 
@@ -153,7 +153,9 @@ Details in `docs/ROADMAP.md` (Batch C).
 
 ## License
 
-MIT © 2026 Dr. Sohil Momin — see [LICENSE](LICENSE). Chosen via owner instruction on 2026-10-15 (resolves OQ-5; recorded as [ADR-0006](docs/ADR/ADR-0006-license-mit.md), revocable by the owner like prior delegated ADRs).
+**PolyForm Noncommercial 1.0.0** © 2026 Dr. Sohil Momin — see [LICENSE](LICENSE), which is normative and includes the `Required Notice:` line that must travel with every copy.
+
+This is a **source-available, noncommercial** licence, not an OSI-approved open-source licence: you may read, run, change and share the software for any noncommercial purpose (personal use, research, study, charities, educational institutions, public research and government bodies), but commercial use needs a separate licence from the owner. Chosen by the owner on 2026-10-29 ([ADR-0009](docs/ADR/ADR-0009-license-polyform-noncommercial.md)), superseding the earlier MIT decision ([ADR-0006](docs/ADR/ADR-0006-license-mit.md), now superseded). The SPDX identifier declared in `pyproject.toml` is `PolyForm-Noncommercial-1.0.0`.
 
 ## Project owner
 

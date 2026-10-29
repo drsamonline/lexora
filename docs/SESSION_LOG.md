@@ -483,3 +483,23 @@ The buffered encoder's peak grew ~4.8 MiB per MiB of input (linear fit put the 5
 **Gate:** `python3 -m pytest -q` → **201 passed, 1 skipped** (skip = GUI offscreen test; PySide6/libegl1 not installed in this container). `python3 scripts/linkcheck.py` → run before commit.
 
 **Push state:** the GitHub App credential available to this session is **read-only** for this repo (`git push` → 403 "Permission to drsamonline/lexora.git denied"; `gh api -X POST …/git/refs` → "Resource not accessible by integration"), even though the account's role on the repo is admin. Session-39 work is therefore committed locally and awaits either a write-scoped credential or an owner push.
+
+---
+
+## Session 40 — 2026-10-29 (licence reconciled: PolyForm Noncommercial 1.0.0)
+
+**Trigger:** Session 39 ended by flagging a live contradiction rather than resolving it — `LICENSE` and the README badge carried PolyForm Noncommercial 1.0.0 while `pyproject.toml` (`license = "MIT"`), README §License, `docs/STATUS.md` and Accepted ADR-0006 all still said MIT. Owner replied "polyform": PolyForm Noncommercial 1.0.0 is the licence of record.
+
+**Decision recorded as [ADR-0009](ADR/ADR-0009-license-polyform-noncommercial.md)**, superseding ADR-0006. Options considered were A (PolyForm Noncommercial — chosen), B (revert to MIT), C (PolyForm Small Business), D (dual licensing, a business layer on A rather than a licence text). ADR-0006 is marked **Superseded** with its body untouched per the append-only policy; its filename `ADR-0006-license-mit.md` is deliberately retained so existing links keep resolving, and the ADR index shows both the supersession and the new record.
+
+**Sweep (the actual work — a licence is only settled when every reader sees the same terms):**
+- `pyproject.toml`: `license = "MIT"` → `"PolyForm-Noncommercial-1.0.0"` — the SPDX short identifier, verified against the SPDX licence list (short id `PolyForm-Noncommercial-1.0.0`, full name "PolyForm Noncommercial License 1.0.0", released 2019-07-09, `isOsiApproved = false`).
+- `README.md`: footer line and the §License section rewritten — it now states plainly that this is source-available and noncommercial, lists what noncommercial covers (personal use, research, study, charities, educational institutions, public research, government bodies), says commercial use needs a separate licence, and links both ADR-0009 and the superseded ADR-0006.
+- `docs/index.html`: JSON-LD `"license"` moved from `opensource.org/licenses/MIT` to the PolyForm URL, licence badge re-pointed, footer link relabelled. `docs/404.html`: footer. `docs/index.md`: header note + ADR list entry.
+- `docs/STATUS.md` licence row, `docs/PROGRESS.md` OQ-5, `docs/DECISIONS.md` (OQ-5 row + ADR table), `docs/RELEASE_PROCESS.md` R3, `docs/ADR/README.md`, and the licence cross-references inside `docs/ADR/ADR-0008` and `docs/DESIGN_GUI.md`.
+
+**Honest consequences recorded in the ADR rather than glossed:** the licence is **not OSI-approved open source** and every commercial permission MIT gave is gone for future distributions (copies already out under MIT stay MIT for their recipients); the `Required Notice:` line makes `LICENSE` a mandatory artifact in every release (R3); **PySide6's LGPL-plus-PolyForm combination is flagged for a dependency-licence re-read** (dynamic linking preserves relink rights, but the combination has not been reviewed); **PyMuPDF's AGPL flag from ADR-0006 stands unchanged** — PolyForm does not satisfy AGPL copyleft either, and it remains a non-dependency requiring its own ADR; if outside patches are ever taken, `CONTRIBUTING.md` should state that contributions land under the project licence. ADR-0009 repeats ADR-0006's caveat that none of this is a legal review — the owner is accountable.
+
+**Verification run this session:** `pip install -e .` succeeds and the built metadata reports `License-Expression: PolyForm-Noncommercial-1.0.0`; a tree-wide grep for MIT finds no licence-position reference outside ADR-0006's historical body, ADR-0009 and the changelog/session-log history; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK; `python3 -m pytest -q` → 201 passed, 1 skipped (unchanged — no code touched).
+
+**Push state:** unchanged from Session 39 — the GitHub App credential available in-session is read-only, so this session's work is delivered as a patch for the owner to apply and push.
