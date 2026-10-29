@@ -183,11 +183,90 @@ def _fetch_one(pg_id: int, timeout: float = 60.0) -> bytes:
         return resp.read()
 
 
+GUTENBERG_CATALOG_URL = "https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv"
+CATALOG_CACHE_DIR = REPO_ROOT / "corpus" / "_catalog"  # under the gitignored corpus/ tree
+
+
+def fetch_catalog(cache_dir: Path | None = None, *, timeout: float = 240.0) -> dict:
+    """Download (or reuse) Project Gutenberg's official catalog CSV.
+
+    The catalog is what makes bulk selection reproducible: same catalog digest
+    + same filter ⇒ same id list, and the digest is recorded in the snapshot
+    sidecar so a later run can tell whether the catalog moved under it.
+    Returns {"path", "sha256", "bytes", "url", "reused", "downloaded_utc"}.
+    """
+    cache_dir = Path(cache_dir) if cache_dir else CATALOG_CACHE_DIR
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    path = cache_dir / "pg_catalog.csv"
+    if path.is_file() and path.stat().st_size > 1_000_000:
+        return {"path": str(path), "sha256": sha256_bytes(path.read_bytes()),
+                "bytes": path.stat().st_size, "url": GUTENBERG_CATALOG_URL,
+                "reused": True}
+    req = urllib.request.Request(
+        GUTENBERG_CATALOG_URL,
+        headers={"User-Agent": "lexora-benchmark-harness/0 (research; contact: repo owner)"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        data = resp.read()
+    path.write_bytes(data)
+    return {"path": str(path), "sha256": sha256_bytes(data), "bytes": len(data),
+            "url": GUTENBERG_CATALOG_URL, "reused": False}
+
+
+def select_ids_from_catalog(
+    catalog_path: Path | str,
+    *,
+    language: str = "en",
+    limit: int = 1000,
+    entry_type: str = "Text",
+    exclude: tuple[int, ...] | list[int] = (),
+) -> list[dict]:
+    """Deterministic bulk selection from the PG catalog.
+
+    Rule (deliberately boring, so it is reproducible and auditable): keep rows
+    whose Type equals `entry_type` and whose Language field contains
+    `language`, drop anything in `exclude`, then order by PG id ascending and
+    take the first `limit`. Ordering by id — not by popularity or title — means
+    the selection does not drift when the catalog is regenerated with new
+    downloads, only grows at the end.
+
+    Rights note: the catalog carries no rights column. Gutenberg's hosting
+    posture is US public domain (plus a small number of permission items), and
+    each downloaded file carries its own licence statement, which is what the
+    existing snapshot sidecars cite. Bulk selection therefore inherits that
+    posture rather than verifying per item — recorded as a caveat in the
+    snapshot's `selection` block, and a per-item RDF rights check stays an open
+    item rather than being implied.
+    """
+    import csv
+
+    excluded = set(int(i) for i in exclude)
+    rows: list[dict] = []
+    with open(catalog_path, encoding="utf-8", newline="") as fh:
+        for row in csv.DictReader(fh):
+            if row.get("Type") != entry_type:
+                continue
+            if language not in (row.get("Language") or ""):
+                continue
+            try:
+                pg_id = int(row["Text#"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if pg_id in excluded:
+                continue
+            rows.append({"id": pg_id, "title": row.get("Title") or "",
+                         "language": row.get("Language") or "",
+                         "issued": row.get("Issued") or ""})
+    rows.sort(key=lambda r: r["id"])
+    return rows[:limit]
+
+
 def fetch_gutenberg_snapshot(
     dest: Path,
     *,
     ids: tuple[int, ...] | list[int] = DEFAULT_GUTENBERG_IDS,
     min_mb: float = 0.5,
+    selection: dict | None = None,
 ) -> dict:
     """Download (or reuse) PG texts into dest/, write sidecars, return provenance.
 
@@ -208,6 +287,27 @@ def fetch_gutenberg_snapshot(
 
     records, lineage_map, meta_map = [], {}, {}
     failures: list[dict] = []
+
+    def _write_sidecars() -> None:
+        """Checkpoint provenance. A >=1 GiB fetch spans many minutes and often
+        many invocations; writing only at the end means an interrupted run
+        leaves texts on disk with no sources record, and the next run cannot
+        tell they are already fetched (it re-downloads everything). Writing
+        after each file makes the fetch genuinely resumable."""
+        snapshot = {
+            "tier": TIER_LABEL_T1,
+            "host": GUTENBERG_CACHE_BASE,
+            "requested_ids": list(ids),
+            "files": records,
+            "failures": failures,
+            "complete": len(records) + len(failures) >= len(ids),
+        }
+        if selection is not None:
+            snapshot["selection"] = selection
+        sources_path.write_text(json.dumps(snapshot, indent=2, sort_keys=True) + "\n")
+        Path(str(dest) + ".lineage.json").write_text(json.dumps(lineage_map, indent=2, sort_keys=True) + "\n")
+        Path(str(dest) + ".meta.json").write_text(json.dumps(meta_map, indent=2, sort_keys=True) + "\n")
+
     for pg_id in ids:
         fname = f"gutenberg-{pg_id}.txt"
         path = dest / fname
@@ -241,6 +341,7 @@ def fetch_gutenberg_snapshot(
         meta_map[rel] = {"category": "prose/books",
                          "language": detect_language(path.read_bytes()),
                          "rights": "P0"}
+        _write_sidecars()
 
     snapshot = {
         "tier": TIER_LABEL_T1,
@@ -249,9 +350,10 @@ def fetch_gutenberg_snapshot(
         "files": records,
         "failures": failures,
     }
-    sources_path.write_text(json.dumps(snapshot, indent=2, sort_keys=True) + "\n")
-    Path(str(dest) + ".lineage.json").write_text(json.dumps(lineage_map, indent=2, sort_keys=True) + "\n")
-    Path(str(dest) + ".meta.json").write_text(json.dumps(meta_map, indent=2, sort_keys=True) + "\n")
+    if selection is not None:
+        snapshot["selection"] = selection
+    snapshot["complete"] = len(records) + len(failures) >= len(ids)
+    _write_sidecars()
     return snapshot
 
 

@@ -54,6 +54,7 @@ import statistics
 import subprocess
 import sys
 import time
+import pathlib
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -146,7 +147,37 @@ def cmd_corpus_fetch(args: argparse.Namespace) -> int:
         snap = corpus_mod.generate_synthetic_corpus(dest)
         print(f"wrote synthetic corpus: {len(snap['files'])} files -> {dest}")
     else:
-        if args.ids:
+        selection = None
+        if getattr(args, "catalog_limit", 0):
+            cat = corpus_mod.fetch_catalog(
+                pathlib.Path(args.catalog_cache) if args.catalog_cache else None
+            )
+            exclude = tuple(int(x) for x in args.exclude_ids.split(",") if x.strip())
+            chosen = corpus_mod.select_ids_from_catalog(
+                cat["path"], language="en", limit=args.catalog_limit, exclude=exclude
+            )
+            ids = tuple(r["id"] for r in chosen)
+            min_mb = args.min_mb
+            selection = {
+                "method": "catalog-filter",
+                "catalog_url": cat["url"],
+                "catalog_sha256": cat["sha256"],
+                "catalog_bytes": cat["bytes"],
+                "catalog_reused_from_cache": cat["reused"],
+                "filter": {"type": "Text", "language": "en"},
+                "order": "PG id ascending",
+                "limit": args.catalog_limit,
+                "excluded_ids": list(exclude),
+                "selected_count": len(ids),
+                "rights_note": ("PG catalog has no rights column; selection inherits "
+                                "Gutenberg's US-public-domain hosting posture and each "
+                                "downloaded file carries its own licence statement. "
+                                "Per-item RDF rights verification is an open item, not "
+                                "implied by this record."),
+            }
+            print(f"catalog selection: {len(ids)} ids (limit {args.catalog_limit}) "
+                  f"from catalog sha256 {cat['sha256'][:16]}…; size guard {min_mb} MB")
+        elif args.ids:
             ids = tuple(int(s) for s in args.ids.split(","))
             min_mb = args.min_mb  # explicit override wins for raw id lists
         else:
@@ -171,7 +202,8 @@ def cmd_corpus_fetch(args: argparse.Namespace) -> int:
             else:
                 min_mb = args.min_mb
             print(f"language lists requested: {langs} -> {len(ids)} PG ids; size guard {min_mb} MB")
-        snap = corpus_mod.fetch_gutenberg_snapshot(dest, ids=ids, min_mb=min_mb)
+        snap = corpus_mod.fetch_gutenberg_snapshot(dest, ids=ids, min_mb=min_mb,
+                                                  selection=selection)
         total = sum(r["size_bytes"] for r in snap["files"])
         print(f"wrote Gutenberg snapshot: {len(snap['files'])} files, {total} bytes -> {dest}")
         if snap["failures"]:
@@ -507,7 +539,15 @@ def build_parser() -> argparse.ArgumentParser:
     cf.add_argument("--tier", choices=["auto", "t1", "t2"], default="auto")
     cf.add_argument("--ids", default=None, help="comma-separated PG ids (overrides --languages)")
     cf.add_argument("--languages", default="en", help="curated language lists: en,hi,gu (comma-separated)")
-    cf.add_argument("--min-mb", type=float, default=0.5); cf.set_defaults(func=cmd_corpus_fetch)
+    cf.add_argument("--min-mb", type=float, default=0.5)
+    cf.add_argument("--catalog-limit", type=int, default=0,
+                    help="select this many English Text ids from PG's official catalog "
+                         "instead of the curated list (0 = curated list). Selection is "
+                         "deterministic: filter then order by PG id ascending.")
+    cf.add_argument("--catalog-cache", default=None,
+                    help="where to keep pg_catalog.csv (default corpus/_catalog, gitignored)")
+    cf.add_argument("--exclude-ids", default="",
+                    help="comma-separated PG ids to leave out of a catalog selection"); cf.set_defaults(func=cmd_corpus_fetch)
     cc = sub.add_parser("corpus-commit", help="copy snapshot provenance sidecars into committed benchmarks/provenance/")
     cc.add_argument("--root", default="corpus/gutenberg-r0"); cc.set_defaults(func=cmd_corpus_commit)
     mf = sub.add_parser("manifest"); mf.add_argument("--root", required=True)

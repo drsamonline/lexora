@@ -534,3 +534,25 @@ Decode is now flat in archive size, as encode has been since Session 39. The two
 **Gate:** `python3 -m pytest -q` → **238 passed, 1 skipped** (37 new in `tests/test_unpack_stream.py`); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — the in-session GitHub App credential is read-only, so this session is delivered as a patch for the owner to apply and push.
+
+---
+
+## Session 42 — 2026-10-29 (corpus: catalog-driven selection, resumable fetch, first bulk snapshot)
+
+**Baseline:** `main` at `19cc1a9` (streaming decode landed), suite 238 passed / 1 skipped. Session 41's verification also established something P1 never had: **Project Gutenberg egress works from this container** (`www.gutenberg.org` HTTP 200; `aleph.gutenberg.org` answers 502, so nothing may depend on that host). The earlier "network unavailable" posture was a probe that was never run, not a blocked network.
+
+**What landed.**
+- **`corpus.select_ids_from_catalog()` + `corpus.fetch_catalog()`**: ids now come from Gutenberg's official catalog (21,271,171 B CSV, cached in the gitignored `corpus/_catalog/`) rather than a curated tuple that caps out at 64 English works. Rule: `Type=Text`, `Language` contains `en`, order by PG id **ascending**, take the first `--catalog-limit`. Id order was chosen deliberately — popularity or title order would reshuffle the selection whenever the catalog is regenerated, which would make a partially fetched snapshot impossible to resume.
+- **Reproducibility:** the catalog digest is recorded in the snapshot's `selection` block with the filter, order, limit and excluded ids. Snapshot `gutenberg-cat-partial` came from catalog `3cece81ad3a9261f1b2fbfd2db1e1819cf0c4d3bcffc02ef74ccb8865b46895c`; the same digest + filter reproduces the id list exactly (checked twice in-session).
+- **Fetch became resumable** — the change that mattered most in practice. Sidecars were previously written only after the loop finished, so the first invocation here was killed at the 285 s call limit and left 118 texts on disk with **no** `sources.json`; the next run had no idea they existed and re-downloaded all of them. `fetch_gutenberg_snapshot` now checkpoints `sources`/`lineage`/`meta` after every file and marks `complete: true/false`. Re-verified: the third invocation reused **210 of 317** files instead of re-fetching them.
+- **`harness.py corpus-fetch --catalog-limit N [--catalog-cache DIR] [--exclude-ids a,b]`** exposes it; the curated `--languages` path is untouched.
+
+**Snapshot recorded (partial, labelled as such).** `benchmarks/provenance/gutenberg-cat-partial/` (145 KB of JSON; raw texts stay gitignored): 1400 ids selected, **317 files / 165.3 MB**, 29 failures recorded honestly (404s, plus payloads below the 0.05 MB error-page guard), `complete: false`. `manifest` → 318 files, `manifest_sha256 a2af8ae9…`; `verify` → 0 problems; `audit-splits` → 215 train / 38 validation / 65 heldout, **no lineage straddles splits**.
+
+**Not claimed.** ≥1 GiB is still unmet, and no benchmark revision was run — the corpus is far below BENCHMARK_PROTOCOL scope and publication into BENCHMARK_RESULTS.md needs owner sign-off (QUALITY_PLAN). The shortfall is pure fetch time: this sandbox cannot run background jobs and each call is capped at ~285 s, yielding ~100 files / ~54 MB per invocation, so ~19 invocations would be needed from here. The same command resumes it on a machine that can run unattended.
+
+**Rights — flagged, not resolved.** The PG catalog has **no rights column**. Bulk selection inherits Gutenberg's US-public-domain hosting posture plus each file's own licence statement (which is what the existing P0 classification rests on); a **per-item RDF rights check is an open item** and is written into CORPUS_POLICY.md rather than assumed.
+
+**Gate:** `python3 -m pytest -q` → 238 passed, 1 skipped; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — the in-session GitHub App credential is read-only, so this session is delivered as a patch for the owner to apply and push.
