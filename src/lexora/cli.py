@@ -11,6 +11,7 @@ Subcommands:
                   the archive is written; atomic write: temp file + rename,
                   ERROR_HANDLING recovery semantics)
   lexora unpack  --in ARCHIVE.lxz --out CANONICAL [--block N] [--meta]
+  lexora verify  --in ARCHIVE.lxz [--block N] [--json]
                  (writes ONLY verified bytes; refuses with a specific error
                   and zero output on integrity/limit/format failure)
 
@@ -43,6 +44,7 @@ from lexora.container import (
     pack_stream as lxz_pack_stream,
     read_index_stream,
     unpack as lxz_unpack,
+    verify_stream,
     unpack_stream as lxz_unpack_stream,
 )
 from lexora.zstd_core import CodecError, compress, decompress
@@ -465,6 +467,46 @@ def cmd_unpack(args) -> int:
     return EXIT_OK
 
 
+def cmd_verify(args) -> int:
+    """Audit an archive without writing any payload: structure, then per-block
+    integrity. Streaming, so an audit costs one pass and one block of memory.
+
+    Exit 0 = everything verified, 7 = refusal or any failed block (matching the
+    reader's refusal code so scripts can treat "bad archive" uniformly), 3 =
+    unreadable input.
+    """
+    try:
+        src = open(args.infile, "rb")
+    except OSError as exc:
+        print(f"error: cannot read {args.infile}: {exc}", file=sys.stderr)
+        raise SystemExit(EXIT_FILE)
+    with src:
+        archive_bytes = os.fstat(src.fileno()).st_size
+        result = verify_stream(src, only_block=args.block)
+
+    failed = [(i, code) for i, ok, code in result.blocks if not ok]
+    if args.json:
+        print(json.dumps({
+            "archive_bytes": archive_bytes,
+            "ok": result.ok,
+            "error": result.error,
+            "block_count": result.block_count,
+            "checked": [i for i, _, _ in result.blocks],
+            "failed": [{"index": i, "code": code} for i, code in failed],
+        }, indent=2, sort_keys=True))
+    if result.error:
+        print(f"verify: refusal: {result.error}", file=sys.stderr)
+    for i, code in failed:
+        print(f"verify: block {i} FAILED ({code})", file=sys.stderr)
+    print(
+        f"verify: archive={archive_bytes} blocks={result.block_count} "
+        f"checked={len(result.blocks)} failed={len(failed)} "
+        f"verified={'yes' if result.ok else 'no'}",
+        file=sys.stderr,
+    )
+    return EXIT_OK if result.ok else EXIT_CONTAINER
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="lexora",
@@ -526,6 +568,14 @@ def build_parser() -> argparse.ArgumentParser:
                     help="buffer the whole archive and output in memory instead of "
                          "decoding block-by-block (same output bytes, much higher peak RSS)")
     up.set_defaults(func=cmd_unpack)
+
+    vf = sub.add_parser("verify", help="audit a .lxz archive without writing payload bytes")
+    vf.add_argument("--in", dest="infile", required=True)
+    vf.add_argument("--block", type=int, default=None,
+                    help="verify only block N (default: every block)")
+    vf.add_argument("--json", action="store_true",
+                    help="print the full per-block report as JSON to stdout")
+    vf.set_defaults(func=cmd_verify)
     return p
 
 

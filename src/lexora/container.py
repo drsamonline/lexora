@@ -595,26 +595,78 @@ class VerifyResult:
     blocks: tuple[tuple[int, bool, str | None], ...]  # (index, ok, code|None)
 
 
-def verify_archive(archive: bytes) -> VerifyResult:
-    """Public structural+integrity verification WITHOUT producing payload
-    bytes. Reader-rule validation runs first (header checksum, flags, codec
-    id, index/trailer consistency, limit checks — REQ-SEC-001); then each
-    block is decoded and hash-checked independently so callers get a
-    per-block verdict (ADR-0007 per-block semantics).
+def verify_stream(src, *, only_block: int | None = None) -> VerifyResult:
+    """Structural + per-block integrity verification over a seekable handle.
 
-    Added Session 25: needed by the future GUI archive inspector (G4,
-    docs/DESIGN_GUI.md) and any audit tooling; library-only for now — no CLI
-    surface until a flag is actually requested (scope honesty)."""
+    Same verdict as verify_archive(), but the archive is never resident: the
+    index is validated first (reader rules — header checksum, flags, codec id,
+    index/trailer consistency, limits), then each block is decoded and
+    hash-checked in turn. Verification is **best-effort per block**: one corrupt
+    block does not stop the report, because an audit wants to know how much of an
+    archive is salvageable, not just that something is wrong (ADR-0007 per-block
+    semantics).
+
+    Why this exists alongside verify_archive(): that function called
+    `unpack(archive, only_block=i)` per block, and `unpack` re-reads and
+    re-validates the whole archive on every call — so verifying an N-block
+    archive did N full passes over it. This reads each block exactly once.
+    """
     try:
-        info, _, _ = read_index(archive)
+        info, _, _ = read_index_stream(src)
     except ContainerError as exc:
-        return VerifyResult(False, f"{exc.code}: {exc}", 0, ())
+        # exc.__str__ already renders "[code] message"; use the fields to avoid
+        # printing the code twice ("E-FMT-IDX-004: [E-FMT-IDX-004] ...").
+        return VerifyResult(False, f"{exc.code}: {exc.message}", 0, ())
+
+    if only_block is not None:
+        if not (0 <= only_block < len(info.blocks)):
+            return VerifyResult(False, f"E-FMT-IDX-006: block index {only_block} out of range",
+                                len(info.blocks), ())
+        wanted: list[int] | range = [only_block]
+    else:
+        wanted = range(len(info.blocks))
+
     results: list[tuple[int, bool, str | None]] = []
-    for i, e in enumerate(info.blocks):
+    for i in wanted:
+        e = info.blocks[i]
         try:
-            unpack(archive, only_block=i)
+            src.seek(e.offset)
+            frame = src.read(e.compressed_size)
+            if len(frame) != e.compressed_size:
+                raise ContainerError("E-FMT-IDX-001",
+                                     f"block {i} truncated ({len(frame)} of {e.compressed_size} bytes)")
+            if frame[:4] != b"\x28\xB5\x2F\xFD":
+                raise ContainerError("E-CMP-003", f"block {i} is not a zstd frame")
+            payload = decompress(frame, expected_original_size=e.uncompressed_size)
+            if hashlib.sha256(payload).digest() != e.sha256:
+                raise ContainerError("E-INTEGRITY-001",
+                                     f"block {i} sha256 mismatch — refusing block, zero output")
             results.append((i, True, None))
         except ContainerError as exc:
             results.append((i, False, exc.code))
+        except CodecError as exc:
+            results.append((i, False, "E-CMP-004"))
+            del exc
+        finally:
+            frame = None
+            payload = None
     ok = all(r[1] for r in results)
     return VerifyResult(ok, None, len(info.blocks), tuple(results))
+
+
+def verify_archive(archive: bytes) -> VerifyResult:
+    """Public structural+integrity verification WITHOUT producing payload bytes.
+
+    Reader-rule validation runs first (header checksum, flags, codec id,
+    index/trailer consistency, limit checks — REQ-SEC-001); then each block is
+    decoded and hash-checked independently so callers get a per-block verdict
+    (ADR-0007 per-block semantics).
+
+    Session 47: now a thin wrapper over verify_stream(), which reads each block
+    once. The previous implementation called `unpack(archive, only_block=i)` per
+    block, and unpack re-reads and re-validates the entire archive on every call
+    — O(blocks) full passes over the buffer. Behaviour is unchanged; the cost is
+    not."""
+    import io
+
+    return verify_stream(io.BytesIO(archive))

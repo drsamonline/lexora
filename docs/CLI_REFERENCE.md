@@ -19,7 +19,7 @@ Version string: `lexora --version` → `lexora 0.0.1.dev1` (prototype; no stable
 
 ## Scope honesty
 
-Five subcommands exist: the three Phase-1 baseline flows (canonicalize + plain zstd frames) plus `pack`/`unpack` for the `.lxz` v0 container, unblocked by ADR-0007 acceptance (Session 24, under standing owner delegation). The container is **experimental** (major 0): byte layout frozen per ADR-0007 but pre-release. Any command listed here exists and is covered by tests (`tests/test_cli.py`, `tests/test_container_lxz.py`).
+Six subcommands exist: the three Phase-1 baseline flows (canonicalize + plain zstd frames), `pack`/`unpack` for the `.lxz` v0 container (unblocked by ADR-0007 acceptance, Session 24, under standing owner delegation), and `verify` (Session 47) for auditing an archive without producing payload bytes. The container is **experimental** (major 0): byte layout frozen per ADR-0007 but pre-release. Any command listed here exists and is covered by tests (`tests/test_cli.py`, `tests/test_container_lxz.py`).
 
 ## Subcommands
 
@@ -121,6 +121,24 @@ lexora unpack --in ARCHIVE.lxz [--out CANONICAL] [--block N] [--meta] [--no-stre
 | `--block N` | no | all | bounded single-block decode (REQ-CMP-005) |
 | `--meta` | no | off | print index metadata JSON to stdout instead of payload bytes; index only — no block is read or decoded (Session 41) |
 | `--no-stream` | no | off (streaming) | buffer the whole archive and output in memory instead of decoding block-by-block; same output bytes, ~3.3× the peak RSS at a 32 MiB archive |
+
+### `lexora verify` — audit an archive without writing payload bytes
+
+Answers "is this archive intact?" without producing output, and without holding the archive in memory: the index is validated first (header checksum, flags, codec id, index/trailer consistency, limit checks), then every block is decoded and its SHA-256 checked against the index. Verification is **best-effort per block** — one corrupt block does not stop the report, because an audit should tell you how much is salvageable, not merely that something is wrong (ADR-0007 per-block semantics).
+
+```text
+lexora verify --in ARCHIVE.lxz [--block N] [--json]
+```
+
+| Flag | Required | Default | Meaning |
+|---|---|---|---|
+| `--in PATH` | yes | — | archive to audit |
+| `--block N` | no | all | verify a single block (bounded, REQ-CMP-005) |
+| `--json` | no | off | print the full per-block report to stdout |
+
+Exit codes: **0** everything verified; **7** a refusal (bad header/index/limits) or any failed block — the same code the reader uses, so scripts can treat "bad archive" uniformly; **3** unreadable input. Nothing is ever written to `--out`, because there is no `--out`.
+
+Library equivalent: `container.verify_stream(handle)` — and `verify_archive(bytes)` is now a thin wrapper over it, so a verification costs one pass over the archive instead of one pass *per block*.
 
 ## Exit codes
 

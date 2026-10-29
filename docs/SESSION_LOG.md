@@ -651,3 +651,21 @@ The price of the current default, stated plainly: **19 → 3 costs 26.7 % more b
 **Gate:** `python3 -m pytest -q` → **377 passed, 1 skipped** (no library code changed this session); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–46 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 47 — 2026-10-29 (`lexora verify`: the audit surface the app was missing)
+
+**Why this stage.** The library could verify an archive (`verify_archive`) but the CLI could not, and the docstring was explicit that this was a deliberate "no CLI surface until a flag is actually requested" decision. It is worth requesting now: `pack` writes archives, `unpack` refuses bad ones, and the missing verb is "is this archive intact?" — the question a user asks before trusting a backup, and the one the GUI's inspector will ask. So the fifth subcommand became the sixth.
+
+**What landed.**
+- **`container.verify_stream(handle)`** — index validated first (header checksum, flags, codec id, index/trailer consistency, limits: REQ-SEC-001), then each block decoded once and its SHA-256 checked against the index. **Best-effort per block**: a corrupt block is reported with its code while its healthy siblings still report OK, because an audit should say how much is salvageable rather than only that something is wrong (ADR-0007 per-block semantics).
+- **`lexora verify --in ARCHIVE.lxz [--block N] [--json]`** — exit **0** verified, **7** refusal or any failed block (deliberately the same code the reader uses, so scripts treat "bad archive" uniformly), **3** unreadable input. There is no `--out`, so an audit cannot write bytes by construction.
+
+**The refactor that mattered.** `verify_archive()` called `unpack(archive, only_block=i)` per block, and `unpack` re-reads and re-validates the entire buffer on every call — so verifying an N-block archive did **N full passes** over it. It is now a thin wrapper over `verify_stream`, unchanged in behaviour, one pass in cost. A counting-reader test pins the property (bytes pulled through `read()` must stay below 1.5× the archive size), so the regression cannot come back quietly.
+
+**Bug fixed in passing:** the refusal string printed the code twice (`E-FMT-IDX-004: [E-FMT-IDX-004] …`) because the code was prefixed onto a message that already contained it. Now built from the exception's fields.
+
+**Gate:** `python3 -m pytest -q` → **390 passed, 1 skipped** (13 new in `tests/test_verify_cli.py`); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–47 are delivered as one patch on top of `19cc1a9`.
