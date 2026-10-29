@@ -5,7 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
-### Changed
+### Fixed
+- 2026-10-29 — Session 43 (**provenance checkpointing was lossy; add `corpus-reconcile`**):
+  - **Bug:** the per-file checkpoint added in Session 42 rebuilt the record from the *current* invocation's progress, so an interrupted invocation **shrank** the record of files that were still on disk. Observed live: two killed passes left 587 texts / 287.9 MB on disk recorded as 232 files. Checkpoints are now **supersets** — prior records are seeded in and only the file just processed is upserted, while a genuine failure removes that file's record (the manifest must never cite a missing text).
+  - **`corpus.reconcile_snapshot()` + `harness.py corpus-reconcile --root DIR`:** repairs a truncated record from the bytes on disk, without the network and without re-walking 1400 ids. Files whose id is outside the requested set are counted as `orphaned` and deliberately not claimed as corpus members. On the real snapshot: 166 records recovered in 12 s, record brought to exact agreement with the disk (587 files, 287.9 MB).
+  - **Checkpoint cadence** is every 25 files instead of every file — the sidecar grows to hundreds of KB and per-file rewrites dominated a mostly-reuse pass (~0.8 s per id). A kill can now lose up to 25 recent entries, which is precisely what `corpus-reconcile` repairs.
+  - Provenance for `gutenberg-cat-partial` re-committed at 587 files / 287.9 MB (`reconciled: true` on the 166 rebuilt entries). **≥1 GiB still unmet** — fetch time, not machinery.
+  - Tests: 7 new in `tests/test_corpus_reconcile.py` (recovery from disk, idempotence, orphans not claimed, byte-stable sorted output, checkpoint-superset invariant, failure-removes-stale-record, shared sidecar writer). Suite **245 → 252 passed**, 1 skipped.
 - 2026-10-29 — Session 42 (**catalog-driven corpus selection; fetch made resumable** — P2/OQ-8 groundwork):
   - **`corpus.select_ids_from_catalog()`** derives ids from Project Gutenberg's official catalog (`pg_catalog.csv`, 21,271,171 B) instead of a hand-curated list: keep `Type=Text` + `Language` containing `en`, order by PG id ascending, take `--catalog-limit`. Ordering by id means the selection grows at the end rather than reshuffling when the catalog is regenerated, so a snapshot can be resumed. The catalog's SHA-256, the filter, the order and the limit are recorded in the snapshot's `selection` block — same digest + same filter ⇒ same id list.
   - **`corpus.fetch_catalog()`** caches the catalog under the gitignored `corpus/_catalog/`; **`harness.py corpus-fetch --catalog-limit N [--catalog-cache DIR] [--exclude-ids …]`** wires it up.

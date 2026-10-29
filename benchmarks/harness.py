@@ -35,6 +35,7 @@ Honesty notes:
 Usage:
   python benchmarks/harness.py env
   python benchmarks/harness.py corpus-fetch [--n 8] [--min-mb 0.5] [--dest corpus/gutenberg-r0]
+  python benchmarks/harness.py corpus-reconcile --root DIR   (repair after a killed fetch)
   python benchmarks/harness.py corpus-commit [--root corpus/gutenberg-r0]
   python benchmarks/harness.py manifest --root DIR --out MANIFEST.json [--lineage-map lm.json]
   python benchmarks/harness.py verify --manifest MANIFEST.json
@@ -210,6 +211,25 @@ def cmd_corpus_fetch(args: argparse.Namespace) -> int:
             for f in snap["failures"]:
                 print(f"FETCH FAILED (recorded, not hidden): {f['file']}: {f['error']}", file=sys.stderr)
             return 1
+    return 0
+
+
+def cmd_corpus_reconcile(args: argparse.Namespace) -> int:
+    """Repair sidecars after an interrupted fetch, without touching the network.
+
+    Hashes every gutenberg-*.txt in the snapshot and upserts a record for each
+    file whose id belongs to the snapshot's requested set. Files outside that
+    set are counted, not claimed.
+    """
+    root = Path(args.root)
+    if not root.is_dir():
+        print(f"error: {root} is not a directory", file=sys.stderr)
+        return 2
+    summary = corpus_mod.reconcile_snapshot(root)
+    print(f"reconciled {root}: {summary['recovered']} recovered, "
+          f"{summary['already_recorded']} already recorded, {summary['orphaned']} orphaned "
+          f"(outside the requested id set); record now covers {summary['files']} files, "
+          f"{summary['bytes']} bytes")
     return 0
 
 
@@ -548,6 +568,12 @@ def build_parser() -> argparse.ArgumentParser:
                     help="where to keep pg_catalog.csv (default corpus/_catalog, gitignored)")
     cf.add_argument("--exclude-ids", default="",
                     help="comma-separated PG ids to leave out of a catalog selection"); cf.set_defaults(func=cmd_corpus_fetch)
+    cr = sub.add_parser("corpus-reconcile",
+                        help="rebuild provenance sidecars from the texts on disk "
+                             "(repairs a fetch that was killed mid-run)")
+    cr.add_argument("--root", required=True, help="snapshot directory")
+    cr.set_defaults(func=cmd_corpus_reconcile)
+
     cc = sub.add_parser("corpus-commit", help="copy snapshot provenance sidecars into committed benchmarks/provenance/")
     cc.add_argument("--root", default="corpus/gutenberg-r0"); cc.set_defaults(func=cmd_corpus_commit)
     mf = sub.add_parser("manifest"); mf.add_argument("--root", required=True)

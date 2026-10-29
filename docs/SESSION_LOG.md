@@ -556,3 +556,23 @@ Decode is now flat in archive size, as encode has been since Session 39. The two
 **Gate:** `python3 -m pytest -q` → 238 passed, 1 skipped; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — the in-session GitHub App credential is read-only, so this session is delivered as a patch for the owner to apply and push.
+
+---
+
+## Session 43 — 2026-10-29 (corpus: the checkpoint was lossy; reconcile added)
+
+**Context.** The GitHub connector permission request is with Sarvam (threads sent 2026-10-29 to support@ and developer@, exact errors and timestamps supplied; owner revoked the test fine-grained PAT). Push remains impossible from this sandbox — the egress substitutes its own credential, so a token supplied by the owner cannot take effect either. Work continues by patch. Meanwhile the corpus track was the load-bearing item, and it produced a bug worth recording.
+
+**The bug.** Session 42's per-file checkpoint rebuilt the record from the *current* invocation's progress. That is fine when a run finishes and wrong when it does not: an interrupted invocation rewrites the record with only what it had reached, **shrinking** the history of texts that are still on disk. Measured for real — two killed passes left **587 texts / 287.9 MB** on disk while `sources.json` claimed **232 files**. The failure mode is the worst kind for this project: the data is fine, the record lies, and a manifest built from it would silently under-report the corpus.
+
+**The fix, in two parts.**
+1. **Checkpoints are supersets.** Prior records are seeded from the existing sidecars and only the file just processed is upserted, so a checkpoint can add to the record but never remove from it. The one deliberate exception: a genuine fetch failure removes that file's record, because a manifest must never cite a text that is not on disk. Sidecar writing moved into a module-level `_write_snapshot_sidecars()` so the fetch and the repair path cannot drift apart.
+2. **`corpus.reconcile_snapshot()` + `harness.py corpus-reconcile --root DIR`** — the way back from a record that has already been truncated. It hashes the texts on disk and upserts a record for every file whose id belongs to the snapshot's requested set: no network, no re-walking 1400 ids. Files outside that set are counted as `orphaned` and deliberately **not** claimed, because claiming them would be provenance nobody agreed to. On the real snapshot it recovered **166 records in 12 s** and brought the record to exact agreement with the disk.
+
+**Checkpoint cadence** also changed to every 25 files rather than every file. The sidecar grows to hundreds of KB, and rewriting it per file dominated a mostly-reuse pass (~0.8 s per id, so a 1400-id pass took over 20 minutes with nothing to download). The trade is that a kill can lose up to 25 recent entries — which is exactly the case `corpus-reconcile` now repairs, so the coarser cadence is safe rather than merely faster.
+
+**Corpus state.** `gutenberg-cat-partial`: 1400 ids selected, **587 files / 287.9 MB**, 29 recorded failures, `complete: false`. Provenance re-committed (`reconciled: true` on the 166 rebuilt entries). Each ~285 s invocation advances ~90–100 files, so the ≥1 GiB target needs roughly a dozen more passes here, or one unattended run on a machine that can host it — the shortfall is fetch time, not machinery. No benchmark revision was run, and none will be until the corpus is at protocol scope and the owner signs off publication.
+
+**Gate:** `python3 -m pytest -q` → **252 passed, 1 skipped** (7 new in `tests/test_corpus_reconcile.py`); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential; this session is delivered as a patch.

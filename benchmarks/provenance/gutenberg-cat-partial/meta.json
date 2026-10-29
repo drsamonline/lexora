@@ -934,6 +934,11 @@
     "language": "en",
     "rights": "P0"
   },
+  "gutenberg-310.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
   "gutenberg-311.txt": {
     "category": "prose/books",
     "language": "en",
@@ -1309,7 +1314,147 @@
     "language": "en",
     "rights": "P0"
   },
+  "gutenberg-381.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-382.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-383.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-384.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-385.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-386.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-387.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-388.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-389.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
   "gutenberg-39.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-390.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-391.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-392.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-393.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-394.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-395.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-397.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-398.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-399.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-400.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-401.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-402.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-403.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-404.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-405.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-406.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-407.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-408.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-409.txt": {
     "category": "prose/books",
     "language": "en",
     "rights": "P0"
@@ -1319,7 +1464,107 @@
     "language": "en",
     "rights": "P0"
   },
+  "gutenberg-410.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-411.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-412.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-413.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-414.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-415.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-416.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-417.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-418.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-419.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
   "gutenberg-42.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-420.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-421.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-422.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-423.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-424.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-425.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-426.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-427.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-428.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-429.txt": {
     "category": "prose/books",
     "language": "en",
     "rights": "P0"
@@ -1329,7 +1574,107 @@
     "language": "en",
     "rights": "P0"
   },
+  "gutenberg-430.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-431.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-432.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-433.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-434.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-435.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-436.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-437.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-438.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-439.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
   "gutenberg-44.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-440.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-441.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-442.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-443.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-444.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-445.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-446.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-447.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-448.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-449.txt": {
     "category": "prose/books",
     "language": "en",
     "rights": "P0"
@@ -1339,7 +1684,107 @@
     "language": "en",
     "rights": "P0"
   },
+  "gutenberg-450.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-451.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-452.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-453.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-454.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-455.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-456.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-457.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-458.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-459.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
   "gutenberg-46.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-460.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-461.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-462.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-463.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-464.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-465.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-466.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-467.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-468.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-469.txt": {
     "category": "prose/books",
     "language": "en",
     "rights": "P0"
@@ -1349,7 +1794,107 @@
     "language": "en",
     "rights": "P0"
   },
+  "gutenberg-470.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-471.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-472.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-473.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-474.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-475.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-476.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-477.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-478.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-479.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
   "gutenberg-48.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-480.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-481.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-482.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-483.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-484.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-485.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-486.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-487.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-488.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-489.txt": {
     "category": "prose/books",
     "language": "en",
     "rights": "P0"
@@ -1359,7 +1904,197 @@
     "language": "en",
     "rights": "P0"
   },
+  "gutenberg-491.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-492.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-493.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-494.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-495.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-496.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-497.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-498.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-499.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-500.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-501.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-502.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-503.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-504.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-505.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-506.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-507.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-508.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-509.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
   "gutenberg-51.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-510.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-511.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-512.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-513.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-514.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-515.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-516.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-517.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-518.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-520.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-521.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-522.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-523.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-524.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-525.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-526.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-527.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-528.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-529.txt": {
     "category": "prose/books",
     "language": "en",
     "rights": "P0"
@@ -1369,7 +2104,107 @@
     "language": "en",
     "rights": "P0"
   },
+  "gutenberg-530.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-531.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-532.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-533.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-534.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-535.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-536.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-537.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-538.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-539.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
   "gutenberg-54.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-540.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-541.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-542.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-543.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-544.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-545.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-546.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-547.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-548.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-549.txt": {
     "category": "prose/books",
     "language": "en",
     "rights": "P0"
@@ -1379,7 +2214,202 @@
     "language": "en",
     "rights": "P0"
   },
+  "gutenberg-550.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-551.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-552.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-553.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-554.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-555.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-556.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-557.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-558.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-559.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-560.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-561.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-562.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-563.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-564.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-565.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-566.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-567.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-568.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-569.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-570.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-571.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-572.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-573.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-574.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-575.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-577.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-578.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-579.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
   "gutenberg-58.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-580.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-581.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-582.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-583.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-584.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-585.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-586.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-587.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-588.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-589.txt": {
     "category": "prose/books",
     "language": "en",
     "rights": "P0"
@@ -1389,7 +2419,97 @@
     "language": "en",
     "rights": "P0"
   },
+  "gutenberg-591.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-592.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-593.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-594.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-595.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-596.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-597.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-598.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-599.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
   "gutenberg-60.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-600.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-601.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-602.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-603.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-604.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-605.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-606.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-608.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-609.txt": {
     "category": "prose/books",
     "language": "en",
     "rights": "P0"
@@ -1399,7 +2519,87 @@
     "language": "en",
     "rights": "P0"
   },
+  "gutenberg-610.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-611.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-612.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-614.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-615.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-617.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-618.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-619.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
   "gutenberg-62.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-620.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-621.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-622.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-623.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-624.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-625.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-626.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-627.txt": {
     "category": "prose/books",
     "language": "en",
     "rights": "P0"
@@ -1409,12 +2609,162 @@
     "language": "en",
     "rights": "P0"
   },
+  "gutenberg-633.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-634.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-636.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-637.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-638.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-639.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
   "gutenberg-64.txt": {
     "category": "prose/books",
     "language": "en",
     "rights": "P0"
   },
+  "gutenberg-640.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-641.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-642.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-643.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-644.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-645.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-646.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-647.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-648.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-649.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-650.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-651.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-652.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-653.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-654.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-655.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-656.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-657.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-658.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-659.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
   "gutenberg-66.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-660.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-661.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-662.txt": {
+    "category": "prose/books",
+    "language": "en",
+    "rights": "P0"
+  },
+  "gutenberg-663.txt": {
     "category": "prose/books",
     "language": "en",
     "rights": "P0"

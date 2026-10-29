@@ -261,6 +261,93 @@ def select_ids_from_catalog(
     return rows[:limit]
 
 
+def _write_snapshot_sidecars(dest: Path, ids, records_by_file: dict, failures_by_file: dict,
+                             lineage_map: dict, meta_map: dict, selection: dict | None) -> dict:
+    """Write the three sidecars (sorted, so the files are byte-stable) and return
+    the snapshot dict. Single source of truth for the sidecar format."""
+    dest = Path(dest)
+    snapshot = {
+        "tier": TIER_LABEL_T1,
+        "host": GUTENBERG_CACHE_BASE,
+        "requested_ids": list(ids),
+        "files": [records_by_file[k] for k in sorted(records_by_file)],
+        "failures": [failures_by_file[k] for k in sorted(failures_by_file)],
+        "complete": len(records_by_file) + len(failures_by_file) >= len(ids),
+    }
+    if selection is not None:
+        snapshot["selection"] = selection
+    Path(str(dest) + ".sources.json").write_text(json.dumps(snapshot, indent=2, sort_keys=True) + "\n")
+    Path(str(dest) + ".lineage.json").write_text(json.dumps(lineage_map, indent=2, sort_keys=True) + "\n")
+    Path(str(dest) + ".meta.json").write_text(json.dumps(meta_map, indent=2, sort_keys=True) + "\n")
+    return snapshot
+
+
+def reconcile_snapshot(dest: Path, *, ids: tuple[int, ...] | list[int] | None = None) -> dict:
+    """Bring the sidecars back in line with the texts actually on disk.
+
+    A killed fetch can leave texts whose provenance was lost — earlier versions
+    of the checkpoint rewrote the record with only the current invocation's
+    progress, so a 587-file directory could end up recorded as 232 files. Rather
+    than re-downloading or re-walking 1400 ids over the network, hash what is on
+    disk and upsert a record for every file whose id belongs to the requested
+    set. Nothing is invented: sha256 and size come from the bytes themselves.
+
+    Files whose id is NOT in the requested set are counted as `orphaned` and left
+    alone — they are not claimed as corpus members, because claiming them would
+    be provenance we did not agree to.
+
+    Returns {recovered, already_recorded, orphaned, files, bytes}.
+    """
+    dest = Path(dest)
+    sources_path = Path(str(dest) + ".sources.json")
+    lineage_path = Path(str(dest) + ".lineage.json")
+    meta_path = Path(str(dest) + ".meta.json")
+    prior_snapshot: dict = json.loads(sources_path.read_text()) if sources_path.is_file() else {}
+    requested = tuple(ids) if ids is not None else tuple(prior_snapshot.get("requested_ids", []))
+    requested_set = set(requested)
+    selection = prior_snapshot.get("selection")
+
+    records_by_file = {e["file"]: e for e in prior_snapshot.get("files", [])}
+    failures_by_file = {e["file"]: e for e in prior_snapshot.get("failures", [])}
+    lineage_map = json.loads(lineage_path.read_text()) if lineage_path.is_file() else {}
+    meta_map = json.loads(meta_path.read_text()) if meta_path.is_file() else {}
+
+    recovered = already = orphaned = 0
+    for path in sorted(dest.glob("gutenberg-*.txt")):
+        rel = path.name
+        try:
+            pg_id = int(rel.removeprefix("gutenberg-").removesuffix(".txt"))
+        except ValueError:
+            orphaned += 1
+            continue
+        if pg_id not in requested_set:
+            orphaned += 1
+            continue
+        if rel in records_by_file and records_by_file[rel].get("size_bytes") == path.stat().st_size:
+            already += 1
+            continue
+        records_by_file[rel] = {
+            "file": rel,
+            "sha256": sha256_bytes(path.read_bytes()),
+            "size_bytes": path.stat().st_size,
+            "source_url": f"{GUTENBERG_CACHE_BASE}{pg_id}/pg{pg_id}.txt",
+            "reused_existing": True,
+            "reconciled": True,
+        }
+        failures_by_file.pop(rel, None)
+        lineage_map[rel] = f"gutenberg:{pg_id}"
+        meta_map[rel] = {"category": "prose/books",
+                         "language": detect_language(path.read_bytes()),
+                         "rights": "P0"}
+        recovered += 1
+
+    _write_snapshot_sidecars(dest, requested, records_by_file, failures_by_file,
+                             lineage_map, meta_map, selection)
+    return {"recovered": recovered, "already_recorded": already, "orphaned": orphaned,
+            "files": len(records_by_file),
+            "bytes": sum(e["size_bytes"] for e in records_by_file.values())}
+
+
 def fetch_gutenberg_snapshot(
     dest: Path,
     *,
@@ -277,36 +364,48 @@ def fetch_gutenberg_snapshot(
     Existing files whose SHA-256 matches the sources record are NOT re-downloaded.
     `language` is script-detected per file (see detect_language), never assumed
     from the curated id list — honest labeling for mixed-script PG items.
+
+    Resumability contract: provenance is checkpointed after every file, and each
+    checkpoint is a SUPERSET of what was already recorded — prior entries are
+    seeded in and only the file just processed is upserted. Without that, an
+    interrupted invocation rewrites the record with just its own partial progress
+    and silently shrinks the history of texts that are still on disk (observed in
+    Session 43: a killed run cut a 587-file record to 232 while the files stayed).
     """
     dest = Path(dest)
     dest.mkdir(parents=True, exist_ok=True)
     sources_path = Path(str(dest) + ".sources.json")
-    prior: dict = {}
-    if sources_path.is_file():
-        prior = {e["file"]: e for e in json.loads(sources_path.read_text()).get("files", [])}
+    lineage_path = Path(str(dest) + ".lineage.json")
+    meta_path = Path(str(dest) + ".meta.json")
 
-    records, lineage_map, meta_map = [], {}, {}
-    failures: list[dict] = []
+    # Seed from whatever is already on record, so a checkpoint can only add.
+    records_by_file: dict[str, dict] = {}
+    failures_by_file: dict[str, dict] = {}
+    lineage_map: dict[str, str] = {}
+    meta_map: dict[str, dict] = {}
+    if sources_path.is_file():
+        prior_snapshot = json.loads(sources_path.read_text())
+        for entry in prior_snapshot.get("files", []):
+            records_by_file[entry["file"]] = entry
+        for entry in prior_snapshot.get("failures", []):
+            failures_by_file[entry["file"]] = entry
+    if lineage_path.is_file():
+        lineage_map = json.loads(lineage_path.read_text())
+    if meta_path.is_file():
+        meta_map = json.loads(meta_path.read_text())
+    prior = records_by_file  # name kept for the reuse check below
 
     def _write_sidecars() -> None:
-        """Checkpoint provenance. A >=1 GiB fetch spans many minutes and often
-        many invocations; writing only at the end means an interrupted run
-        leaves texts on disk with no sources record, and the next run cannot
-        tell they are already fetched (it re-downloads everything). Writing
-        after each file makes the fetch genuinely resumable."""
-        snapshot = {
-            "tier": TIER_LABEL_T1,
-            "host": GUTENBERG_CACHE_BASE,
-            "requested_ids": list(ids),
-            "files": records,
-            "failures": failures,
-            "complete": len(records) + len(failures) >= len(ids),
-        }
-        if selection is not None:
-            snapshot["selection"] = selection
-        sources_path.write_text(json.dumps(snapshot, indent=2, sort_keys=True) + "\n")
-        Path(str(dest) + ".lineage.json").write_text(json.dumps(lineage_map, indent=2, sort_keys=True) + "\n")
-        Path(str(dest) + ".meta.json").write_text(json.dumps(meta_map, indent=2, sort_keys=True) + "\n")
+        """Checkpoint provenance (superset semantics — see the docstring)."""
+        _write_snapshot_sidecars(dest, ids, records_by_file, failures_by_file,
+                                 lineage_map, meta_map, selection)
+
+    # Checkpoint cadence. Writing the (growing) sidecar after every single file
+    # dominated a mostly-reuse pass — ~0.8 s per id, so a full 1400-id pass took
+    # over 20 minutes even with nothing to download. Every 25 files keeps the
+    # record within a few seconds of the disk state at a twentieth of the cost.
+    checkpoint_every = 25
+    processed_since_checkpoint = 0
 
     for pg_id in ids:
         fname = f"gutenberg-{pg_id}.txt"
@@ -322,39 +421,50 @@ def fetch_gutenberg_snapshot(
             try:
                 data = _fetch_one(pg_id)
             except (urllib.error.URLError, RuntimeError, OSError) as exc:
-                failures.append({"file": rel, "error": str(exc)})
+                failures_by_file[rel] = {"file": rel, "error": str(exc)}
+                records_by_file.pop(rel, None)
+                lineage_map.pop(rel, None)
+                meta_map.pop(rel, None)
+                processed_since_checkpoint += 1
+                if processed_since_checkpoint >= checkpoint_every:
+                    _write_sidecars()
+                    processed_since_checkpoint = 0
                 continue
             digest = sha256_bytes(data)
             if len(data) < min_mb * 1024 * 1024:
                 # Suspiciously small for these titles => likely an error page.
-                failures.append({"file": rel, "error": f"payload too small ({len(data)} B); discarded"})
+                failures_by_file[rel] = {
+                    "file": rel,
+                    "error": f"payload too small ({len(data)} B); discarded",
+                }
+                records_by_file.pop(rel, None)
+                lineage_map.pop(rel, None)
+                meta_map.pop(rel, None)
+                processed_since_checkpoint += 1
+                if processed_since_checkpoint >= checkpoint_every:
+                    _write_sidecars()
+                    processed_since_checkpoint = 0
                 continue
             path.write_bytes(data)
-        records.append({
+        records_by_file[rel] = {
             "file": rel,
             "sha256": sha256_bytes(path.read_bytes()),
             "size_bytes": path.stat().st_size,
             "source_url": source_url,
             "reused_existing": reused,
-        })
+        }
+        failures_by_file.pop(rel, None)
         lineage_map[rel] = f"gutenberg:{pg_id}"
         meta_map[rel] = {"category": "prose/books",
                          "language": detect_language(path.read_bytes()),
                          "rights": "P0"}
-        _write_sidecars()
+        processed_since_checkpoint += 1
+        if processed_since_checkpoint >= checkpoint_every:
+            _write_sidecars()
+            processed_since_checkpoint = 0
 
-    snapshot = {
-        "tier": TIER_LABEL_T1,
-        "host": GUTENBERG_CACHE_BASE,
-        "requested_ids": list(ids),
-        "files": records,
-        "failures": failures,
-    }
-    if selection is not None:
-        snapshot["selection"] = selection
-    snapshot["complete"] = len(records) + len(failures) >= len(ids)
     _write_sidecars()
-    return snapshot
+    return json.loads(sources_path.read_text())
 
 
 def generate_synthetic_corpus(dest: Path, *, n_files: int = 6, seed: int = 20261016) -> dict:
