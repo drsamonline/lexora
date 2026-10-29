@@ -855,3 +855,21 @@ Cause: both atomic writers called `tempfile.mkstemp(dir=…)` *outside* their `t
 **Gate:** `python3 -m pytest -q` → **482 passed, 1 skipped** (4 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–57 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 58 — 2026-10-29 (corpus: 287.9 MB → 502.1 MB, halfway to the gate)
+
+**Why this stage.** The corpus is the one gate standing between the project and a real benchmark revision (G2 in FORMAT_LXDB.md, and OQ-8), and the machinery has been ready since Session 43. What it needs is unattended runtime, which this sandbox does not have — so the honest move is to grind passes and report the arithmetic.
+
+**What five passes bought.** Snapshot `gutenberg-cat-partial` went from **587 files / 287.9 MB to 946 files / 502.1 MB**, at roughly **43 MB per ~285 s invocation** (network-dependent: the first pass moved 90 MB, later ones 30–47 MB). 54 failures are recorded rather than hidden — 404s and payloads under the 0.05 MB error-page guard.
+
+**Integrity re-checked at the new size, not assumed:** manifest `e4b40cd8…` over 952 files verifies with **0 problems**, and the split audit reads 667 train / 94 validation / 191 heldout with **no lineage straddling**. That last property matters more as the corpus grows, because a lineage that appears in two splits is exactly how a benchmark stops being a measurement of generalisation.
+
+**Where the gate stands.** ~522 MB short of ≥1 GiB. At the observed rate that is roughly a dozen more passes here, or one unattended loop on a machine that can host it. Nothing about the machinery is blocking — this is purely wall-clock, and the resumable fetch (Session 43) means every pass adds to the same snapshot rather than restarting.
+
+**No benchmark revision was run**, and none will be until the corpus is at protocol scope and the owner signs off publication (QUALITY_PLAN). The snapshot's provenance is committed; the texts stay gitignored.
+
+**Gate:** `python3 -m pytest -q` → **482 passed, 1 skipped** (no code touched); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–58 are delivered as one patch on top of `19cc1a9`.

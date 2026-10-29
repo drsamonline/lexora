@@ -6,6 +6,11 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 58 (**corpus grown to 502 MB — halfway to the ≥1 GiB gate**):
+  - Five fetch passes took snapshot `gutenberg-cat-partial` from **587 files / 287.9 MB to 946 files / 502.1 MB** (~43 MB per ~285 s pass), with 54 failures recorded rather than hidden (404s, payloads under the guard).
+  - **Integrity re-checked at the new size:** manifest `e4b40cd8…` over 952 files verifies with **0 problems**; split audit 667 train / 94 validation / 191 heldout, **no lineage straddles splits**.
+  - Provenance sidecar re-committed at the new size; the ≥1 GiB gate is now ~522 MB away, which is unattended runtime rather than machinery.
+  - No code changed; suite unchanged at **482 passed, 1 skipped**.
 - 2026-10-29 — Session 57 (**interruption tested with real signals; SIGTERM debris fixed**):
   - The atomic-write guarantee had only ever been tested with *simulated* failures (a destination object that raises). `tests/test_interruption.py` now kills a real `lexora pack` mid-write with real signals: **SIGINT and SIGTERM leave no destination and no debris; SIGKILL leaves no destination but an unavoidable `.lxz-tmp-*`** (uncatchable).
   - **Fixed:** SIGTERM left a temp file behind. `cli.main` now installs a handler that raises `SystemExit`, routing SIGTERM through the writers' existing cleanup — a killed pack exits 3 with nothing left over. The destination was never at risk: it is only created by `os.replace` after the temp file is complete.
