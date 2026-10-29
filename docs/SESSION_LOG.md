@@ -597,3 +597,31 @@ Decode is now flat in archive size, as encode has been since Session 39. The two
 **Gate:** `python3 -m pytest -q` → **252 passed, 1 skipped** (no code touched); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42, 43 and 44 are delivered together as a single patch on top of `19cc1a9`, at the owner's request, since none of them reached `main`.
+
+---
+
+## Session 45 — 2026-10-29 (streaming canonicalization; throughput measured for the first time)
+
+**Why this stage.** After Sessions 39 and 41 the encoder and decoder were memory-bounded, but `canon` still read the whole document — the last whole-file path in the core, and the one PERFORMANCE_BUDGET flagged as "Not yet measured (canon path still reads whole input)". Closing it also let the three throughput rows be measured for the first time, since `canon` is the natural place to do it.
+
+**`canonicalize_stream()`.** Three things make byte-identity with `canonicalize()` non-trivial, and each is a way to get it wrong:
+1. **Incremental decoding.** A multi-byte UTF-8 sequence or a UTF-16 code unit can straddle a chunk boundary; decoding per chunk with `bytes.decode` corrupts exactly those characters. `codecs.getincrementaldecoder` plus a final flush at EOF is the fix.
+2. **BOM detection across reads.** A UTF-8 BOM needs three bytes, so with a small chunk size it arrives in three separate reads — `raw.startswith(b"\xef\xbb\xbf")` misses it and the BOM is emitted as U+FEFF. The streaming reader gathers three bytes before choosing the codec, and strips a leading U+FEFF from the decoded *text* wherever it lands (the first decoded slice can legitimately be empty).
+3. **A trailing CR.** "\r\n" split across chunks must still collapse to one "\n" (CAN-R02), so a chunk ending in CR carries that CR into the next round; at EOF the carry becomes a lone "\n", which is what the buffered path does with a trailing CR. Rule order (CRLF → LF, then lone CR → LF, then U+00AD removal) is preserved, so a soft hyphen between CR and LF behaves identically.
+
+**Bug found while testing parity, and fixed.** The *buffered* path let a raw `UnicodeDecodeError` escape when a file started with a UTF-16 BOM but was truncated: `_detect_and_decode` wrapped the declared-encoding and UTF-8 branches, but not the BOM-sniffed UTF-16 branch. The CLI only catches `CanonicalizationError`, so a malformed file produced a traceback instead of exit 4. Both paths now raise `CanonicalizationError` through one shared message builder. The only remaining difference between them is the byte *position* quoted inside the codec's own error text, which an incremental decoder cannot know — documented rather than papered over.
+
+**Measured** (same probe, new `canon_*` keys; `--canon-only` so the run is seconds rather than minutes):
+
+| Document | canon streaming | canon buffered |
+|---|---|---|
+| 16 MiB | **35.5 MiB** peak, 29.7 MiB/s | 72.1 MiB peak |
+| 64 MiB | **35.5 MiB** peak, 66.1 MiB/s | 216.2 MiB peak |
+
+Flat in document size, and the buffered path would have breached the 256 MiB canonicalizer budget near an ~80 MiB document — the same shape of latent violation found in the encoder (Session 39) and decoder (Session 41).
+
+**Throughput, measured for the first time** (all three rows previously said "Not yet measured"): canonicalization 29.7–66.1 MiB/s (**PASS** vs ≥5 MB/s); decode 28.5 MiB/s at a 32 MiB archive (**PASS** vs ≥20 MB/s); encode **0.30–0.43 MiB/s at zstd-19 — a MISS against the soft ≥2 MB/s target, ~5× short**. That miss is recorded rather than smoothed: the budget's own wording ("level tuned for default") assumes a default chosen for speed, while the CLI still defaults to level 19. Whether the default level moves or the target is revised is an owner decision, now written into PERFORMANCE_BUDGET rather than left implicit. Throughput numbers from this 2-vCPU container are indicative only and are labelled as such.
+
+**Gate:** `python3 -m pytest -q` → **377 passed, 1 skipped** (125 new in `tests/test_canon_stream.py`); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–45 are delivered as one patch on top of `19cc1a9`.

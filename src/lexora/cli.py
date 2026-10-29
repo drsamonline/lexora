@@ -36,7 +36,7 @@ import sys
 import tempfile
 
 from lexora import __version__
-from lexora.canonicalize import CanonicalizationError, canonicalize
+from lexora.canonicalize import CanonicalizationError, canonicalize, canonicalize_stream
 from lexora.container import ContainerError, read_index
 from lexora.container import (
     pack as lxz_pack,
@@ -79,36 +79,79 @@ def _write(path: str, data: bytes) -> None:
 
 
 def cmd_canon(args: argparse.Namespace) -> int:
-    raw = _read(args.infile)
+    """Canonicalize. Streaming by default (Session 45): the working set is one
+    decoded chunk plus a one-character carry, so it no longer tracks document
+    size. --no-stream keeps the buffered path for A/B evidence runs."""
+    if args.no_stream:
+        raw = _read(args.infile)
+        try:
+            if args.meta:
+                from lexora.canonicalize import canonicalize_with_meta
+
+                meta = canonicalize_with_meta(raw, declared_encoding=args.encoding)
+                out = meta.pop("canonical")
+                if args.outfile != "-":
+                    _write(args.outfile, out)
+                print(json.dumps(meta, indent=2, sort_keys=True))
+                print(
+                    f"canon: {meta['input_bytes']} -> {meta['output_bytes']} bytes "
+                    f"(rules CAN-R01,R02,R05; lexcAN-0.1; --meta audit)",
+                    file=sys.stderr,
+                )
+                return EXIT_OK
+            out = canonicalize(raw, declared_encoding=args.encoding)
+        except CanonicalizationError as exc:
+            print(f"canonicalization error: {exc}", file=sys.stderr)
+            return EXIT_CANON
+        if args.outfile == "-":
+            sys.stdout.buffer.write(out)
+        else:
+            _write(args.outfile, out)
+        print(
+            f"canon: {len(raw)} -> {len(out)} bytes "
+            f"(rules CAN-R01,R02,R05; lexcAN-0.1)",
+            file=sys.stderr,
+        )
+        return EXIT_OK
+
     try:
-        if args.meta:
-            # Audit mode: JSON metadata (sizes + SHA-256 hashes + rule list)
-            # to stdout INSTEAD of payload bytes; payload goes to --out only.
-            import json
+        src = open(args.infile, "rb")
+    except OSError as exc:
+        # _read() raises SystemExit(EXIT_FILE) for an unreadable input, and the
+        # tests (and the documented exit-code table) hold the streaming path to
+        # the same contract rather than returning a code.
+        print(f"error: cannot read {args.infile}: {exc}", file=sys.stderr)
+        raise SystemExit(EXIT_FILE)
+    with src:
+        captured: dict = {}
 
-            from lexora.canonicalize import canonicalize_with_meta
-
-            meta = canonicalize_with_meta(raw, declared_encoding=args.encoding)
-            out = meta.pop("canonical")
-            if args.outfile != "-":
-                _write(args.outfile, out)
-            print(json.dumps(meta, indent=2, sort_keys=True))
-            print(
-                f"canon: {meta['input_bytes']} -> {meta['output_bytes']} bytes "
-                f"(rules CAN-R01,R02,R05; lexcAN-0.1; --meta audit)",
-                file=sys.stderr,
+        def _writer(fh) -> None:
+            captured["meta"] = canonicalize_stream(
+                src, fh, declared_encoding=args.encoding
             )
-            return EXIT_OK
-        out = canonicalize(raw, declared_encoding=args.encoding)
-    except CanonicalizationError as exc:
-        print(f"canonicalization error: {exc}", file=sys.stderr)
-        return EXIT_CANON
-    if args.outfile == "-":
-        sys.stdout.buffer.write(out)
-    else:
-        _write(args.outfile, out)
+
+        try:
+            if args.meta and args.outfile == "-":
+                # --meta owns stdout; the payload has nowhere to go and must NOT
+                # be written there, or it corrupts the JSON (pre-existing rule).
+                with open(os.devnull, "wb") as sink:
+                    _writer(sink)
+            else:
+                _stream_to_destination(args.outfile, _writer)
+        except CanonicalizationError as exc:
+            print(f"canonicalization error: {exc}", file=sys.stderr)
+            return EXIT_CANON
+    meta = captured["meta"]
+    if args.meta:
+        print(json.dumps(meta, indent=2, sort_keys=True))
+        print(
+            f"canon: {meta['input_bytes']} -> {meta['output_bytes']} bytes "
+            f"(rules CAN-R01,R02,R05; lexcAN-0.1; --meta audit)",
+            file=sys.stderr,
+        )
+        return EXIT_OK
     print(
-        f"canon: {len(raw)} -> {len(out)} bytes "
+        f"canon: {meta['input_bytes']} -> {meta['output_bytes']} bytes "
         f"(rules CAN-R01,R02,R05; lexcAN-0.1)",
         file=sys.stderr,
     )
@@ -438,6 +481,9 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--encoding", default=None, help="declared source encoding")
     c.add_argument("--meta", action="store_true",
                    help="print audit JSON (sizes, SHA-256s, rules) to stdout instead of payload")
+    c.add_argument("--no-stream", action="store_true",
+                   help="buffer the whole document in memory instead of canonicalizing "
+                        "chunk-by-chunk (same output bytes, higher peak RSS)")
     c.set_defaults(func=cmd_canon)
 
     z = sub.add_parser("zround", help="zstd compress + verify byte-exact roundtrip")

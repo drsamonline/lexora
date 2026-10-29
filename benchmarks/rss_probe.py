@@ -42,6 +42,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 MIB = 1024 * 1024
 ENCODE_BUDGET_KIB = 512 * 1024
 DECODE_BUDGET_KIB = 256 * 1024
+CANON_BUDGET_KIB = 256 * 1024  # PERFORMANCE_BUDGET: "Canonicalize one document (streaming)"
 
 WORDS = (
     "the of and to in a is that for it as was with be by on not he this are or "
@@ -247,6 +248,11 @@ def main(argv: list[str] | None = None) -> int:
                     help="CLI pack path under test: stream (default since this session) "
                          "or buffered (--no-stream, the pre-streaming behaviour)")
     ap.add_argument("--skip-decode", action="store_true")
+    ap.add_argument("--canon", action="store_true",
+                    help="also measure `lexora canon` (streaming and --no-stream): "
+                         "peak RSS and wall time, for the canonicalizer budget row")
+    ap.add_argument("--canon-only", action="store_true",
+                    help="measure canon alone (skips pack/unpack, so it is fast)")
     ap.add_argument("--summarize-only", action="store_true",
                     help="recompute the summary block from an existing artifact")
     args = ap.parse_args(argv)
@@ -291,7 +297,8 @@ def main(argv: list[str] | None = None) -> int:
                      "--block-size", str(args.block_size)]
         if args.mode == "buffered":
             pack_argv.append("--no-stream")
-        enc = [measure(pack_argv, workdir, env_extra) for _ in range(args.reps)]
+        enc = [] if args.canon_only else [measure(pack_argv, workdir, env_extra)
+                                         for _ in range(args.reps)]
         ok_enc = [r for r in enc if r["exit_code"] == 0]
         row = {
             "mode": args.mode,
@@ -306,11 +313,32 @@ def main(argv: list[str] | None = None) -> int:
             "encode_within_budget": (max(r["peak_rss_kib"] for r in ok_enc) <= ENCODE_BUDGET_KIB) if ok_enc else None,
             "encode_stderr": [r["stderr_tail"] for r in enc if r["stderr_tail"]],
         }
+        if args.canon or args.canon_only:
+            canon_out = workdir / f"canon-{mib}MiB.txt"
+            runs = {}
+            for label, extra in (("stream", []), ("buffered", ["--no-stream"])):
+                argv = [py, "-m", "lexora.cli", "canon", "--in", str(src_file),
+                        "--out", str(canon_out)] + extra
+                runs[label] = [measure(argv, workdir, env_extra) for _ in range(max(1, args.reps))]
+            ok_c = [r for r in runs["stream"] if r["exit_code"] == 0]
+            row["canon_stream_peak_rss_kib"] = [r["peak_rss_kib"] for r in runs["stream"]]
+            row["canon_stream_wall_s"] = [r["wall_s"] for r in runs["stream"]]
+            row["canon_buffered_peak_rss_kib"] = [r["peak_rss_kib"] for r in runs["buffered"]]
+            row["canon_buffered_wall_s"] = [r["wall_s"] for r in runs["buffered"]]
+            row["canon_exit_codes"] = [r["exit_code"] for r in runs["stream"] + runs["buffered"]]
+            if ok_c:
+                best = min(r["wall_s"] for r in ok_c)
+                row["canon_median_peak_rss_kib"] = sorted(r["peak_rss_kib"] for r in ok_c)[len(ok_c) // 2]
+                row["canon_mb_per_s"] = round((nbytes / MIB) / best, 1) if best else None
+                print(f"{mib:>6} {'canon':>7} {row['canon_median_peak_rss_kib']/1024:>9.1f} "
+                      f"{CANON_BUDGET_KIB//1024:>7} {best:>7.2f} {row['canon_exit_codes'][0]:>3}"
+                      f"   ({row['canon_mb_per_s']} MiB/s)")
+
         if ok_enc:
             print(f"{mib:>6} {'pack':>7} {row['encode_peak_rss_median_kib']/1024:>9.1f} "
                   f"{ENCODE_BUDGET_KIB//1024:>7} {max(row['encode_wall_s']):>7.1f} {row['encode_exit_codes'][0]:>3}")
 
-        if not args.skip_decode and arc_file.exists():
+        if not args.canon_only and not args.skip_decode and arc_file.exists():
             dec = [measure([py, "-m", "lexora.cli", "unpack", "--in", str(arc_file), "--out", "-"],
                            workdir, env_extra) for _ in range(args.reps)]
             ok_dec = [r for r in dec if r["exit_code"] == 0]

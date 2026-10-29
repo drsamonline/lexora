@@ -25,6 +25,8 @@ Five subcommands exist: the three Phase-1 baseline flows (canonicalize + plain z
 
 ### `lexora canon` — canonicalize raw bytes → canonical UTF-8
 
+**Memory behaviour (Session 45).** `canon` streams by default: one decoded chunk plus a one-character carry (for a CRLF split across the boundary), so peak RSS is flat in document size — measured 35.5 MiB at both a 16 MiB and a 64 MiB document. `--no-stream` restores the pre-Session-45 whole-file path (216.2 MiB at 64 MiB). Output is byte-identical either way and both raise the same `CanonicalizationError` text, so exit code 4 is unchanged.
+
 Applies the v0 rule set CAN-R01 (encoding normalization), CAN-R02 (CRLF/CR → LF), CAN-R05 (soft-hyphen removal); version `lexcan-0.1`. All other byte classes pass through unchanged (whitelist contract, REQ-CAN-003).
 
 ```text
