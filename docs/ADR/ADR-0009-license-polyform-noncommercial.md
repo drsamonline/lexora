@@ -43,7 +43,7 @@ The drift came from a series of `licence: PolyForm Noncommercial 1.0.0 (…)` co
 
 ## Verification
 
-- `grep -ri "mit" --include="*.md" --include="*.toml" --include="*.html"` over the tree returns no licence-position references to MIT outside ADR-0006's historical body, this ADR, and the changelog/session-log history.
+- A word-boundary grep for `MIT` (`(^|[^A-Za-z_-])MIT([^A-Za-z_-]|$)`) over `*.md`, `*.toml`, `*.html` and `*.yml` returns no licence-position reference outside ADR-0006's historical body, this ADR, the ADR index/supersession rows, and the changelog/session-log history. **Note for future licence sweeps:** the first pass missed two *prose* claims in `docs/index.html` — the FAQ answer to "What is the licence…" and the second footer span — because the sweep looked at structured fields (JSON-LD, badge, footer link) and `grep -c MIT` was drowned by `RESOURCE_LIMITS`/`COMMITTED` noise. Both were caught by the word-boundary re-audit and fixed in the follow-up commit; the docs site is generated-looking HTML with duplicated copy, so it needs a prose read, not just a field check.
 - `pip install -e .` succeeds and the built metadata reports `License-Expression: PolyForm-Noncommercial-1.0.0`.
 - `python3 scripts/linkcheck.py` → all internal links OK.
 - `python3 -m pytest -q` → unchanged suite result (this ADR touches no code).
