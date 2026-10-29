@@ -6,6 +6,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 60 (**LEXORA measured against a baseline for the first time**):
+  - The harness's `SYSTEMS` now registers **`lexora`** (canonicalize → `.lxz` v0 at `DEFAULT_LEVEL`) and **`lexora19`** (the same at zstd level 19, so the level is held constant and only the pipeline varies). Until now LEXORA appeared in no results table — R1–R3 measured the frozen baselines against each other.
+  - **`run --split` / `--max-bytes`** subset a *verified* manifest and record the selector in the artifact, so smoke runs are reproducible without hand-built manifests and provenance is not weakened.
+  - **R4 smoke** on 17 heldout files / 12.1 MiB, 2 reps: `lexora19` **0.3082** vs `zstd19` **0.3102** — 16 of 17 files smaller, aggregate **−0.64 %**; the shipped default (level 9) is **0.3367**, 8.6 % larger at ~10× the speed.
+  - Written up as **`docs/R4_SMOKE_DRAFT.md`** — a draft, not a publication, and explicitly **not an ADR-0001 verdict**: 0.6 % over 12.1 MiB with 2 reps on a shared 2-vCPU container cannot be separated from noise. Honest claim: "indistinguishable at this scope, with a consistent sign across 16 of 17 files".
+  - Peak RSS is absent from this run and the artifact says so rather than inventing a number (no `VmHWM` in this container); memory results live in `benchmarks/results-rss-core.json`.
+  - Suite unchanged at **482 passed, 1 skipped** (harness + docs only).
 - 2026-10-29 — Session 59 (**corpus at 593 MB; and the 1400-id selection could never have reached the gate**):
   - Five more fetch passes took the snapshot from **502.1 MB to 593.4 MB** (1189 files, 61 failures recorded). Manifest `40acccbf…` over 1207 files verifies with **0 problems**; splits 852/116/239, no lineage straddling.
   - **Measured, not guessed: the 1400-id selection was too small.** Mean file size over the fetched set is **0.50 MB**, so 1400 ids would have topped out around **701 MB** — short of the ≥1 GiB gate — because id-ordered selection reaches shorter, more obscure works as it goes. 1 GiB needs ~2044 ids at that mean, so the selection was **raised to 2500**. Because the order is by id, raising the limit appends: the 1164 files already on disk were reused and only new ids were fetched.

@@ -32,6 +32,7 @@ The Phase-1 CLI exists and is tested (`canon`, `zround`, `pipe`, `pack`, `unpack
 
 ## Architecture & specification
 
+- [R4_SMOKE_DRAFT.md](R4_SMOKE_DRAFT.md) — **first measurement of LEXORA against a baseline** (smoke scope, draft, awaiting owner review before any publication)
 - [ADR-0010](ADR/ADR-0010-lxdb-direction.md) — `.lxdb` direction (**Proposed**): container of `.lxz` members as an interim v0, with a block-pool successor named and its trigger stated; **no byte layout until the corpus gate closes**
 - [DEPENDENCY_LICENCE_REVIEW.md](DEPENDENCY_LICENCE_REVIEW.md) — third-party licence obligations for the GUI extra (PySide6/Qt under PolyForm Noncommercial); **review awaiting an owner decision** (to be recorded as ADR-0011)
 

@@ -891,3 +891,29 @@ At 0.50 MB mean, 1 GiB needs about **2044 ids**, so the selection was raised to 
 **Gate:** `python3 -m pytest -q` → **482 passed, 1 skipped** (no code touched); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–59 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 60 — 2026-10-29 (R4 smoke: LEXORA measured against a baseline, at last)
+
+**Why this was the priority.** Every session so far improved a system whose central claim had never been tested. R1–R3 measured the *frozen baselines* against each other (zstd-19 vs xz-9); **LEXORA itself appeared in no results table.** The harness, the manifest, the split audit and the cost accounting were all built to answer one question — does this pipeline compress better than what exists? — and it had never been asked.
+
+**What changed.** `SYSTEMS` gains `lexora` (canonicalize → `.lxz` v0 at `DEFAULT_LEVEL`) and `lexora19` (identical at zstd level 19). The second exists because comparing a level-9 default against a level-19 baseline would mostly measure the *level*, not the pipeline. `run` also gains `--split` / `--max-bytes`, which subset a **verified** manifest and record the selector in the artifact — so smoke runs are reproducible without hand-built manifests, and a subset cannot weaken provenance because the full hash is checked first.
+
+**The numbers** (17 heldout files, 12.1 MiB, 2 reps):
+
+| system | ratio | encode MiB/s |
+|---|---|---|
+| `lexora` (shipped default, level 9) | 0.3367 | 12.36 |
+| `lexora19` | **0.3082** | 1.22 |
+| `zstd19` (baseline) | 0.3102 | 1.21 |
+
+**What it says, and what it does not.** At equal level LEXORA is **not worse** than the baseline *despite* paying container overhead — 16 of 17 files smaller, aggregate −0.64 %. That is the first evidence the pipeline is structurally sound rather than merely correct: canonicalization earns back slightly more than the header and index cost. But 0.6 % over 12.1 MiB with 2 reps on a shared 2-vCPU container **cannot be separated from noise**, and one file got worse. The phrasing written into the draft is *"indistinguishable at this scope, with a consistent sign across 16 of 17 files"* — suggestive, not established. No ADR-0001 verdict, and nothing published into `BENCHMARK_RESULTS.md`.
+
+**A deliberate absence.** Peak RSS is missing from this artifact and the artifact says why (no `VmHWM` in this container) rather than substituting a number from a different method. Memory lives in `benchmarks/results-rss-core.json`, measured by its own probe.
+
+**What protocol scope needs:** corpus ≥1 GiB (593 MB today), all three splits, 3 reps, `xz9` alongside, a second machine class, and owner sign-off — listed in the draft so the gap between "a smoke number exists" and "a verdict exists" stays explicit.
+
+**Gate:** `python3 -m pytest -q` → **482 passed, 1 skipped** (harness + docs only); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–60 are delivered as one patch on top of `19cc1a9`.

@@ -386,9 +386,53 @@ def _sys_xz9(data: bytes, out_path: Path) -> int:
     return out_path.stat().st_size
 
 
+def _sys_lexora(data: bytes, out_path: Path) -> int:
+    """LEXORA itself: canonicalize, then wrap in the `.lxz` v0 container.
+
+    Measured as a *system* so the project's own pipeline sits in the same table as
+    the frozen baselines, on the same files, with the same accounting. The stored
+    bytes include the container overhead (128 B header + 56 B/block index + 40 B
+    trailer) because REQ-CMP-004 says nothing is free: if the decoder needs it, it
+    counts. Level follows `lexora.DEFAULT_LEVEL` (ADR-0012), so the row states the
+    operating point the CLI actually ships.
+
+    Deliberately in-process like `_sys_zstd19`, not a subprocess: the harness's
+    peak-RSS method forks a child around this callable, and an extra interpreter
+    would be measured as if it were ours.
+    """
+    from lexora import DEFAULT_LEVEL
+    from lexora.canonicalize import canonicalize
+    from lexora.container import pack as lxz_pack
+
+    canonical = canonicalize(data)
+    archive = lxz_pack(canonical, level=DEFAULT_LEVEL)
+    out_path.write_bytes(archive)
+    return len(archive)
+
+
+def _sys_lexora19(data: bytes, out_path: Path) -> int:
+    """LEXORA at zstd level 19 — the size-comparable row.
+
+    The shipped default is `DEFAULT_LEVEL` (9, ADR-0012), which trades ~14 % more
+    bytes for ~9x the speed. Comparing that against a level-19 baseline would
+    mostly measure the level, not the pipeline, so this row exists to hold the
+    level constant and expose what the container itself costs.
+    """
+    from lexora.canonicalize import canonicalize
+    from lexora.container import pack as lxz_pack
+
+    archive = lxz_pack(canonicalize(data), level=19)
+    out_path.write_bytes(archive)
+    return len(archive)
+
+
 SYSTEMS = {
+    "lexora": _sys_lexora,
+    "lexora19": _sys_lexora19,
     "zstd19": _sys_zstd19,
     "xz9": _sys_xz9,
+    # "lexora" is OUR pipeline (canon + .lxz v0), not a baseline: it exists so the
+    # project's own numbers appear beside the frozen baselines on identical inputs.
     # brotli_q11 / ppmd: intentionally absent — tools not installed in this
     # environment (verified 2026-10-15 via harness `env`). Add real impls when
     # available; NEVER stub them to produce numbers.
@@ -427,6 +471,33 @@ def cmd_run(args: argparse.Namespace) -> int:
         return 1
     raw_dir = REPO_ROOT / "benchmarks" / "raw"
     raw_dir.mkdir(exist_ok=True)
+
+    # Subset selection for smoke revisions (Session 60). The FULL manifest hash is
+    # verified above before this runs, so a subset never weakens provenance; what
+    # the artifact records is the parent hash plus exactly how the subset was cut.
+    subset = None
+    if args.split or args.max_bytes:
+        selected, budget, seen = [], args.max_bytes or 0, 0
+        for e in m["files"]:
+            if args.split and e.get("split") != args.split:
+                continue
+            selected.append(e)
+            seen += e["size_bytes"]
+            if args.max_bytes and seen >= args.max_bytes:
+                break
+        if not selected:
+            print(f"error: subset selectors matched no files "
+                  f"(split={args.split!r}, max_bytes={args.max_bytes})", file=sys.stderr)
+            return 1
+        subset = {
+            "selector": {"split": args.split, "max_bytes": args.max_bytes},
+            "files": len(selected),
+            "input_bytes": sum(e["size_bytes"] for e in selected),
+            "note": "smoke-scope subset of the parent manifest — never protocol scope",
+        }
+        m = dict(m, files=selected)
+        print(f"subset: {subset['files']} files, {subset['input_bytes'] / 2**20:.1f} MiB "
+              f"(parent manifest_sha256 {m['manifest_sha256'][:16]}…)")
     rows = []
     # P1-T6: peak RSS per system. The encode call runs in a forked child;
     # the parent samples /proc/<pid>/status VmHWM while the child is alive
@@ -526,6 +597,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         "benchmark_revision": args.revision,
         "date": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "manifest_sha256": m["manifest_sha256"],
+        "subset": subset,
         "corpus_tier": m.get("corpus_tier", "UNKNOWN — pre-v2 manifest"),
         "provenance_present": m.get("provenance") is not None,
         "reps": args.reps,
@@ -585,6 +657,10 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--out", required=True); r.add_argument("--reps", type=int, default=3)
     r.add_argument("--revision", type=int, default=0)
     r.add_argument("--systems", default="zstd19,xz9")
+    r.add_argument("--split", default=None,
+                   help="restrict to one split (train|validation|heldout) — smoke runs")
+    r.add_argument("--max-bytes", type=int, default=0,
+                   help="stop after this many input bytes — smoke runs")
     r.set_defaults(func=cmd_run)
     return p
 

@@ -9,6 +9,10 @@
 
 The single place where measured compression/cleaning/performance results are published. Only reproducible runs (committed harness + frozen manifest hash + env capture) may add numbers here. Methodology is defined in [BENCHMARK_PROTOCOL.md](BENCHMARK_PROTOCOL.md); this file contains results and their evidence pointers only.
 
+## R4 smoke — LEXORA measured against the baseline for the first time
+
+**DRAFT, not published** — see [R4_SMOKE_DRAFT.md](R4_SMOKE_DRAFT.md) for the write-up and `benchmarks/results-r4-smoke.json` for the artifact. Until R4, LEXORA itself appeared in no results table: R1–R3 measured the frozen baselines against each other. At equal zstd level on 12.1 MiB of heldout corpus: LEXORA **0.3082** vs zstd-19 **0.3102** — 16 of 17 files smaller, aggregate −0.64 %, **indistinguishable at smoke scope and suggestive rather than established**, explicitly not an ADR-0001 verdict. The shipped default (level 9) is 0.3367, i.e. 8.6 % larger at ~10× the speed.
+
 ## Current state
 
 **One smoke-baseline revision published (R1, 2026-10-16).** It is explicitly **not** an ADR-0001 Pass/Partial/Fail verdict run: the corpus is a Tier-1 fallback snapshot (~7.1 MB, English books only), far below the ≥1 GiB multi-language target in [CORPUS_POLICY.md](CORPUS_POLICY.md). Every number below carries the mandatory tier label **T1-gutenberg-p0**. The pre-R1 statement stands for anything beyond this scope: no validated full-corpus benchmark results exist.
