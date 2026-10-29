@@ -12,6 +12,7 @@ Subcommands:
                   ERROR_HANDLING recovery semantics)
   lexora unpack  --in ARCHIVE.lxz --out CANONICAL [--block N] [--meta]
   lexora verify  --in ARCHIVE.lxz [--block N] [--json]
+  lexora batch   --in DIR --out-dir DIR [--op canon|pack] [--pattern G] [--report F]
                  (writes ONLY verified bytes; refuses with a specific error
                   and zero output on integrity/limit/format failure)
 
@@ -35,6 +36,7 @@ import os
 import shutil
 import sys
 import tempfile
+from pathlib import Path
 
 from lexora import __version__
 from lexora.canonicalize import CanonicalizationError, canonicalize, canonicalize_stream
@@ -55,6 +57,7 @@ from lexora.zstd_core import CodecError, compress, decompress
 MAX_BLOCK_SIZE = 8 * 1024 * 1024
 
 EXIT_OK = 0
+EXIT_PARTIAL = 1  # batch ran to completion, but at least one file failed (Session 48)
 EXIT_FILE = 3
 EXIT_CANON = 4
 EXIT_CODEC = 5
@@ -507,6 +510,136 @@ def cmd_verify(args) -> int:
     return EXIT_OK if result.ok else EXIT_CONTAINER
 
 
+def _iter_batch_inputs(root: Path, pattern: str) -> list[Path]:
+    """Every regular file under `root` (recursively) matching `pattern`.
+
+    Ordering is sorted and therefore deterministic, which matters because the
+    report is compared run to run and a shuffled batch is hard to audit.
+    """
+    if root.is_file():
+        return [root]
+    return sorted(p for p in root.rglob(pattern) if p.is_file())
+
+
+def cmd_batch(args) -> int:
+    """Process many files in one invocation (canon or pack), one at a time.
+
+    This is the core the GUI's batch queue needs, built where it can be tested:
+    streaming per file (so a batch of large documents costs one document, not
+    all of them), deterministic ordering, per-file results in one report, and a
+    documented policy for partial failure rather than a first-error abort.
+
+    Exit codes: 0 every file succeeded; **1** the batch completed but some files
+    failed (new in Session 48 — a partial run is neither success nor a single
+    error); with `--stop-on-error`, the failing file's own code (3/4/5/7); 2 for
+    usage problems; 3 when the input root or output directory cannot be used.
+    """
+    if args.op not in ("canon", "pack"):
+        print(f"usage error: --op must be canon or pack (got {args.op!r})", file=sys.stderr)
+        return 2
+    if args.block_size < 1 or args.block_size > MAX_BLOCK_SIZE:
+        print(f"usage error: --block-size must be 1..{MAX_BLOCK_SIZE}", file=sys.stderr)
+        return 2
+
+    root = Path(args.infile)
+    if not root.exists():
+        print(f"error: cannot read {root}: no such file or directory", file=sys.stderr)
+        return EXIT_FILE
+    inputs = _iter_batch_inputs(root, args.pattern)
+    if not inputs:
+        print(f"error: no files matched {args.pattern!r} under {root}", file=sys.stderr)
+        return 2
+
+    out_dir = Path(args.out_dir)
+    try:
+        out_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        print(f"error: cannot create {out_dir}: {exc}", file=sys.stderr)
+        return EXIT_FILE
+
+    suffix = args.suffix or (".canon" if args.op == "canon" else ".lxz")
+    base = root if root.is_dir() else root.parent
+    results: list[dict] = []
+    failures = 0
+
+    for src_path in inputs:
+        rel = src_path.relative_to(base)
+        dst_path = out_dir / rel.parent / (rel.name + suffix)
+        entry: dict = {"input": str(rel), "output": str(dst_path.relative_to(out_dir))}
+        try:
+            dst_path.parent.mkdir(parents=True, exist_ok=True)
+            # pack_stream backfills the header and re-reads it to self-check, so
+            # its destination must be readable; canon only writes forward.
+            mode = "wb+" if args.op == "pack" else "wb"
+            with open(src_path, "rb") as src, open(dst_path, mode) as dst:
+                if args.op == "canon":
+                    meta = canonicalize_stream(src, dst, declared_encoding=args.encoding)
+                else:
+                    info = lxz_pack_stream(src, dst, level=args.level,
+                                           block_size=args.block_size)
+                    meta = {"input_bytes": src_path.stat().st_size,
+                            "output_bytes": dst_path.stat().st_size,
+                            "blocks": len(info.blocks)}
+            entry.update(ok=True, **{k: meta[k] for k in ("input_bytes", "output_bytes")})
+            if "blocks" in meta:
+                entry["blocks"] = meta["blocks"]
+        except CanonicalizationError as exc:
+            entry.update(ok=False, code="E-CAN", error=str(exc))
+        except ContainerError as exc:
+            entry.update(ok=False, code=exc.code, error=exc.message)
+        except CodecError as exc:
+            entry.update(ok=False, code="E-CMP", error=str(exc))
+        except OSError as exc:
+            entry.update(ok=False, code="E-IO", error=str(exc))
+        if not entry["ok"]:
+            failures += 1
+            # a failed file must not leave a half-written artifact behind
+            try:
+                dst_path.unlink()
+            except OSError:
+                pass
+            print(f"batch: {entry['input']} FAILED ({entry.get('code')}): "
+                  f"{entry.get('error', '')}", file=sys.stderr)
+            if args.stop_on_error:
+                results.append(entry)
+                break
+        results.append(entry)
+
+    ok_count = sum(1 for r in results if r["ok"])
+    report = {
+        "op": args.op,
+        "input_root": str(root),
+        "pattern": args.pattern,
+        "output_dir": str(out_dir),
+        "suffix": suffix,
+        "files_matched": len(inputs),
+        "files_ok": ok_count,
+        "files_failed": failures,
+        "input_bytes_total": sum(r.get("input_bytes", 0) for r in results),
+        "output_bytes_total": sum(r.get("output_bytes", 0) for r in results),
+        "results": results,
+    }
+    if args.report:
+        Path(args.report).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    print(
+        f"batch: {args.op} {ok_count}/{len(results)} ok"
+        + (f", {failures} failed" if failures else "")
+        + f"; in={report['input_bytes_total']} out={report['output_bytes_total']} bytes"
+        + f" -> {out_dir}",
+        file=sys.stderr,
+    )
+    if failures:
+        if args.stop_on_error:
+            first = next(r for r in results if not r["ok"])
+            return {"E-CAN": EXIT_CANON, "E-CMP": EXIT_CODEC, "E-IO": EXIT_FILE}.get(
+                first.get("code"), EXIT_CONTAINER
+            )
+        return EXIT_PARTIAL
+    return EXIT_OK
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="lexora",
@@ -576,6 +709,23 @@ def build_parser() -> argparse.ArgumentParser:
     vf.add_argument("--json", action="store_true",
                     help="print the full per-block report as JSON to stdout")
     vf.set_defaults(func=cmd_verify)
+
+    bt = sub.add_parser("batch", help="process many files in one invocation (canon or pack)")
+    bt.add_argument("--in", dest="infile", required=True,
+                    help="a directory (searched recursively) or a single file")
+    bt.add_argument("--op", choices=("canon", "pack"), default="canon")
+    bt.add_argument("--out-dir", required=True, help="destination root (created if missing)")
+    bt.add_argument("--pattern", default="*", help="glob applied under --in (default: *)")
+    bt.add_argument("--suffix", default=None,
+                    help="appended to each output name (default: .canon for canon, .lxz for pack)")
+    bt.add_argument("--encoding", default=None, help="declared source encoding (canon only)")
+    bt.add_argument("--level", type=int, default=19, help="zstd level (pack only)")
+    bt.add_argument("--block-size", type=int, default=8 * 1024 * 1024)
+    bt.add_argument("--stop-on-error", action="store_true",
+                    help="abort at the first failure and exit with that file's code")
+    bt.add_argument("--report", default=None, help="write the JSON report to this path")
+    bt.add_argument("--json", action="store_true", help="print the JSON report to stdout")
+    bt.set_defaults(func=cmd_batch)
     return p
 
 

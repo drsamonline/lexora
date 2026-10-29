@@ -19,7 +19,7 @@ Version string: `lexora --version` → `lexora 0.0.1.dev1` (prototype; no stable
 
 ## Scope honesty
 
-Six subcommands exist: the three Phase-1 baseline flows (canonicalize + plain zstd frames), `pack`/`unpack` for the `.lxz` v0 container (unblocked by ADR-0007 acceptance, Session 24, under standing owner delegation), and `verify` (Session 47) for auditing an archive without producing payload bytes. The container is **experimental** (major 0): byte layout frozen per ADR-0007 but pre-release. Any command listed here exists and is covered by tests (`tests/test_cli.py`, `tests/test_container_lxz.py`).
+Seven subcommands exist: the three Phase-1 baseline flows (canonicalize + plain zstd frames), `pack`/`unpack` for the `.lxz` v0 container (unblocked by ADR-0007 acceptance, Session 24, under standing owner delegation), `verify` (Session 47) for auditing an archive without producing payload bytes, and `batch` (Session 48) for processing many files in one invocation. The container is **experimental** (major 0): byte layout frozen per ADR-0007 but pre-release. Any command listed here exists and is covered by tests (`tests/test_cli.py`, `tests/test_container_lxz.py`).
 
 ## Subcommands
 
@@ -140,6 +140,40 @@ Exit codes: **0** everything verified; **7** a refusal (bad header/index/limits)
 
 Library equivalent: `container.verify_stream(handle)` — and `verify_archive(bytes)` is now a thin wrapper over it, so a verification costs one pass over the archive instead of one pass *per block*.
 
+### `lexora batch` — process many files in one invocation
+
+The core a queue needs, built where it can be tested: every file goes through the
+same streaming paths as the single-file commands, so a batch of large documents
+costs one document of memory rather than all of them. Ordering is **sorted and
+deterministic**, so a report compares run to run, and the input directory's
+structure is preserved under `--out-dir`.
+
+```text
+lexora batch --in DIR --out-dir DIR [--op canon|pack] [--pattern G] [--suffix S]
+             [--encoding E] [--level N] [--block-size B]
+             [--stop-on-error] [--report F] [--json]
+```
+
+| Flag | Required | Default | Meaning |
+|---|---|---|---|
+| `--in PATH` | yes | — | directory (searched recursively) or a single file |
+| `--op` | no | `canon` | `canon` or `pack` |
+| `--out-dir DIR` | yes | — | destination root; created if missing |
+| `--pattern G` | no | `*` | glob applied under `--in` |
+| `--suffix S` | no | `.canon` / `.lxz` | appended to each output name |
+| `--encoding E` | no | — | declared source encoding (canon only) |
+| `--level N`, `--block-size B` | no | 19, 8 MiB | pack only |
+| `--stop-on-error` | no | off | abort at the first failure, exit with that file's code |
+| `--report F`, `--json` | no | — | write / print the JSON report (per-file `ok`, `code`, sizes) |
+
+**Partial failure is a policy, not an accident.** By default the batch keeps going
+and reports every file; the exit code is then **1** — completed, but not
+everything worked — which is a code this CLI did not previously use. With
+`--stop-on-error` the first failure's own code is returned instead (3/4/5/7), so a
+script that wants fail-fast semantics gets exactly what a single-file invocation
+would give it. A failed file never leaves a half-written artifact: the partial
+output is deleted before the failure is recorded.
+
 ## Exit codes
 
 Stable per this contract (all paths exercised by `tests/test_cli.py`):
@@ -147,6 +181,7 @@ Stable per this contract (all paths exercised by `tests/test_cli.py`):
 | Code | Meaning | When |
 |---|---|---|
 | 0 | success | output written (or stdout) and round-trip verified where applicable |
+| 1 | partial batch | `batch` ran to completion but at least one file failed — see the `batch` section. Added in Session 48; the earlier note that the shipped space has no exit 1 is superseded |
 | 2 | usage error | unknown/missing subcommand or missing required flag (argparse default) |
 | 3 | input/output file error | cannot open/read input or write output (OSError) |
 | 4 | canonicalization error | undecodable input without declaration, bad declared codec |

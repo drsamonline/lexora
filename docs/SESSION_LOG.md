@@ -669,3 +669,19 @@ The price of the current default, stated plainly: **19 → 3 costs 26.7 % more b
 **Gate:** `python3 -m pytest -q` → **390 passed, 1 skipped** (13 new in `tests/test_verify_cli.py`); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–47 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 48 — 2026-10-29 (`lexora batch`: the queue core, where it can be tested)
+
+**Why this stage.** The GUI's batch queue (G8-full) is listed as a stretch item, but the useful half of it is not a widget — it is a loop over files with a result per file, and that belongs in the CLI where it can be tested without Qt. PySide6 cannot be installed in this environment (no `libegl1`, no apt), so writing widget code here would be untested-by-construction; writing the engine is the honest way to advance the same feature.
+
+**What landed: `lexora batch --in DIR --out-dir DIR [--op canon|pack]`.** Recursive, sorted and therefore deterministic (a report has to compare run to run), input structure preserved under the output root, `--pattern` filtering, `--suffix` control, `--encoding` for canon, `--level`/`--block-size` for pack, and a per-file JSON report via `--report` or `--json`. Each file runs through the same streaming paths as the single-file commands, so a batch of large documents costs one document of resident memory rather than all of them.
+
+**Partial failure is a policy, so it is written down.** By default the batch completes and reports everything, returning **exit 1** — "completed, but not everything worked" — a code the CLI had never used; the exit table in CLI_REFERENCE said the shipped space had no exit 1, and that note is now explicitly superseded rather than quietly contradicted. `--stop-on-error` instead returns the first failing file's own code (3/4/5/7), so fail-fast scripts get exactly what a single-file invocation gives them. A failed file's partial output is deleted before the failure is recorded.
+
+**Bug found by the smoke test, not by the tests I had written first.** The pack path opened its destination `"wb"`, but `pack_stream` backfills the header and re-reads it to self-check — so every packed file failed with `E-IO: read`. Destinations are now `wb+` for pack and `wb` for canon. Worth recording because it is exactly the class of bug a single-file test with `BytesIO` hides: `BytesIO` is always readable.
+
+**Gate:** `python3 -m pytest -q` → **402 passed, 1 skipped** (12 new in `tests/test_batch_cli.py`); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK. End-to-end on a real tree: canon batch → pack batch → every produced archive verified with the Session-47 `verify` command.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–48 are delivered as one patch on top of `19cc1a9`.
