@@ -789,3 +789,25 @@ The price of the current default, stated plainly: **19 → 3 costs 26.7 % more b
 **Gate:** `python3 -m pytest -q` → **446 passed, 1 skipped** (14 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–54 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 55 — 2026-10-29 (writer hardening: the CLI crashed on a missing directory)
+
+**Why this stage.** Session 54 attacked the reader. This one attacked the writer — pathological block sizes, payloads that defeat the compressor's own cap, destinations that fail mid-write, and directories that cannot be written at all. The property under test is not "it succeeds" but "when it cannot succeed, it fails cleanly and leaves nothing behind".
+
+**The bug that fell out is user-facing, not theoretical.** Packing into a directory that does not exist, or one you cannot write to, printed a **Python traceback and exited 1**:
+
+```
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/wf/nodir/.lxz-tmp-jx31zjsv'
+```
+
+Cause: both atomic writers called `tempfile.mkstemp(dir=…)` *outside* their `try` block, so the `OSError` escaped before any handler could convert it into the documented behaviour. `CLI_REFERENCE.md` promises exit **3** with a one-line error for every output-file failure, and the exit-code table is presented as a stable contract — so this was a contract violation that only a failure-path test could see. `mkstemp` now sits inside the guard; the same two commands produce `error: cannot write …` with exit 3, no artifact and no `.lxz-tmp-*` debris.
+
+**What the new suite holds** (`tests/test_writer_fuzz.py`, 22 tests): block sizes 1/2/3/7/10/11 covering exact-block and block+1 boundaries; payloads of all-0xFF, incompressible noise and the empty case; a tight `max_block_compressed` refusing with `E-RES-002` rather than truncating (truncation would produce an archive that cannot round-trip); a destination that reports ENOSPC after 500 bytes; a one-byte-at-a-time source for the streaming canonicalizer, because real files can return short reads and a reader assuming `read(n)` yields `n` would corrupt or stall; three-run determinism; and the CLI failure paths, including `batch` into an unwritable out-dir.
+
+**A deliberate test-side decision:** the CLI reports file errors two ways — a returned code, or `SystemExit(3)` raised from the atomic writers, matching how `_read()` treats unreadable input. The tests accept either, because the *contract* is the exit code, not which mechanism produces it. Pinning the mechanism would have made the tests brittle without making them stronger.
+
+**Gate:** `python3 -m pytest -q` → **468 passed, 1 skipped** (22 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–55 are delivered as one patch on top of `19cc1a9`.

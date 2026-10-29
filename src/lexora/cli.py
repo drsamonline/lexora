@@ -234,18 +234,24 @@ def _write_atomic(path: str, data: bytes) -> None:
     """temp file + fsync + rename (ERROR_HANDLING recovery semantics): a crash
     leaves either the previous artifact or the new one, never a hybrid."""
     d = os.path.dirname(os.path.abspath(path))
-    fd, tmp = tempfile.mkstemp(dir=d, prefix=".lxz-tmp-")
+    tmp: str | None = None
     try:
+        # mkstemp must be INSIDE the try: an unwritable or missing destination
+        # directory raises here, and before Session 55 that OSError escaped as a
+        # traceback with exit 1 — contradicting the documented exit-code table,
+        # which promises 3 and a one-line error for any output-file failure.
+        fd, tmp = tempfile.mkstemp(dir=d, prefix=".lxz-tmp-")
         with os.fdopen(fd, "wb") as fh:
             fh.write(data)
             fh.flush()
             os.fsync(fh.fileno())
         os.replace(tmp, path)
     except OSError as exc:
-        try:
-            os.unlink(tmp)
-        except OSError:
-            pass
+        if tmp is not None:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
         print(f"error: cannot write {path}: {exc}", file=sys.stderr)
         raise SystemExit(EXIT_FILE)
 
@@ -259,15 +265,20 @@ def _write_atomic_stream(path: str, writer) -> None:
     streamed writer backfills the header and re-reads it to self-check.
     """
     d = os.path.dirname(os.path.abspath(path))
-    fd, tmp = tempfile.mkstemp(dir=d, prefix=".lxz-tmp-")
+    tmp: str | None = None
 
     def _discard() -> None:
+        if tmp is None:
+            return
         try:
             os.unlink(tmp)
         except OSError:
             pass
 
     try:
+        # Inside the try for the same reason as _write_atomic: a missing or
+        # unwritable destination directory must become exit 3, not a traceback.
+        fd, tmp = tempfile.mkstemp(dir=d, prefix=".lxz-tmp-")
         with os.fdopen(fd, "wb+") as fh:
             writer(fh)
             fh.flush()

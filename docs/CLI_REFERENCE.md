@@ -229,7 +229,7 @@ Stable per this contract (all paths exercised by `tests/test_cli.py`):
 | 0 | success | output written (or stdout) and round-trip verified where applicable |
 | 1 | partial batch | `batch` ran to completion but at least one file failed — see the `batch` section. Added in Session 48; the earlier note that the shipped space has no exit 1 is superseded |
 | 2 | usage error | unknown/missing subcommand or missing required flag (argparse default) |
-| 3 | input/output file error | cannot open/read input or write output (OSError) |
+| 3 | input/output file error | cannot open/read input or write output (OSError) — including a **missing or unwritable destination directory**, which raised a traceback and exited 1 until Session 55 (the atomic writers created their temp file outside the guarded block). Artifact-free on failure: no output file, no `.lxz-tmp-*` debris |
 | 4 | canonicalization error | undecodable input without declaration, bad declared codec |
 | 5 | codec error | corrupt/truncated frame, str-instead-of-bytes misuse, level outside 1..22 |
 | 6 | round-trip verification failure | `decode(encode(C)) != C` — REQ-CMP-001 violation, blocker severity |
