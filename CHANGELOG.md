@@ -6,6 +6,11 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 61 (**corpus at 746.5 MB — three-quarters of the way to the gate**):
+  - Nine fetch passes took the snapshot from **593.4 MB to 746.5 MB** (1569 files, 81 failures recorded), at ~17 MB per ~285 s pass as the id tail gets smaller.
+  - **Integrity re-checked at the new size:** manifest `1785040d…` over 1586 files verifies with **0 problems**; splits 1117 train / 155 validation / 314 heldout, **no lineage straddling**.
+  - **~278 MB short of ≥1 GiB**, i.e. ~16 more passes here or one unattended loop. The mean is now 0.48 MB/file, so 2500 ids should clear the gate; if not, raising `--catalog-limit` appends and reuses.
+  - No code changed; suite unchanged at **482 passed, 1 skipped**.
 - 2026-10-29 — Session 60 (**LEXORA measured against a baseline for the first time**):
   - The harness's `SYSTEMS` now registers **`lexora`** (canonicalize → `.lxz` v0 at `DEFAULT_LEVEL`) and **`lexora19`** (the same at zstd level 19, so the level is held constant and only the pipeline varies). Until now LEXORA appeared in no results table — R1–R3 measured the frozen baselines against each other.
   - **`run --split` / `--max-bytes`** subset a *verified* manifest and record the selector in the artifact, so smoke runs are reproducible without hand-built manifests and provenance is not weakened.

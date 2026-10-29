@@ -917,3 +917,19 @@ At 0.50 MB mean, 1 GiB needs about **2044 ids**, so the selection was raised to 
 **Gate:** `python3 -m pytest -q` → **482 passed, 1 skipped** (harness + docs only); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–60 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 61 — 2026-10-29 (corpus to 746.5 MB: three-quarters of the gate)
+
+**What the passes bought.** Nine fetch passes took the snapshot from **593.4 MB to 746.5 MB** (1569 files, 81 failures recorded rather than hidden — 404s and payloads under the guard). Manifest `1785040d…` over 1586 files verifies with **0 problems**; splits 1117 train / 155 validation / 314 heldout, **no lineage straddling**.
+
+**The rate is the story.** Per-pass yield keeps falling as the id tail gets smaller: ~43 MB per pass when the head of the list was being fetched (Session 58), ~20 MB in Session 59, **~17 MB now**. That is expected for an id-ordered selection, and it is why the earlier "a dozen more passes" estimate was wrong twice — the arithmetic has to be redone against the current mean, not the historical one.
+
+**Where it stands.** ~278 MB short of ≥1 GiB, i.e. ~16 more passes here or one unattended loop on a machine that can host it. The measured mean is now **0.48 MB/file**, so the 2500-id selection should clear the gate; if it does not, raising `--catalog-limit` appends to the same ordering and reuses everything already on disk.
+
+**No benchmark revision was re-run** — the R4 smoke artifact (Session 60) stands as the only measurement of LEXORA against a baseline, and it remains explicitly smoke-scope. A protocol-scope revision still needs the full gigabyte, all three splits, 3 reps, `xz9` alongside and owner sign-off.
+
+**Gate:** `python3 -m pytest -q` → **482 passed, 1 skipped** (no code touched); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–61 are delivered as one patch on top of `19cc1a9`.
