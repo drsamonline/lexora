@@ -6,6 +6,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 50 (**directory-level `inspect`** — the "how did the batch go?" view):
+  - `inspect --in DIR [--pattern '*.lxz'] [--verify] [--json]`: recursive, sorted summary of every archive under a directory — totals first (payload, bytes on disk, ratio, container overhead, blocks), then one line per archive with status.
+  - **Failures are counted, not dropped.** A broken archive appears as a row with its refusal code and is included in the archive count and byte totals; a summary that omitted its failures would be a summary you cannot trust. Exit 0 when everything is clean, 7 when any archive is not, 2 when the directory holds no matches.
+  - Fixed a duplicate-key bug found by the smoke test: `summarize_directory` set `"archives"` to the count and then to the row list, so the report's first line printed the whole table. Now `archive_count` is the number and `archives` is the list, pinned by a JSON-parity test.
+  - **Second bug, caught by reading the demo output:** with one broken archive present, the report printed *"every block in every archive verified"* directly above a FAILED row. A broken archive contributes no blocks, so "all parsed rows verified" was **vacuously true**. The verdict now covers every row, and the line reads "N archive(s) could not be verified" when any archive fails to parse. Pinned by a regression test that asserts the reassuring sentence is absent.
+  - Library: `summarize_directory()` / `format_directory_report()` alongside the single-archive pair, still Qt-free for the GUI inspector.
+  - Tests: 6 added to `tests/test_inspect_cli.py` (aggregate totals, JSON parity with the library, one broken archive not hiding the rest, `--verify` surfacing a failed block in the rows, empty directory → 2, pattern narrowing). Suite **416 → 422 passed**, 1 skipped.
 - 2026-10-29 — Session 49 (**`lexora inspect` — the readable summary, and the accounting identity made visible**):
   - **`src/lexora/inspect.py`** (`summarize()` + `format_report()`), deliberately Qt-free so the GUI inspector (G4) renders the same data instead of re-deriving it: format/versions, payload vs archive bytes, container overhead broken down (header / index-per-block / trailer), a block table, and an **explicit cost-accounting check**.
   - The accounting line is the point: `.lxz` v0 promises `header + Σ frames + index + trailer == file length` — REQ-CMP-004 ("nothing is free") instantiated for this container, checkable from the index alone. It prints `OK` or `MISMATCH`, and a mismatch exits 7.

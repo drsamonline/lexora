@@ -478,7 +478,24 @@ def cmd_inspect(args) -> int:
     only): this prints what a person wants to see — what the archive is, how much
     of it is payload, what the container costs, and whether its accounting closes.
     """
-    from lexora.inspect import format_report, summarize
+    from lexora.inspect import (
+        format_directory_report,
+        format_report,
+        summarize,
+        summarize_directory,
+    )
+
+    if Path(args.infile).is_dir():
+        summary = summarize_directory(args.infile, pattern=args.pattern, verify=args.verify)
+        if not summary["archives"]:
+            print(f"error: no archives matched {args.pattern!r} under {args.infile}",
+                  file=sys.stderr)
+            return 2
+        if args.json:
+            print(json.dumps(summary, indent=2, sort_keys=True))
+        else:
+            print(format_directory_report(summary))
+        return EXIT_OK if summary["archives_failed"] == 0 else EXIT_CONTAINER
 
     try:
         src = open(args.infile, "rb")
@@ -739,13 +756,17 @@ def build_parser() -> argparse.ArgumentParser:
                     help="print the full per-block report as JSON to stdout")
     vf.set_defaults(func=cmd_verify)
 
-    ins = sub.add_parser("inspect", help="print a readable summary of one archive")
-    ins.add_argument("--in", dest="infile", required=True)
+    ins = sub.add_parser("inspect",
+                         help="print a readable summary of one archive, or of every archive in a directory")
+    ins.add_argument("--in", dest="infile", required=True,
+                     help="an archive, or a directory to summarise every archive under it")
     ins.add_argument("--verify", action="store_true",
                      help="also decode every block and check its SHA-256 (costs a full read)")
     ins.add_argument("--json", action="store_true", help="machine-readable summary instead of text")
     ins.add_argument("--blocks", type=int, default=20,
                      help="how many block rows to print (default 20; 0 hides the table)")
+    ins.add_argument("--pattern", default="*.lxz",
+                     help="glob used when --in is a directory (default: *.lxz)")
     ins.set_defaults(func=cmd_inspect)
 
     bt = sub.add_parser("batch", help="process many files in one invocation (canon or pack)")

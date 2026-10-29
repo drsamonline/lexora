@@ -143,3 +143,105 @@ class TestCliInspect:
         arc.write_bytes(bytes(raw))
         assert cli.main(["inspect", "--in", str(arc)]) == cli.EXIT_CONTAINER
         assert "refusal" in capsys.readouterr().err
+
+
+class TestDirectoryInspect:
+    """A directory summary answers "how did the batch run go?" — so it must total
+    honestly (including failures) and never let one broken archive hide the rest."""
+
+    def _packed_dir(self, tmp_path, files: dict[str, bytes]) -> pathlib.Path:
+        src = tmp_path / "in"
+        src.mkdir()
+        for name, data in files.items():
+            p = src / name
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_bytes(data)
+        out = tmp_path / "packed"
+        assert cli.main(["batch", "--in", str(src), "--out-dir", str(out),
+                         "--op", "pack", "--level", "1"]) == cli.EXIT_OK
+        return out
+
+    def test_aggregate_totals_and_rows(self, tmp_path, capsys) -> None:
+        out = self._packed_dir(tmp_path, {"a.txt": b"alpha\r\n", "sub/b.txt": b"beta\r\n"})
+        assert cli.main(["inspect", "--in", str(out)]) == cli.EXIT_OK
+        text = capsys.readouterr().out
+        assert "2 archive(s)" in text and "2 ok, 0 failed" in text
+        assert "not checked" in text
+        assert "a.txt.lxz" in text and "sub/b.txt.lxz" in text
+
+    def test_json_aggregate_matches_the_library(self, tmp_path, capsys) -> None:
+        out = self._packed_dir(tmp_path, {"a.txt": b"alpha\r\n"})
+        assert cli.main(["inspect", "--in", str(out), "--json"]) == cli.EXIT_OK
+        printed = json.loads(capsys.readouterr().out)
+        from lexora.inspect import summarize_directory
+
+        assert printed == summarize_directory(out)
+        assert printed["archive_count"] == 1
+        assert printed["archives"][0]["archive"] == "a.txt.lxz"
+        assert printed["archive_bytes_total"] == printed["archives"][0]["archive_bytes"]
+
+    def test_one_broken_archive_does_not_hide_the_others(self, tmp_path, capsys) -> None:
+        out = self._packed_dir(tmp_path, {"a.txt": b"alpha\r\n", "b.txt": b"beta\r\n"})
+        bad = out / "zz-broken.lxz"
+        raw = bytearray((out / "a.txt.lxz").read_bytes())
+        raw[20] ^= 0xFF
+        bad.write_bytes(bytes(raw))
+
+        assert cli.main(["inspect", "--in", str(out)]) == cli.EXIT_CONTAINER
+        text = capsys.readouterr().out
+        assert "2 ok, 1 failed" in text
+        assert "FAILED (E-FMT-HEAD-004)" in text
+        # the good archives are still listed
+        assert "a.txt.lxz" in text and "b.txt.lxz" in text
+
+    def test_verify_flag_reports_a_failed_block_in_the_rows(self, tmp_path, capsys) -> None:
+        out = self._packed_dir(tmp_path, {"a.txt": b"payload " * 500})
+        arc = out / "a.txt.lxz"
+        raw = bytearray(arc.read_bytes())
+        info, _, _ = container.read_index(raw)
+        raw[info.blocks[0].offset + 4] ^= 0xFF
+        arc.write_bytes(bytes(raw))
+
+        assert cli.main(["inspect", "--in", str(out), "--verify", "--json"]) == cli.EXIT_CONTAINER
+        printed = json.loads(capsys.readouterr().out)
+        row = printed["archives"][0]
+        assert row["ok"] is False and row["verified"] is False
+        assert row["failed_blocks"] == [{"index": 0, "code": "E-CMP-004"}]
+
+    def test_empty_directory_is_a_usage_error(self, tmp_path, capsys) -> None:
+        empty = tmp_path / "empty"
+        empty.mkdir()
+        assert cli.main(["inspect", "--in", str(empty)]) == 2
+        assert "no archives matched" in capsys.readouterr().err
+
+    def test_pattern_narrows_the_scan(self, tmp_path, capsys) -> None:
+        out = self._packed_dir(tmp_path, {"a.txt": b"alpha\r\n"})
+        (out / "notes.txt").write_text("not an archive")
+        assert cli.main(["inspect", "--in", str(out), "--json"]) == cli.EXIT_OK
+        assert json.loads(capsys.readouterr().out)["archive_count"] == 1
+        assert cli.main(["inspect", "--in", str(out), "--pattern", "*.txt", "--json"]) != cli.EXIT_OK
+
+
+def test_directory_report_never_claims_integrity_when_an_archive_failed(tmp_path, capsys) -> None:
+    """Regression: a broken archive has no blocks, so "every parsed row verified"
+    was vacuously true and the report printed "every block in every archive
+    verified" directly above a FAILED row. The verdict must cover all rows."""
+    src = tmp_path / "in"
+    src.mkdir()
+    (src / "a.txt").write_bytes(b"alpha\r\n")
+    packed = tmp_path / "packed"
+    assert cli.main(["batch", "--in", str(src), "--out-dir", str(packed),
+                     "--op", "pack", "--level", "1"]) == cli.EXIT_OK
+    raw = bytearray((packed / "a.txt.lxz").read_bytes())
+    raw[20] ^= 0xFF  # corrupt the header of a copy
+    (packed / "zz-broken.lxz").write_bytes(bytes(raw))
+
+    assert cli.main(["inspect", "--in", str(packed), "--verify"]) == cli.EXIT_CONTAINER
+    text = capsys.readouterr().out
+    assert "every block in every archive verified" not in text
+    assert "1 archive(s) could not be verified" in text
+
+    assert cli.main(["inspect", "--in", str(packed), "--verify", "--json"]) == cli.EXIT_CONTAINER
+    printed = json.loads(capsys.readouterr().out)
+    assert printed["verified"] is False
+    assert printed["archive_count"] == 2 and printed["archives_failed"] == 1

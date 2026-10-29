@@ -13,8 +13,11 @@ index alone without decoding anything.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from lexora.container import (
     HEADER_SIZE,
+    ContainerError,
     INDEX_ENTRY_SIZE,
     TRAILER_SIZE,
     read_index_stream,
@@ -147,4 +150,103 @@ def format_report(summary: dict, *, max_blocks: int = 20) -> str:
     hidden = len(summary["blocks"]) - max(0, max_blocks)
     if hidden > 0:
         lines.append(f"... {hidden} more block(s) not shown (--blocks N to raise the limit)")
+    return "\n".join(lines)
+
+
+def summarize_directory(root: Path | str, *, pattern: str = "*.lxz", verify: bool = False) -> dict:
+    """Aggregate summary over every archive under `root` (recursive, sorted).
+
+    This is what a user actually asks after a batch pack: "how did the run turn
+    out?" — so it answers per archive *and* in total, and it keeps going when one
+    archive is broken rather than stopping at the first bad file. A broken archive
+    is recorded with its refusal code; it is never silently dropped from the
+    totals, because a count that omits its failures is a count you cannot trust.
+    """
+    root = Path(root)
+    paths = sorted(p for p in root.rglob(pattern) if p.is_file())
+    rows: list[dict] = []
+    for path in paths:
+        rel = path.relative_to(root).as_posix()
+        try:
+            with open(path, "rb") as fh:
+                summary = summarize(fh, verify=verify)
+        except ContainerError as exc:
+            rows.append({"archive": rel, "ok": False, "code": exc.code,
+                         "error": exc.message, "archive_bytes": path.stat().st_size})
+            continue
+        except OSError as exc:
+            rows.append({"archive": rel, "ok": False, "code": "E-IO",
+                         "error": str(exc), "archive_bytes": path.stat().st_size})
+            continue
+        ok = summary["accounting"]["ok"] and (summary["verified"] is not False)
+        rows.append({
+            "archive": rel,
+            "ok": ok,
+            "code": None if ok else ("E-ACCT" if not summary["accounting"]["ok"] else "E-INTEGRITY-001"),
+            "archive_bytes": summary["archive_bytes"],
+            "total_uncompressed_bytes": summary["total_uncompressed_bytes"],
+            "block_count": summary["block_count"],
+            "ratio": summary["ratio"],
+            "accounting_ok": summary["accounting"]["ok"],
+            "overhead_bytes": summary["overhead"]["total_bytes"],
+            "verified": summary["verified"],
+            "failed_blocks": summary["failed_blocks"],
+        })
+
+    good = [r for r in rows if r["ok"]]
+    return {
+        "root": str(root),
+        "pattern": pattern,
+        "archive_count": len(rows),
+        "archives_ok": len(good),
+        "archives_failed": len(rows) - len(good),
+        "archive_bytes_total": sum(r.get("archive_bytes", 0) for r in rows),
+        "uncompressed_bytes_total": sum(r.get("total_uncompressed_bytes", 0) for r in rows),
+        "overhead_bytes_total": sum(r.get("overhead_bytes", 0) for r in rows),
+        "block_count_total": sum(r.get("block_count", 0) for r in rows),
+        "ratio": round(
+            sum(r.get("archive_bytes", 0) for r in rows)
+            / sum(r.get("total_uncompressed_bytes", 0) for r in rows), 4
+        ) if sum(r.get("total_uncompressed_bytes", 0) for r in rows) else None,
+        # Deliberately over ALL rows, not just the parsed ones: a broken archive
+        # contributes no blocks, so "every good row verified" was vacuously True
+        # and the report claimed full integrity while listing a FAILED archive.
+        "verified": (all(r.get("verified") is True for r in rows) if verify and rows else None),
+        "archives": rows,  # per-archive rows; "archive_count" is the number
+    }
+
+
+def format_directory_report(summary: dict) -> str:
+    """Text rendering of summarize_directory(): totals first, then one line each."""
+    lines = [
+        f"{summary['archive_count']} archive(s) under {summary['root']} "
+        f"({summary['pattern']}): {summary['archives_ok']} ok, "
+        f"{summary['archives_failed']} failed",
+        f"payload {summary['uncompressed_bytes_total']:,} -> "
+        f"{summary['archive_bytes_total']:,} bytes on disk, ratio {summary['ratio']}, "
+        f"container overhead {summary['overhead_bytes_total']:,} bytes "
+        f"across {summary['block_count_total']} block(s) in the "
+        f"{summary['archive_count'] - summary['archives_failed']} archive(s) that parsed",
+    ]
+    if summary["archives_failed"]:
+        lines.append(
+            f"integrity: {summary['archives_failed']} archive(s) could not be verified "
+            f"(see rows below)"
+        )
+    elif summary["verified"] is True:
+        lines.append("integrity: every block in every archive verified")
+    elif summary["verified"] is False:
+        lines.append("integrity: FAILURES present (see rows below)")
+    else:
+        lines.append("integrity: not checked (pass --verify to decode and hash every block)")
+    lines.append("")
+    width = max((len(r["archive"]) for r in summary["archives"]), default=7)
+    lines.append(f"{'archive':<{width}} {'blocks':>6} {'bytes':>10} {'ratio':>7}  status")
+    for r in summary["archives"]:
+        status = "ok" if r["ok"] else f"FAILED ({r.get('code')})"
+        lines.append(
+            f"{r['archive']:<{width}} {r.get('block_count', 0):>6} "
+            f"{r.get('archive_bytes', 0):>10,} {r.get('ratio') if r.get('ratio') is not None else '-':>7}  "
+            f"{status}"
+        )
     return "\n".join(lines)

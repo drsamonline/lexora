@@ -201,9 +201,22 @@ file is not what its own index claims, and the exit code is 7.
 Without `--verify` the integrity line says **"not checked"** rather than implying
 a pass — structure and payload integrity are different questions.
 
-Library equivalent: `lexora.inspect.summarize(handle, verify=False)` and
-`format_report(summary)` — Qt-free, so the GUI inspector (G4) can render the same
-data instead of re-deriving it.
+**Directory mode (Session 50).** Point `--in` at a directory and it summarises every
+archive under it (recursive, sorted, `--pattern`, default `*.lxz`): totals first,
+then one line per archive with blocks, bytes, ratio and status. A broken archive is
+listed with its refusal code and counted in the totals — a summary that dropped its
+failures would be a summary you cannot trust. Exit 0 when every archive is clean,
+**7** when any is not (same code as single-file inspect, so "there is something
+wrong in here" is one signal), 2 when the directory holds no matches.
+
+```text
+lexora inspect --in DIR [--pattern '*.lxz'] [--verify] [--json]
+```
+
+Library equivalents: `lexora.inspect.summarize(handle, verify=False)` /
+`format_report(summary)` for one archive, and `summarize_directory(root)` /
+`format_directory_report(summary)` for a tree — all Qt-free, so the GUI inspector
+(G4) can render the same data instead of re-deriving it.
 
 ## Exit codes
 

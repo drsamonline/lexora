@@ -701,3 +701,19 @@ The price of the current default, stated plainly: **19 → 3 costs 26.7 % more b
 **Gate:** `python3 -m pytest -q` → **416 passed, 1 skipped** (14 new in `tests/test_inspect_cli.py`); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–49 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 50 — 2026-10-29 (directory-level `inspect`: "how did the batch go?")
+
+**Why this stage.** Session 49 gave a readable summary of *one* archive. After `batch` packs a tree, the question a user actually asks is about the run, not a file — so `--in` now accepts a directory and answers it: recursive, sorted, totals first, then one line per archive.
+
+**The design decision that matters** is what to do with a broken archive. It is listed with its refusal code **and counted in the totals** — the archive count, the byte totals, the ratio all include it. Dropping failures from a summary is how a run that half-failed looks like a run that succeeded, and this project has spent several sessions catching exactly that class of mistake in its own records.
+
+**Bug found by the smoke test, not the unit tests:** `summarize_directory` set `"archives"` to the row count and then to the row list in the same dict literal, so the report's first line printed the entire table where a number belonged. The keys are now `archive_count` (number) and `archives` (list), and a JSON-parity test pins the shape. Worth recording because the tests I had written checked for substrings like "2 archive(s)" — which a *list* also happened to produce once stringified, so only the eyeball check on real output caught it.
+
+**Second bug, and the more interesting one.** Reading the demo output rather than the test results caught this: with one broken archive in the directory, the report printed **"integrity: every block in every archive verified"** directly above a row reading `FAILED (E-FMT-HEAD-004)`. The cause is a vacuous truth — a broken archive contributes no blocks, so "every parsed row verified" was trivially satisfied. The verdict now spans **all** rows, and the line reads "N archive(s) could not be verified" whenever any archive fails to parse. A regression test asserts the reassuring sentence is *absent* in that case, which is the assertion that would have caught it the first time. Both bugs came from the same habit worth naming: trusting a summary's arithmetic without reading the summary.
+
+**Gate:** `python3 -m pytest -q` → **423 passed, 1 skipped** (7 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–50 are delivered as one patch on top of `19cc1a9`.
