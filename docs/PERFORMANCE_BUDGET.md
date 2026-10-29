@@ -27,10 +27,28 @@ Proposed profile "REF-4G": x86-64 laptop-class CPU, **4 GiB RAM total**, spinnin
 | Path | Proposed target | Status |
 |---|---|---|
 | Canonicalization | ≥ 5 MB/s text | **Measured — PASS by a wide margin:** 29.7 MiB/s at a 16 MiB document, 66.1 MiB/s at 64 MiB (streaming default). |
-| Core encode (level tuned for default) | ≥ 2 MB/s | **Measured — MISS at the current default:** 0.30 MiB/s (1 MiB), 0.43 MiB/s (4 MiB), 0.35 MiB/s (32 MiB) at zstd level 19 on this 2-vCPU container. Soft target, so it does not block, but the gap is ~5×. Level 19 is the reason: the budget's own wording ("level tuned for default") assumes a default chosen for speed, while the CLI still defaults to 19. **Open question for the owner:** keep 19 as the default and revise the target, or lower the default level. |
+| Core encode (level tuned for default) | ≥ 2 MB/s | **Measured — MISS at the current default:** 0.30–0.71 MiB/s at zstd level 19 (across sizes and passes on this 2-vCPU container). Soft target, so it does not block, but the gap is 3–7×. Level 19 is the reason: the budget's own wording ("level tuned for default") assumes a default chosen for speed, while the CLI still defaults to 19. **The trade-off is now measured** — see the sweep below. |
 | Core decode | ≥ 20 MB/s | **Measured — PASS:** 28.5 MiB/s at a 32 MiB archive (1.4 MiB/s at 1 MiB is startup, not throughput). |
 
 Measurement caveat for the three rows above: single runs on a noisy 2-vCPU container, derived from wall time in `benchmarks/results-rss-core.json`. Peak-RSS numbers from this box are stable; **throughput numbers are indicative only** and need the REF-4G-class machine plus BENCHMARK_PROTOCOL §6.3 repeats before anyone quotes them as a result.
+
+### Encode level sweep — evidence for the default-level question (Session 46)
+
+Measured on 8 MiB of real Project Gutenberg prose (the first 8 MiB of the tier-1 snapshot, not synthetic text), 8 MiB blocks, one run per level. Artifact: `benchmarks/results-level-sweep.json`; reproduce with `python3 benchmarks/rss_probe.py --level-sweep --sweep-input FILE --overwrite`.
+
+| zstd level | speed | ratio (archive/input) | peak RSS |
+|---|---|---|---|
+| 1 | 11.7 MiB/s | 0.3863 | 46.5 MiB |
+| 3 | **12.8 MiB/s** | 0.3393 | 44.5 MiB |
+| 6 | 9.4 MiB/s | 0.3146 | 45.6 MiB |
+| 9 | 6.2 MiB/s | 0.3043 | 51.5 MiB |
+| 12 | 2.4 MiB/s | 0.2961 | 81.4 MiB |
+| 15 | 1.1 MiB/s | 0.2873 | 102.9 MiB |
+| 19 (current default) | **0.7 MiB/s** | **0.2678** | 120.1 MiB |
+
+Read across the ends: going from 19 to 3 costs **26.7 % more bytes** and buys **~18× the speed** and 76 MiB less peak RSS. Level 9 sits in the middle (+13.6 % bytes versus 19, ~9× the speed). Levels 1 and 3 are within noise of each other on this box, so no meaning attaches to level 1 looking slower than level 3.
+
+**This is not a decision.** Compression *size* merit is governed by the ADR-0001 gate, not by this table, and one sample is not a benchmark revision. It exists so the owner can pick: keep 19 and revise the soft target, default to 6–9 (meets ≥2 MB/s with a modest size cost), or expose the choice and keep 19 for archival use.
 
 Throughput misses do not block phases unless they force violating memory budgets; compression *size* merit is governed exclusively by ADR-0001 gates, not these numbers.
 

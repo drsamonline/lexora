@@ -625,3 +625,29 @@ Flat in document size, and the buffered path would have breached the 256 MiB can
 **Gate:** `python3 -m pytest -q` → **377 passed, 1 skipped** (125 new in `tests/test_canon_stream.py`); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–45 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 46 — 2026-10-29 (encode level sweep; probe hardened)
+
+**Why this stage.** Session 45 recorded the one measured miss in the project — encode throughput 0.30–0.43 MiB/s at zstd-19 against a soft ≥2 MB/s target — and left the question open because it is a decision, not a fix. A decision needs the price attached to each option, so this session measured the trade-off instead of arguing about it.
+
+**`--level-sweep`** encodes one input at several zstd levels and records speed, archive ratio and peak RSS. Run on **8 MiB of real Project Gutenberg prose** (assembled from the tier-1 snapshot — deliberately not synthetic, whose ratios flatter the encoder), 8 MiB blocks, one run per level:
+
+| level | speed | ratio | peak RSS |
+|---|---|---|---|
+| 1 | 11.7 MiB/s | 0.3863 | 46.5 MiB |
+| 3 | 12.8 MiB/s | 0.3393 | 44.5 MiB |
+| 6 | 9.4 MiB/s | 0.3146 | 45.6 MiB |
+| 9 | 6.2 MiB/s | 0.3043 | 51.5 MiB |
+| 12 | 2.4 MiB/s | 0.2961 | 81.4 MiB |
+| 15 | 1.1 MiB/s | 0.2873 | 102.9 MiB |
+| 19 | 0.7 MiB/s | 0.2678 | 120.1 MiB |
+
+The price of the current default, stated plainly: **19 → 3 costs 26.7 % more bytes and buys ~18× the speed plus 76 MiB less RAM**; level 9 costs 13.6 % more bytes for ~9× the speed. Levels 1 and 3 are within noise of each other here, so nothing should be read into level 1 looking slower than level 3. What the owner does with it — keep 19 and revise the target, default to 6–9, or keep 19 and document a fast preset — is deliberately **not** decided here: compression *size* merit is governed by the ADR-0001 gate, and one sample is not a benchmark revision.
+
+**Probe hardened.** Session 45 lost a measurement set twice by running the probe without `--append`, which replaced the artifact wholesale; the second time it was only recoverable because the file was committed. The probe now **refuses to overwrite an existing artifact** without `--append`, or an explicit `--overwrite`. Verified by attempting the same command that caused the loss: it exits 2 with a message naming both flags.
+
+**Gate:** `python3 -m pytest -q` → **377 passed, 1 skipped** (no library code changed this session); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–46 are delivered as one patch on top of `19cc1a9`.

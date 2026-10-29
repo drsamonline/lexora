@@ -6,6 +6,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 46 (**encode level sweep: the price of the default level, measured**; probe hardened):
+  - **`benchmarks/rss_probe.py --level-sweep`** measures encode speed, archive ratio and peak RSS across zstd levels on one input, writing `benchmarks/results-level-sweep.json`. Run on **8 MiB of real Gutenberg prose** (not synthetic): level 19 → 0.7 MiB/s at ratio 0.2678; level 9 → 6.2 MiB/s at 0.3043; level 3 → 12.8 MiB/s at 0.3393. So 19 → 3 costs **26.7 % more bytes** for **~18× the speed** and 76 MiB less peak RSS. Table and caveats in PERFORMANCE_BUDGET.md; it is **evidence, not a decision** — size merit belongs to the ADR-0001 gate.
+  - **Probe hardened against the mistake I made twice in Session 45:** a fresh run now refuses to overwrite an existing artifact without `--append` (or an explicit `--overwrite`), instead of silently discarding every previous row.
+  - Tests: no new suite tests (the probe is a measurement tool, not library code); suite unchanged at **377 passed, 1 skipped**.
 - 2026-10-29 — Session 45 (**streaming canonicalization — the last whole-file path in the core**):
   - **`canonicalize_stream()`**: incremental decoding (`codecs.getincrementaldecoder`, so a multi-byte sequence split across a chunk boundary is not corrupted), BOM sniffing that gathers three bytes however small the chunk is, a one-character CR carry so a CRLF split across chunks still collapses, and U+00AD removal — rules applied in the buffered path's order, so output is **byte-identical**. Peak RSS **35.5 MiB flat** at 16 MiB and 64 MiB documents, versus 72.1 / 216.2 MiB buffered, which would have breached the 256 MiB canonicalizer budget near an ~80 MiB document.
   - **CLI:** `canon` streams by default; `--no-stream` keeps the buffered path for A/B evidence; `--meta` works on both (JSON to stdout, payload to `--out`, stdout stays clean).

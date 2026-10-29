@@ -1,0 +1,88 @@
+{
+  "block_size": 8388608,
+  "date": "2026-10-29T14:49:27Z",
+  "env": {
+    "cpu_model": ": unknown",
+    "lexora_commit": "3f8c592c02d9ddb4afa521a2adfa46c176eb950e",
+    "lexora_dirty": true,
+    "machine": "x86_64",
+    "os": "Linux",
+    "python": "3.12.13",
+    "ram_bytes": 2199912448,
+    "reference_machine": "REF-4G NOT confirmed (OQ-7 related) - deviation recorded",
+    "release": "4.19.0-gvisor",
+    "zstandard": "0.25.0"
+  },
+  "levels": [
+    {
+      "archive_bytes": 3240829,
+      "exit_code": 0,
+      "level": 1,
+      "mib_per_s": 11.73,
+      "peak_rss_kib": 47628,
+      "ratio": 0.3863,
+      "wall_s": 0.682
+    },
+    {
+      "archive_bytes": 2846113,
+      "exit_code": 0,
+      "level": 3,
+      "mib_per_s": 12.84,
+      "peak_rss_kib": 45600,
+      "ratio": 0.3393,
+      "wall_s": 0.623
+    },
+    {
+      "archive_bytes": 2638667,
+      "exit_code": 0,
+      "level": 6,
+      "mib_per_s": 9.36,
+      "peak_rss_kib": 46704,
+      "ratio": 0.3146,
+      "wall_s": 0.855
+    },
+    {
+      "archive_bytes": 2553008,
+      "exit_code": 0,
+      "level": 9,
+      "mib_per_s": 6.23,
+      "peak_rss_kib": 52760,
+      "ratio": 0.3043,
+      "wall_s": 1.284
+    },
+    {
+      "archive_bytes": 2483825,
+      "exit_code": 0,
+      "level": 12,
+      "mib_per_s": 2.38,
+      "peak_rss_kib": 83304,
+      "ratio": 0.2961,
+      "wall_s": 3.361
+    },
+    {
+      "archive_bytes": 2410448,
+      "exit_code": 0,
+      "level": 15,
+      "mib_per_s": 1.14,
+      "peak_rss_kib": 105420,
+      "ratio": 0.2873,
+      "wall_s": 7.037
+    },
+    {
+      "archive_bytes": 2246162,
+      "exit_code": 0,
+      "level": 19,
+      "mib_per_s": 0.71,
+      "peak_rss_kib": 122936,
+      "ratio": 0.2678,
+      "wall_s": 11.317
+    }
+  ],
+  "note": "Encode level trade-off for the default-level question (Session 45: encode measured 0.30-0.43 MiB/s at zstd-19 against a soft >=2 MB/s target). Single run per level on a noisy box: treat speed as indicative, ratio as sound. No ADR-0001 verdict is implied \u2014 a single sample is not a benchmark revision.",
+  "probe": "encode-level-sweep",
+  "source": {
+    "bytes": 8388608,
+    "kind": "file",
+    "path": "/scratch/work/sweep-sample.txt"
+  }
+}

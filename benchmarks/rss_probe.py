@@ -236,6 +236,82 @@ def load_artifact(path: Path) -> dict:
     }
 
 
+def run_level_sweep(args) -> int:
+    """Encode one input at several zstd levels and report speed, size and memory.
+
+    Exists because Session 45 measured encode throughput at 0.30-0.43 MiB/s
+    against a soft >=2 MB/s target and left the question open: move the default
+    level, or revise the target? That is answerable only with the trade-off in
+    front of us — bytes saved per unit of time and RAM.
+    """
+    out_path = Path(args.sweep_out)
+    if out_path.exists() and not args.overwrite:
+        print(f"refusing to overwrite {out_path} — pass --overwrite to replace it",
+              file=sys.stderr)
+        return 2
+
+    workdir = Path(tempfile.mkdtemp(prefix="lexora-sweep-"))
+    if args.sweep_input:
+        src_file = Path(args.sweep_input)
+        if not src_file.is_file():
+            print(f"error: --sweep-input {src_file} is not a file", file=sys.stderr)
+            return 2
+        source = {"kind": "file", "path": str(src_file), "bytes": src_file.stat().st_size}
+    else:
+        nbytes = 8 * MIB
+        src_file = workdir / "sweep-input.bin"
+        src_file.write_bytes(synth_text(nbytes))
+        source = {"kind": "synthetic-deterministic", "bytes": nbytes,
+                  "note": "seeded English-like prose; ratios from synthetic text flatter "
+                          "the encoder, so prefer --sweep-input with real corpus text"}
+
+    levels = [int(x) for x in args.levels.split(",") if x.strip()]
+    py = sys.executable
+    env_extra = {"PYTHONPATH": str(REPO_ROOT / "src"), "PYTHONHASHSEED": "0"}
+    rows = []
+    print(f"{'level':>5} {'wall s':>7} {'MiB/s':>7} {'archive':>9} {'ratio':>7} {'peak MiB':>9}")
+    for level in levels:
+        arc = workdir / f"l{level}.lxz"
+        r = measure([py, "-m", "lexora.cli", "pack", "--in", str(src_file), "--out", str(arc),
+                     "--level", str(level)], workdir, env_extra)
+        if r["exit_code"] != 0:
+            print(f"  level {level} FAILED rc={r['exit_code']}: {r['stderr_tail'][-160:]}",
+                  file=sys.stderr)
+            rows.append({"level": level, "exit_code": r["exit_code"]})
+            continue
+        size = arc.stat().st_size
+        row = {
+            "level": level,
+            "exit_code": 0,
+            "wall_s": r["wall_s"],
+            "peak_rss_kib": r["peak_rss_kib"],
+            "archive_bytes": size,
+            "ratio": round(size / source["bytes"], 4),
+            "mib_per_s": round((source["bytes"] / MIB) / r["wall_s"], 2) if r["wall_s"] else None,
+        }
+        rows.append(row)
+        print(f"{level:>5} {row['wall_s']:>7.2f} {row['mib_per_s']:>7.2f} {size:>9} "
+              f"{row['ratio']:>7.4f} {row['peak_rss_kib']/1024:>9.1f}")
+
+    artifact = {
+        "probe": "encode-level-sweep",
+        "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "note": ("Encode level trade-off for the default-level question (Session 45: encode "
+                 "measured 0.30-0.43 MiB/s at zstd-19 against a soft >=2 MB/s target). "
+                 "Single run per level on a noisy box: treat speed as indicative, ratio as "
+                 "sound. No ADR-0001 verdict is implied — a single sample is not a benchmark "
+                 "revision."),
+        "source": source,
+        "block_size": 8 * MIB,
+        "env": env_capture(),
+        "levels": rows,
+    }
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(artifact, indent=2, sort_keys=True) + "\n")
+    print(f"\nartifact: {out_path}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--sizes", default="1,4,16", help="input sizes in MiB, comma separated")
@@ -244,10 +320,21 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--block-size", type=int, default=8 * 1024 * 1024)
     ap.add_argument("--out", default=str(REPO_ROOT / "benchmarks" / "results-rss-core.json"))
     ap.add_argument("--append", action="store_true", help="merge into an existing artifact")
+    ap.add_argument("--overwrite", action="store_true",
+                    help="allow replacing an existing artifact without --append "
+                         "(off by default: a fresh run silently dropping previous rows "
+                         "is how two measurement sets were lost in Session 45)")
     ap.add_argument("--mode", choices=("stream", "buffered"), default="stream",
                     help="CLI pack path under test: stream (default since this session) "
                          "or buffered (--no-stream, the pre-streaming behaviour)")
     ap.add_argument("--skip-decode", action="store_true")
+    ap.add_argument("--level-sweep", action="store_true",
+                    help="measure encode speed/size/memory across zstd levels on one input "
+                         "(evidence for the default-level question raised in Session 45)")
+    ap.add_argument("--levels", default="3,6,9,12,15,19")
+    ap.add_argument("--sweep-input", default=None,
+                    help="real text file to sweep over (default: deterministic synthetic)")
+    ap.add_argument("--sweep-out", default=str(REPO_ROOT / "benchmarks" / "results-level-sweep.json"))
     ap.add_argument("--canon", action="store_true",
                     help="also measure `lexora canon` (streaming and --no-stream): "
                          "peak RSS and wall time, for the canonicalizer budget row")
@@ -258,11 +345,18 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     out_path = Path(args.out)
+    if out_path.exists() and not args.append and not args.overwrite:
+        print(f"refusing to overwrite {out_path} with a fresh artifact — pass --append to "
+              f"merge into it, or --overwrite to discard its rows deliberately", file=sys.stderr)
+        return 2
     artifact = load_artifact(out_path) if args.append else load_artifact(Path("/nonexistent"))
     artifact["env"] = env_capture()
     artifact["level"] = args.level
     artifact["block_size"] = args.block_size
     artifact["date"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    if args.level_sweep:
+        return run_level_sweep(args)
 
     if args.summarize_only:
         artifact = load_artifact(out_path)  # summarize whatever is already measured
