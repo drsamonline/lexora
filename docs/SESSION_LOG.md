@@ -873,3 +873,21 @@ Cause: both atomic writers called `tempfile.mkstemp(dir=…)` *outside* their `t
 **Gate:** `python3 -m pytest -q` → **482 passed, 1 skipped** (no code touched); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–58 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 59 — 2026-10-29 (corpus to 593 MB, and a plan correction worth the passes)
+
+**What the passes bought.** Five more fetch passes took the snapshot from **502.1 MB to 593.4 MB** (1189 files, 61 failures recorded rather than hidden). Manifest `40acccbf…` over 1207 files verifies with **0 problems**; splits 852 train / 116 validation / 239 heldout, **no lineage straddling**.
+
+**The finding that matters more than the megabytes.** Nine passes across two sessions let the mean file size be measured instead of assumed: **0.50 MB per file** over 1164 files. Projected forward, **1400 ids would have topped out around 701 MB** — the ≥1 GiB gate would never have been reached by the plan as written, and nothing would have said so until someone did the arithmetic. The cause is structural: the selection is ordered by PG id, and the later ids in a fixed range are shorter, more obscure works, so the yield per id falls as you go.
+
+At 0.50 MB mean, 1 GiB needs about **2044 ids**, so the selection was raised to **2500**. That change costs nothing on disk: because the ordering is by id, raising the limit *appends* — the 1164 files already fetched were reused and the pass only pulled the new ids.
+
+**Where it stands.** ~431 MB short. The per-pass yield is falling with the tail (~20 MB per ~285 s pass against ~43 MB earlier), so finishing in this sandbox is now ~20 passes rather than a dozen. That is unattended runtime, not machinery, and the resumable fetch means each pass adds to the same snapshot.
+
+**No benchmark revision was run**, and none will be until the corpus is at protocol scope with the owner's sign-off.
+
+**Gate:** `python3 -m pytest -q` → **482 passed, 1 skipped** (no code touched); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–59 are delivered as one patch on top of `19cc1a9`.

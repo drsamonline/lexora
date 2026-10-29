@@ -6,6 +6,11 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 59 (**corpus at 593 MB; and the 1400-id selection could never have reached the gate**):
+  - Five more fetch passes took the snapshot from **502.1 MB to 593.4 MB** (1189 files, 61 failures recorded). Manifest `40acccbf…` over 1207 files verifies with **0 problems**; splits 852/116/239, no lineage straddling.
+  - **Measured, not guessed: the 1400-id selection was too small.** Mean file size over the fetched set is **0.50 MB**, so 1400 ids would have topped out around **701 MB** — short of the ≥1 GiB gate — because id-ordered selection reaches shorter, more obscure works as it goes. 1 GiB needs ~2044 ids at that mean, so the selection was **raised to 2500**. Because the order is by id, raising the limit appends: the 1164 files already on disk were reused and only new ids were fetched.
+  - **Per-pass yield is falling** as the tail ids get smaller (~20 MB per ~285 s pass against ~43 MB earlier), so finishing here is ~20 passes rather than a dozen. Unattended runtime, not machinery.
+  - No code changed; suite unchanged at **482 passed, 1 skipped**.
 - 2026-10-29 — Session 58 (**corpus grown to 502 MB — halfway to the ≥1 GiB gate**):
   - Five fetch passes took snapshot `gutenberg-cat-partial` from **587 files / 287.9 MB to 946 files / 502.1 MB** (~43 MB per ~285 s pass), with 54 failures recorded rather than hidden (404s, payloads under the guard).
   - **Integrity re-checked at the new size:** manifest `e4b40cd8…` over 952 files verifies with **0 problems**; split audit 667 train / 94 validation / 191 heldout, **no lineage straddles splits**.
