@@ -13,6 +13,7 @@ Subcommands:
   lexora unpack  --in ARCHIVE.lxz --out CANONICAL [--block N] [--meta]
   lexora verify  --in ARCHIVE.lxz [--block N] [--json]
   lexora inspect --in ARCHIVE.lxz [--verify] [--json] [--blocks N]
+  lexora doctor  [--json]
   lexora batch   --in DIR --out-dir DIR [--op canon|pack|unpack] [--pattern G] [--report F]
                  (writes ONLY verified bytes; refuses with a specific error
                   and zero output on integrity/limit/format failure)
@@ -482,6 +483,23 @@ def cmd_unpack(args) -> int:
     return EXIT_OK
 
 
+def cmd_doctor(args) -> int:
+    """Report whether this installation is healthy, and on what.
+
+    Exit 0 when every check passes, **1** when any check fails or warns — the same
+    "not everything is well" meaning `batch` gives exit 1, and deliberately not 7,
+    because nothing here is an archive refusal.
+    """
+    from lexora.doctor import format_report, run_checks
+
+    report = run_checks()
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_report(report))
+    return EXIT_OK if report["healthy"] else EXIT_PARTIAL
+
+
 def cmd_inspect(args) -> int:
     """Human-readable summary of one archive; `--verify` adds a full integrity pass.
 
@@ -799,6 +817,10 @@ def build_parser() -> argparse.ArgumentParser:
     ins.add_argument("--pattern", default="*.lxz",
                      help="glob used when --in is a directory (default: *.lxz)")
     ins.set_defaults(func=cmd_inspect)
+
+    doc = sub.add_parser("doctor", help="report whether this install is healthy")
+    doc.add_argument("--json", action="store_true", help="machine-readable report")
+    doc.set_defaults(func=cmd_doctor)
 
     bt = sub.add_parser("batch",
                         help="process many files in one invocation (canon, pack or unpack)")

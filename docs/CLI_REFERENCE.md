@@ -19,7 +19,7 @@ Version string: `lexora --version` → `lexora 0.0.1.dev1` (prototype; no stable
 
 ## Scope honesty
 
-Eight subcommands exist: the three Phase-1 baseline flows (canonicalize + plain zstd frames), `pack`/`unpack` for the `.lxz` v0 container (unblocked by ADR-0007 acceptance, Session 24, under standing owner delegation), `verify` (Session 47) for auditing an archive without producing payload bytes, `batch` (Session 48) for processing many files in one invocation, and `inspect` (Session 49) for a readable summary of one archive. The container is **experimental** (major 0): byte layout frozen per ADR-0007 but pre-release. Any command listed here exists and is covered by tests (`tests/test_cli.py`, `tests/test_container_lxz.py`).
+Nine subcommands exist: the three Phase-1 baseline flows (canonicalize + plain zstd frames), `pack`/`unpack` for the `.lxz` v0 container (unblocked by ADR-0007 acceptance, Session 24, under standing owner delegation), `verify` (Session 47) for auditing an archive without producing payload bytes, `batch` (Session 48) for processing many files in one invocation, `inspect` (Session 49) for a readable summary of one archive, and `doctor` (Session 56) for an install-health report. The container is **experimental** (major 0): byte layout frozen per ADR-0007 but pre-release. Any command listed here exists and is covered by tests (`tests/test_cli.py`, `tests/test_container_lxz.py`).
 
 ## Subcommands
 
@@ -219,6 +219,31 @@ Library equivalents: `lexora.inspect.summarize(handle, verify=False)` /
 `format_report(summary)` for one archive, and `summarize_directory(root)` /
 `format_directory_report(summary)` for a tree — all Qt-free, so the GUI inspector
 (G4) can render the same data instead of re-deriving it.
+
+### `lexora doctor` — is this install healthy, and what is it running on?
+
+Collects the facts a bug report needs, so a report can carry evidence instead of
+guesses. Qt-free, so the GUI's About view can render the same report.
+
+```text
+lexora doctor [--json]
+```
+
+Checks, each with a status of `ok`, `warn`, `fail` or `info`:
+
+| Check | Meaning |
+|---|---|
+| `python` | interpreter version and implementation against the ADR-0005 floor (3.12) |
+| `zstandard` | the core codec: importable, and inside the pinned range `>=0.23,<0.26` |
+| `round trip` | **a live pack → verify → unpack in memory** — the one check that answers "does this install work at all?" rather than "does the metadata look right?" |
+| `gui extra` | whether PySide6 is importable; `info` when absent, never a failure (ADR-0008) |
+| `working directory` | writable, because every command writes somewhere |
+| `config directory`, `defaults`, `corpus …` | informational: where the GUI config lives, the compiled-in defaults (`DEFAULT_LEVEL`, LIM-01/02, archive ceiling), and whether corpus directories exist with how much they hold |
+
+Exit codes: **0** every check passes, **1** any check fails or warns — the same "not
+everything is well" meaning `batch` gives exit 1, and deliberately not 7, since
+nothing here is an archive refusal. Corpus presence is reported as `info` and never
+makes a report unhealthy: data is not health.
 
 ## Exit codes
 

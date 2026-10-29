@@ -811,3 +811,21 @@ Cause: both atomic writers called `tempfile.mkstemp(dir=…)` *outside* their `t
 **Gate:** `python3 -m pytest -q` → **468 passed, 1 skipped** (22 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–55 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 56 — 2026-10-29 (`lexora doctor`: facts for bug reports)
+
+**Why this stage.** Every session so far has ended with me handing over a patch and describing the environment it was verified in — Python version, codec version, whether PySide6 was available, where the config lives. That is exactly the information a bug report needs, and until now it only existed in prose. `lexora doctor` collects it as a command.
+
+**What it reports**, each check with `ok`/`warn`/`fail`/`info`: the interpreter against ADR-0005's 3.12 floor; `zstandard` against its pinned `>=0.23,<0.26` range; whether the optional GUI extra is importable (informational when absent, never a failure — it *is* optional per ADR-0008); working-directory writability; the GUI config path; the compiled-in defaults (`DEFAULT_LEVEL`, LIM-01/LIM-02, archive ceiling); and the corpus directories with their file counts and sizes.
+
+**The check that earns the command** is the live **pack → verify → unpack** self-test. Version strings tell you what is installed; they do not tell you whether the thing works. A codec that imports and a build that round-trips are different claims, and the second is the one a user cares about.
+
+**Two deliberate honesty choices.** Corpus presence is reported as `info` and never makes a report unhealthy — missing data is a project state, not a broken install, and a doctor that cried wolf about it would train people to ignore it. And the exit code is **1** for "attention needed", not 7: 7 means "the archive was refused", and nothing here parses an archive.
+
+**Qt-free by construction**, like the inspect formatters, so the GUI's About view can render the same report instead of re-deriving it — which also means this is testable in an environment with no Qt, as this one is.
+
+**Gate:** `python3 -m pytest -q` → **478 passed, 1 skipped** (10 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–56 are delivered as one patch on top of `19cc1a9`.

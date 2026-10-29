@@ -5,7 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
-### Fixed
+### Added
+- 2026-10-29 — Session 56 (**`lexora doctor`** — the facts a bug report needs):
+  - `lexora doctor [--json]` reports: interpreter version against the ADR-0005 floor; the core codec's version against its pinned range; **a live pack → verify → unpack self-test**; whether the optional GUI extra is importable; working-directory writability; the GUI config path; the compiled-in defaults (`DEFAULT_LEVEL`, LIM-01/LIM-02, archive ceiling); and whether the corpus directories exist and how much they hold.
+  - The self-test is the point: it answers *"does this install work at all?"*, which metadata checks cannot.
+  - Statuses are `ok` / `warn` / `fail` / `info`, and only `fail`/`warn` affect the exit code — **0** healthy, **1** attention needed (the same meaning `batch` gives exit 1, deliberately not 7 since nothing here is an archive refusal). Corpus absence is `info` and never makes a report unhealthy: data is not health.
+  - `lexora.doctor` is Qt-free, so the GUI About view can render the same report rather than re-deriving it.
+  - Tests: 10 in `tests/test_doctor_cli.py` (healthy install, the round-trip check is real, GUI extra never a failure, corpus facts, absence is not unhealthy, XDG config path, a forced failure flipping the exit code, report formatting, JSON parity, clean stderr). Suite **468 → 478 passed**, 1 skipped.
 - 2026-10-29 — Session 55 (**writer hardening; one user-facing bug found**):
   - **`pack`/`canon`/`unpack`/`batch` into a missing or unwritable destination raised a Python traceback and exited 1.** Both atomic writers (`_write_atomic`, `_write_atomic_stream`) created their temp file *outside* the guarded block, so `mkstemp`'s `OSError` escaped before any handler saw it — directly contradicting the documented exit-code table, which promises exit 3 and a one-line error for any output-file failure. `mkstemp` is now inside the `try`, and both paths produce `error: cannot write …` with exit 3 and no debris.
   - **New `tests/test_writer_fuzz.py`** — 22 tests attacking the write path the way the reader suite attacks the read path: block sizes 1/2/3/7/10/11 (exact-block and block+1 boundaries), payloads of all-0xFF and incompressible noise, a tight `max_block_compressed` refusing with `E-RES-002` instead of truncating, a destination that reports ENOSPC mid-write, a one-byte-at-a-time source for the streaming canonicalizer, three-run determinism, and the CLI failure paths (missing dir, unwritable dir, canon/unpack parity, batch into an unwritable out-dir) asserting exit 3, a one-line error, no traceback, no artifact and no `.lxz-tmp-*` debris.
