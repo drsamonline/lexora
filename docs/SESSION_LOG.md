@@ -829,3 +829,29 @@ Cause: both atomic writers called `tempfile.mkstemp(dir=…)` *outside* their `t
 **Gate:** `python3 -m pytest -q` → **478 passed, 1 skipped** (10 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–56 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 57 — 2026-10-29 (interruption: real signals, and the debris SIGTERM left)
+
+**Why this stage.** The atomic-write guarantee — *a crash leaves either the previous artifact or the new one, never a hybrid* — is stated in the CLI reference, the module docstrings and the recovery semantics, and until now it was tested only with **simulated** failures: a destination object whose `write()` raises. That proves the handler runs; it does not prove what happens when the operating system kills the process.
+
+**Method.** Kill a real `lexora pack` mid-write with real signals, then look at the directory.
+
+| Signal | Destination | Temp file |
+|---|---|---|
+| SIGINT | untouched | removed |
+| SIGTERM | untouched | **removed only after this session's fix** |
+| SIGKILL | untouched | left behind (uncatchable) |
+
+**The guarantee holds under all three** — the destination is only ever created by `os.replace` once the temp file is complete, so no signal can produce a partial archive.
+
+**What did not hold was cleanliness.** SIGTERM killed the process outright and left a `.lxz-tmp-*` behind, because Python's default SIGTERM behaviour is immediate termination — no exception, so the writers' `except BaseException: discard()` never ran. `cli.main` now installs a handler that raises `SystemExit`, routing SIGTERM through the same cleanup as Ctrl-C: exit 3, nothing left over. SIGKILL stays unclean by definition, and the docs now say so rather than implying otherwise.
+
+**The strongest test is the user's actual worry:** re-pack over an existing archive, get killed mid-write, and confirm the **old archive is byte-identical and still verifies**. That passes.
+
+**A test-authoring bug worth recording.** The first version used `bytes(range(256)) * N` as the payload — 8 MiB of a 256-byte repeating pattern, which zstd-19 compresses in well under a second because every match is maximal. The kill therefore landed *after* the pack had finished, and three tests failed claiming "a partial archive reached the destination" when nothing of the sort had happened. The payload is now deterministic varied text (~6 s at level 19). This is the second time this project has been misled by unrealistically compressible input — the first was the Session-39 RSS probe, where synthetic text flattered the encoder.
+
+**Gate:** `python3 -m pytest -q` → **482 passed, 1 skipped** (4 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–57 are delivered as one patch on top of `19cc1a9`.

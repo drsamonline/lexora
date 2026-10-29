@@ -9,6 +9,25 @@
 
 Defines the error taxonomy, severity levels, and behavioral contract every LEXORA component MUST follow once implemented: what fails closed, what is recoverable, what may be retried, and what the user/operator sees. Goal: **no silent data loss, no partial output presented as success** (blueprint invariants; REQ-SEC-004).
 
+## Interruption behaviour (measured, Session 57)
+
+The atomic-write guarantee — *a crash leaves either the previous artifact or the new
+one, never a hybrid* — was tested only with simulated failures until Session 57, when
+a real `pack` was killed with real signals. What actually survives:
+
+| Signal | Destination | Temp file (`.lxz-tmp-*`) |
+|---|---|---|
+| SIGINT (Ctrl-C) | untouched — never partially written | removed |
+| SIGTERM | untouched | removed (a handler turns it into `SystemExit` so the writers' cleanup runs — added Session 57; before that it left debris) |
+| SIGKILL | untouched | **left behind** — uncatchable, so debris is unavoidable |
+| crash mid-write (exception) | untouched | removed |
+| disk full / ENOSPC | untouched | removed, exit 3 |
+
+The destination is safe in every case because it is only ever created by
+`os.replace` once the temp file is complete. SIGKILL debris is the one residue: it
+does not endanger an existing archive, and re-running the command overwrites the
+destination normally — the stale temp file simply stays until removed by hand.
+
 ## Global rules
 
 1. **Fail closed on integrity.** Checksum, AEAD (if ever enabled), hash-of-dictionary, or round-trip verification failure ⇒ abort with `E-INTEGRITY-*`; never emit partially recovered text as if valid.

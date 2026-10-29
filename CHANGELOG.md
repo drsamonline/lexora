@@ -6,6 +6,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 57 (**interruption tested with real signals; SIGTERM debris fixed**):
+  - The atomic-write guarantee had only ever been tested with *simulated* failures (a destination object that raises). `tests/test_interruption.py` now kills a real `lexora pack` mid-write with real signals: **SIGINT and SIGTERM leave no destination and no debris; SIGKILL leaves no destination but an unavoidable `.lxz-tmp-*`** (uncatchable).
+  - **Fixed:** SIGTERM left a temp file behind. `cli.main` now installs a handler that raises `SystemExit`, routing SIGTERM through the writers' existing cleanup — a killed pack exits 3 with nothing left over. The destination was never at risk: it is only created by `os.replace` after the temp file is complete.
+  - **The strongest test** is the one that matters to a user: re-packing over an existing archive and being killed leaves the **old archive byte-identical and still verifiable**.
+  - A test-authoring bug worth recording: the first version used `bytes(range(256)) * N` as the payload, which compresses in well under a second at level 19, so the kill landed after the pack had finished and three tests failed for the wrong reason. The payload is now deterministic varied text (~6 s at level 19).
+  - Docs: ERROR_HANDLING gains a measured interruption table (signal → destination → debris). Tests: 4 new. Suite **478 → 482 passed**, 1 skipped.
 - 2026-10-29 — Session 56 (**`lexora doctor`** — the facts a bug report needs):
   - `lexora doctor [--json]` reports: interpreter version against the ADR-0005 floor; the core codec's version against its pinned range; **a live pack → verify → unpack self-test**; whether the optional GUI extra is importable; working-directory writability; the GUI config path; the compiled-in defaults (`DEFAULT_LEVEL`, LIM-01/LIM-02, archive ceiling); and whether the corpus directories exist and how much they hold.
   - The self-test is the point: it answers *"does this install work at all?"*, which metadata checks cannot.

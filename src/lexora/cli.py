@@ -36,6 +36,7 @@ import argparse
 import json
 import os
 import shutil
+import signal
 import sys
 import tempfile
 from pathlib import Path
@@ -65,6 +66,32 @@ EXIT_CANON = 4
 EXIT_CODEC = 5
 EXIT_ROUNDTRIP = 6
 EXIT_CONTAINER = 7
+
+
+def _raise_exit(signum, frame):  # noqa: ARG001 - signal handler signature
+    """Turn a termination signal into SystemExit so cleanup handlers run."""
+    raise SystemExit(EXIT_FILE)
+
+
+def _install_termination_handler() -> None:
+    """Make SIGTERM unwind like Ctrl-C does.
+
+    The atomic writers' guarantee (never a partial destination) holds under every
+    signal, because the destination is only ever created by `os.replace` after the
+    temp file is complete. What differed was *debris*: SIGINT raises
+    KeyboardInterrupt, which the writers catch and clean up after; SIGTERM killed
+    the process outright and left a `.lxz-tmp-*` behind (measured, Session 57).
+    SIGKILL cannot be handled — debris there is unavoidable, and the destination is
+    still safe.
+
+    Installed only for the duration of a CLI run; a host embedding `cli.main()`
+    gets the same behaviour, which is what its callers expect from a command.
+    """
+    try:
+        signal.signal(signal.SIGTERM, _raise_exit)
+    except (ValueError, OSError, AttributeError):
+        # not the main thread, or a platform without SIGTERM — nothing to do
+        pass
 
 
 def _read(path: str) -> bytes:
@@ -845,6 +872,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    _install_termination_handler()
     return args.func(args)
 
 
