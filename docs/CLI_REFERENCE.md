@@ -157,14 +157,16 @@ lexora batch --in DIR --out-dir DIR [--op canon|pack] [--pattern G] [--suffix S]
 | Flag | Required | Default | Meaning |
 |---|---|---|---|
 | `--in PATH` | yes | — | directory (searched recursively) or a single file |
-| `--op` | no | `canon` | `canon` or `pack` |
+| `--op` | no | `canon` | `canon`, `pack` or `unpack` (Session 51) |
 | `--out-dir DIR` | yes | — | destination root; created if missing |
 | `--pattern G` | no | `*` | glob applied under `--in` |
-| `--suffix S` | no | `.canon` / `.lxz` | appended to each output name |
+| `--suffix S` | no | `.canon` / `.lxz` / *stripped* | appended to each output name; for `unpack` the `.lxz` is stripped instead, so a round trip returns the names it started with |
 | `--encoding E` | no | — | declared source encoding (canon only) |
 | `--level N`, `--block-size B` | no | 19, 8 MiB | pack only |
 | `--stop-on-error` | no | off | abort at the first failure, exit with that file's code |
 | `--report F`, `--json` | no | — | write / print the JSON report (per-file `ok`, `code`, sizes) |
+
+**Round trips are the point of `--op unpack`.** `canon` → `pack` → `unpack` returns a tree byte-identical to the canonical stage, verified in the test suite by diffing the two directories. Unpacking uses the streaming decoder, so every block's SHA-256 is checked before its bytes are written — a corrupt archive in the batch produces a failed row and **no output file**, while its healthy neighbours decode normally.
 
 **Partial failure is a policy, not an accident.** By default the batch keeps going
 and reports every file; the exit code is then **1** — completed, but not

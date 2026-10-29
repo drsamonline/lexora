@@ -717,3 +717,19 @@ The price of the current default, stated plainly: **19 → 3 costs 26.7 % more b
 **Gate:** `python3 -m pytest -q` → **423 passed, 1 skipped** (7 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–50 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 51 — 2026-10-29 (`batch --op unpack`: closing the round trip)
+
+**Why this stage.** `batch` could canonicalize and pack but not decode, so the pipeline could be run forwards and not backwards without dropping to a shell loop over `unpack`. That asymmetry was the most obvious remaining gap in the CLI's own story, and it is cheap to close properly.
+
+**What landed.** `lexora batch --op unpack`. Three details that make it more than a loop:
+
+1. **Output names strip `.lxz`**, so `canon → pack → unpack` returns exactly the names the canonical stage produced. The test asserts this by **diffing the two directories**, not by comparing a couple of files — a naming scheme is either identical or it is not.
+2. **Decoding is the streaming path**, so every block's SHA-256 is checked before its bytes are written. A corrupt archive in the tree becomes a failed row with **no output file at all**, while its healthy neighbours decode normally. The partial-batch policy (exit 1) is unchanged and now covers all three operations.
+3. `--suffix` still wins when given, applying literally — the strip is the default, not a hard rule.
+
+**Gate:** `python3 -m pytest -q` → **427 passed, 1 skipped** (4 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK. Smoke: canon → pack → unpack over a two-file tree with a subdirectory produced a byte-identical tree; adding a deliberately corrupted archive to the middle stage produced exit 1, two good outputs and no output for the broken one.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–51 are delivered as one patch on top of `19cc1a9`.

@@ -137,3 +137,61 @@ class TestBatchUsage:
         out = tmp_path / "deep" / "nested" / "out"
         assert cli.main(["batch", "--in", str(src), "--out-dir", str(out)]) == cli.EXIT_OK
         assert (out / "a.txt.canon").is_file()
+
+
+class TestUnpackBatch:
+    """The symmetric gap: batch could canon and pack but not decode. A round trip
+    must return the tree it started from, byte for byte."""
+
+    def _pipeline(self, tmp_path) -> tuple[pathlib.Path, pathlib.Path, pathlib.Path]:
+        src = _tree(tmp_path / "in")
+        canon = tmp_path / "canon"
+        packed = tmp_path / "packed"
+        assert cli.main(["batch", "--in", str(src), "--out-dir", str(canon)]) == cli.EXIT_OK
+        assert cli.main(["batch", "--in", str(canon), "--out-dir", str(packed),
+                         "--op", "pack", "--level", "1"]) == cli.EXIT_OK
+        return src, canon, packed
+
+    def test_round_trip_returns_the_canonical_tree(self, tmp_path) -> None:
+        _src, canon, packed = self._pipeline(tmp_path)
+        back = tmp_path / "back"
+        assert cli.main(["batch", "--in", str(packed), "--out-dir", str(back),
+                         "--op", "unpack"]) == cli.EXIT_OK
+        # unpack strips ".lxz", so the names match the canonical stage exactly
+        for rel in ("a.txt.canon", "sub/b.txt.canon"):
+            assert (back / rel).read_bytes() == (canon / rel).read_bytes()
+
+    def test_report_records_blocks_and_sizes(self, tmp_path, capsys) -> None:
+        _src, _canon, packed = self._pipeline(tmp_path)
+        assert cli.main(["batch", "--in", str(packed), "--out-dir", str(tmp_path / "b"),
+                         "--op", "unpack", "--json"]) == cli.EXIT_OK
+        report = json.loads(capsys.readouterr().out)
+        assert report["op"] == "unpack"
+        assert report["files_ok"] == 2
+        assert all(r["blocks"] >= 1 for r in report["results"])
+        assert report["output_bytes_total"] > 0
+
+    def test_a_corrupt_archive_fails_alone(self, tmp_path, capsys) -> None:
+        _src, _canon, packed = self._pipeline(tmp_path)
+        raw = bytearray((packed / "a.txt.canon.lxz").read_bytes())
+        raw[20] ^= 0xFF
+        (packed / "zz-broken.lxz").write_bytes(bytes(raw))
+        out = tmp_path / "back"
+
+        rc = cli.main(["batch", "--in", str(packed), "--out-dir", str(out),
+                       "--op", "unpack", "--json"])
+
+        assert rc == cli.EXIT_PARTIAL
+        report = json.loads(capsys.readouterr().out)
+        assert report["files_ok"] == 2 and report["files_failed"] == 1
+        broken = next(r for r in report["results"] if r["input"] == "zz-broken.lxz")
+        assert broken["code"] == "E-FMT-HEAD-004"
+        assert not (out / "zz-broken").exists()  # no output for a refused archive
+        assert (out / "a.txt.canon").is_file()   # healthy neighbours still decoded
+
+    def test_custom_suffix_applies_to_unpack_too(self, tmp_path) -> None:
+        _src, _canon, packed = self._pipeline(tmp_path)
+        out = tmp_path / "suffixed"
+        assert cli.main(["batch", "--in", str(packed), "--out-dir", str(out),
+                         "--op", "unpack", "--suffix", ".txt"]) == cli.EXIT_OK
+        assert (out / "a.txt.canon.lxz.txt").is_file()

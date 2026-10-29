@@ -13,7 +13,7 @@ Subcommands:
   lexora unpack  --in ARCHIVE.lxz --out CANONICAL [--block N] [--meta]
   lexora verify  --in ARCHIVE.lxz [--block N] [--json]
   lexora inspect --in ARCHIVE.lxz [--verify] [--json] [--blocks N]
-  lexora batch   --in DIR --out-dir DIR [--op canon|pack] [--pattern G] [--report F]
+  lexora batch   --in DIR --out-dir DIR [--op canon|pack|unpack] [--pattern G] [--report F]
                  (writes ONLY verified bytes; refuses with a specific error
                   and zero output on integrity/limit/format failure)
 
@@ -580,8 +580,9 @@ def cmd_batch(args) -> int:
     error); with `--stop-on-error`, the failing file's own code (3/4/5/7); 2 for
     usage problems; 3 when the input root or output directory cannot be used.
     """
-    if args.op not in ("canon", "pack"):
-        print(f"usage error: --op must be canon or pack (got {args.op!r})", file=sys.stderr)
+    if args.op not in ("canon", "pack", "unpack"):
+        print(f"usage error: --op must be canon, pack or unpack (got {args.op!r})",
+              file=sys.stderr)
         return 2
     if args.block_size < 1 or args.block_size > MAX_BLOCK_SIZE:
         print(f"usage error: --block-size must be 1..{MAX_BLOCK_SIZE}", file=sys.stderr)
@@ -603,28 +604,47 @@ def cmd_batch(args) -> int:
         print(f"error: cannot create {out_dir}: {exc}", file=sys.stderr)
         return EXIT_FILE
 
-    suffix = args.suffix or (".canon" if args.op == "canon" else ".lxz")
+    suffix = args.suffix or (".canon" if args.op == "canon" else
+                             ".lxz" if args.op == "pack" else "")
+
+    def _output_name(rel: Path) -> str:
+        """canon/pack append; unpack strips the archive suffix so the round trip
+        returns the name it started with."""
+        if args.op != "unpack":
+            return rel.name + suffix
+        if suffix:
+            return rel.name + suffix
+        if rel.name.endswith(".lxz"):
+            return rel.name[: -len(".lxz")]
+        return rel.name + ".unpacked"  # not an .lxz name; will fail to parse anyway
     base = root if root.is_dir() else root.parent
     results: list[dict] = []
     failures = 0
 
     for src_path in inputs:
         rel = src_path.relative_to(base)
-        dst_path = out_dir / rel.parent / (rel.name + suffix)
+        dst_path = out_dir / rel.parent / _output_name(rel)
         entry: dict = {"input": str(rel), "output": str(dst_path.relative_to(out_dir))}
         try:
             dst_path.parent.mkdir(parents=True, exist_ok=True)
             # pack_stream backfills the header and re-reads it to self-check, so
             # its destination must be readable; canon only writes forward.
-            mode = "wb+" if args.op == "pack" else "wb"
+            mode = "wb+" if args.op == "pack" else "wb"  # unpack writes forward only
             with open(src_path, "rb") as src, open(dst_path, mode) as dst:
                 if args.op == "canon":
                     meta = canonicalize_stream(src, dst, declared_encoding=args.encoding)
-                else:
+                elif args.op == "pack":
                     info = lxz_pack_stream(src, dst, level=args.level,
                                            block_size=args.block_size)
                     meta = {"input_bytes": src_path.stat().st_size,
                             "output_bytes": dst_path.stat().st_size,
+                            "blocks": len(info.blocks)}
+                else:
+                    # unpack_stream verifies every block's SHA-256 before writing
+                    # its bytes, so a corrupt archive yields no output at all.
+                    info, written = lxz_unpack_stream(src, dst)
+                    meta = {"input_bytes": src_path.stat().st_size,
+                            "output_bytes": written,
                             "blocks": len(info.blocks)}
             entry.update(ok=True, **{k: meta[k] for k in ("input_bytes", "output_bytes")})
             if "blocks" in meta:
@@ -769,14 +789,16 @@ def build_parser() -> argparse.ArgumentParser:
                      help="glob used when --in is a directory (default: *.lxz)")
     ins.set_defaults(func=cmd_inspect)
 
-    bt = sub.add_parser("batch", help="process many files in one invocation (canon or pack)")
+    bt = sub.add_parser("batch",
+                        help="process many files in one invocation (canon, pack or unpack)")
     bt.add_argument("--in", dest="infile", required=True,
                     help="a directory (searched recursively) or a single file")
-    bt.add_argument("--op", choices=("canon", "pack"), default="canon")
+    bt.add_argument("--op", choices=("canon", "pack", "unpack"), default="canon")
     bt.add_argument("--out-dir", required=True, help="destination root (created if missing)")
     bt.add_argument("--pattern", default="*", help="glob applied under --in (default: *)")
     bt.add_argument("--suffix", default=None,
-                    help="appended to each output name (default: .canon for canon, .lxz for pack)")
+                    help="appended to each output name (default: .canon for canon, .lxz for pack; "
+                         "for unpack the .lxz is stripped instead)")
     bt.add_argument("--encoding", default=None, help="declared source encoding (canon only)")
     bt.add_argument("--level", type=int, default=19, help="zstd level (pack only)")
     bt.add_argument("--block-size", type=int, default=8 * 1024 * 1024)

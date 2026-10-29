@@ -6,6 +6,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 51 (**`batch --op unpack`** — the batch round trip is closed):
+  - `lexora batch --op unpack` decodes a tree of archives back to canonical text. The symmetric gap: `batch` could canonicalize and pack but not decode, so a batch pipeline could not be reversed without a shell loop.
+  - **`.lxz` is stripped from output names**, so `canon → pack → unpack` returns exactly the names the canonical stage produced — asserted in the tests by diffing the two directories rather than comparing a few files.
+  - Decoding goes through the streaming decoder, so every block's SHA-256 is checked before its bytes are written: a corrupt archive becomes a failed row with **no output file**, while its healthy neighbours decode normally (partial-batch exit 1, unchanged policy).
+  - `--suffix` still overrides, applying literally to unpack output when given.
+  - Tests: 4 added to `tests/test_batch_cli.py` (round-trip identity against the canonical tree, report blocks/sizes, corrupt archive failing alone with no output, custom suffix on unpack). Suite **423 → 427 passed**, 1 skipped.
 - 2026-10-29 — Session 50 (**directory-level `inspect`** — the "how did the batch go?" view):
   - `inspect --in DIR [--pattern '*.lxz'] [--verify] [--json]`: recursive, sorted summary of every archive under a directory — totals first (payload, bytes on disk, ratio, container overhead, blocks), then one line per archive with status.
   - **Failures are counted, not dropped.** A broken archive appears as a row with its refusal code and is included in the archive count and byte totals; a summary that omitted its failures would be a summary you cannot trust. Exit 0 when everything is clean, 7 when any archive is not, 2 when the directory holds no matches.
