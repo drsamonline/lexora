@@ -6,6 +6,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 62 (**R4 now measures both baselines — and LEXORA sits between them**):
+  - **`xz9-lzma`** system added: this sandbox has no `xz` binary, so the row comes from stdlib `lzma` at `FORMAT_XZ, preset=9` — same format and preset through liblzma, recorded in the artifact as a different implementation (sizes comparable, timing not quite).
+  - **Result on 12.1 MiB heldout:** `lexora19` **0.3082** vs `zstd19` **0.3102** (−0.64 %, 16 of 17 files smaller) and vs `xz9-lzma` **0.3064** (**+0.59 %, xz wins every file**). LEXORA sits between the two frozen baselines.
+  - **The finding that matters:** v0 is canonicalization + zstd, so **no zstd level will pass xz** on this corpus. That is the design's ceiling, not an implementation defect — and it is exactly what the roadmap's PPMd/Brotli/dictionary phases exist for. The R4 numbers make the ADR-0001 gate concrete instead of rhetorical.
+  - **A silent-drop bug found and fixed:** the new `xz9-lzma` availability branch forgot `ok.append(name)`, so the system appeared in *neither* `systems_run` nor `systems_skipped` — it ran nowhere and said nothing. `_available_systems` is now total, with an assertion that every requested name lands in exactly one list, and 10 tests in `tests/test_harness_systems.py`.
+  - A third instance of the same test-authoring trap: a "level 19 must be smaller than level 9" test used `b"..." * 400`, on which both levels produced byte-identical output (278 B) because zstd's higher levels add nothing when matches are already maximal. The payload is now varied text.
+  - Suite **482 → 492 passed**, 1 skipped.
 - 2026-10-29 — Session 61 (**corpus at 746.5 MB — three-quarters of the way to the gate**):
   - Nine fetch passes took the snapshot from **593.4 MB to 746.5 MB** (1569 files, 81 failures recorded), at ~17 MB per ~285 s pass as the id tail gets smaller.
   - **Integrity re-checked at the new size:** manifest `1785040d…` over 1586 files verifies with **0 problems**; splits 1117 train / 155 validation / 314 heldout, **no lineage straddling**.

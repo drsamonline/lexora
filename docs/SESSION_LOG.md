@@ -933,3 +933,30 @@ At 0.50 MB mean, 1 GiB needs about **2044 ids**, so the selection was raised to 
 **Gate:** `python3 -m pytest -q` → **482 passed, 1 skipped** (no code touched); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–61 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 62 — 2026-10-29 (both baselines measured: LEXORA sits between them)
+
+**Why this stage.** R4 (Session 60) compared LEXORA against zstd-19 only. xz-9 is the harder frozen baseline — R1–R3 measured the two against each other — so a table without it flattered the pipeline.
+
+**No `xz` binary exists in this sandbox**, so the row comes from `xz9-lzma`: stdlib `lzma` at `FORMAT_XZ, preset=9`, i.e. the same format and preset through liblzma instead of the CLI. Sizes are directly comparable; the timing is not quite (a CPython call is not a subprocess), and the artifact records which implementation ran rather than pretending they are the same thing.
+
+**The numbers** (17 heldout files, 12.1 MiB, 2 reps):
+
+| system | ratio | encode MiB/s |
+|---|---|---|
+| `lexora` (shipped default, level 9) | 0.3367 | 12.55 |
+| `lexora19` | 0.3082 | 1.39 |
+| `zstd19` | 0.3102 | 1.36 |
+| `xz9-lzma` | **0.3064** | 1.06 |
+
+**The finding.** LEXORA sits **between the two frozen baselines**: −0.64 % against zstd-19 (16 of 17 files smaller) and **+0.59 % against xz-9, with xz winning every single file**. v0 is canonicalization plus zstd, so **no zstd level will carry it past xz** on this corpus. That is the ceiling of the design rather than a defect in the implementation — and it is precisely what the roadmap's PPMd, Brotli and trained-dictionary phases exist for. The R4 table now makes the ADR-0001 gate concrete instead of rhetorical.
+
+**A silent-drop bug, found by the new system.** The `xz9-lzma` availability branch I wrote forgot `ok.append(name)` on the success path, so the system ended up in **neither** `systems_run` nor `systems_skipped`: it ran nowhere and said nothing. The first run therefore reported "3 systems" and looked fine. `_available_systems` is now written as explicit terminating branches with a final assertion that every requested name lands in exactly one list, and `tests/test_harness_systems.py` (10 tests) holds that property plus the "a measured system must produce a verifiable artifact" check.
+
+**Third instance of the same test-authoring trap.** A test asserting "level 19 is smaller than level 9" used `b"..." * 400` as its payload — on which both levels produced **byte-identical output (278 B)**, because zstd's higher levels add nothing when every match is already maximal. Sessions 39 and 57 were the first two (synthetic text flattering the RSS probe; a repeating pattern defeating the interruption test). The lesson is now recorded in the test itself: use varied text when the property depends on compression effort.
+
+**Gate:** `python3 -m pytest -q` → **492 passed, 1 skipped** (10 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–62 are delivered as one patch on top of `19cc1a9`.

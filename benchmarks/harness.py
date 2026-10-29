@@ -426,11 +426,28 @@ def _sys_lexora19(data: bytes, out_path: Path) -> int:
     return len(archive)
 
 
+def _sys_xz9_lzma(data: bytes, out_path: Path) -> int:
+    """xz preset 9 through Python's `lzma` (liblzma), for hosts without the CLI.
+
+    Same algorithm and preset as `_sys_xz9`, different entry point: this sandbox has
+    no `xz` binary (verified Session 62), and stdlib `lzma` produces genuine `.xz`
+    streams. The artifact records which implementation ran, because "xz -9" and
+    "liblzma preset 9 through CPython" are the same format but not the same process —
+    a distinction that matters for a timing number and not at all for a size number.
+    """
+    import lzma
+
+    blob = lzma.compress(data, format=lzma.FORMAT_XZ, preset=9)
+    out_path.write_bytes(blob)
+    return len(blob)
+
+
 SYSTEMS = {
     "lexora": _sys_lexora,
     "lexora19": _sys_lexora19,
     "zstd19": _sys_zstd19,
     "xz9": _sys_xz9,
+    "xz9-lzma": _sys_xz9_lzma,
     # "lexora" is OUR pipeline (canon + .lxz v0), not a baseline: it exists so the
     # project's own numbers appear beside the frozen baselines on identical inputs.
     # brotli_q11 / ppmd: intentionally absent — tools not installed in this
@@ -440,20 +457,44 @@ SYSTEMS = {
 
 
 def _available_systems(requested: list[str]) -> tuple[list[str], dict]:
+    """Split requested systems into runnable and skipped, with a reason for each.
+
+    Written as explicit branches that each terminate, after Session 62 shipped a
+    branch that forgot `ok.append(name)` — the system then appeared in NEITHER list
+    and vanished from the run without a word. The final assertion makes that class
+    of mistake impossible: every requested name must land in exactly one list.
+    """
     ok, skipped = [], {}
     for name in requested:
         if name not in SYSTEMS:
             skipped[name] = "not implemented in harness (see SYSTEMS comment)"
-        elif name == "xz9" and not shutil.which("xz"):
-            skipped[name] = "xz CLI not installed"
-        elif name == "zstd19":
+            continue
+        if name == "xz9":
+            if shutil.which("xz"):
+                ok.append(name)
+            else:
+                skipped[name] = "xz CLI not installed (try xz9-lzma)"
+            continue
+        if name == "xz9-lzma":
+            try:
+                import lzma  # noqa: F401
+
+                ok.append(name)
+            except ImportError:  # pragma: no cover - interpreter without liblzma
+                skipped[name] = "stdlib lzma unavailable in this interpreter"
+            continue
+        if name == "zstd19":
             try:
                 import zstandard  # noqa: F401
+
                 ok.append(name)
-            except ImportError:
+            except ImportError:  # pragma: no cover
                 skipped[name] = "python-zstandard not installed"
-        else:
-            ok.append(name)
+            continue
+        ok.append(name)
+    unaccounted = set(requested) - set(ok) - set(skipped)
+    if unaccounted:  # pragma: no cover - defensive, see docstring
+        raise SystemExit(f"internal error: systems in neither list: {sorted(unaccounted)}")
     return ok, skipped
 
 

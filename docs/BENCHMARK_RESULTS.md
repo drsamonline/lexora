@@ -11,7 +11,7 @@ The single place where measured compression/cleaning/performance results are pub
 
 ## R4 smoke — LEXORA measured against the baseline for the first time
 
-**DRAFT, not published** — see [R4_SMOKE_DRAFT.md](R4_SMOKE_DRAFT.md) for the write-up and `benchmarks/results-r4-smoke.json` for the artifact. Until R4, LEXORA itself appeared in no results table: R1–R3 measured the frozen baselines against each other. At equal zstd level on 12.1 MiB of heldout corpus: LEXORA **0.3082** vs zstd-19 **0.3102** — 16 of 17 files smaller, aggregate −0.64 %, **indistinguishable at smoke scope and suggestive rather than established**, explicitly not an ADR-0001 verdict. The shipped default (level 9) is 0.3367, i.e. 8.6 % larger at ~10× the speed.
+**DRAFT, not published** — see [R4_SMOKE_DRAFT.md](R4_SMOKE_DRAFT.md) for the write-up and `benchmarks/results-r4-smoke.json` for the artifact. Until R4, LEXORA itself appeared in no results table: R1–R3 measured the frozen baselines against each other. At equal zstd level on 12.1 MiB of heldout corpus, LEXORA **0.3082** sits **between the two frozen baselines**: marginally better than zstd-19 (**0.3102**, −0.64 %, 16 of 17 files) and marginally worse than xz-9 (**0.3064**, +0.59 %, xz wins every file). **Indistinguishable at smoke scope and suggestive rather than established** — explicitly not an ADR-0001 verdict. The shipped default (level 9) is 0.3367, i.e. 8.5 % larger than zstd-19 at ~10× the speed. The practical reading: v0 is canonicalization + zstd, so it cannot pass xz by tuning zstd — which is what the roadmap's PPMd/Brotli/dictionary phases exist for.
 
 ## Current state
 
