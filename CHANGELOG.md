@@ -6,6 +6,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 52 (**ADR-0010 Proposed: `.lxdb` direction, with the gates re-measured**):
+  - **`docs/ADR/ADR-0010-lxdb-direction.md`** separates two questions that were being conflated: *what shape* should a multi-document archive be, and *what bytes* does it freeze. Only the first is decidable now. Three options are priced — container-of-containers (recommended, interim), block pool with a document map (the successor, where the real wins are), and a segmented append log (rejected as premature: it drags journaling and crash recovery into scope).
+  - **The gate table in FORMAT_LXDB.md was stale and is now re-measured:** G1 (round-trip validated) and G3 (`.lxz` ADR accepted) are **met**; G2 (frozen-corpus benchmark) is **not** — 587 files / 287.9 MB against the ≥1 GiB target. So the direction is open and the byte layout stays forbidden, with the layout assigned to a future ADR-0011 once G2 closes.
+  - **The measurement that makes it concrete:** `batch` produces one `.lxz` per document, and a 23-byte document became a **256-byte archive — 91 % container** (168 B fixed + 56 B/block of index). `.lxz` is behaving exactly as specified; it is simply the wrong shape for a library.
+  - **Option A's limits are stated rather than implied:** it does not reduce per-document overhead, does not dedupe, and does not support updates — with a successor condition (G2 met *and* a measurement showing overhead or duplicate-block redundancy costing bytes) and a rule that Option B arrives as a new format version, not a retrofit.
+  - Documentation only; no code, no layout, no magic. Suite unchanged at **427 passed, 1 skipped**.
 - 2026-10-29 — Session 51 (**`batch --op unpack`** — the batch round trip is closed):
   - `lexora batch --op unpack` decodes a tree of archives back to canonical text. The symmetric gap: `batch` could canonicalize and pack but not decode, so a batch pipeline could not be reversed without a shell loop.
   - **`.lxz` is stripped from output names**, so `canon → pack → unpack` returns exactly the names the canonical stage produced — asserted in the tests by diffing the two directories rather than comparing a few files.

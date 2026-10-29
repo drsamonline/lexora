@@ -1,6 +1,6 @@
 # Dependency licence review — GUI extra (PySide6/Qt) under PolyForm Noncommercial
 
-> **Status:** Review for owner decision (Session 44, 2026-10-29). **Not a decision record and not legal advice.** It gathers what the licences require, what this project's distribution shape means for them, and the options — the choice belongs in an ADR (proposed as ADR-0010) once the owner picks.
+> **Status:** Review for owner decision (Session 44, 2026-10-29). **Not a decision record and not legal advice.** It gathers what the licences require, what this project's distribution shape means for them, and the options — the choice belongs in an ADR (to be recorded as ADR-0011) once the owner picks.
 > **Raised by:** [ADR-0009](ADR/ADR-0009-license-polyform-noncommercial.md) Consequences §3, which flagged the PySide6 combination as an open review item rather than closing it silently.
 > **Related:** [ADR-0006](ADR/ADR-0006-license-mit.md) (superseded) · [ADR-0008](ADR/ADR-0008-gui-toolkit-architecture.md) (toolkit decision) · [ADR-0009](ADR/ADR-0009-license-polyform-noncommercial.md) (project licence) · `LICENSE` · `pyproject.toml` · [RELEASE_PROCESS.md](RELEASE_PROCESS.md) R3
 
@@ -87,6 +87,6 @@ ADR-0006 flagged it and ADR-0009 carried the flag forward. AGPL-3.0 requires the
 
 ## 7. What is needed to close this
 
-1. Owner picks A, B, C or D → recorded as **ADR-0010**, which then either closes the ADR-0009 flag or states precisely what remains.
+1. Owner picks A, B, C or D → recorded as **ADR-0011** (ADR-0010 was taken by the `.lxdb` direction in Session 52), which then either closes the ADR-0009 flag or states precisely what remains.
 2. Whichever is chosen, the §4 checklist becomes part of the release gate (R3 grows a licence-notices row).
 3. If the GUI is ever distributed commercially by anyone, get a lawyer's read. This document records engineering judgement about licence mechanics; it is not a legal opinion, and the owner remains accountable for data and licence decisions as CORPUS_POLICY already says for data.

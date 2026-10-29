@@ -733,3 +733,21 @@ The price of the current default, stated plainly: **19 → 3 costs 26.7 % more b
 **Gate:** `python3 -m pytest -q` → **427 passed, 1 skipped** (4 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK. Smoke: canon → pack → unpack over a two-file tree with a subdirectory produced a byte-identical tree; adding a deliberately corrupted archive to the middle stage produced exit 1, two good outputs and no output for the broken one.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–51 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 52 — 2026-10-29 (ADR-0010 Proposed: `.lxdb` direction, gates re-measured)
+
+**Why this stage, and why it is a document rather than code.** The CLI is now feature-complete for `.lxz` v0 and its round trip, and the remaining work kept pointing at the same wall: `batch` emits **one archive per document**, and each pays 168 bytes of fixed overhead plus 56 bytes per block of index — measured, a 23-byte document became a **256-byte archive, 91 % container**. `.lxz` is doing exactly what it promises; it is the wrong shape for a library. But FORMAT_LXDB.md forbids design work before its gates are met, so the first job was to find out whether they actually are.
+
+**The gate table was stale, and now it is measured.** G1 (core round-trip validated) — **met**, by P1 completion plus the Session-51 end-to-end `canon → pack → unpack` identity. G3 (`.lxz` format ADR accepted) — **met**, ADR-0007 since 2026-10-16. G2 (frozen-corpus benchmark run, Phase 2 exit) — **not met**: 587 files / 287.9 MB against a ≥1 GiB target, `complete: false` in the provenance record. That split is what makes this session legitimate: the *direction* question is decidable, the *byte layout* question is not.
+
+**ADR-0010 therefore separates the two.** It prices three shapes — container-of-containers (recommended as an interim v0, because it reuses the frozen reader verbatim per member and can be specified honestly in a fraction of the risk), a block pool with a document map (where the real wins live: one container overhead, block dedupe, later a shared dictionary), and a segmented append log (rejected now — it drags journaling and crash recovery into scope, which is precisely what FORMAT_LXDB.md's deferral rationale warns against).
+
+**What it refuses to claim matters as much as what it recommends.** Option A does *not* reduce per-document overhead, does *not* dedupe and does *not* support updates — stated in the ADR so no future UI text or doc can imply otherwise. Option B's successor condition is a measurement, not an opinion: G2 met **and** evidence that overhead or duplicate-block redundancy is materially costing bytes. And Option B arrives as a new format version rather than a retrofit, the same discipline ADR-0007 applied to `.lxz`.
+
+**Status: Proposed.** Nothing is decided until the owner accepts it, and no `.lxdb` code or byte layout may exist until then *and* G2 closes — the layout is assigned to a future ADR-0011 with its own test vectors.
+
+**Gate:** `python3 -m pytest -q` → **427 passed, 1 skipped** (documentation only); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–52 are delivered as one patch on top of `19cc1a9`.

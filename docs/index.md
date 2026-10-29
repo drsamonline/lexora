@@ -32,7 +32,8 @@ The Phase-1 CLI exists and is tested (`canon`, `zround`, `pipe`, `pack`, `unpack
 
 ## Architecture & specification
 
-- [DEPENDENCY_LICENCE_REVIEW.md](DEPENDENCY_LICENCE_REVIEW.md) — third-party licence obligations for the GUI extra (PySide6/Qt under PolyForm Noncommercial); **review awaiting an owner decision** (proposed ADR-0010)
+- [ADR-0010](ADR/ADR-0010-lxdb-direction.md) — `.lxdb` direction (**Proposed**): container of `.lxz` members as an interim v0, with a block-pool successor named and its trigger stated; **no byte layout until the corpus gate closes**
+- [DEPENDENCY_LICENCE_REVIEW.md](DEPENDENCY_LICENCE_REVIEW.md) — third-party licence obligations for the GUI extra (PySide6/Qt under PolyForm Noncommercial); **review awaiting an owner decision** (to be recorded as ADR-0011)
 
 
 - [PROJECT_CHARTER.md](PROJECT_CHARTER.md) — problem, goals, constraints, non-goals

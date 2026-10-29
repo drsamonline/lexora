@@ -26,5 +26,6 @@ Use [ADR-0001-template.md](ADR-0001-template.md) as the starting point (it doubl
 | [ADR-0007](ADR-0007-container-v0-freeze.md) | `.lxz` v0 layout freeze | **Accepted** w/ recorded amendments (delegated) | 2026-10-16 |
 | [ADR-0008](ADR-0008-gui-toolkit-architecture.md) | GUI toolkit, packaging & architecture | **Accepted** (delegated) | 2026-10-17 |
 | [ADR-0009](ADR-0009-license-polyform-noncommercial.md) | License = PolyForm Noncommercial 1.0.0 (supersedes ADR-0006) | **Accepted** (owner decision) | 2026-10-29 |
+| [ADR-0010](ADR-0010-lxdb-direction.md) | `.lxdb` direction — container-of-containers vs block pool (no byte layout) | **Proposed** (owner decision pending) | 2026-10-29 |
 
 Template location note: the canonical template now lives at [../templates/ADR_TEMPLATE.md](../templates/ADR_TEMPLATE.md); `ADR-0001-template.md` remains for historical continuity only.

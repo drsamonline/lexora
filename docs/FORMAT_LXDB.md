@@ -1,10 +1,10 @@
 # `.lxdb` Incremental Database Mode
 
-> ## ⚠️ DEFERRED — NOT DESIGNED
-> **Status:** Deferred by policy (REQ-FMT-004): work begins only after the `.lxz` baseline is implemented and validated. No layout, no semantics, no claims.
+> ## ⚠️ DEFERRED — DIRECTION PROPOSED, NO LAYOUT
+> **Status:** Deferred by policy (REQ-FMT-004) for any *byte layout*. The **direction** question is now recorded in [ADR-0010](ADR/ADR-0010-lxdb-direction.md) (**Proposed**, owner decision pending): a container of `.lxz` members as an interim v0, with a block-pool successor named and its trigger stated. No field widths, magic, ordering or semantics exist below.
 > **Owner:** Unassigned
-> **Last verified:** 2026-10-15
-> **Related:** [FORMAT_LXZ.md](FORMAT_LXZ.md) · [SPECIFICATION.md §7.3](SPECIFICATION.md)
+> **Last verified:** 2026-10-29 (gate table re-measured in Session 52)
+> **Related:** [FORMAT_LXZ.md](FORMAT_LXZ.md) · [SPECIFICATION.md §7.3](SPECIFICATION.md) · [ADR-0010](ADR/ADR-0010-lxdb-direction.md) · [ADR-0007](ADR/ADR-0007-container-v0-freeze.md)
 
 ## Purpose & Scope (intent level only)
 
@@ -26,10 +26,12 @@
 
 ## Status gate
 
-| Gate | Condition | Met? |
-|---|---|---|
-| G1 | Core pipeline round-trip validated (Phase 1 exit) | ❌ Not started |
-| G2 | Frozen-corpus benchmark run completed (Phase 2 exit) | ❌ Not started |
-| G3 | `.lxz` format ADR accepted (Phase 4) | ❌ Not started |
+| Gate | Condition | Met? | Evidence (re-measured 2026-10-29, Session 52) |
+|---|---|---|---|
+| G1 | Core pipeline round-trip validated (Phase 1 exit) | ✅ **Met** | P1 complete; round trip asserted at every layer, and end-to-end `canon → pack → unpack` returns a byte-identical tree (Session 51) |
+| G2 | Frozen-corpus benchmark run completed (Phase 2 exit) | ❌ **Not met** | corpus is 587 files / 287.9 MB against the ≥1 GiB target; `benchmarks/provenance/gutenberg-cat-partial/sources.json` records `complete: false`; no protocol-scope revision exists |
+| G3 | `.lxz` format ADR accepted (Phase 4) | ✅ **Met** | [ADR-0007](ADR/ADR-0007-container-v0-freeze.md) Accepted 2026-10-16 and exercised ever since |
 
-**No `.lxdb` design work may begin before G3.** This file exists solely to record that constraint and the open questions; it contains zero specification.
+**What the gates now allow, and what they still forbid.** G1 and G3 are met, so the *direction* decision is open and is recorded in [ADR-0010](ADR/ADR-0010-lxdb-direction.md) (Proposed). G2 is not met, so **no byte layout, no magic, no field widths, and no `.lxdb` code** — a layout frozen before the benchmark that would judge it is exactly the sequencing error ADR-0007 avoided for `.lxz`. When G2 closes, the layout becomes its own ADR (proposed: ADR-0012) with its own test vectors.
+
+**Why the direction question was worth opening before G2:** `batch` produces one `.lxz` per document, and each pays 168 bytes of fixed container overhead plus 56 bytes per block of index — measured, a 23-byte document became a 256-byte archive (91 % container). That is `.lxz` behaving correctly; it is simply the wrong shape for a library, and the shape can be chosen cheaply before any bytes are frozen.
