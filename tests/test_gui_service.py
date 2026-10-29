@@ -396,7 +396,9 @@ def test_job_missing_input_exit3(tmp_path, svc):
 def test_settings_defaults_without_file(tmp_path):
     s = load_settings(tmp_path / "absent.json")
     assert s == DEFAULT_SETTINGS
-    assert s["level"] == 3 and s["block_size"] == MAX_BLOCK_SIZE
+    from lexora import DEFAULT_LEVEL
+
+    assert s["level"] == DEFAULT_LEVEL and s["block_size"] == MAX_BLOCK_SIZE
 
 
 def test_settings_save_load_roundtrip(tmp_path):

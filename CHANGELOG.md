@@ -5,7 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
-### Added
+### Changed
+- 2026-10-29 — Session 53 (**three decisions recorded; the default encode level changes to 9**):
+  - **[ADR-0010](docs/ADR/ADR-0010-lxdb-direction.md) Accepted** — `.lxdb` v0 direction: a container of `.lxz` members, chosen on the practical argument that it reuses the frozen reader verbatim and needs no new bytes frozen. Option B (block pool) stays named as the successor with a measurement-based trigger; the byte layout is still forbidden until the corpus gate G2 closes (now assigned to ADR-0013).
+  - **[ADR-0011](docs/ADR/ADR-0011-gui-process-separation.md) Accepted** — the GUI becomes a **client of the CLI** rather than an in-process library consumer, which answers the LGPL question structurally instead of with paperwork, isolates Qt crashes from archive operations, and is testable without Qt. Explicitly no GUI code changed: PySide6 cannot be installed in this environment, so the ADR records the decision and the implementation order, not untested widgets. Partly supersedes ADR-0008's in-process service-layer assumption.
+  - **[ADR-0012](docs/ADR/ADR-0012-default-encode-level.md) Accepted — `DEFAULT_LEVEL = 9`.** The one measured budget miss (0.30–0.71 MiB/s at zstd-19 against ≥2 MB/s) becomes a pass at 6.2 MiB/s, for 13.6 % more bytes. Level 19 stays available for archival use.
+  - **A real inconsistency fixed on the way:** the three surfaces disagreed about the default — CLI and library 19, GUI settings hardcoded **3**, with a comment claiming it "matches the CLI default". They now all read `lexora.DEFAULT_LEVEL`, the false comment is gone, and `tests/test_level_default.py` fails if any surface drifts.
+  - Tests: 5 new (default-level constant and range, library entry-point parity, all four CLI subcommands, GUI settings, and CLI-default == library-default bytes). Suite **427 → 432 passed**, 1 skipped.
 - 2026-10-29 — Session 52 (**ADR-0010 Proposed: `.lxdb` direction, with the gates re-measured**):
   - **`docs/ADR/ADR-0010-lxdb-direction.md`** separates two questions that were being conflated: *what shape* should a multi-document archive be, and *what bytes* does it freeze. Only the first is decidable now. Three options are priced — container-of-containers (recommended, interim), block pool with a document map (the successor, where the real wins are), and a segmented append log (rejected as premature: it drags journaling and crash recovery into scope).
   - **The gate table in FORMAT_LXDB.md was stale and is now re-measured:** G1 (round-trip validated) and G3 (`.lxz` ADR accepted) are **met**; G2 (frozen-corpus benchmark) is **not** — 587 files / 287.9 MB against the ≥1 GiB target. So the direction is open and the byte layout stays forbidden, with the layout assigned to a future ADR-0011 once G2 closes.

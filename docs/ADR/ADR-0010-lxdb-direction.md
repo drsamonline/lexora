@@ -1,6 +1,6 @@
 # ADR-0010: `.lxdb` direction — container-of-containers vs block pool (no byte layout)
 
-> **Status:** **Proposed** — recommendation below; approval pending from the owner. This ADR deliberately does **not** specify a byte layout, and no `.lxdb` code may be written until it is Accepted *and* the corpus gate in [FORMAT_LXDB.md](../FORMAT_LXDB.md) is met.
+> **Status:** **Accepted 2026-10-29** — Option A (container of `.lxz` members) as the interim v0, under owner delegation: asked which option was best *practically*, the owner left the choice to this record rather than picking, so the recommendation below stands as the decision (the same delegation pattern as ADR-0007's "DECIDE UR SELF"). This ADR still deliberately specifies **no byte layout**: no `.lxdb` code may be written until the corpus gate G2 in [FORMAT_LXDB.md](../FORMAT_LXDB.md) is met and the layout is frozen by ADR-0013.
 > **Date:** 2026-10-29
 > **Deciders:** Owner Dr Sohil Momin (pending); documentation architect (drafted, delegated)
 > **Related:** [FORMAT_LXDB.md](../FORMAT_LXDB.md) (gate table, now updated with evidence) · [ADR-0007](ADR-0007-container-v0-freeze.md) (`.lxz` v0 freeze) · [COST_MODEL.md](../COST_MODEL.md) (REQ-CMP-004 accounting) · [RESOURCE_LIMITS.md](../RESOURCE_LIMITS.md) (LIM-01…10) · [FORMAT_LXZ.md](../FORMAT_LXZ.md) · [PHASES.md](../PHASES.md) · [BENCHMARK_PROTOCOL.md](../BENCHMARK_PROTOCOL.md)
@@ -59,12 +59,12 @@ Append-only segments, each a block run with its own index, plus a top-level segm
 
 ## Decision
 
-**Recommend Option A now, as an explicitly interim step, with Option B named as the successor and the migration path stated.** Precisely:
+**Adopt Option A now, as an explicitly interim step, with Option B named as the successor and the migration path stated.** The practical reason it wins today: it reuses the frozen, tested `.lxz` reader verbatim per member, so it can be specified honestly and tested thoroughly without freezing any new bytes — Option B is the better *format* but needs a new layout, new refusal classes and the benchmark that G2 is still waiting on. Precisely:
 
-1. **Shape decision (this ADR, pending approval):** `.lxdb` v0 is a *container of `.lxz` members* with a document table. It solves the file-count and addressing problem, reuses the frozen reader, and can be specified and tested in a fraction of B's risk.
+1. **Shape decision (accepted):** `.lxdb` v0 is a *container of `.lxz` members* with a document table. It solves the file-count and addressing problem, reuses the frozen reader, and can be specified and tested in a fraction of B's risk.
 2. **What it does not promise:** it does **not** reduce per-document overhead, does **not** dedupe, and does **not** support updates. Any documentation or UI text implying otherwise would be false.
 3. **Successor condition for Option B:** when (a) the corpus gate G2 is met and (b) a measured sample shows per-document overhead or duplicate-block redundancy is materially costing bytes, Option B is designed as a **new format version** (`LXDB` major bump) rather than retrofitted into v0 — the same discipline ADR-0007 applied to `.lxz`.
-4. **Byte layout remains gated.** No field widths, magic, ordering or trailer arithmetic are specified here. That work waits on G2, and will be its own ADR (proposed: **ADR-0012**) with its own test vectors, exactly as `.lxz` v0 had ADR-0007.
+4. **Byte layout remains gated.** No field widths, magic, ordering or trailer arithmetic are specified here. That work waits on G2, and will be its own ADR (proposed: **ADR-0013**) with its own test vectors, exactly as `.lxz` v0 had ADR-0007.
 5. **Update semantics remain out of scope**, per FORMAT_LXDB.md — Option C is recorded as the eventual home for them.
 
 ## Consequences & trade-offs

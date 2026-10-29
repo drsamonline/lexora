@@ -31,7 +31,7 @@ import threading
 from pathlib import Path
 from typing import Any, Callable
 
-from lexora import __version__
+from lexora import DEFAULT_LEVEL, __version__
 from lexora.canonicalize import CanonicalizationError, canonicalize, canonicalize_with_meta
 from lexora.container import ContainerError
 from lexora.container import pack as lxz_pack
@@ -122,7 +122,9 @@ class JobResult:
 
 SETTINGS_FILENAME = "gui-settings.json"
 DEFAULT_SETTINGS: dict[str, Any] = {
-    "level": 3,                    # matches the CLI `pack --level` default
+    "level": DEFAULT_LEVEL,        # one source of truth (was hardcoded 3 while the CLI
+                                   # default was 19 — the comment claiming they matched
+                                   # was wrong; Session 53 pinned both to DEFAULT_LEVEL)
     "block_size": MAX_BLOCK_SIZE,  # LIM-01 ceiling, matches CLI default
 }
 

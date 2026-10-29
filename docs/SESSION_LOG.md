@@ -751,3 +751,21 @@ The price of the current default, stated plainly: **19 → 3 costs 26.7 % more b
 **Gate:** `python3 -m pytest -q` → **427 passed, 1 skipped** (documentation only); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–52 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 53 — 2026-10-29 (three decisions recorded: `.lxdb` direction, GUI process separation, default level)
+
+**How the decisions arrived.** The three open questions were put to the owner as multiple-choice. Two came back as "which is better practically?" — a delegation, not an answer — and one was chosen explicitly (**B, process separation**). So two of the three decisions are recorded under delegation, the pattern ADR-0007 established ("DECIDE UR SELF"), and each record says so rather than implying the owner picked it.
+
+**ADR-0010 Accepted — `.lxdb` v0 is a container of `.lxz` members.** The practical argument decides it: the frozen, tested `.lxz` reader is reused verbatim per member, so the format can be specified honestly and tested thoroughly without freezing any new bytes. Option B (block pool with a document map) remains the better *format* — one container overhead instead of N, plus dedupe — and stays named as the successor with a measurement-based trigger. The byte layout is still forbidden until the corpus gate G2 closes, and is now assigned to ADR-0013; `src/` still contains no `.lxdb` code or magic, which was verified rather than assumed.
+
+**ADR-0011 Accepted — the GUI becomes a client of the CLI.** This answers the LGPL question structurally: a separate process is the strongest possible "can the user replace the LGPL parts?" answer, and Qt crashes stop being able to corrupt an in-flight archive operation. It also happens to be testable in this environment, which matters — the GUI half is the one thing here that has never been verifiable. **No GUI code changed**, deliberately: PySide6 cannot be installed (no `libegl1`, no apt), and untested widget code would be worse than none. The ADR records the decision, what it partly supersedes in ADR-0008, and the implementation order for when a Qt-capable environment exists.
+
+**ADR-0012 Accepted — `DEFAULT_LEVEL = 9`.** This turns the project's only measured budget miss (0.30–0.71 MiB/s at zstd-19 against a soft ≥2 MB/s target) into a pass at 6.2 MiB/s, for 13.6 % more bytes; level 19 stays available for archival work. Level 9 is the knee of the measured curve — beyond it, 12/15/19 buy 3–6 % more bytes for a 3–9× slowdown.
+
+**The inconsistency this uncovered is the part worth remembering.** The three surfaces disagreed about the default: CLI and library used 19, the GUI settings hardcoded **3**, and a comment asserted that value "matches the CLI `pack --level` default". Two surfaces of the same application were producing different archives from identical input, and no test noticed because each surface was tested against its own constant. They now all read `lexora.DEFAULT_LEVEL`, and `tests/test_level_default.py` asserts agreement across both library entry points, all four CLI subcommands and the GUI settings — the test that would have caught it. The stale comment is deleted rather than corrected, because a comment that restates a constant is a second source of truth.
+
+**Gate:** `python3 -m pytest -q` → **432 passed, 1 skipped** (5 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–53 are delivered as one patch on top of `19cc1a9`.

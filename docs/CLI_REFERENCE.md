@@ -96,7 +96,7 @@ lexora pack --in CANONICAL --out ARCHIVE.lxz [--level N] [--block-size B]
 |---|---|---|---|
 | `--in PATH` | yes | — | payload file (normally `canon` output; `pack` does not canonicalize) |
 | `--out PATH` | yes | — | archive destination; `-` writes to stdout (binary) |
-| `--level N` | no | 19 | zstd level 1..22 (same contract as `zround`) |
+| `--level N` | no | **9** (`lexora.DEFAULT_LEVEL`, ADR-0012) | zstd level 1..22; 19 remains the archival choice |
 | `--block-size B` | no | 8388608 | max uncompressed bytes per block, legal range 1..8388608 (LIM-01); out-of-range → exit 2 before any read/write (Session 26 bounds messaging); declared in header and enforced by readers |
 | `--no-stream` | no | off (streaming) | buffer the whole input in memory instead of streaming block-by-block. Same output bytes, far higher peak RSS (measured 196.9 MiB vs 126.1 MiB at a 32 MiB input, Session 39) — kept for A/B evidence runs only |
 
@@ -162,7 +162,7 @@ lexora batch --in DIR --out-dir DIR [--op canon|pack] [--pattern G] [--suffix S]
 | `--pattern G` | no | `*` | glob applied under `--in` |
 | `--suffix S` | no | `.canon` / `.lxz` / *stripped* | appended to each output name; for `unpack` the `.lxz` is stripped instead, so a round trip returns the names it started with |
 | `--encoding E` | no | — | declared source encoding (canon only) |
-| `--level N`, `--block-size B` | no | 19, 8 MiB | pack only |
+| `--level N`, `--block-size B` | no | 9 (`DEFAULT_LEVEL`), 8 MiB | pack only |
 | `--stop-on-error` | no | off | abort at the first failure, exit with that file's code |
 | `--report F`, `--json` | no | — | write / print the JSON report (per-file `ok`, `code`, sizes) |
 

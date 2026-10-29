@@ -27,7 +27,7 @@ Proposed profile "REF-4G": x86-64 laptop-class CPU, **4 GiB RAM total**, spinnin
 | Path | Proposed target | Status |
 |---|---|---|
 | Canonicalization | ≥ 5 MB/s text | **Measured — PASS by a wide margin:** 29.7 MiB/s at a 16 MiB document, 66.1 MiB/s at 64 MiB (streaming default). |
-| Core encode (level tuned for default) | ≥ 2 MB/s | **Measured — MISS at the current default:** 0.30–0.71 MiB/s at zstd level 19 (across sizes and passes on this 2-vCPU container). Soft target, so it does not block, but the gap is 3–7×. Level 19 is the reason: the budget's own wording ("level tuned for default") assumes a default chosen for speed, while the CLI still defaults to 19. **The trade-off is now measured** — see the sweep below. |
+| Core encode (level tuned for default) | ≥ 2 MB/s | **Measured — PASS at the default since Session 53:** `lexora.DEFAULT_LEVEL = 9` (ADR-0012) gives **6.2 MiB/s** on real prose, ~3× the target. At the previous default (19) the same measurement was 0.30–0.71 MiB/s — a 3–7× **miss**, which is what forced the decision. Level 19 remains available explicitly for archival work and still misses the target by design. |
 | Core decode | ≥ 20 MB/s | **Measured — PASS:** 28.5 MiB/s at a 32 MiB archive (1.4 MiB/s at 1 MiB is startup, not throughput). |
 
 Measurement caveat for the three rows above: single runs on a noisy 2-vCPU container, derived from wall time in `benchmarks/results-rss-core.json`. Peak-RSS numbers from this box are stable; **throughput numbers are indicative only** and need the REF-4G-class machine plus BENCHMARK_PROTOCOL §6.3 repeats before anyone quotes them as a result.

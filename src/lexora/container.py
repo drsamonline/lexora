@@ -40,7 +40,7 @@ from dataclasses import dataclass
 
 import zstandard as zstd
 
-from lexora import CANONICALIZER_VERSION, CODEC_ID_ZSTD, __version__
+from lexora import CANONICALIZER_VERSION, CODEC_ID_ZSTD, DEFAULT_LEVEL, __version__
 from lexora.zstd_core import CodecError, compress, decompress
 
 MAGIC = b"LXZ|"
@@ -114,7 +114,7 @@ class ArchiveInfo:
         return sum(b.uncompressed_size for b in self.blocks)
 
 
-def pack(data: bytes, *, level: int = 19,
+def pack(data: bytes, *, level: int = DEFAULT_LEVEL,
          block_size: int = DEFAULT_MAX_BLOCK_UNCOMPRESSED,
          max_block_compressed: int = DEFAULT_MAX_BLOCK_COMPRESSED,
          max_total_uncompressed: int = DEFAULT_MAX_TOTAL_UNCOMPRESSED,
@@ -201,7 +201,7 @@ def _build_header(*, block_size: int, max_block_compressed: int,
     return bytes(header)
 
 
-def pack_stream(src, dst, *, level: int = 19,
+def pack_stream(src, dst, *, level: int = DEFAULT_LEVEL,
                 block_size: int = DEFAULT_MAX_BLOCK_UNCOMPRESSED,
                 max_block_compressed: int = DEFAULT_MAX_BLOCK_COMPRESSED,
                 max_total_uncompressed: int = DEFAULT_MAX_TOTAL_UNCOMPRESSED,

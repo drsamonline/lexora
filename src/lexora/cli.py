@@ -39,7 +39,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from lexora import __version__
+from lexora import DEFAULT_LEVEL, __version__
 from lexora.canonicalize import CanonicalizationError, canonicalize, canonicalize_stream
 from lexora.container import ContainerError, read_index
 from lexora.container import (
@@ -730,7 +730,7 @@ def build_parser() -> argparse.ArgumentParser:
     z = sub.add_parser("zround", help="zstd compress + verify byte-exact roundtrip")
     z.add_argument("--in", dest="infile", required=True)
     z.add_argument("--out", dest="outfile", default="-", help="'-' to skip writing")
-    z.add_argument("--level", type=int, default=19)
+    z.add_argument("--level", type=int, default=DEFAULT_LEVEL)
     z.set_defaults(func=cmd_zround)
 
     pp = sub.add_parser(
@@ -740,13 +740,13 @@ def build_parser() -> argparse.ArgumentParser:
     pp.add_argument("--in", dest="infile", required=True)
     pp.add_argument("--out", dest="outfile", default="-", help="'-' to skip writing")
     pp.add_argument("--encoding", default=None, help="declared source encoding")
-    pp.add_argument("--level", type=int, default=19)
+    pp.add_argument("--level", type=int, default=DEFAULT_LEVEL)
     pp.set_defaults(func=cmd_pipe)
 
     pk = sub.add_parser("pack", help="wrap canonical bytes into a .lxz v0 archive (ADR-0007)")
     pk.add_argument("--in", dest="infile", required=True)
     pk.add_argument("--out", dest="outfile", required=True, help="'-' for stdout")
-    pk.add_argument("--level", type=int, default=19)
+    pk.add_argument("--level", type=int, default=DEFAULT_LEVEL)
     pk.add_argument("--no-stream", action="store_true",
                     help="buffer the whole input in memory instead of streaming "
                          "block-by-block (same output bytes, much higher peak RSS)")
@@ -800,7 +800,7 @@ def build_parser() -> argparse.ArgumentParser:
                     help="appended to each output name (default: .canon for canon, .lxz for pack; "
                          "for unpack the .lxz is stripped instead)")
     bt.add_argument("--encoding", default=None, help="declared source encoding (canon only)")
-    bt.add_argument("--level", type=int, default=19, help="zstd level (pack only)")
+    bt.add_argument("--level", type=int, default=DEFAULT_LEVEL, help="zstd level (pack only)")
     bt.add_argument("--block-size", type=int, default=8 * 1024 * 1024)
     bt.add_argument("--stop-on-error", action="store_true",
                     help="abort at the first failure and exit with that file's code")
