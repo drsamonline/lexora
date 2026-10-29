@@ -769,3 +769,23 @@ The price of the current default, stated plainly: **19 → 3 costs 26.7 % more b
 **Gate:** `python3 -m pytest -q` → **432 passed, 1 skipped** (5 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–53 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 54 — 2026-10-29 (reader hardening: fuzzing found two real gaps)
+
+**Why this stage.** Every other session added surface; this one attacked it. The `.lxz` reader is the only component that parses untrusted bytes, its documentation makes strong claims (validate-before-allocate, bounded memory, refuse rather than guess), and nothing until now exercised those claims adversarially.
+
+**Method.** A deterministic fuzz pass — truncations at every length, single-byte flips at sampled offsets, end-drops, and random blobs — across four archive shapes and seven reader entry points (`read_index`, `read_index_stream`, `unpack`, `unpack_stream`, `verify_archive`, `verify_stream`, `inspect.summarize`). No external fuzz library and a fixed seed, so any failure reproduces from the test name alone. The first pass reported **zero crashes**, which was reassuring and also wrong to stop at: the interesting properties were not "does it crash" but "does it ever silently mis-decode" and "does it ever allocate what the input asked for".
+
+**Gap 1 — the reader trusted the header's own limits.** RESOURCE_LIMITS.md states that LIM-01 (8 MiB uncompressed block) and LIM-02 (16 MiB compressed block) are "enforced by reader". In fact `_validate_header` enforced only the caps the header *declared about itself*. With a recomputed header checksum — trivially available to anyone crafting a file — an archive could declare `max_block_uncompressed = 2^60` and every downstream pre-allocation check would pass, because they all compared against that declared number. Declared caps may now be **stricter** than the ceiling but never looser, refused with the new **`E-RES-004`**. This is a documentation-vs-code gap closed, not a new feature.
+
+**Gap 2 — a corrupt frame header could drive an allocation attempt.** One flipped byte inside a zstd frame produced a `MemoryError`: the decoder honoured a content size the corrupted frame declared. `decompress()` now reads the frame's declared content size first and refuses when it disagrees with the caller's hint — before any allocation — and converts any residual `MemoryError` into a `CodecError` so the failure is bounded and typed. Under the same fix, a 2^50 content-size claim is now refused while allocating under 32 MiB (asserted with `tracemalloc`).
+
+**What the suite now holds** (`tests/test_reader_fuzz.py`, 14 tests): mutants either decode to the **original** bytes or raise `ContainerError` — never another exception type and never a wrong answer, which is the property that matters most since a silent mis-decode is worse than any refusal; refusals are deterministic across repeated runs; the CLI never tracebacks and only returns documented exit codes; random blobs are refused; and — the over-hardening guard — a real archive and the committed golden vector still verify.
+
+**Cost note.** The module takes ~27 s of the suite's ~30 s. That is deliberate: a fuzz suite that runs in 0.2 s is not fuzzing much. If the suite's runtime ever matters, the mutants are bounded by one constant (`step` in `_mutants`).
+
+**Gate:** `python3 -m pytest -q` → **446 passed, 1 skipped** (14 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–54 are delivered as one patch on top of `19cc1a9`.

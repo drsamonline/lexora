@@ -12,8 +12,8 @@ Hard ceilings the encoder may emit and the decoder must enforce, so hostile or o
 
 | ID | Resource | Proposed max | Enforced by | Status |
 |---|---|---|---|---|
-| LIM-01 | Block uncompressed size | 8 MiB | reader pre-allocation check | Candidate |
-| LIM-02 | Compressed block size | 16 MiB (never > input cap + margin rule) | reader | Candidate |
+| LIM-01 | Block uncompressed size | 8 MiB | reader pre-allocation check — **enforced since Session 54**: the reader refuses a header that declares a looser cap than this ceiling (`E-RES-004`), instead of trusting the header's own number | Candidate |
+| LIM-02 | Compressed block size | 16 MiB (never > input cap + margin rule) | reader — **enforced since Session 54** via the same `E-RES-004` check | Candidate |
 | LIM-03 | Document count per `.lxz` | 1,000,000 | index parse bound | Candidate |
 | LIM-04 | Index bytes per document | 4 KiB | reader | Candidate |
 | LIM-05 | Embedded dictionary size | 100 MiB | header check before read | Candidate |

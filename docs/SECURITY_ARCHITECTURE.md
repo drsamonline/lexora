@@ -44,7 +44,7 @@ Describes how security properties are *designed into* LEXORA's pipeline: which c
 
 | Requirement | Mechanism (intended) | Spec location | Implementation status |
 |---|---|---|---|
-| REQ-SEC-001 hostile archives ⇒ bounded memory | Validate-before-allocate; [RESOURCE_LIMITS.md](RESOURCE_LIMITS.md) ceilings enforced by reader; streaming block processing | SPEC §4, FORMAT_LXZ reqs | Not started |
+| REQ-SEC-001 hostile archives ⇒ bounded memory | Validate-before-allocate; [RESOURCE_LIMITS.md](RESOURCE_LIMITS.md) ceilings enforced by reader; streaming block processing. **Session 54 closed two gaps found by fuzzing:** the reader enforced only the limits a header *declared* (now clamped to the absolute LIM-01/LIM-02 ceilings, `E-RES-004`), and a corrupt zstd frame header could drive an allocation attempt (now refused on a frame-vs-index size mismatch before decoding). `tests/test_reader_fuzz.py` holds the properties | SPEC §4, FORMAT_LXZ reqs | **Implemented + fuzz-tested** |
 | REQ-SEC-002 no sensitive content in shared dictionaries | Corpus privacy classification, default-deny publication, dictionary provenance records | CORPUS_POLICY.md | Not started |
 | REQ-SEC-003 optional AEAD encryption | ChaCha20-Poly1305 or AES-256-GCM, per-block scope, header-as-AEAD, durable nonce discipline | ENCRYPTION_PROFILE.md (Proposed) | Out of current scope |
 | REQ-SEC-004 corruption detected on read | Per-block + whole-archive checksums; mismatch ⇒ refuse decode with explicit error | SPEC §4/§7, ERROR_HANDLING.md | Not started |

@@ -372,6 +372,29 @@ def _validate_header(header: bytes, file_len: int) -> ArchiveInfo:
         raise ContainerError("E-CMP-006", f"unknown codec id {codec_id!r}")
     if block_count < 1:
         raise ContainerError("E-FMT-IDX-002", "block_count must be >= 1")
+    # RESOURCE_LIMITS promises the reader enforces LIM-01/LIM-02 as ceilings, but
+    # until Session 54 it only enforced whatever the header DECLARED — so a hostile
+    # header could raise its own limits to 2^60 and defeat every pre-allocation
+    # check downstream. The declared caps may be *stricter* than the ceiling,
+    # never looser.
+    if max_bu > DEFAULT_MAX_BLOCK_UNCOMPRESSED:
+        raise ContainerError(
+            "E-RES-004",
+            f"declared max_block_uncompressed {max_bu} exceeds LIM-01 ceiling "
+            f"{DEFAULT_MAX_BLOCK_UNCOMPRESSED}",
+        )
+    if max_bc > DEFAULT_MAX_BLOCK_COMPRESSED:
+        raise ContainerError(
+            "E-RES-004",
+            f"declared max_block_compressed {max_bc} exceeds LIM-02 ceiling "
+            f"{DEFAULT_MAX_BLOCK_COMPRESSED}",
+        )
+    if max_tu > DEFAULT_MAX_TOTAL_UNCOMPRESSED:
+        raise ContainerError(
+            "E-RES-004",
+            f"declared max_total_uncompressed {max_tu} exceeds the archive ceiling "
+            f"{DEFAULT_MAX_TOTAL_UNCOMPRESSED}",
+        )
     min_size = HEADER_SIZE + block_count * INDEX_ENTRY_SIZE + TRAILER_SIZE
     if file_len < min_size:
         raise ContainerError(

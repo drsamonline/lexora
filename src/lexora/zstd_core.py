@@ -62,6 +62,20 @@ def decompress(frame: bytes, *, expected_original_size: int | None = None) -> by
     dctx = zstd.ZstdDecompressor()
     try:
         if expected_original_size is not None:
+            # Refuse a frame whose own header disagrees with the caller's hint
+            # BEFORE decoding: a corrupted frame header can declare an enormous
+            # content size, and the decoder would try to honour it (observed as a
+            # MemoryError under fuzzing, Session 54). frame_content_size() reads a
+            # few bytes and allocates nothing.
+            try:
+                declared = zstd.frame_content_size(frame)
+            except zstd.ZstdError:
+                declared = None
+            if declared not in (None, -1) and declared != expected_original_size:
+                raise CodecError(
+                    f"frame declares content size {declared} but the index says "
+                    f"{expected_original_size}; refusing before allocation"
+                )
             out = dctx.decompress(
                 frame, max_output_size=max(expected_original_size, 1)
             )
@@ -81,6 +95,14 @@ def decompress(frame: bytes, *, expected_original_size: int | None = None) -> by
         return dctx.decompress(frame, max_output_size=max(size, 1))
     except zstd.ZstdError as exc:
         raise CodecError(f"corrupt or truncated zstd frame: {exc}") from exc
+    except MemoryError as exc:  # pragma: no cover - depends on allocator pressure
+        # A corrupt frame header can ask the decoder for an enormous window. Refuse
+        # rather than growing memory on an unvalidated length (REQ-SEC-001 spirit);
+        # observed as a MemoryError under fuzzing in Session 54.
+        raise CodecError(
+            "decoder could not allocate the declared output size; refusing rather "
+            "than growing memory on an unvalidated length"
+        ) from exc
 
 
 def verify_roundtrip(canonical: bytes, *, level: int = DEFAULT_LEVEL) -> dict:
