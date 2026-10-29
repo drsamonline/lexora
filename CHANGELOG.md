@@ -5,6 +5,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
+### Added
+- 2026-10-29 — Session 44 (**dependency licence review for the GUI extra**; ADR-0009's open item gets an answer short of a decision):
+  - **`docs/DEPENDENCY_LICENCE_REVIEW.md`** — reads LGPL-3.0 §4 against PolyForm Noncommercial and finds **no licence conflict**: LGPL requires relinkability (satisfied by the shared-library wheels) plus notices, and PolyForm restricts commercial use, not modification. It bounds the exposure to the optional `[gui]` extra, since the core install stays Qt-free (ADR-0008 decision 1).
+  - **The finding that could actually bite:** PySide6's own licence is only half the story — the wheels bundle individual Qt modules and some are GPL-3.0-only. The review therefore audits what the GUI imports (`PySide6.QtCore`, `QtGui`, `QtWidgets` and nothing else, lazily, all in `app.py`) rather than trusting the toolkit name, and says plainly that the module-to-licence mapping must be re-confirmed against the wheel at packaging time (PySide6 is not installed in the review environment, so this was read from source, not from a wheel).
+  - **A shipping checklist** (§4): NOTICE file, LGPL+GPL texts beside `LICENSE`, the LGPL notice reachable from the About view, a documented relinking route, and re-verification whenever PySide6's version moves. Wired into RELEASE_PROCESS R3 as an open sub-item.
+  - **Four options for the owner** (§6): comply and ship (recommended if the GUI ships at all), process separation, drop `[gui]` from distribution, or a commercial Qt licence — the choice to be recorded as ADR-0010. PyMuPDF's AGPL flag from ADR-0006 is restated as unchanged and still not a dependency.
+  - Explicitly **not legal advice**, and it says so: the owner remains accountable, and a lawyer's read is warranted if the GUI is ever distributed commercially.
+  - Cross-referenced from ADR-0009 Consequences §3, the docs index, and RELEASE_PROCESS R3.
+
 ### Fixed
 - 2026-10-29 — Session 43 (**provenance checkpointing was lossy; add `corpus-reconcile`**):
   - **Bug:** the per-file checkpoint added in Session 42 rebuilt the record from the *current* invocation's progress, so an interrupted invocation **shrank** the record of files that were still on disk. Observed live: two killed passes left 587 texts / 287.9 MB on disk recorded as 232 files. Checkpoints are now **supersets** — prior records are seeded in and only the file just processed is upserted, while a genuine failure removes that file's record (the manifest must never cite a missing text).

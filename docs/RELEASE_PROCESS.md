@@ -9,7 +9,7 @@
 |---|---|---|
 | R1 | Implementation code exists with passing tests in-repo | ❌ No code, no test tooling |
 | R2 | Python version range decided (OQ-7 in [DECISIONS.md](DECISIONS.md)) | ❌ Open |
-| R3 | License chosen and LICENSE file added (OQ-5) | ✅ Done — PolyForm Noncommercial 1.0.0 via [ADR-0009](ADR/ADR-0009-license-polyform-noncommercial.md) (2026-10-29), superseding ADR-0006's MIT; `LICENSE` at root is normative, ship it with every artifact |
+| R3 | License chosen and LICENSE file added (OQ-5) | ✅ Done — PolyForm Noncommercial 1.0.0 via [ADR-0009](ADR/ADR-0009-license-polyform-noncommercial.md) (2026-10-29), superseding ADR-0006's MIT; `LICENSE` at root is normative, ship it with every artifact. **Open sub-item:** any artifact containing the `[gui]` extra must also ship third-party notices + LGPL/GPL texts + a relinking statement — see [DEPENDENCY_LICENCE_REVIEW.md](DEPENDENCY_LICENCE_REVIEW.md) §4 (decision pending, ADR-0010) |
 | R4 | `.lxz` format frozen: byte layout approved + conformance test vectors published ([FORMAT_LXZ.md](FORMAT_LXZ.md) currently PROPOSED) | ❌ Not frozen |
 | R5 | Benchmark protocol executed on a rights-cleared corpus; claims in README/CHANGELOG limited to measured results ([BENCHMARK_PROTOCOL.md](BENCHMARK_PROTOCOL.md), [CORPUS_POLICY.md](CORPUS_POLICY.md)) | ❌ No corpus (OQ-8), no results |
 | R6 | Versioning scheme formally adopted via ADR (OQ-9; SemVer proposed) | ❌ Open |

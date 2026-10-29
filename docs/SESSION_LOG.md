@@ -576,3 +576,24 @@ Decode is now flat in archive size, as encode has been since Session 39. The two
 **Gate:** `python3 -m pytest -q` → **252 passed, 1 skipped** (7 new in `tests/test_corpus_reconcile.py`); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential; this session is delivered as a patch.
+
+---
+
+## Session 44 — 2026-10-29 (dependency licence review: PySide6/Qt under PolyForm)
+
+**Why this stage.** ADR-0009 closed the project-licence question but deliberately left one item open rather than closing it silently: whether PySide6's LGPL sits cleanly with PolyForm for the optional `[gui]` extra. The GitHub permission request is with Sarvam, so pushing is still impossible from here and the corpus fetch is bandwidth-bound; a review that needs judgement is the right shape of work for this environment.
+
+**Landed: `docs/DEPENDENCY_LICENCE_REVIEW.md`.** Not an ADR — a review that ends in a decision the owner has to make, with the options laid out.
+
+- **Obligations, read against LGPL-3.0 §4:** prominent notice that the library is used, copies of the GPL-3.0 and LGPL-3.0 texts with the distribution, the library's copyright notice in any in-application notice display, a relinking/replacement mechanism (satisfied by dynamic linking against the shared PySide6 wheels), and installation information only where GPL §6 would require it — which a normal desktop install does not.
+- **The compatibility question:** no direct conflict with PolyForm. LGPL forbids terms that restrict modification of the library or reverse engineering for debugging; PolyForm restricts *commercial use*, not modification, and its notice obligations are additive rather than contradictory. The residual cost is comprehension — recipients face two permission systems at once — not doctrine.
+- **The finding worth the exercise:** PySide6's own licence is only half the story, because the wheels bundle individual Qt modules and **some Qt modules are GPL-3.0-only**. So the review audits what this GUI actually imports rather than trusting the toolkit name: `PySide6.QtCore`, `PySide6.QtGui`, `PySide6.QtWidgets`, lazily, all in `app.py` (lines 25, 139, 148, 344, 359, 443), with `service.py` and `crash.py` staying Qt-free. All three are LGPL-3.0 in Qt 6 — **asserted from Qt's published licensing, not from an installed wheel**, because PySide6 is absent from this environment (the GUI test skips). The document says so and puts re-confirmation against the wheel first on the packaging checklist, rather than presenting a source read as a verified fact.
+- **Shipping checklist (§4):** NOTICE file naming every third-party component; LGPL + GPL texts shipped beside `LICENSE`; the LGPL notice reachable from the running application (the About view is the natural home); a documented relinking route with no static linking or substitution-blocking bundling; `LICENSE` still travelling with every artifact (R3); and re-verification whenever PySide6's version moves.
+- **Options (§6):** A comply-and-ship (recommended if the GUI ships to anyone at all), B process separation, C drop `[gui]` from distribution, D commercial Qt licence. PyMuPDF's AGPL-3.0 flag is restated as unchanged — still not a dependency, still needing its own ADR and realistically a commercial licence.
+- **Framing:** explicitly not legal advice, stated in the document's own header and again in §7; the owner remains accountable, and counsel should review if the GUI is ever distributed commercially.
+
+**Wiring:** ADR-0009 Consequences §3 now points at the review and records that the item is *reviewed but undecided*; `docs/index.md` lists it under Architecture; RELEASE_PROCESS R3 carries the notices obligation as an open sub-item so it cannot be forgotten when the GUI first ships.
+
+**Gate:** `python3 -m pytest -q` → **252 passed, 1 skipped** (no code touched); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42, 43 and 44 are delivered together as a single patch on top of `19cc1a9`, at the owner's request, since none of them reached `main`.

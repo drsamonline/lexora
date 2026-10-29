@@ -32,6 +32,9 @@ The Phase-1 CLI exists and is tested (`canon`, `zround`, `pipe`, `pack`, `unpack
 
 ## Architecture & specification
 
+- [DEPENDENCY_LICENCE_REVIEW.md](DEPENDENCY_LICENCE_REVIEW.md) — third-party licence obligations for the GUI extra (PySide6/Qt under PolyForm Noncommercial); **review awaiting an owner decision** (proposed ADR-0010)
+
+
 - [PROJECT_CHARTER.md](PROJECT_CHARTER.md) — problem, goals, constraints, non-goals
 - [MASTER_BLUEPRINT.md](MASTER_BLUEPRINT.md) — distilled architecture view (source-of-truth remains the root blueprint file)
 - [SPECIFICATION.md](SPECIFICATION.md) — `LEXORA-SPEC-1.0-draft`, normative but **not approved** (blocked on ADRs 0001–0004 + rule-table freeze)
