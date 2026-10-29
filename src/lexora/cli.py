@@ -29,14 +29,22 @@ Exit codes (tested in tests/test_cli.py):
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import shutil
 import sys
 import tempfile
 
 from lexora import __version__
 from lexora.canonicalize import CanonicalizationError, canonicalize
 from lexora.container import ContainerError, read_index
-from lexora.container import pack as lxz_pack, pack_stream as lxz_pack_stream, unpack as lxz_unpack
+from lexora.container import (
+    pack as lxz_pack,
+    pack_stream as lxz_pack_stream,
+    read_index_stream,
+    unpack as lxz_unpack,
+    unpack_stream as lxz_unpack_stream,
+)
 from lexora.zstd_core import CodecError, compress, decompress
 
 # LIM-01 ceiling for the pack CLI surface (docs/RESOURCE_LIMITS.md; mirrors
@@ -225,6 +233,54 @@ def _write_atomic_stream(path: str, writer) -> None:
         raise
 
 
+def _stream_to_destination(outfile: str, writer) -> None:
+    """Run `writer(fh)` into a temp file, then deliver it to `outfile`.
+
+    A path destination is renamed into place (same recovery guarantee as
+    _write_atomic); `-` copies the finished temp file to stdout. Either way
+    nothing reaches the destination unless writer() returned without raising,
+    which is what keeps "refuse unverified output" (REQ-SEC-004) true on a
+    streaming decode: a bad block aborts before a single byte is emitted.
+    """
+    if outfile != "-":
+        _write_atomic_stream(outfile, writer)
+        return
+    fd, tmp = tempfile.mkstemp(prefix=".lxz-out-")
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            writer(fh)
+            fh.flush()
+            os.fsync(fh.fileno())
+        with open(tmp, "rb") as fh:
+            shutil.copyfileobj(fh, sys.stdout.buffer, 1 << 20)
+        sys.stdout.buffer.flush()
+    finally:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+
+
+def _archive_meta(info) -> dict:
+    """Index metadata as JSON (the --meta payload; index only, no blocks read)."""
+    return {
+        "format": f"LXZ-{info.format_major}.{info.format_minor}",
+        "codec_id": info.codec_id,
+        "canonicalizer_version": info.canonicalizer_version,
+        "generator_version": info.generator_version,
+        "limits": {
+            "max_block_uncompressed": info.max_block_uncompressed,
+            "max_block_compressed": info.max_block_compressed,
+            "max_total_uncompressed": info.max_total_uncompressed,
+        },
+        "blocks": [
+            {"index": i, "offset": b.offset, "compressed_size": b.compressed_size,
+             "uncompressed_size": b.uncompressed_size, "sha256": b.hexdigest}
+            for i, b in enumerate(info.blocks)
+        ],
+    }
+
+
 def cmd_pack(args) -> int:
     # --block-size bounds messaging (Session 26 polish sweep): the library
     # silently clamps block_size to LIM-01 (8 MiB); the CLI refuses up front
@@ -301,41 +357,66 @@ def cmd_pack(args) -> int:
 
 
 def cmd_unpack(args) -> int:
-    archive = _read(args.infile)
-    try:
-        info, _, _ = read_index(archive)
-        out = lxz_unpack(archive, only_block=args.block)
-    except ContainerError as exc:
-        # refusal is all-or-nothing; NO output bytes written (REQ-SEC-004)
-        print(f"container refusal: {exc}", file=sys.stderr)
-        return EXIT_CONTAINER
-    if args.meta:
-        # --meta prints index metadata to stdout INSTEAD of payload bytes.
-        import json
-        meta = {
-            "format": f"LXZ-{info.format_major}.{info.format_minor}",
-            "codec_id": info.codec_id,
-            "canonicalizer_version": info.canonicalizer_version,
-            "generator_version": info.generator_version,
-            "limits": {
-                "max_block_uncompressed": info.max_block_uncompressed,
-                "max_block_compressed": info.max_block_compressed,
-                "max_total_uncompressed": info.max_total_uncompressed,
-            },
-            "blocks": [
-                {"index": i, "offset": b.offset, "compressed_size": b.compressed_size,
-                 "uncompressed_size": b.uncompressed_size, "sha256": b.hexdigest}
-                for i, b in enumerate(info.blocks)
-            ],
-        }
-        print(json.dumps(meta, indent=2))
-    elif args.outfile == "-":
-        sys.stdout.buffer.write(out)
+    """Decode an archive. Streaming by default (Session 41): the index plus one
+    block are resident, so decode memory no longer tracks archive size.
+    --no-stream keeps the pre-Session-41 whole-archive path for A/B runs."""
+    if args.no_stream:
+        archive = _read(args.infile)
+        try:
+            info, _, _ = read_index(archive)
+            out = lxz_unpack(archive, only_block=args.block)
+        except ContainerError as exc:
+            # refusal is all-or-nothing; NO output bytes written (REQ-SEC-004)
+            print(f"container refusal: {exc}", file=sys.stderr)
+            return EXIT_CONTAINER
+        if args.meta:
+            print(json.dumps(_archive_meta(info), indent=2))
+        elif args.outfile == "-":
+            sys.stdout.buffer.write(out)
+        else:
+            _write_atomic(args.outfile, out)
+        archive_bytes, out_bytes = len(archive), len(out)
+        blocks = 1 if args.block is not None else len(info.blocks)
     else:
-        _write_atomic(args.outfile, out)
+        try:
+            src = open(args.infile, "rb")
+        except OSError as exc:
+            print(f"error: cannot read {args.infile}: {exc}", file=sys.stderr)
+            return EXIT_FILE
+        with src:
+            archive_bytes = os.fstat(src.fileno()).st_size
+            try:
+                info, _, _ = read_index_stream(src)
+            except ContainerError as exc:
+                print(f"container refusal: {exc}", file=sys.stderr)
+                return EXIT_CONTAINER
+            if args.meta:
+                # index only: no block is read or decoded
+                print(json.dumps(_archive_meta(info), indent=2))
+                print(
+                    f"unpack: archive={archive_bytes} out={info.total_uncompressed} "
+                    f"blocks_decoded=0 verified=index-only "
+                    f"(LXZ-{info.format_major}.{info.format_minor})",
+                    file=sys.stderr,
+                )
+                return EXIT_OK
+            captured: dict = {}
+
+            def _writer(fh) -> None:
+                _, written = lxz_unpack_stream(src, fh, only_block=args.block)
+                captured["written"] = written
+
+            try:
+                _stream_to_destination(args.outfile, _writer)
+            except ContainerError as exc:
+                print(f"container refusal: {exc}", file=sys.stderr)
+                return EXIT_CONTAINER
+            out_bytes = captured["written"]
+            blocks = 1 if args.block is not None else len(info.blocks)
+
     print(
-        f"unpack: archive={len(archive)} out={len(out)} "
-        f"blocks_decoded={1 if args.block is not None else len(info.blocks)} verified=yes",
+        f"unpack: archive={archive_bytes} out={out_bytes} "
+        f"blocks_decoded={blocks} verified=yes",
         file=sys.stderr,
     )
     return EXIT_OK
@@ -393,7 +474,11 @@ def build_parser() -> argparse.ArgumentParser:
     up.add_argument("--block", type=int, default=None,
                     help="bounded decode of a single block index (REQ-CMP-005)")
     up.add_argument("--meta", action="store_true",
-                    help="print index metadata as JSON (stdout) instead of payload")
+                    help="print index metadata as JSON (stdout) instead of payload "
+                         "(index only — no block is read)")
+    up.add_argument("--no-stream", action="store_true",
+                    help="buffer the whole archive and output in memory instead of "
+                         "decoding block-by-block (same output bytes, much higher peak RSS)")
     up.set_defaults(func=cmd_unpack)
     return p
 

@@ -338,20 +338,28 @@ def unpack_header(archive: bytes) -> ArchiveInfo:
     if len(archive) < HEADER_SIZE + TRAILER_SIZE:
         raise ContainerError("E-FMT-HEAD-003",
                              f"file too short for header+trailer: {len(archive)} bytes")
-    if archive[0:4] != MAGIC:
+    return _validate_header(archive[:HEADER_SIZE], len(archive))
+
+
+def _validate_header(header: bytes, file_len: int) -> ArchiveInfo:
+    """Header rules over a 128-byte slice plus the archive's true length.
+
+    Split out of unpack_header() so the streaming reader can validate a header
+    it read from a file handle without materialising the whole archive."""
+    if header[0:4] != MAGIC:
         raise ContainerError("E-FMT-HEAD-001", "bad magic (not an .lxz archive)")
-    stored = archive[CHECKSUM_REGION:HEADER_SIZE]
-    computed = hashlib.sha256(archive[:CHECKSUM_REGION]).digest()
+    stored = header[CHECKSUM_REGION:HEADER_SIZE]
+    computed = hashlib.sha256(header[:CHECKSUM_REGION]).digest()
     if stored != computed:
         raise ContainerError("E-FMT-HEAD-004", "header checksum mismatch (corrupt header)")
 
-    major, minor = struct.unpack_from("<HH", archive, 4)
-    flags = struct.unpack_from("<Q", archive, 8)[0]
-    codec_id = _unpad(archive[16:32])
-    canon_ver = _unpad(archive[32:48])
-    max_bu, max_bc, max_tu = struct.unpack_from("<QQQ", archive, 48)
-    block_count = struct.unpack_from("<Q", archive, 72)[0]
-    gen = _unpad(archive[80:96])
+    major, minor = struct.unpack_from("<HH", header, 4)
+    flags = struct.unpack_from("<Q", header, 8)[0]
+    codec_id = _unpad(header[16:32])
+    canon_ver = _unpad(header[32:48])
+    max_bu, max_bc, max_tu = struct.unpack_from("<QQQ", header, 48)
+    block_count = struct.unpack_from("<Q", header, 72)[0]
+    gen = _unpad(header[80:96])
 
     if major != FORMAT_MAJOR:
         raise ContainerError("E-FMT-HEAD-005", f"unsupported format major {major}")
@@ -365,7 +373,7 @@ def unpack_header(archive: bytes) -> ArchiveInfo:
     if block_count < 1:
         raise ContainerError("E-FMT-IDX-002", "block_count must be >= 1")
     min_size = HEADER_SIZE + block_count * INDEX_ENTRY_SIZE + TRAILER_SIZE
-    if len(archive) < min_size:
+    if file_len < min_size:
         raise ContainerError(
             "E-FMT-IDX-003",
             f"file shorter than header+index+trailer minimum ({min_size} needed)",
@@ -382,21 +390,39 @@ def read_index(archive: bytes) -> tuple[ArchiveInfo, int, int]:
     index_bytes + 24-byte *prefix* of SHA-256(index region) (the draft's own
     arithmetic: "fixed 40 bytes" with two u64 leaves 24 for the digest;
     recorded as Amendment 3 in the ADR). Header checksum remains full 32 B."""
-    info = unpack_header(archive)
     file_len = len(archive)
+    if file_len < HEADER_SIZE + TRAILER_SIZE:
+        raise ContainerError("E-FMT-HEAD-003",
+                             f"file too short for header+trailer: {file_len} bytes")
+    return _read_index_parts(
+        archive[:HEADER_SIZE],
+        file_len,
+        archive[file_len - TRAILER_SIZE:file_len],
+        lambda off, n: archive[off:off + n],
+    )
+
+
+def _read_index_parts(header: bytes, file_len: int, trailer: bytes, fetch) -> tuple[ArchiveInfo, int, int]:
+    """Shared index validation. `fetch(offset, length)` returns bytes from the
+    archive, which lets the same rules run over an in-memory buffer or a file
+    handle (see read_index_stream)."""
+    info = _validate_header(header, file_len)
     t_off = file_len - TRAILER_SIZE
-    idx_off, idx_len = struct.unpack_from("<QQ", archive, t_off)
-    idx_hash = archive[t_off + 16:t_off + TRAILER_SIZE]  # 24-byte SHA-256 prefix
+    idx_off, idx_len = struct.unpack_from("<QQ", trailer, 0)
+    idx_hash = trailer[16:TRAILER_SIZE]  # 24-byte SHA-256 prefix
     if idx_off < HEADER_SIZE or idx_len % INDEX_ENTRY_SIZE or idx_off + idx_len > t_off:
         raise ContainerError("E-FMT-IDX-001",
                              f"index region [{idx_off},{idx_off + idx_len}) invalid")
-    index_region = archive[idx_off:idx_off + idx_len]
+    index_region = fetch(idx_off, idx_len)
+    if len(index_region) != idx_len:
+        raise ContainerError("E-FMT-IDX-001",
+                             f"index region truncated ({len(index_region)} of {idx_len} bytes)")
     if hashlib.sha256(index_region).digest()[:TRAILER_SIZE - 16] != idx_hash:
         raise ContainerError("E-FMT-IDX-004", "index checksum mismatch")
     count = idx_len // INDEX_ENTRY_SIZE
-    if count != struct.unpack_from("<Q", archive, 72)[0]:
+    if count != struct.unpack_from("<Q", header, 72)[0]:
         raise ContainerError("E-FMT-IDX-002",
-                             f"header block_count {struct.unpack_from('<Q', archive, 72)[0]} != index entries {count}")
+                             f"header block_count {struct.unpack_from('<Q', header, 72)[0]} != index entries {count}")
     entries: list[BlockEntry] = []
     cursor = HEADER_SIZE
     total_unc = 0
@@ -429,6 +455,33 @@ def read_index(archive: bytes) -> tuple[ArchiveInfo, int, int]:
     return info, idx_off, idx_len
 
 
+def read_index_stream(src) -> tuple[ArchiveInfo, int, int]:
+    """read_index() over a seekable file handle: reads the 128-byte header, the
+    40-byte trailer and the index region — never a block payload.
+
+    Index size is 56 bytes per block (LIM-04 bounds a single entry at 4 KiB but
+    the region itself grows with block count), so this is the only part of a
+    large archive that is ever fully resident.
+    """
+    if not (hasattr(src, "seek") and hasattr(src, "tell")):
+        raise ContainerError("E-USAGE-004", "read_index_stream() needs a seekable src")
+    src.seek(0, 2)
+    file_len = src.tell()
+    if file_len < HEADER_SIZE + TRAILER_SIZE:
+        raise ContainerError("E-FMT-HEAD-003",
+                             f"file too short for header+trailer: {file_len} bytes")
+    src.seek(0)
+    header = src.read(HEADER_SIZE)
+    src.seek(file_len - TRAILER_SIZE)
+    trailer = src.read(TRAILER_SIZE)
+
+    def fetch(off: int, n: int) -> bytes:
+        src.seek(off)
+        return src.read(n)
+
+    return _read_index_parts(header, file_len, trailer, fetch)
+
+
 def unpack(archive: bytes, *, only_block: int | None = None) -> bytes:
     """Decode a `.lxz` v0 archive to its original bytes.
 
@@ -458,6 +511,57 @@ def unpack(archive: bytes, *, only_block: int | None = None) -> bytes:
                                  f"block {i} sha256 mismatch — refusing block, zero output")
         out += payload
     return bytes(out)
+
+
+def unpack_stream(src, dst, *, only_block: int | None = None) -> tuple[ArchiveInfo, int]:
+    """Decode a `.lxz` archive from a seekable handle into `dst`, one block at a
+    time — the mirror of pack_stream().
+
+    Why this exists: `unpack()` needs the whole archive AND the whole output in
+    memory, so decode peak RSS tracked archive size (~2.9 MiB peak per MiB of
+    input; the 256 MiB decode budget in docs/PERFORMANCE_BUDGET.md was reached
+    near an ~85 MiB archive). Here the resident set is the index plus ONE block
+    (compressed frame + decoded bytes), so it does not grow with archive size.
+
+    Guarantees kept from unpack():
+      * index is fully validated BEFORE any block is read (REQ-SEC-001);
+      * each block's sha256 is checked against the index before its bytes are
+        written, so a corrupt block contributes zero output (REQ-SEC-004);
+      * `only_block=N` still decodes exactly one block (REQ-CMP-005).
+
+    `dst` is written sequentially; atomicity is the caller's concern (the CLI
+    writes through a temp file and renames). Returns (info, bytes_written).
+    """
+    info, _, _ = read_index_stream(src)
+    if only_block is not None:
+        if not (0 <= only_block < len(info.blocks)):
+            raise ContainerError("E-FMT-IDX-006", f"block index {only_block} out of range")
+        wanted: range | list[int] = [only_block]
+    else:
+        wanted = range(len(info.blocks))
+
+    written = 0
+    for i in wanted:
+        e = info.blocks[i]
+        src.seek(e.offset)
+        frame = src.read(e.compressed_size)
+        if len(frame) != e.compressed_size:
+            raise ContainerError("E-FMT-IDX-001",
+                                 f"block {i} truncated ({len(frame)} of {e.compressed_size} bytes)")
+        if frame[:4] != b"\x28\xB5\x2F\xFD":
+            raise ContainerError("E-CMP-003", f"block {i} is not a zstd frame")
+        try:
+            payload = decompress(frame, expected_original_size=e.uncompressed_size)
+        except CodecError as exc:
+            raise ContainerError("E-CMP-004", f"block {i} decode failed: {exc}") from exc
+        if hashlib.sha256(payload).digest() != e.sha256:
+            # per-block granularity: zero output for THIS block (REQ-SEC-004)
+            raise ContainerError("E-INTEGRITY-001",
+                                 f"block {i} sha256 mismatch — refusing block, zero output")
+        dst.write(payload)
+        written += len(payload)
+        del frame, payload  # keep the resident set at one block
+    return info, written
 
 
 def unpack_blocks(archive: bytes) -> tuple[bytes, list[str]]:

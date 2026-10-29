@@ -104,10 +104,12 @@ Behavior notes: empty input packs as one zero-length block (exit 0); summary lin
 
 ### `lexora unpack` — decode a `.lxz` archive, refusing unverified output
 
+**Memory behaviour (Session 41).** `unpack` streams by default: the index is validated up front, then blocks are decoded one at a time and written as they verify, so peak RSS is flat in archive size (measured ≈34 MiB at both 32 MiB and 64 MiB archives — `benchmarks/results-rss-core.json`). `--no-stream` restores the pre-Session-41 whole-archive path (~2.8 MiB peak per MiB of archive). Either way the refusal guarantee is intact: nothing reaches `--out` (or stdout) unless every block verified, because the payload is staged in a temp file and only then renamed or copied.
+
 Validates header hash → limits/index consistency → per-block zstd decode → per-block SHA-256, all *before* any output byte is emitted (REQ-SEC-001/004). Any refusal ⇒ exit 7, **no output file created**.
 
 ```text
-lexora unpack --in ARCHIVE.lxz [--out CANONICAL] [--block N] [--meta]
+lexora unpack --in ARCHIVE.lxz [--out CANONICAL] [--block N] [--meta] [--no-stream]
 ```
 
 | Flag | Required | Default | Meaning |
@@ -115,7 +117,8 @@ lexora unpack --in ARCHIVE.lxz [--out CANONICAL] [--block N] [--meta]
 | `--in PATH` | yes | — | archive file |
 | `--out PATH` | no | `-` | decoded payload destination; `-` writes to stdout |
 | `--block N` | no | all | bounded single-block decode (REQ-CMP-005) |
-| `--meta` | no | off | print index metadata JSON to stdout instead of payload bytes |
+| `--meta` | no | off | print index metadata JSON to stdout instead of payload bytes; index only — no block is read or decoded (Session 41) |
+| `--no-stream` | no | off (streaming) | buffer the whole archive and output in memory instead of decoding block-by-block; same output bytes, ~3.3× the peak RSS at a 32 MiB archive |
 
 ## Exit codes
 

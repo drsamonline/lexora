@@ -505,3 +505,32 @@ The buffered encoder's peak grew ~4.8 MiB per MiB of input (linear fit put the 5
 **Follow-up after the owner pushed (2026-10-29):** verification of the pushed tree caught two licence claims the sweep had missed, both in `docs/index.html` prose rather than its structured fields — the FAQ answer to "What is the licence, and who maintains it?" still opened with "MIT © 2026", and a second footer span still read "MIT © 2026". The original audit had leaned on `grep -c MIT`, which is dominated by `RESOURCE_LIMITS`/`COMMITTED` noise, and on the JSON-LD/badge/footer-link fields rather than a read of the visible copy. Fixed in the follow-up commit, re-audited with a word-boundary regex, and the lesson written into ADR-0009's Verification section so the next licence sweep does not repeat it.
 
 **Push state:** unchanged from Session 39 — the GitHub App credential available in-session is read-only, so this session's work is delivered as a patch for the owner to apply and push.
+
+---
+
+## Session 41 — 2026-10-29 (streaming decode: P1-T8 closed, the last P1 memory item)
+
+**Baseline:** `main` at `44fee44` (licence sweep + its follow-up), suite 201 passed / 1 skipped, linkcheck OK. Session 39 left one open memory item: `unpack` held the whole archive *and* the whole output, so decode peak RSS tracked archive size (~2.8 MiB per MiB; 116.1 MiB at a 32 MiB archive, 188.6 MiB at 64 MiB) and the 256 MiB decode budget was reachable near an ~85 MiB archive.
+
+**What landed — the mirror of Session 39's encoder work.**
+- `container.read_index_stream(src)` reads the 128-byte header, the 40-byte trailer and the index region from a seekable handle and never touches a block. It shares **all** index rules with `read_index()` through a new `_read_index_parts(header, file_len, trailer, fetch)` — one implementation of the validate-before-allocate rules (REQ-SEC-001), two ways of feeding it (memory slice or file handle). `unpack_header()` was likewise split into `_validate_header(header, file_len)` so a streamed header is validated by the same code. No rule was re-implemented, which is why the 31 existing container tests stayed green through the refactor.
+- `container.unpack_stream(src, dst, *, only_block=None)` validates the index first, then decodes one block at a time, checking each block's SHA-256 against the index **before** writing its bytes (REQ-SEC-004), and frees the frame and payload each iteration. `only_block=N` keeps REQ-CMP-005 semantics exactly.
+- **CLI:** `unpack` streams by default; `--no-stream` keeps the buffered path for A/B evidence; `--meta` now reads only the index and prints `verified=index-only`. Because a streamed decode could otherwise emit verified bytes and then hit a bad block, the payload is always staged in a temp file and only renamed (path) or copied (stdout) after the writer returns — the "refuse unverified output" guarantee is now tested on stdout explicitly.
+
+**Measured (same probe, `decode_path` now recorded per row):**
+
+| Archive | buffered decode | streaming decode |
+|---|---|---|
+| 1 MiB | 28.3 MiB | — |
+| 4 MiB | 38.4 MiB | — |
+| 16 MiB | 70.3 MiB | — |
+| 32 MiB | 116.1 MiB | **34.8 MiB** |
+| 64 MiB | 188.6 MiB | **34.1 MiB** |
+
+Decode is now flat in archive size, as encode has been since Session 39. The two 32/64 MiB stream rows were measured this session; the earlier rows were retro-tagged `decode_path: buffered` rather than deleted, so the artifact keeps its history and the two readers can never be confused.
+
+**Not claimed:** no throughput statement. Encode wall-clock on this 2-vCPU box continues to be noisy (32 MiB: 72–93 s across passes), and decode timings (1.1–1.5 s) are too small to say anything about a REF-4G machine. Memory is what was established.
+
+**Gate:** `python3 -m pytest -q` → **238 passed, 1 skipped** (37 new in `tests/test_unpack_stream.py`); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — the in-session GitHub App credential is read-only, so this session is delivered as a patch for the owner to apply and push.

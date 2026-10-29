@@ -5,21 +5,21 @@
     "encode_block": 524288
   },
   "corpus_tier": "synthetic-deterministic",
-  "date": "2026-10-28T14:13:40Z",
+  "date": "2026-10-29T06:12:10Z",
+  "decode_path_note": "decode_path=buffered rows were measured before Session 41, when `unpack` held the whole archive and output in memory; decode_path=stream rows are the block-by-block reader added in Session 41. Encode rows are unaffected by that change.",
   "encode_budget_breach_input_mib": {
     "buffered": 95.5,
-    "stream": 429.5
+    "stream": 421.0
   },
   "encode_slope_kib_per_mib": {
     "buffered": 4888.1,
-    "stream": 1039.0
+    "stream": 1060.1
   },
   "env": {
     "cpu_model": ": unknown",
-    "lexora_commit": "1c91f2f8d87144b3f7e03229f9cc8ca0e27d9b6d",
+    "lexora_commit": "44fee44303fd34782edeb516cf8a472367141fe0",
     "lexora_dirty": true,
     "machine": "x86_64",
-    "measured_against": "Session-39 working tree on top of 1c91f2f (streaming encoder + probe uncommitted at measurement time); lexora_dirty=true is accurate for that tree",
     "os": "Linux",
     "python": "3.12.13",
     "ram_bytes": 2199912448,
@@ -38,6 +38,7 @@
       "decode_exit_codes": [
         0
       ],
+      "decode_path": "buffered",
       "decode_peak_rss_kib": [
         28940
       ],
@@ -70,6 +71,7 @@
       "decode_exit_codes": [
         0
       ],
+      "decode_path": "buffered",
       "decode_peak_rss_kib": [
         28804
       ],
@@ -102,6 +104,7 @@
       "decode_exit_codes": [
         0
       ],
+      "decode_path": "buffered",
       "decode_peak_rss_kib": [
         39276
       ],
@@ -134,6 +137,7 @@
       "decode_exit_codes": [
         0
       ],
+      "decode_path": "buffered",
       "decode_peak_rss_kib": [
         39492
       ],
@@ -166,6 +170,7 @@
       "decode_exit_codes": [
         0
       ],
+      "decode_path": "buffered",
       "decode_peak_rss_kib": [
         72036
       ],
@@ -198,6 +203,7 @@
       "decode_exit_codes": [
         0
       ],
+      "decode_path": "buffered",
       "decode_peak_rss_kib": [
         71436
       ],
@@ -230,38 +236,7 @@
       "decode_exit_codes": [
         0
       ],
-      "decode_peak_rss_kib": [
-        120084
-      ],
-      "decode_peak_rss_median_kib": 120084,
-      "decode_stderr": [],
-      "decode_wall_s": [
-        1.405
-      ],
-      "decode_within_budget": true,
-      "encode_budget_kib": 524288,
-      "encode_exit_codes": [
-        0
-      ],
-      "encode_peak_rss_kib": [
-        129096
-      ],
-      "encode_peak_rss_median_kib": 129096,
-      "encode_stderr": [],
-      "encode_wall_s": [
-        71.684
-      ],
-      "encode_within_budget": true,
-      "input_bytes": 33554432,
-      "input_mib": 32,
-      "mode": "stream"
-    },
-    {
-      "archive_bytes": 8862053,
-      "decode_budget_kib": 262144,
-      "decode_exit_codes": [
-        0
-      ],
+      "decode_path": "buffered",
       "decode_peak_rss_kib": [
         118916
       ],
@@ -289,18 +264,19 @@
       "mode": "buffered"
     },
     {
-      "archive_bytes": 17732047,
+      "archive_bytes": 8862053,
       "decode_budget_kib": 262144,
       "decode_exit_codes": [
         0
       ],
+      "decode_path": "stream",
       "decode_peak_rss_kib": [
-        193120
+        35632
       ],
-      "decode_peak_rss_median_kib": 193120,
+      "decode_peak_rss_median_kib": 35632,
       "decode_stderr": [],
       "decode_wall_s": [
-        1.409
+        1.123
       ],
       "decode_within_budget": true,
       "encode_budget_kib": 524288,
@@ -308,12 +284,45 @@
         0
       ],
       "encode_peak_rss_kib": [
-        129220
+        130132
       ],
-      "encode_peak_rss_median_kib": 129220,
+      "encode_peak_rss_median_kib": 130132,
       "encode_stderr": [],
       "encode_wall_s": [
-        158.944
+        92.701
+      ],
+      "encode_within_budget": true,
+      "input_bytes": 33554432,
+      "input_mib": 32,
+      "mode": "stream"
+    },
+    {
+      "archive_bytes": 17732047,
+      "decode_budget_kib": 262144,
+      "decode_exit_codes": [
+        0
+      ],
+      "decode_path": "stream",
+      "decode_peak_rss_kib": [
+        34908
+      ],
+      "decode_peak_rss_median_kib": 34908,
+      "decode_stderr": [],
+      "decode_wall_s": [
+        1.479
+      ],
+      "decode_within_budget": true,
+      "encode_budget_kib": 524288,
+      "encode_exit_codes": [
+        0
+      ],
+      "encode_peak_rss_kib": [
+        130380
+      ],
+      "encode_peak_rss_median_kib": 130380,
+      "encode_stderr": [],
+      "encode_wall_s": [
+        163.896
       ],
       "encode_within_budget": true,
       "input_bytes": 67108864,
@@ -334,6 +343,8 @@
           "32": 118916,
           "4": 39492
         },
+        "decode_slope_kib_per_mib_buffered": 2871.8,
+        "decode_slope_kib_per_mib_stream": null,
         "decode_within_budget_all_sizes": true,
         "encode_peak_rss_kib_by_input_mib": {
           "1": 44532,
@@ -349,24 +360,26 @@
         "decode_peak_rss_kib_by_input_mib": {
           "1": 28940,
           "16": 72036,
-          "32": 120084,
+          "32": 35632,
           "4": 39276,
-          "64": 193120
+          "64": 34908
         },
+        "decode_slope_kib_per_mib_buffered": 2832.2,
+        "decode_slope_kib_per_mib_stream": -22.6,
         "decode_within_budget_all_sizes": true,
         "encode_peak_rss_kib_by_input_mib": {
           "1": 46064,
           "16": 121416,
-          "32": 129096,
+          "32": 130132,
           "4": 85948,
-          "64": 129220
+          "64": 130380
         },
-        "encode_plateau_kib": 129220,
-        "encode_plateau_mib": 126.2,
+        "encode_plateau_kib": 130380,
+        "encode_plateau_mib": 127.3,
         "encode_within_budget_all_sizes": true
       }
     },
-    "generated": "2026-10-28T14:15:38Z",
+    "generated": "2026-10-29T06:15:36Z",
     "headline": "Streaming pack holds a flat plateau (~127 MiB) from one full block upward; the buffered path grows with input size and is the reason the 512 MiB encode budget was at risk around a ~95 MiB document. Decode is still buffered (whole-archive residency) and remains the open memory item."
   }
 }

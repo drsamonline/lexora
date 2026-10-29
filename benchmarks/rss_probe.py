@@ -167,6 +167,17 @@ def summarize(artifact: dict) -> None:
         full_block = [r for r in rows if r["input_mib"] * MIB >= artifact.get("block_size", MIB)]
         plateau = max((r["encode_peak_rss_median_kib"] for r in full_block), default=None)
         dec_rows = [r for r in rows if r.get("decode_peak_rss_median_kib")]
+        dec_stream = [r for r in dec_rows if r.get("decode_path") == "stream"]
+        dec_buffered = [r for r in dec_rows if r.get("decode_path") != "stream"]
+
+        def _slope(pts):
+            if len(pts) < 2:
+                return None
+            xs = [p[0] for p in pts]
+            ys = [p[1] for p in pts]
+            mx, my = statistics.mean(xs), statistics.mean(ys)
+            den = sum((x - mx) ** 2 for x in xs)
+            return round(sum((x - mx) * (y - my) for x, y in pts) / den, 1) if den else None
         by_mode[mode] = {
             "encode_peak_rss_kib_by_input_mib": peaks,
             "encode_plateau_kib": plateau,
@@ -177,6 +188,10 @@ def summarize(artifact: dict) -> None:
             "decode_peak_rss_kib_by_input_mib": {
                 str(r["input_mib"]): r["decode_peak_rss_median_kib"] for r in dec_rows
             },
+            "decode_slope_kib_per_mib_stream": _slope(
+                [(r["input_mib"], r["decode_peak_rss_median_kib"]) for r in dec_stream]),
+            "decode_slope_kib_per_mib_buffered": _slope(
+                [(r["input_mib"], r["decode_peak_rss_median_kib"]) for r in dec_buffered]),
             "decode_within_budget_all_sizes": all(
                 r.get("decode_within_budget") for r in dec_rows if r.get("decode_within_budget") is not None
             ) if dec_rows else None,
@@ -300,6 +315,9 @@ def main(argv: list[str] | None = None) -> int:
                            workdir, env_extra) for _ in range(args.reps)]
             ok_dec = [r for r in dec if r["exit_code"] == 0]
             row.update({
+                # decode streams by default as of Session 41; rows measured
+                # before that carry "buffered" (tagged retroactively below)
+                "decode_path": "stream",
                 "decode_peak_rss_kib": [r["peak_rss_kib"] for r in dec],
                 "decode_peak_rss_median_kib": int(statistics.median([r["peak_rss_kib"] for r in ok_dec])) if ok_dec else None,
                 "decode_wall_s": [r["wall_s"] for r in dec],
