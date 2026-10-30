@@ -336,9 +336,15 @@ def reconcile_snapshot(dest: Path, *, ids: tuple[int, ...] | list[int] | None = 
         }
         failures_by_file.pop(rel, None)
         lineage_map[rel] = f"gutenberg:{pg_id}"
-        meta_map[rel] = {"category": "prose/books",
-                         "language": detect_language(path.read_bytes()),
-                         "rights": "P0"}
+        if rel in meta_map:
+            # Reconcile keeps whatever metadata was already recorded: it exists to
+            # rebuild the *record* from the texts on disk, and re-detecting a
+            # language is a full read of the file for no new information.
+            pass
+        else:
+            meta_map[rel] = {"category": "prose/books",
+                             "language": detect_language(path.read_bytes()),
+                             "rights": "P0"}
         recovered += 1
 
     _write_snapshot_sidecars(dest, requested, records_by_file, failures_by_file,
@@ -354,6 +360,8 @@ def fetch_gutenberg_snapshot(
     ids: tuple[int, ...] | list[int] = DEFAULT_GUTENBERG_IDS,
     min_mb: float = 0.5,
     selection: dict | None = None,
+    rehash: bool = False,
+    retry_failed: bool = False,
 ) -> dict:
     """Download (or reuse) PG texts into dest/, write sidecars, return provenance.
 
@@ -412,11 +420,33 @@ def fetch_gutenberg_snapshot(
         path = dest / fname
         rel = fname
         source_url = f"{GUTENBERG_CACHE_BASE}{pg_id}/pg{pg_id}.txt"
+        # Skip ids already known to fail. Every pass used to re-attempt all of them,
+        # and by Session 65 that was ~81 recorded 404s at ~1 s each — most of a
+        # 285 s budget spent re-learning the same answer while new ids went unfetched.
+        # `--retry-failed` exists because a 404 today can succeed tomorrow.
+        if rel in failures_by_file and not retry_failed:
+            continue
         reused = False
         if path.is_file() and rel in prior:
-            digest = sha256_bytes(path.read_bytes())
-            if digest == prior[rel]["sha256"]:
+            # Reuse check. Hashing every existing file on every pass made the resume
+            # cost grow with the corpus: by Session 65 a 1600-file snapshot spent most
+            # of a 285 s pass re-reading itself and fetched only ~6 MB of new text.
+            # A recorded (size, mtime_ns) pair is enough to trust the stored digest —
+            # any rewrite or truncation changes both. `--rehash` forces the old
+            # full-verification behaviour for anyone who wants it.
+            st = path.stat()
+            known = prior[rel]
+            same_identity = (
+                known.get("size_bytes") == st.st_size
+                and known.get("mtime_ns") == st.st_mtime_ns
+            )
+            if same_identity and not rehash:
                 reused = True
+                digest = known["sha256"]
+            else:
+                digest = sha256_bytes(path.read_bytes())
+                if digest == known["sha256"]:
+                    reused = True
         if not reused:
             try:
                 data = _fetch_one(pg_id)
@@ -446,18 +476,23 @@ def fetch_gutenberg_snapshot(
                     processed_since_checkpoint = 0
                 continue
             path.write_bytes(data)
+        st = path.stat()
         records_by_file[rel] = {
             "file": rel,
-            "sha256": sha256_bytes(path.read_bytes()),
-            "size_bytes": path.stat().st_size,
+            "sha256": digest if reused else sha256_bytes(path.read_bytes()),
+            "size_bytes": st.st_size,
+            "mtime_ns": st.st_mtime_ns,
             "source_url": source_url,
             "reused_existing": reused,
         }
         failures_by_file.pop(rel, None)
         lineage_map[rel] = f"gutenberg:{pg_id}"
-        meta_map[rel] = {"category": "prose/books",
-                         "language": detect_language(path.read_bytes()),
-                         "rights": "P0"}
+        if reused and rel in meta_map:
+            pass  # keep the recorded metadata; see the note in reconcile_snapshot
+        else:
+            meta_map[rel] = {"category": "prose/books",
+                             "language": detect_language(path.read_bytes()),
+                             "rights": "P0"}
         processed_since_checkpoint += 1
         if processed_since_checkpoint >= checkpoint_every:
             _write_sidecars()

@@ -204,7 +204,9 @@ def cmd_corpus_fetch(args: argparse.Namespace) -> int:
                 min_mb = args.min_mb
             print(f"language lists requested: {langs} -> {len(ids)} PG ids; size guard {min_mb} MB")
         snap = corpus_mod.fetch_gutenberg_snapshot(dest, ids=ids, min_mb=min_mb,
-                                                  selection=selection)
+                                                  selection=selection,
+                                                  rehash=args.rehash,
+                                                  retry_failed=args.retry_failed)
         total = sum(r["size_bytes"] for r in snap["files"])
         print(f"wrote Gutenberg snapshot: {len(snap['files'])} files, {total} bytes -> {dest}")
         if snap["failures"]:
@@ -679,6 +681,12 @@ def build_parser() -> argparse.ArgumentParser:
                          "deterministic: filter then order by PG id ascending.")
     cf.add_argument("--catalog-cache", default=None,
                     help="where to keep pg_catalog.csv (default corpus/_catalog, gitignored)")
+    cf.add_argument("--retry-failed", action="store_true",
+                    help="re-attempt ids already recorded as failed (404s, undersized "
+                         "payloads); off by default because it dominates a pass")
+    cf.add_argument("--rehash", action="store_true",
+                    help="verify every existing file by SHA-256 instead of trusting "
+                         "the recorded (size, mtime_ns) — slower, paranoid")
     cf.add_argument("--exclude-ids", default="",
                     help="comma-separated PG ids to leave out of a catalog selection"); cf.set_defaults(func=cmd_corpus_fetch)
     cr = sub.add_parser("corpus-reconcile",

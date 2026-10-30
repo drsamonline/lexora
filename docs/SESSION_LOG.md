@@ -1005,3 +1005,25 @@ File-level, across all 172: `lexora19` beats `zstd19` on **167 files** (−0.60 
 **Gate:** `python3 -m pytest -q` → **492 passed, 1 skipped**; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK. Cross-checked that every relative link in the three new/edited documents resolves, and that the verb count and test count in the README match the code.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–64 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 65 — 2026-10-29 (the corpus gate is met: 1.014 GiB)
+
+**The headline.** `gutenberg-cat-partial` went from **746.5 MB to 1038.4 MB (1.014 GiB)** — 2323 files, 102 recorded failures. Manifest `abffa16e…` over 2333 files verifies with **0 problems**; splits 1648 train / 218 validation / 467 heldout with **no lineage straddling**. The ≥1 GiB corpus condition (OQ-8) is met.
+
+**How it actually happened — three costs, none of them the network.** The previous sessions reported "per-pass yield keeps falling, ~17 MB per 285 s pass". That was true and the explanation was wrong. Each pass was doing three things it did not need to:
+
+1. **Re-hashing the entire corpus** to decide what to reuse. At 770 MB that is most of a pass's CPU and I/O. Reuse is now keyed on the recorded `(size, mtime_ns)` pair — any rewrite changes both — with `--rehash` for anyone who wants the old full verification.
+2. **Re-running `detect_language()` on every reused file.** The record-building step called it unconditionally, so the fetcher read 770 MB of text in order to download 4 MB of new text. Metadata is now preserved on reuse.
+3. **Re-attempting every recorded failure.** 102 404s at ~1 s each consumed a large share of each 285 s budget, and the list only grew. Known failures are now skipped; `--retry-failed` restores the old behaviour because a 404 today can succeed tomorrow.
+
+Fixing (3) alone tripled the yield in one measurement. Per-pass went from ~4–9 MB to **~35–40 MB**, and the session moved 292 MB instead of the ~20 MB the old rate predicted.
+
+**A test caught a real miss in my own fix.** The first attempt patched the metadata branch inside `reconcile_snapshot` and left the *main fetch loop* re-detecting languages — the code looked right by eye and was wrong. `test_reuse_preserves_recorded_metadata` failed on the very next run and pointed at the line. All three behaviours are now pinned in `tests/test_corpus_fetch.py` (4 tests), using a monkeypatched fetcher so no test touches the network.
+
+**What this does not do.** Meeting the corpus size does not make R4 a verdict. Protocol scope still needs all three splits at full size, 3 reps, `xz9` via the CLI, a second machine class and owner sign-off. The R4 smoke numbers from Session 63 are unchanged until the run is repeated at 1 GiB — which is now the obvious next step.
+
+**Gate:** `python3 -m pytest -q` → **496 passed, 1 skipped** (4 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–65 are delivered as one patch on top of `19cc1a9`.

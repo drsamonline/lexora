@@ -6,6 +6,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 65 (**the corpus gate is met — 1.014 GiB — after fixing three resume costs that were mistaken for a slow network**):
+  - **2323 files / 1038.4 MB (1.014 GiB)** in `gutenberg-cat-partial`, from 746.5 MB at the start of the session. Manifest `abffa16e…` over 2333 files verifies with **0 problems**; splits 1648/218/467, no lineage straddling. 102 failures recorded.
+  - **Three fetcher costs fixed, each of which looked like "the network is slow" and was not:**
+    - reuse re-hashed the *entire* corpus every pass → now keyed on the recorded `(size, mtime_ns)` pair, with `--rehash` to force full verification;
+    - reuse re-ran `detect_language()` on every file, re-reading ~770 MB to fetch ~4 MB → metadata is now preserved on reuse;
+    - **every pass re-attempted every recorded failure** — 102 404s at ~1 s each consumed most of a 285 s budget → known failures are skipped, with `--retry-failed` to re-check them deliberately. This one alone tripled the yield.
+  - Per-pass yield went from **~4–9 MB to ~35–40 MB**; the session moved 292 MB.
+  - 4 new tests in `tests/test_corpus_fetch.py` pin all three behaviours (no re-attempt without the flag, no re-hash when size+mtime are unchanged, metadata preserved, `mtime_ns` recorded). One of them caught a real miss: the first attempt patched the metadata branch in `reconcile_snapshot` and left the main fetch loop re-detecting.
+  - Suite **492 → 496 passed**, 1 skipped.
 - 2026-10-29 — Session 64 (**release notes + a reproducible-benchmark guide; README brought back in line with reality**):
   - **`docs/RELEASE_NOTES.md`** — what this unreleased tree actually contains (no release or tag exists, OQ-9): the streaming rewrite with its measured numbers, the four new CLI verbs, the hardening work with the bugs it found, the first LEXORA-vs-baseline measurement, the licence position, the two decisions that shape what comes next, a working quick-start, and a **Known limits** section that states the corpus shortfall, the unstarted GUI work, the missing `.lxdb` layout, the fact that `lexora` does not beat xz-9, and the read-only push credential.
   - **`benchmarks/README.md`** — reproduction from a clean checkout: env capture, catalog selection and its resumability, reconcile, manifest/verify/split-audit, the run command with its system table (`lexora`/`lexora19`/`zstd19`/`xz9`/`xz9-lzma`), the separate RSS/throughput probe, how to read an artifact, and the three traps that cost real afternoons (probe overwrite guard, no `VmHWM` here, and unrealistically compressible test input).
