@@ -206,7 +206,8 @@ def cmd_corpus_fetch(args: argparse.Namespace) -> int:
         snap = corpus_mod.fetch_gutenberg_snapshot(dest, ids=ids, min_mb=min_mb,
                                                   selection=selection,
                                                   rehash=args.rehash,
-                                                  retry_failed=args.retry_failed)
+                                                  retry_failed=args.retry_failed,
+                                                  jobs=args.jobs)
         total = sum(r["size_bytes"] for r in snap["files"])
         print(f"wrote Gutenberg snapshot: {len(snap['files'])} files, {total} bytes -> {dest}")
         if snap["failures"]:
@@ -681,6 +682,11 @@ def build_parser() -> argparse.ArgumentParser:
                          "deterministic: filter then order by PG id ascending.")
     cf.add_argument("--catalog-cache", default=None,
                     help="where to keep pg_catalog.csv (default corpus/_catalog, gitignored)")
+    cf.add_argument("--jobs", type=int, default=1,
+                    help="fetch this many ids concurrently (default 1); the record is "
+                         "still assembled in id order, so sidecars are unchanged. Unlike "
+                         "batch --jobs this is a real gain: the work is network-bound, so "
+                         "8 threads fetch ~50%% more files per pass than 1")
     cf.add_argument("--retry-failed", action="store_true",
                     help="re-attempt ids already recorded as failed (404s, undersized "
                          "payloads); off by default because it dominates a pass")

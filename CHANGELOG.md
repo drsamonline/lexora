@@ -6,6 +6,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 67 (**`--jobs` for batch and for the corpus fetch — one is a real gain, the other measured a loss**):
+  - **`lexora batch --jobs N`** processes files in parallel. Threads were tried first and **measured useless**: python-zstandard holds the GIL for the whole compress call (two threads × four compressions = **3.04 s vs 1.62 s sequential**, exactly 2×). The worker is now a module-level picklable function run in a **process** pool. Results, ordering and the report are byte-identical to `--jobs 1` (asserted by tests), but on this 2-vCPU container it is **20–40 % slower** for typical file sizes, so the flag is documented as **experimental**, not as a speedup.
+  - **`corpus-fetch --jobs N`** is a genuine gain: the work is network-bound, so eight threads fetched **73 files in one 229 s pass** against ~50 sequentially. The record is still assembled in id order, so sidecars do not depend on completion order.
+  - Corpus finished the selection: **2395 files / 1079.4 MB (1.054 GiB)**, all 2500 ids accounted for (105 recorded failures), manifest `c92cf578…` verifies with 0 problems, splits 1691/230/474, no lineage straddling.
+  - **A flaky test fixed properly:** the mtime-reuse test relied on a rewrite landing outside the filesystem's mtime granularity, so it passed alone and failed in the full suite. It now sets `st_mtime_ns` explicitly.
+  - Tests: 6 new for `--jobs` (report and artifacts identical to sequential for both `canon` and `pack`, input order preserved under 6 jobs, one bad file still failing alone, `--stop-on-error` still returning the failing code, default still sequential). Suite **496 → 502 passed**, 1 skipped.
 - 2026-10-29 — Session 66 (**R5: the R4 result reproduces on the ≥1 GiB corpus**):
   - Corpus re-fetched to **1.014 GiB** (2322 files) after a sandbox recycle reverted the working copy; manifest `56d9443d…` over 2344 files verifies with **0 problems**, splits 1659/218/467, no lineage straddling.
   - **R5 — 184 files / 80.4 MiB, three splits, 3 reps, on the 1 GiB corpus:** `lexora19` **0.3101**, `zstd19` **0.3120** (−0.60 %, 178/184 files smaller), `xz9-lzma` **0.3077** (+0.77 %, 0/184), shipped default **0.3360**.

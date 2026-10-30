@@ -195,3 +195,69 @@ class TestUnpackBatch:
         assert cli.main(["batch", "--in", str(packed), "--out-dir", str(out),
                          "--op", "unpack", "--suffix", ".txt"]) == cli.EXIT_OK
         assert (out / "a.txt.canon.lxz.txt").is_file()
+
+
+class TestBatchJobs:
+    """`--jobs N` may change the wall clock, never the answer.
+
+    Compression releases the GIL inside zstandard, so a thread pool is real
+    parallelism for a pack batch — but the report and every artifact must be
+    byte-identical to a sequential run, or the flag would silently change results.
+    """
+
+    def _tree(self, tmp_path) -> pathlib.Path:
+        root = tmp_path / "in"
+        (root / "sub").mkdir(parents=True)
+        for i in range(6):
+            (root / f"f{i}.txt").write_bytes((f"document {i} " * 300).encode())
+        (root / "sub" / "nested.txt").write_bytes(b"nested document " * 200)
+        return root
+
+    @pytest.mark.parametrize("op", ["canon", "pack"])
+    def test_report_and_artifacts_match_a_sequential_run(self, tmp_path, op) -> None:
+        root = self._tree(tmp_path)
+        seq, par = tmp_path / "seq", tmp_path / "par"
+        common = ["--op", op, "--level", "3", "--json"]
+
+        assert cli.main(["batch", "--in", str(root), "--out-dir", str(seq)] + common) == 0
+        assert cli.main(["batch", "--in", str(root), "--out-dir", str(par), "--jobs", "4"] + common) == 0
+
+        # artifacts: byte-identical tree
+        seq_files = sorted(p.relative_to(seq) for p in seq.rglob("*") if p.is_file())
+        par_files = sorted(p.relative_to(par) for p in par.rglob("*") if p.is_file())
+        assert seq_files == par_files
+        for rel in seq_files:
+            assert (seq / rel).read_bytes() == (par / rel).read_bytes(), rel
+
+    def test_results_stay_in_input_order_with_many_jobs(self, tmp_path, capsys) -> None:
+        root = self._tree(tmp_path)
+        assert cli.main(["batch", "--in", str(root), "--out-dir", str(tmp_path / "o"),
+                         "--jobs", "6", "--json"]) == 0
+        report = json.loads(capsys.readouterr().out)
+        inputs = [r["input"] for r in report["results"]]
+        assert inputs == sorted(inputs), "parallel completion order leaked into the report"
+        assert report["files_ok"] == report["files_matched"] == len(inputs)
+
+    def test_one_bad_file_still_fails_alone_under_jobs(self, tmp_path, capsys) -> None:
+        root = self._tree(tmp_path)
+        (root / "zz-bad.txt").write_bytes(b"bad \xff bytes\n")  # invalid UTF-8
+        rc = cli.main(["batch", "--in", str(root), "--out-dir", str(tmp_path / "o"),
+                       "--jobs", "4", "--json"])
+        assert rc == cli.EXIT_PARTIAL
+        report = json.loads(capsys.readouterr().out)
+        bad = next(r for r in report["results"] if r["input"] == "zz-bad.txt")
+        assert bad["ok"] is False and bad["code"] == "E-CAN"
+        assert report["files_failed"] == 1
+        assert not (tmp_path / "o" / "zz-bad.txt.canon").exists()
+
+    def test_stop_on_error_still_returns_the_failing_code(self, tmp_path) -> None:
+        root = self._tree(tmp_path)
+        (root / "zz-bad.txt").write_bytes(b"bad \xff bytes\n")
+        rc = cli.main(["batch", "--in", str(root), "--out-dir", str(tmp_path / "o"),
+                       "--jobs", "2", "--stop-on-error"])
+        assert rc == cli.EXIT_CANON
+
+    def test_default_is_still_sequential(self, tmp_path) -> None:
+        parser = cli.build_parser()
+        args = parser.parse_args(["batch", "--in", "x", "--out-dir", "y"])
+        assert args.jobs == 1, "parallelism must be opt-in"

@@ -44,11 +44,20 @@ digest and filter reproduce the same id list.
 
 ```bash
 python3 benchmarks/harness.py corpus-fetch \
-    --catalog-limit 2500 --min-mb 0.05 \
+    --catalog-limit 2500 --min-mb 0.05 --jobs 8 \
     --dest corpus/gutenberg-cat --catalog-cache corpus/_catalog
 ```
 
-**It resumes, and it is safe to interrupt.** Existing files whose SHA-256 matches the
+**`--jobs 8` is worth using here and only here.** The work is network-bound, so threads
+genuinely overlap: eight threads fetched ~50 % more files per pass than one. The same
+flag on `lexora batch` is a *loss* (compression holds the GIL, and processes contend for
+the 2 available cores), which is why it is documented as experimental there.
+
+**It resumes, and it is safe to interrupt.** Reuse is decided on the recorded
+`(size, mtime_ns)` pair rather than by re-hashing the corpus, metadata is preserved on
+reuse, and ids already recorded as failures are skipped — those three fixes turned a
+pass that fetched 22 files into one that fetches 70+. Use `--rehash` for full
+verification and `--retry-failed` to re-check 404s deliberately. Existing files whose SHA-256 matches the
 record are not re-downloaded; provenance is checkpointed every 25 files and is always
 a *superset* of what was already recorded. Re-running the same command adds to the
 same snapshot — that is how the current 746 MB snapshot was built, pass by pass.

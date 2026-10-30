@@ -362,6 +362,7 @@ def fetch_gutenberg_snapshot(
     selection: dict | None = None,
     rehash: bool = False,
     retry_failed: bool = False,
+    jobs: int = 1,
 ) -> dict:
     """Download (or reuse) PG texts into dest/, write sidecars, return provenance.
 
@@ -415,25 +416,28 @@ def fetch_gutenberg_snapshot(
     checkpoint_every = 25
     processed_since_checkpoint = 0
 
-    for pg_id in ids:
+    def _one(pg_id: int) -> dict:
+        """Do one id's work without touching the shared record.
+
+        Returns an outcome the main thread applies in id order, which is what makes
+        `--jobs` safe: the network and hashing run concurrently, but the record is
+        assembled sequentially, so the resulting sidecars do not depend on
+        completion order.
+        """
         fname = f"gutenberg-{pg_id}.txt"
         path = dest / fname
         rel = fname
         source_url = f"{GUTENBERG_CACHE_BASE}{pg_id}/pg{pg_id}.txt"
-        # Skip ids already known to fail. Every pass used to re-attempt all of them,
-        # and by Session 65 that was ~81 recorded 404s at ~1 s each — most of a
-        # 285 s budget spent re-learning the same answer while new ids went unfetched.
-        # `--retry-failed` exists because a 404 today can succeed tomorrow.
         if rel in failures_by_file and not retry_failed:
-            continue
+            return {"rel": rel, "skip": True}
+
         reused = False
+        digest = None
         if path.is_file() and rel in prior:
-            # Reuse check. Hashing every existing file on every pass made the resume
-            # cost grow with the corpus: by Session 65 a 1600-file snapshot spent most
-            # of a 285 s pass re-reading itself and fetched only ~6 MB of new text.
-            # A recorded (size, mtime_ns) pair is enough to trust the stored digest —
-            # any rewrite or truncation changes both. `--rehash` forces the old
-            # full-verification behaviour for anyone who wants it.
+            # Reuse check keyed on (size, mtime_ns): hashing the whole corpus every
+            # pass made the resume cost grow with the snapshot, so by Session 65 a
+            # 1600-file corpus spent most of a 285 s pass re-reading itself.
+            # `--rehash` restores full verification.
             st = path.stat()
             known = prior[rel]
             same_identity = (
@@ -447,37 +451,21 @@ def fetch_gutenberg_snapshot(
                 digest = sha256_bytes(path.read_bytes())
                 if digest == known["sha256"]:
                     reused = True
+
         if not reused:
             try:
                 data = _fetch_one(pg_id)
             except (urllib.error.URLError, RuntimeError, OSError) as exc:
-                failures_by_file[rel] = {"file": rel, "error": str(exc)}
-                records_by_file.pop(rel, None)
-                lineage_map.pop(rel, None)
-                meta_map.pop(rel, None)
-                processed_since_checkpoint += 1
-                if processed_since_checkpoint >= checkpoint_every:
-                    _write_sidecars()
-                    processed_since_checkpoint = 0
-                continue
+                return {"rel": rel, "failure": {"file": rel, "error": str(exc)}}
             digest = sha256_bytes(data)
             if len(data) < min_mb * 1024 * 1024:
-                # Suspiciously small for these titles => likely an error page.
-                failures_by_file[rel] = {
-                    "file": rel,
-                    "error": f"payload too small ({len(data)} B); discarded",
-                }
-                records_by_file.pop(rel, None)
-                lineage_map.pop(rel, None)
-                meta_map.pop(rel, None)
-                processed_since_checkpoint += 1
-                if processed_since_checkpoint >= checkpoint_every:
-                    _write_sidecars()
-                    processed_since_checkpoint = 0
-                continue
+                return {"rel": rel,
+                        "failure": {"file": rel,
+                                    "error": f"payload too small ({len(data)} B); discarded"}}
             path.write_bytes(data)
+
         st = path.stat()
-        records_by_file[rel] = {
+        record = {
             "file": rel,
             "sha256": digest if reused else sha256_bytes(path.read_bytes()),
             "size_bytes": st.st_size,
@@ -485,14 +473,39 @@ def fetch_gutenberg_snapshot(
             "source_url": source_url,
             "reused_existing": reused,
         }
-        failures_by_file.pop(rel, None)
-        lineage_map[rel] = f"gutenberg:{pg_id}"
-        if reused and rel in meta_map:
-            pass  # keep the recorded metadata; see the note in reconcile_snapshot
+        meta = None
+        if not (reused and rel in meta_map):
+            meta = {"category": "prose/books",
+                    "language": detect_language(path.read_bytes()),
+                    "rights": "P0"}
+        return {"rel": rel, "record": record, "lineage": f"gutenberg:{pg_id}", "meta": meta}
+
+    jobs = max(1, int(jobs or 1))
+    if jobs > 1 and len(ids) > 1:
+        from concurrent.futures import ThreadPoolExecutor
+
+        # pool.map preserves input order, so the record is assembled in id order
+        # whatever order the fetches complete in.
+        with ThreadPoolExecutor(max_workers=jobs) as pool:
+            outcomes = list(pool.map(_one, ids))
+    else:
+        outcomes = [_one(pg_id) for pg_id in ids]
+
+    for outcome in outcomes:
+        rel = outcome["rel"]
+        if outcome.get("skip"):
+            continue
+        if "failure" in outcome:
+            failures_by_file[rel] = outcome["failure"]
+            records_by_file.pop(rel, None)
+            lineage_map.pop(rel, None)
+            meta_map.pop(rel, None)
         else:
-            meta_map[rel] = {"category": "prose/books",
-                             "language": detect_language(path.read_bytes()),
-                             "rights": "P0"}
+            records_by_file[rel] = outcome["record"]
+            failures_by_file.pop(rel, None)
+            lineage_map[rel] = outcome["lineage"]
+            if outcome["meta"] is not None:
+                meta_map[rel] = outcome["meta"]
         processed_since_checkpoint += 1
         if processed_since_checkpoint >= checkpoint_every:
             _write_sidecars()

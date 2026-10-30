@@ -61,9 +61,16 @@ def test_reuse_trusts_size_and_mtime_instead_of_rehashing(tmp_path, fake_fetch, 
     corpus.fetch_gutenberg_snapshot(snap_dir, ids=(7,), min_mb=0.0)
     assert hashed == [], "a file whose size and mtime are unchanged was re-hashed"
 
-    # touching the file invalidates the shortcut, and the hash must then match
+    # touching the file invalidates the shortcut, and the hash must then match.
+    # The mtime is set explicitly: a rewrite can land inside the filesystem's mtime
+    # granularity, which made this assertion flaky when the suite ran in one process.
+    import os
+    import time
+
     p = snap_dir / "gutenberg-7.txt"
     p.write_bytes(p.read_bytes())
+    bumped = time.time_ns() + 1_000_000
+    os.utime(p, ns=(bumped, bumped))
     corpus.fetch_gutenberg_snapshot(snap_dir, ids=(7,), min_mb=0.0)
     assert len(hashed) == 1, "a rewritten file must be re-hashed"
 

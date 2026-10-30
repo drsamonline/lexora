@@ -163,8 +163,11 @@ lexora batch --in DIR --out-dir DIR [--op canon|pack] [--pattern G] [--suffix S]
 | `--suffix S` | no | `.canon` / `.lxz` / *stripped* | appended to each output name; for `unpack` the `.lxz` is stripped instead, so a round trip returns the names it started with |
 | `--encoding E` | no | — | declared source encoding (canon only) |
 | `--level N`, `--block-size B` | no | 9 (`DEFAULT_LEVEL`), 8 MiB | pack only |
+| `--jobs N` | no | 1 | process N files concurrently. **Results, ordering and the report are identical to `--jobs 1`** — only the wall clock may differ. **Experimental: measured 20–40 % SLOWER than sequential on the 2-vCPU container these numbers come from** (process start-up plus CPU contention). It is opt-in for hosts with real parallel cores; measure before relying on it |
 | `--stop-on-error` | no | off | abort at the first failure, exit with that file's code |
 | `--report F`, `--json` | no | — | write / print the JSON report (per-file `ok`, `code`, sizes) |
+
+**Why `--jobs` uses processes, not threads.** Threads were tried first and measured useless: python-zstandard holds the GIL for the whole compress call — two threads doing four compressions each took **3.04 s against 1.62 s sequential**, i.e. exactly 2×, which is no parallelism at all. Processes have their own GIL, so the worker is a module-level, picklable function. On the 2-vCPU container measured here even that is a net loss for typical file sizes (12 × 1 MiB: 1059 ms at `--jobs 1`, 1292 ms at 2, 1467 ms at 4; 4 × 4 MiB: 1052 ms vs 1392 ms), because process start-up and CPU quota dominate. The flag is therefore documented as experimental rather than sold as a speedup.
 
 **Round trips are the point of `--op unpack`.** `canon` → `pack` → `unpack` returns a tree byte-identical to the canonical stage, verified in the test suite by diffing the two directories. Unpacking uses the streaming decoder, so every block's SHA-256 is checked before its bytes are written — a corrupt archive in the batch produces a failed row and **no output file**, while its healthy neighbours decode normally.
 

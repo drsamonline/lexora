@@ -1054,3 +1054,21 @@ The re-fetch produced a **different manifest digest** (`56d9443d…` vs `abffa16
 **Gate:** `python3 -m pytest -q` → **496 passed, 1 skipped** (no code touched); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–66 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 67 — 2026-10-29 (parallelism: one real gain, one measured loss)
+
+**What was built.** `--jobs N` on `lexora batch` and on `harness.py corpus-fetch`.
+
+**The batch flag nearly shipped as a lie, and the measurement stopped it.** The obvious implementation is a thread pool — and it does nothing here, because **python-zstandard holds the GIL for the whole compress call**: two threads doing four compressions each took **3.04 s against 1.62 s sequential**, exactly 2×, which is no parallelism at all. So the worker became a module-level picklable function driven by a **process** pool. That is correct and deterministic — results, ordering and the report are byte-identical to `--jobs 1`, asserted by tests — but on this 2-vCPU container it is still **20–40 % slower** for realistic file sizes (12 × 1 MiB: 1059 ms → 1292 ms → 1467 ms at jobs 1/2/4; 4 × 4 MiB: 1052 ms → 1392 ms), because process start-up and CPU quota dominate the per-file work. So the flag ships **opt-in, default 1, labelled experimental in `--help`**, with the numbers written into CLI_REFERENCE. Shipping it as "faster" would have been the easy and false thing to do.
+
+**The corpus flag is the opposite story.** Fetching is network-bound, so threads overlap properly: **eight threads fetched 73 files in one 229 s pass**, against roughly 50 sequentially. The record is still assembled in id order, so the sidecars do not depend on completion order — the same determinism property, for a workload where the parallelism is real.
+
+**The corpus is finished.** All 2500 requested ids are accounted for: **2395 files / 1079.4 MB (1.054 GiB)** plus **105 recorded failures**. Manifest `c92cf578…` verifies with **0 problems**; splits 1691 train / 230 validation / 474 heldout, **no lineage straddling**. The ≥1 GiB gate is met with margin, and the selection is exhausted rather than abandoned.
+
+**A flaky test fixed rather than retried.** The mtime-reuse test asserted "one hash after a rewrite", but a rewrite can land inside the filesystem's mtime granularity — it passed alone and failed in the full suite. It now sets `st_mtime_ns` explicitly. Worth recording because the first instinct (re-running until green) would have hidden a real property of the optimisation: reuse depends on mtime changing when content changes.
+
+**Gate:** `python3 -m pytest -q` → **502 passed, 1 skipped** (6 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–67 are delivered as one patch on top of `19cc1a9`.

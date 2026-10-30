@@ -623,6 +623,60 @@ def _iter_batch_inputs(root: Path, pattern: str) -> list[Path]:
     return sorted(p for p in root.rglob(pattern) if p.is_file())
 
 
+def _batch_one(spec: dict) -> dict:
+    """Process one file for `batch`. Module-level and picklable so it can run in a
+    worker *process*.
+
+    Threads were tried first and measured useless here: python-zstandard holds the
+    GIL for the whole compress call (2 threads x 4 compressions took 3.04 s against
+    1.62 s sequential, i.e. exactly 2x), so a thread pool only adds overhead to a
+    CPU-bound batch. Processes have their own GIL, so `--jobs` is a real knob —
+    bounded by core count, which is 2 on the machine these numbers came from.
+    """
+    from lexora.canonicalize import canonicalize_stream
+    from lexora.container import pack_stream as lxz_pack_stream
+    from lexora.container import unpack_stream as lxz_unpack_stream
+
+    entry: dict = {"input": spec["rel"], "output": spec["out_rel"]}
+    src_path, dst_path = Path(spec["src"]), Path(spec["dst"])
+    try:
+        dst_path.parent.mkdir(parents=True, exist_ok=True)
+        # pack_stream backfills the header and re-reads it to self-check, so its
+        # destination must be readable; canon and unpack write forward only.
+        mode = "wb+" if spec["op"] == "pack" else "wb"
+        with open(src_path, "rb") as src, open(dst_path, mode) as dst:
+            if spec["op"] == "canon":
+                meta = canonicalize_stream(src, dst, declared_encoding=spec["encoding"])
+            elif spec["op"] == "pack":
+                info = lxz_pack_stream(src, dst, level=spec["level"],
+                                       block_size=spec["block_size"])
+                meta = {"input_bytes": src_path.stat().st_size,
+                        "output_bytes": dst_path.stat().st_size,
+                        "blocks": len(info.blocks)}
+            else:
+                info, written = lxz_unpack_stream(src, dst)
+                meta = {"input_bytes": src_path.stat().st_size,
+                        "output_bytes": written,
+                        "blocks": len(info.blocks)}
+        entry.update(ok=True, **{k: meta[k] for k in ("input_bytes", "output_bytes")})
+        if "blocks" in meta:
+            entry["blocks"] = meta["blocks"]
+    except CanonicalizationError as exc:
+        entry.update(ok=False, code="E-CAN", error=str(exc))
+    except ContainerError as exc:
+        entry.update(ok=False, code=exc.code, error=exc.message)
+    except CodecError as exc:
+        entry.update(ok=False, code="E-CMP", error=str(exc))
+    except OSError as exc:
+        entry.update(ok=False, code="E-IO", error=str(exc))
+    if not entry["ok"]:
+        try:
+            dst_path.unlink()  # a failed file leaves no half-written artifact
+        except OSError:
+            pass
+    return entry
+
+
 def cmd_batch(args) -> int:
     """Process many files in one invocation (canon or pack), one at a time.
 
@@ -674,59 +728,43 @@ def cmd_batch(args) -> int:
             return rel.name[: -len(".lxz")]
         return rel.name + ".unpacked"  # not an .lxz name; will fail to parse anyway
     base = root if root.is_dir() else root.parent
-    results: list[dict] = []
-    failures = 0
 
+    specs = []
     for src_path in inputs:
         rel = src_path.relative_to(base)
         dst_path = out_dir / rel.parent / _output_name(rel)
-        entry: dict = {"input": str(rel), "output": str(dst_path.relative_to(out_dir))}
-        try:
-            dst_path.parent.mkdir(parents=True, exist_ok=True)
-            # pack_stream backfills the header and re-reads it to self-check, so
-            # its destination must be readable; canon only writes forward.
-            mode = "wb+" if args.op == "pack" else "wb"  # unpack writes forward only
-            with open(src_path, "rb") as src, open(dst_path, mode) as dst:
-                if args.op == "canon":
-                    meta = canonicalize_stream(src, dst, declared_encoding=args.encoding)
-                elif args.op == "pack":
-                    info = lxz_pack_stream(src, dst, level=args.level,
-                                           block_size=args.block_size)
-                    meta = {"input_bytes": src_path.stat().st_size,
-                            "output_bytes": dst_path.stat().st_size,
-                            "blocks": len(info.blocks)}
-                else:
-                    # unpack_stream verifies every block's SHA-256 before writing
-                    # its bytes, so a corrupt archive yields no output at all.
-                    info, written = lxz_unpack_stream(src, dst)
-                    meta = {"input_bytes": src_path.stat().st_size,
-                            "output_bytes": written,
-                            "blocks": len(info.blocks)}
-            entry.update(ok=True, **{k: meta[k] for k in ("input_bytes", "output_bytes")})
-            if "blocks" in meta:
-                entry["blocks"] = meta["blocks"]
-        except CanonicalizationError as exc:
-            entry.update(ok=False, code="E-CAN", error=str(exc))
-        except ContainerError as exc:
-            entry.update(ok=False, code=exc.code, error=exc.message)
-        except CodecError as exc:
-            entry.update(ok=False, code="E-CMP", error=str(exc))
-        except OSError as exc:
-            entry.update(ok=False, code="E-IO", error=str(exc))
+        specs.append({
+            "op": args.op,
+            "src": str(src_path),
+            "dst": str(dst_path),
+            "rel": str(rel),
+            "out_rel": str(dst_path.relative_to(out_dir)),
+            "level": args.level,
+            "block_size": args.block_size,
+            "encoding": args.encoding,
+        })
+
+    jobs = max(1, int(getattr(args, "jobs", 1) or 1))
+    if jobs == 1 or len(specs) == 1:
+        outcomes = [_batch_one(spec) for spec in specs]
+    else:
+        from concurrent.futures import ProcessPoolExecutor
+
+        with ProcessPoolExecutor(max_workers=jobs) as pool:
+            outcomes = list(pool.map(_batch_one, specs))  # map preserves input order
+
+    results = []
+    for entry in outcomes:
         if not entry["ok"]:
-            failures += 1
-            # a failed file must not leave a half-written artifact behind
-            try:
-                dst_path.unlink()
-            except OSError:
-                pass
             print(f"batch: {entry['input']} FAILED ({entry.get('code')}): "
                   f"{entry.get('error', '')}", file=sys.stderr)
+            results.append(entry)
             if args.stop_on_error:
-                results.append(entry)
                 break
+            continue
         results.append(entry)
 
+    failures = sum(1 for r in results if not r["ok"])
     ok_count = sum(1 for r in results if r["ok"])
     report = {
         "op": args.op,
@@ -862,6 +900,12 @@ def build_parser() -> argparse.ArgumentParser:
     bt.add_argument("--encoding", default=None, help="declared source encoding (canon only)")
     bt.add_argument("--level", type=int, default=DEFAULT_LEVEL, help="zstd level (pack only)")
     bt.add_argument("--block-size", type=int, default=8 * 1024 * 1024)
+    bt.add_argument("--jobs", type=int, default=1,
+                    help="process this many files concurrently (default 1). Results and "
+                         "the report are identical to a sequential run. EXPERIMENTAL: on "
+                         "the 2-vCPU container these numbers came from it is 20-40%% "
+                         "SLOWER than --jobs 1 (process start-up plus CPU contention), "
+                         "so measure before relying on it")
     bt.add_argument("--stop-on-error", action="store_true",
                     help="abort at the first failure and exit with that file's code")
     bt.add_argument("--report", default=None, help="write the JSON report to this path")
