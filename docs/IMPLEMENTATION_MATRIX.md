@@ -38,20 +38,20 @@ Single table mapping each requirement to design section, implementation module/f
 | REQ-EXP-002 | Train-split-only induction | CORPUS_POLICY (this batch) | lineage splitter | T-EXP-102 (audit) | none | Not started | Corpus absent (OQ-8) |
 | REQ-EXP-003 | Retirement thresholds | BENCHMARK_PROTOCOL ablation | report schema | T-EXP-103 | none | Not started | — |
 | REQ-FMT-001 | `.lxz` layout via ADR+vectors | [FORMAT_LXZ](FORMAT_LXZ.md) (**PROPOSED**) | `src/lexora/container.py` | T-FMT-101 conformance | none | **Verified** | ADR-0007 accepted; canonicalization + `.lxz` golden vectors tracked |
-| REQ-FMT-002 | Resource-limit declarations enforced | FORMAT_LXZ limits fields | reader | T-FMT-102 | none | Not started | Values pending budget doc |
-| REQ-FMT-003 | Must-understand/may-ignore flags | FORMAT_LXZ compat rules | reader | T-FMT-103 synthetic | none | Not started | — |
+| REQ-FMT-002 | Resource-limit declarations enforced | FORMAT_LXZ limits fields | `src/lexora/container.py` | T-FMT-102 | none | **Verified** | LIM-01/LIM-02 clamped, `E-RES-004`; tests/test_reader_fuzz.py |
+| REQ-FMT-003 | Must-understand/may-ignore flags | FORMAT_LXZ compat rules | `src/lexora/container.py` | T-FMT-103 synthetic | none | **Verified** | must-understand bits refused (`E-FMT-HEAD-002`), may-ignore bits tolerated; tests/test_format_flags.py (7 tests) |
 | REQ-FMT-004 | `.lxdb` deferred | [FORMAT_LXDB](FORMAT_LXDB.md) proposal | — | — | — | Deferred | Intentional (blueprint §phase order) |
 | REQ-BMK-001 | ≥1 GiB manifest, 70/10/20 lineage | CORPUS_POLICY | `benchmarks/harness.py` + corpus.py | T-BMK-101 split audit | none | **In progress** | corpus 1.054 GiB (manifest `c92cf578…`); protocol-scope run + sign-off open |
-| REQ-BMK-002 | Pinned baselines incl. roles | SPEC §4.6 (ADR-0002/0003 Accepted) | baseline runners | T-BMK-102 | none | Not started | External tools install guide needed |
+| REQ-BMK-002 | Pinned baselines incl. roles | SPEC §4.6 (ADR-0002/0003 Accepted) | `benchmarks/harness.py` SYSTEMS | T-BMK-102 | none | **Implemented** | zstd-19 and xz (CLI or liblzma) registered with ADR-0002/0003 roles; Brotli q11 and PPMd absent because the tools are not installed — documented in benchmarks/README.md |
 | REQ-BMK-003 | Pass/Partial/Fail verdicts | SPEC §5.2 (ADR-0001 Accepted) | verdict generator | T-BMK-103 | none | Not started | No results until real run |
 | REQ-BMK-004 | Per-doc/category/env reporting | BENCHMARK_PROTOCOL | report schema | T-BMK-104 | none | Not started | — |
-| REQ-RES-001 | Streaming under ~4 GiB RAM | RESOURCE_LIMITS, PERFORMANCE_BUDGET | whole pipeline | T-RES-101 RSS | none | Not started | Reference machine undefined |
-| REQ-RES-002 | Python range via ADR | DECISIONS OQ-7 | build config | CI matrix | none | Blocked on OQ-7 | — |
+| REQ-RES-001 | Streaming under ~4 GiB RAM | RESOURCE_LIMITS, PERFORMANCE_BUDGET | whole pipeline (streaming) | T-RES-101 RSS | none | **Verified** | flat peak RSS measured: encode 126 MiB, decode 34.8 MiB, canon 35.5 MiB — benchmarks/results-rss-core.json |
+| REQ-RES-002 | Python range via ADR | DECISIONS OQ-7 | `pyproject.toml` | CI matrix | none | **Verified** | ADR-0005 accepted; `requires-python = ">=3.12,<4.0"` and CI runs 3.12 |
 | REQ-RES-003 | Offline operation | INSTALLATION/BUILD_GUIDE | packaging | T-RES-103 smoke | none | Not started | Wheel vendoring plan missing |
 | REQ-SEC-001 | Hostile-archive safety | SPEC §4; THREAT_MODEL (Batch D) | `src/lexora/container.py` + `zstd_core.py` | fuzz campaign | none | **Verified** | fuzz suites: refuse or decode-to-original, never crash; absolute limits enforced |
 | REQ-SEC-002 | Clinical data isolation | CORPUS_POLICY | corpus tooling | policy audit | none | Not started | OQ-8 classification unknown |
 | REQ-SEC-003 | AEAD encryption profile | ENCRYPTION_PROFILE (Batch D, if in scope) | — | KAT vectors | none | Out of current scope | Owner confirm scope |
-| REQ-SEC-004 | Checksum refuse-on-mismatch | FORMAT_LXZ checksums | reader | bit-flip tests | none | Not started | Hash algorithm undecided |
+| REQ-SEC-004 | Checksum refuse-on-mismatch | FORMAT_LXZ checksums | `src/lexora/container.py` | bit-flip tests | none | **Verified** | per-block SHA-256 refused on mismatch; bit-flip coverage in test_container_lxz.py + test_reader_fuzz.py |
 
 ## Reading notes
 

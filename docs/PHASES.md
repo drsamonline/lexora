@@ -1,8 +1,8 @@
 # LEXORA Phases
 
-> **Status:** Draft (planning; Phase 0 partially in progress, all later phases Not started)
+> **Status:** Living plan. **P0 complete · P1 complete (owner-accepted) · P2 in progress · P3–P5 not started**
 > **Owner:** Documentation architect (delegated)
-> **Last verified:** 2026-10-15 — repository contains documentation only; zero implementation files
+> **Last verified:** 2026-10-30 — P1 complete and tested (510 tests); P2 harness operational and the corpus at 1.05 GiB; the protocol-scope run and verdict generator are what remain
 > **Related:** [ROADMAP.md](ROADMAP.md) · [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) · [SPECIFICATION.md](SPECIFICATION.md) · [ACCEPTANCE_CRITERIA.md](ACCEPTANCE_CRITERIA.md)
 
 ## Purpose
@@ -41,7 +41,7 @@ Phases P0–P7 map to milestones M0–M7 in [ROADMAP.md](ROADMAP.md). Statuses f
 - **Risks:** Format churn late → freeze `.lxz` v0 layout *before* writing encoder (FORMAT_LXZ.md is PROPOSED until then).
 - **Rollback/fallback:** Keep canonicalizer independent of container so a format revision doesn't invalidate cleaning outputs.
 
-## P2 — Benchmark harness & first numbers — **Started (Session 38; owner directive "next phase")**
+## P2 — Benchmark harness & first numbers — **In progress**
 
 - **Opening state:** harness mechanics already landed in P1 (env capture, manifest/verify, split audit, cost accounting, N-repeat runner, peak-RSS sampling — `benchmarks/harness.py`); smoke-scope artifacts R0/R3 exist. Load-bearing gap: **OQ-8 corpus ≥1 GiB** (en/hi/gu per BENCHMARK_PROTOCOL) and the ADR-0001 verdict run at protocol scope. Container network egress to Gutenberg mirrors is unverified (S37 note) — first task is a live fetch probe; if blocked, document precisely which step fails.
 - **Objective:** Reproducible measurement of Core vs frozen baselines.
