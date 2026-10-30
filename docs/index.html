@@ -400,7 +400,7 @@
       </div>
 
       <div class="viz reveal" aria-hidden="true">
-        <div class="viz-head"><span>entropy · canonical byte stream</span><b id="entropyLabel">7.12 MB</b></div>
+        <div class="viz-head"><span>entropy · canonical byte stream</span><b id="entropyLabel">1.05 GiB</b></div>
         <svg class="strip" viewBox="0 0 340 64" preserveAspectRatio="none" id="entropyStrip"></svg>
         <div class="sizebar">
           <div class="row">
@@ -409,17 +409,22 @@
             <span class="val">1.05 GiB corpus</span>
           </div>
           <div class="row">
-            <span>zstd-19</span>
+            <span>LEXORA</span>
             <span class="track"><span class="fill" data-w="31.01"></span></span>
             <span class="val"><b>0.3101</b> ratio</span>
           </div>
           <div class="row">
+            <span>zstd-19</span>
+            <span class="track"><span class="fill" data-w="31.20"></span></span>
+            <span class="val"><b>0.3120</b> ratio</span>
+          </div>
+          <div class="row">
             <span>xz-9</span>
             <span class="track"><span class="fill" data-w="30.77"></span></span>
-            <span class="val"><b>2,119,756</b> B</span>
+            <span class="val"><b>0.3077</b> ratio</span>
           </div>
         </div>
-        <p class="kicker" style="margin:14px 0 0">Tier T1-gutenberg-p0 · baseline-vs-baseline smoke snapshot (R1/R2) · no LEXORA-vs-baseline verdict</p>
+        <p class="kicker" style="margin:14px 0 0">Tier T1-gutenberg-p0 · LEXORA measured against both frozen baselines (R5) · smoke scope, no gate verdict</p>
       </div>
     </div>
   </section>
@@ -482,7 +487,7 @@
       <h2 class="sec">What the tool looks like</h2>
       <p class="lede">The experimental PySide6 GUI (milestones M1&ndash;M3, not released) shows a document
       collection, the cost-selected codec result and the round-trip verdict in one window. The figures below
-      are the only published numbers &mdash; the Tier-1 smoke snapshot, baseline-vs-baseline.</p>
+      are the project&rsquo;s R5 measurement: LEXORA against both frozen baselines, at smoke scope.</p>
 
       <div class="pv-win reveal" role="img" aria-label="Mock LEXORA compression window with a file list, compression ratio bars, a progress bar and a round-trip summary panel">
         <div class="bar">
@@ -506,7 +511,7 @@
             </div>
             <p class="kicker" style="margin-top:8px">round-trip verified &middot; decode(encode(C)) == C</p>
             <div class="pv-ratios">
-              <div class="pv-rrow"><span>input</span><span class="pv-rtrack"><span class="pv-rfill dim" style="width:100%"></span></span><span class="num">7.1 MB</span></div>
+              <div class="pv-rrow"><span>input</span><span class="pv-rtrack"><span class="pv-rfill dim" style="width:100%"></span></span><span class="num">80.4 MiB</span></div>
               <div class="pv-rrow"><span>LEXORA</span><span class="pv-rtrack"><span class="pv-rfill" style="width:31.01%"></span></span><span class="num">0.3101</span></div>
               <div class="pv-rrow"><span>zstd-19</span><span class="pv-rtrack"><span class="pv-rfill" style="width:31.20%"></span></span><span class="num">0.3120</span></div>
             </div>
@@ -516,7 +521,7 @@
             </div>
             <div class="pv-summary">
               <div class="k">Gate status</div>
-              <div class="v">No <b>LEXORA-vs-baseline</b> verdict yet &mdash; the numbers above are frozen generic baselines compared with each other.</div>
+              <div class="v">LEXORA is <b>0.60% smaller than zstd-19</b> and <b>0.77% larger than xz-9</b> &mdash; smoke scope, not a gate verdict.</div>
             </div>
           </aside>
         </div>
@@ -637,7 +642,7 @@ lexora unpack --in archive.lxz --out back.txt</pre>
             <div class="gate"><div class="big">≥ 3%</div><div class="lbl">Partial — smaller total stored size</div></div>
           </div>
           <p class="kicker" style="margin-top:16px">Peak RSS (measured once, R3 artifact): zstd-19 ≈ 85,956 KiB · xz-9 ≈ 35,348 KiB. Budget target ≈ 4 GiB (REF-4G).</p>
-          <p class="kicker" style="margin-top:8px">Known caveats, recorded honestly: 2 of 8 requested texts were discarded by the fetch size guard; held-out is a single lineage, so statistical strength is nil; the corpus (~7.1 MB) is far below the ≥1 GiB protocol target.</p>
+          <p class="kicker" style="margin-top:8px">Known caveats, recorded honestly: this run used bounded subsets of a 1.05 GiB corpus (the ≥1 GiB protocol target is now met, but a full-corpus run has not been done); three splits, 3 repetitions, one machine class; xz measured through liblzma rather than the CLI.</p>
         </div>
       </div>
     </div>
