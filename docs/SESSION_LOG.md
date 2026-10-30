@@ -960,3 +960,28 @@ At 0.50 MB mean, 1 GiB needs about **2044 ids**, so the selection was raised to 
 **Gate:** `python3 -m pytest -q` → **492 passed, 1 skipped** (10 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–62 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 63 — 2026-10-29 (R4 across all three splits: the ordering is stable)
+
+**Why this stage.** Session 62's R4 used a single heldout subset of 12.1 MiB with 2 reps, and the honest conclusion was "indistinguishable from noise". A measurement whose sign might be an artefact of one subset is not much use, so this run covered **all three splits at 3 reps**: 172 files, 78.6 MiB.
+
+**The numbers.**
+
+| system | all splits | train | validation |
+|---|---|---|---|
+| `lexora` (default, L9) | 0.3352 | 0.3325 | 0.3409 |
+| `lexora19` | **0.3090** | 0.3077 | 0.3176 |
+| `zstd19` | 0.3109 | 0.3097 | 0.3194 |
+| `xz9-lzma` | **0.3068** | 0.3056 | 0.3154 |
+
+File-level, across all 172: `lexora19` beats `zstd19` on **167 files** (−0.60 % aggregate) and loses to `xz9-lzma` on **all 172** (+0.74 %).
+
+**What changed in the claim.** The ordering — LEXORA between the two baselines — is **identical in every split**, which the single-subset run could not establish. So the framing moves from *"indistinguishable at this scope"* to **"a small, consistent advantage over zstd-19 and a small, consistent deficit against xz-9"**. Note what did *not* change: the magnitude is still ~0.6–0.7 %, small enough that a different corpus, a different zstd version, or the container's 168-byte overhead across many tiny files could shift it. Stability of sign is not the same as practical significance, and the draft says so.
+
+**Still not a verdict.** Smoke scope: 78.6 MiB against a ≥1 GiB protocol requirement, three splits but bounded subsets, one machine class, `xz9` via liblzma rather than the CLI, and no owner sign-off. The five conditions for protocol scope are unchanged and listed in the draft.
+
+**Gate:** `python3 -m pytest -q` → **492 passed, 1 skipped** (no code touched); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–63 are delivered as one patch on top of `19cc1a9`.

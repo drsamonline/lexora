@@ -6,6 +6,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 63 (**R4 across all three splits, 3 reps — the ordering is stable**):
+  - **172 files / 78.6 MiB, train + validation + heldout, 3 reps, 4 systems.** `lexora19` **0.3090**, `zstd19` **0.3109** (−0.60 %, **167 of 172 files** smaller), `xz9-lzma` **0.3068** (+0.74 %, **0 of 172**), shipped default **0.3352** at ~9× the speed.
+  - **The ordering is identical in every split** (train 0.3077/0.3097/0.3056, validation 0.3176/0.3194/0.3154), which is stronger than the single-split first cut.
+  - **Framing tightened, not loosened:** the claim moves from "indistinguishable at this scope" to **"a small, consistent advantage over zstd-19 and a small, consistent deficit against xz-9"** — the sign is stable, the magnitude (~0.6–0.7 %) is still small enough that a different corpus or zstd version could shift it.
+  - Three artifacts committed (`results-r4-{train,validation,heldout}.json`); the earlier 12.1 MiB cut is retained as the first measurement.
+  - No code changed; suite unchanged at **492 passed, 1 skipped**.
 - 2026-10-29 — Session 62 (**R4 now measures both baselines — and LEXORA sits between them**):
   - **`xz9-lzma`** system added: this sandbox has no `xz` binary, so the row comes from stdlib `lzma` at `FORMAT_XZ, preset=9` — same format and preset through liblzma, recorded in the artifact as a different implementation (sizes comparable, timing not quite).
   - **Result on 12.1 MiB heldout:** `lexora19` **0.3082** vs `zstd19` **0.3102** (−0.64 %, 16 of 17 files smaller) and vs `xz9-lzma` **0.3064** (**+0.59 %, xz wins every file**). LEXORA sits between the two frozen baselines.
