@@ -32,6 +32,9 @@ The Phase-1 CLI exists and is tested (`canon`, `zround`, `pipe`, `pack`, `unpack
 
 ## Architecture & specification
 
+- [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) — every task with its closure evidence
+- [ACCEPTANCE_CRITERIA.md](ACCEPTANCE_CRITERIA.md) · [DEVELOPMENT_SETUP.md](DEVELOPMENT_SETUP.md) — checklists and environment setup
+- [PERFORMANCE_BUDGET.md](PERFORMANCE_BUDGET.md) — memory/throughput envelopes, now carrying live measurements
 - [RELEASE_NOTES.md](RELEASE_NOTES.md) — what the unreleased tree contains, its known limits, and what a release would need
 - [R4_SMOKE_DRAFT.md](R4_SMOKE_DRAFT.md) — **first measurement of LEXORA against a baseline** (smoke scope, draft, awaiting owner review before any publication)
 - [ADR-0010](ADR/ADR-0010-lxdb-direction.md) — `.lxdb` direction (**Proposed**): container of `.lxz` members as an interim v0, with a block-pool successor named and its trigger stated; **no byte layout until the corpus gate closes**

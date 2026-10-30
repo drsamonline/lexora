@@ -1,6 +1,6 @@
 # ADR-0008: GUI toolkit, packaging, and architecture constraints
 
-> **Status:** **Accepted** (2026-10-17, Session 26) under the project owner's standing autonomous-decision delegation ("DECIDE UR SELF", 2026-10-16), consistent with ADR-0001…0007. Revocable/amendable by the owner at any time via a superseding ADR per policy.
+> **Status:** **Accepted** (2026-10-17, Session 26) — **partly superseded 2026-10-29 by [ADR-0011](ADR-0011-gui-process-separation.md)**: decisions 2–3 assumed an in-process service layer calling the library, and the GUI is now a *client of the CLI* (process separation). The toolkit choice (PySide6) and the Qt-free-core constraint stand unchanged under the project owner's standing autonomous-decision delegation ("DECIDE UR SELF", 2026-10-16), consistent with ADR-0001…0007. Revocable/amendable by the owner at any time via a superseding ADR per policy.
 > **Date:** 2026-10-17
 > **Deciders:** Documentation architect, under standing owner delegation (not independent owner review)
 > **Related:** [DESIGN_GUI.md](../DESIGN_GUI.md) (plan of record) · [CLI_REFERENCE.md](../CLI_REFERENCE.md) · [RESOURCE_LIMITS.md](../RESOURCE_LIMITS.md) · OQ-12 / OQ-13 / OQ-14 · [ADR-0009](ADR-0009-license-polyform-noncommercial.md) (PolyForm Noncommercial 1.0.0; supersedes ADR-0006's MIT) · [ADR-0007](ADR-0007-container-v0-freeze.md)

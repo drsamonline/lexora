@@ -29,7 +29,7 @@
 | Gate | Condition | Met? | Evidence (re-measured 2026-10-29, Session 52) |
 |---|---|---|---|
 | G1 | Core pipeline round-trip validated (Phase 1 exit) | ✅ **Met** | P1 complete; round trip asserted at every layer, and end-to-end `canon → pack → unpack` returns a byte-identical tree (Session 51) |
-| G2 | Frozen-corpus benchmark run completed (Phase 2 exit) | ❌ **Not met** | corpus is 587 files / 287.9 MB against the ≥1 GiB target; `benchmarks/provenance/gutenberg-cat-partial/sources.json` records `complete: false`; no protocol-scope revision exists |
+| G2 | Frozen-corpus benchmark run completed (Phase 2 exit) | ❌ **Not met** — but for a different reason than before | **Corpus size is satisfied:** 2395 files / 1.054 GiB (`benchmarks/provenance/gutenberg-cat-partial/sources.json`, manifest `c92cf578…`). What remains is a **protocol-scope benchmark run** (all three splits at full size, 3 reps, `xz9` via the CLI, second machine class) and **owner sign-off**; R4/R5 are bounded subsets |
 | G3 | `.lxz` format ADR accepted (Phase 4) | ✅ **Met** | [ADR-0007](ADR/ADR-0007-container-v0-freeze.md) Accepted 2026-10-16 and exercised ever since |
 
 **What the gates now allow, and what they still forbid.** G1 and G3 are met, so the *direction* decision is open and is recorded in [ADR-0010](ADR/ADR-0010-lxdb-direction.md) (Accepted). G2 is not met, so **no byte layout, no magic, no field widths, and no `.lxdb` code** — a layout frozen before the benchmark that would judge it is exactly the sequencing error ADR-0007 avoided for `.lxz`. When G2 closes, the layout becomes its own ADR (proposed: ADR-0013) with its own test vectors.

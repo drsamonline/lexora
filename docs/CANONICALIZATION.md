@@ -2,7 +2,7 @@
 
 > **Status:** Proposed — rule table NOT frozen (Phase 0 exit criterion)
 > **Owner:** Unassigned
-> **Last verified:** 2026-10-16 (v0 rules CAN-R01/R02/R05 implemented as `lexcan-0.1`; 9 golden vectors committed under `tests/vectors/canonicalization/` + invariant tests in `tests/test_canonicalize_invariants.py`; freeze sign-off still pending — see [ADR-0007](ADR/ADR-0007-container-v0-freeze.md)/OQ-11 for the container, owner review for this table)
+> **Last verified:** 2026-10-29 (Session 67 reconciliation: streaming path added; version string typo fixed)
 > **Related:** [SPECIFICATION.md §2](SPECIFICATION.md) · [ADR-0004](ADR/ADR-0004-cleaning-error-metric.md) · [GLOSSARY.md](GLOSSARY.md)
 
 ## Purpose & Scope

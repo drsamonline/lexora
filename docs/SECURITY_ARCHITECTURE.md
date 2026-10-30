@@ -2,7 +2,7 @@
 
 > **Status:** Draft (design-intent document; **no implementation exists**, so nothing here is enforced by code — verified 2026-10-15)
 > **Owner:** Documentation architect (delegated)
-> **Last verified:** 2026-10-15
+> **Last verified:** 2026-10-29 (Session 67 reconciliation: REQ-SEC-001 implemented and fuzz-tested)
 > **Related:** [THREAT_MODEL.md](THREAT_MODEL.md) · [RESOURCE_LIMITS.md](RESOURCE_LIMITS.md) · [PRIVACY_AND_DATA_HANDLING.md](PRIVACY_AND_DATA_HANDLING.md) · [ENCRYPTION_PROFILE.md](ENCRYPTION_PROFILE.md) · [SPECIFICATION.md](SPECIFICATION.md) · root [SECURITY.md](../SECURITY.md) · blueprint §8
 
 ## Purpose & scope

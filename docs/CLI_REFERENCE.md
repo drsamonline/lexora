@@ -2,7 +2,7 @@
 
 > **Status:** Implemented-scope reference — documents ONLY the subcommands that exist and are tested. No placeholders for planned commands (master-prompt rule: no misleading docs).
 > **Owner:** Unassigned
-> **Last verified:** 2026-10-16 against `src/lexora/cli.py` + `tests/test_cli.py` + `tests/test_container_lxz.py` (Session 24)
+> **Last verified:** 2026-10-29 (Session 67 reconciliation: nine subcommands, `--jobs`, exit-1 partial batch, streaming memory behaviour)
 > **Related:** [CANONICALIZATION.md](CANONICALIZATION.md) · [SPECIFICATION.md §8](SPECIFICATION.md) · [FORMAT_LXZ.md](FORMAT_LXZ.md) (layout now normative per accepted [ADR-0007](ADR/ADR-0007-container-v0-freeze.md)) · [STATUS.md](STATUS.md)
 
 ## Installation & invocation

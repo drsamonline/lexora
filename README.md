@@ -8,7 +8,7 @@ Canonicalize text conservatively, then compress it with guaranteed byte-exact re
 <p>
 <a href="https://drsamonline.github.io/lexora/"><img alt="Landing page: live" src="https://img.shields.io/badge/landing%20page-live-84cc16"></a>
 <a href="https://github.com/drsamonline/lexora/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/drsamonline/lexora/actions/workflows/ci.yml/badge.svg"></a>
-<img alt="Tests: 192 passed (local)" src="https://img.shields.io/badge/tests-192%20passed%20(local)-informational">
+<img alt="Tests: 502 passed (local)" src="https://img.shields.io/badge/tests-502%20passed%20(local)-informational">
 <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-blue">
 <a href="LICENSE"><img alt="License: PolyForm Noncommercial 1.0.0" src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-2e7d32"></a>
 <img alt="Version 0.0.1.dev1" src="https://img.shields.io/badge/version-0.0.1.dev1-orange">
@@ -76,7 +76,7 @@ Generic compressors (Zstandard, XZ, Brotli) treat text as opaque bytes. Document
 | Status | Capability |
 |---|---|
 | **Implemented** | Conservative canonicalizer (`src/lexora/canonicalize.py`), Zstd core baseline (`src/lexora/zstd_core.py`), `.lxz` v0 container (`src/lexora/container.py`, ADR-0007), **nine CLI verbs** (`canon`/`zround`/`pipe`/`pack`/`unpack`/`verify`/`inspect`/`batch`/`doctor` — see [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)), benchmark harness (`benchmarks/harness.py` + `corpus.py`, reproducible per [benchmarks/README.md](benchmarks/README.md)), test suite (**492 passed, 1 skipped**, verified 2026-10-29). **Every core path streams** — encode, decode and canonicalization are flat in document size (measured: 126 MiB / 35 MiB / 35 MiB peak) |
-| **In progress** | GUI milestones M1–M3 landed & offscreen-tested but **not released**; ADR-0011 decided the GUI becomes a *client of the CLI* (process separation) and that implementation has not started — it needs a Qt-capable machine. Corpus at **746.5 MB** of the ≥1 GiB benchmark requirement (OQ-8). GitHub Actions paused by owner (OQ-15) — local gate is `pytest -q` + linkcheck |
+| **In progress** | GUI milestones M1–M3 landed & offscreen-tested but **not released**; ADR-0011 decided the GUI becomes a *client of the CLI* (process separation) and that implementation has not started — it needs a Qt-capable machine. Corpus **meets** the ≥1 GiB benchmark requirement (2395 files / 1.054 GiB, OQ-8); what is missing is a protocol-scope run and owner sign-off. GitHub Actions paused by owner (OQ-15) — local gate is `pytest -q` + linkcheck |
 | **Planned** | TXT/PDF ingestion; experimental candidates (dictionaries, Re-Pair, bounded token PPM, numeric/record coding, template+residual); `.lxdb` database mode; optional encryption profile; GUI stretch items (batch queue, drag-and-drop, shortcuts) |
 
 ## Architecture overview (proposed)
@@ -142,7 +142,7 @@ R4, three splits, 172 files / 78.6 MiB, 3 reps (draft, awaiting owner review):
 | `zstd19` (baseline) | 0.3109 |
 | `xz9` (baseline) | **0.3068** |
 
-So the pipeline sits **between** the two baselines: a small, consistent advantage over zstd-19 (167 of 172 files smaller) and a small, consistent deficit against xz-9 (xz wins every file). **Neither is a gate verdict**, the corpus is 746.5 MB against a ≥1 GiB requirement, and the honest reading is in [docs/R4_SMOKE_DRAFT.md](docs/R4_SMOKE_DRAFT.md). Reproduce it from [benchmarks/README.md](benchmarks/README.md).
+So the pipeline sits **between** the two baselines: a small, consistent advantage over zstd-19 (167 of 172 files smaller) and a small, consistent deficit against xz-9 (xz wins every file). **Neither is a gate verdict**: the corpus now meets the ≥1 GiB requirement but no protocol-scope run has been done, and the honest reading is in [docs/R4_SMOKE_DRAFT.md](docs/R4_SMOKE_DRAFT.md). Reproduce it from [benchmarks/README.md](benchmarks/README.md).
 
 ## Security & privacy notes
 

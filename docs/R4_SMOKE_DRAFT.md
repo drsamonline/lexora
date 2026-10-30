@@ -94,7 +94,7 @@ Shipped default vs both baselines: **+8.5 %** larger than zstd-19, **+9.9 %** la
 
 ## What protocol scope would require
 
-1. **Corpus ≥ 1 GiB** (OQ-8). Current snapshot: 593.4 MB — ~431 MB short, ~20 fetch passes here or one unattended loop.
+1. ~~Corpus ≥ 1 GiB (OQ-8)~~ — **met**: 2395 files / 1.054 GiB, manifest `c92cf578…`, 0 problems, no lineage straddling. This condition no longer blocks anything.
 2. **All three splits**, not heldout alone, with the leak audit re-run (currently 852/116/239, no lineage straddling).
 3. **3 reps** per BENCHMARK_PROTOCOL §6.3, and a second machine class for the reference profile (REF-4G, OQ-7).
 4. **`xz9` via the CLI** (this run used `xz9-lzma` because no `xz` binary exists here), on a machine where both are available so the timing rows are comparable.

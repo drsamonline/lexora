@@ -55,7 +55,7 @@ For a tree: `lexora batch --in DIR --out-dir OUT --op canon` (then `--op pack`, 
 
 ## Known limits (stated, not hidden)
 
-- **Corpus is 746.5 MB against the ≥1 GiB requirement** for protocol-scope benchmarks (OQ-8). The R4 numbers are smoke scope and will change.
+- **The corpus meets the ≥1 GiB requirement** (2395 files / 1.054 GiB, OQ-8) but **no protocol-scope benchmark run has been done** — R4/R5 use bounded subsets, so the numbers are smoke scope and will change.
 - **No GUI work landed.** ADR-0011 chose process separation; implementing it needs a Qt-capable machine, and this development environment cannot install PySide6.
 - **`.lxdb` has no byte layout** — the direction is decided (ADR-0010), the layout is gated on the corpus benchmark and assigned to ADR-0013.
 - **`lexora` does not beat xz-9** on size at equal level, and the current design cannot: v0 is canonicalization plus zstd. That is what the roadmap's PPMd/Brotli/dictionary phases exist for.

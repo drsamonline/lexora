@@ -2,7 +2,7 @@
 
 > **Status:** Draft (planning; tasks reference phases in [PHASES.md](PHASES.md))
 > **Owner:** Documentation architect (delegated)
-> **Last verified:** 2026-10-15 — no implementation task below is started
+> **Last verified:** 2026-10-29 (Session 67 reconciliation: tasks through P1-T23)
 > **Related:** [PHASES.md](PHASES.md) · [IMPLEMENTATION_MATRIX.md](IMPLEMENTATION_MATRIX.md) · [ACCEPTANCE_CRITERIA.md](ACCEPTANCE_CRITERIA.md)
 
 ## Purpose
@@ -84,7 +84,7 @@ python3 scripts/linkcheck.py     # ALL INTERNAL LINKS OK expected
 git status --short && git log --oneline -3
 # Tests run with the broken system libtmux pytest plugin disabled (pytest 9.x
 # rejects its marks-on-fixtures usage; verified 2026-10-15):
-python3 -m pytest -q    # 192 passed expected (libtmux neutralized repo-wide via pyproject addopts since S25)
+python3 -m pytest -q    # 502 passed, 1 skipped expected (libtmux neutralized repo-wide via pyproject addopts since S25)
 python benchmarks/harness.py env --out /tmp/env.json   # smoke-check tool capture
 ```
 

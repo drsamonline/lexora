@@ -2,7 +2,7 @@
 
 > **Status:** Draft (taxonomy reconciled with the shipped CLI 2026-10-17, Session 25 — see Global rule 5; severity/recovery sections remain contract for future implementation)
 > **Owner:** Documentation architect (delegated)
-> **Last verified:** 2026-10-17
+> **Last verified:** 2026-10-29 (Session 67 reconciliation: interruption table measured with real signals)
 > **Related:** [SPECIFICATION.md](SPECIFICATION.md) · [CLI_REFERENCE.md](CLI_REFERENCE.md) · [LOGGING_AND_DIAGNOSTICS.md](LOGGING_AND_DIAGNOSTICS.md) · [RESOURCE_LIMITS.md](RESOURCE_LIMITS.md) · [THREAT_MODEL.md](THREAT_MODEL.md) TM-03/TM-04 · runbooks/
 
 ## Purpose & scope

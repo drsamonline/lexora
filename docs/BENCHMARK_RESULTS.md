@@ -2,7 +2,7 @@
 
 > **Status:** Active register (append-only per revision)
 > **Owner:** Documentation architect (delegated)
-> **Last verified:** 2026-10-16 (Revision R2 published — manifest regeneration closing R1's correction note; corpus tier T1-gutenberg-p0 unchanged)
+> **Last verified:** 2026-10-29 (Session 67 reconciliation: R4/R5 draft summary)
 > **Related:** [BENCHMARK_PROTOCOL.md](BENCHMARK_PROTOCOL.md) · [CORPUS_POLICY.md](CORPUS_POLICY.md) · [ADR-0001](ADR/ADR-0001-gate-scope.md)
 
 ## Purpose & scope

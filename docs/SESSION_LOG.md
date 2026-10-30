@@ -1072,3 +1072,33 @@ The re-fetch produced a **different manifest digest** (`56d9443d…` vs `abffa16
 **Gate:** `python3 -m pytest -q` → **502 passed, 1 skipped** (6 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–67 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 68 — 2026-10-29 (documentation reconciliation: what twenty sessions made false)
+
+**Why this stage.** Twenty sessions of work left a documentation set that was, in places, confidently wrong. A wrong document is worse than a missing one: it is read, believed, and acted on. This session audited the docs against the code and the artifacts, and fixed what disagreed.
+
+**What was actually false.**
+
+| Claim | Where | Truth |
+|---|---|---|
+| "192 passed" | STATUS (2×), PROGRESS (2×), README badge, docs/index.html (2×), TASK_BREAKDOWN | **502 passed, 1 skipped** |
+| "8 test files" | PROGRESS | **23** |
+| "Corpus is 746.5 MB against the ≥1 GiB requirement" | README, RELEASE_NOTES, NEXT_SESSION | **1.054 GiB — the requirement is met**; what remains is a protocol-scope run and sign-off |
+| "587 files / 287.9 MB" as the *current* corpus | FORMAT_LXDB G2, R4 draft | 2395 files / 1.054 GiB |
+| "Not started" for 13 **implemented** requirements | IMPLEMENTATION_MATRIX | Verified, with real module paths and test evidence |
+| ADR register missing 0007, 0008, 0010, 0011, 0012 | DECISIONS.md | All five rows added |
+| "Last verified state: Session 57" | NEXT_SESSION header | Session 68 — the header had drifted three sessions because each edit anchored on the previous wording |
+
+**The IMPLEMENTATION_MATRIX was the worst of them.** It is the document that maps every requirement to code, and it said `lexora/canon.py — absent`, "Not started", for canonicalization, the round-trip invariant, the container, byte-exact accounting, bounded decode and hostile-archive safety — all of which are implemented, tested and, in several cases, fuzz-tested. Thirteen rows now carry the real module path and the evidence that closes them; the twenty rows that genuinely are unstarted (ingest, OCR, tokenizer, encryption, Devanagari vectors) are left alone. A matrix that says "not started" about the thing you shipped teaches a reader to distrust the whole document.
+
+**A stale-date audit as well.** Nine documents whose content this session series materially changed (CLI_REFERENCE, ERROR_HANDLING, BENCHMARK_RESULTS, CANONICALIZATION, FORMAT_LXZ, DECISIONS, SECURITY_ARCHITECTURE, TASK_BREAKDOWN, index.md) carried "Last verified" dates from October 15–17; each now says what changed and when.
+
+**One structural gap closed.** `docs/index.md` — the portal — did not list `TASK_BREAKDOWN.md`, `PERFORMANCE_BUDGET.md`, `ACCEPTANCE_CRITERIA.md` or `DEVELOPMENT_SETUP.md`. All four are linked now.
+
+**And one status correction in the ADRs.** ADR-0008's status line now records that **ADR-0011 partly supersedes it**: decisions 2–3 assumed an in-process service layer calling the library, and the GUI is now a client of the CLI. The toolkit choice and the Qt-free-core constraint stand.
+
+**Gate:** `python3 -m pytest -q` → **502 passed, 1 skipped** (documentation only, no code touched); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK. Every claim above was verified against the code or the artifacts, not against memory — including the test count, which was read from a live run.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–68 are delivered as one patch on top of `19cc1a9`.

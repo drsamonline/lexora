@@ -5,7 +5,16 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
-### Added
+### Changed
+- 2026-10-29 — Session 68 (**documentation reconciliation — twenty sessions of drift, audited and fixed**):
+  - **Test counts corrected everywhere they were wrong** (192 → **502 passed, 1 skipped**): STATUS.md (2 places), PROGRESS.md (2), README badge, docs/index.html (badge + code sample), TASK_BREAKDOWN's gate snippet. Test-file count 8 → **23**.
+  - **Corpus figures corrected**: README, RELEASE_NOTES, NEXT_SESSION, FORMAT_LXDB's G2 row and the R4 draft all described a 587–746 MB corpus; the snapshot is **2395 files / 1.054 GiB** and the ≥1 GiB requirement is **met**. FORMAT_LXDB's G2 stays "not met" but now for the honest reason: the size half is satisfied, a protocol-scope run and owner sign-off are not.
+  - **IMPLEMENTATION_MATRIX reconciled — the worst offender.** Thirteen requirements that are implemented and tested (canonicalization CAN-001…004, round trip CMP-001, codec CMP-002, selection CMP-003, accounting CMP-004, bounded decode CMP-005, unknown-ID refusal CMP-006, format FMT-001, hostile-archive safety SEC-001) said "planned — absent / Not started". Each now carries its real module path and the test evidence that closes it; the twenty genuinely unstarted rows (ingest, OCR, tokenizer, encryption, Devanagari vectors) are untouched.
+  - **ADR register completed**: DECISIONS.md was missing ADR-0007, 0008, 0010, 0011 and 0012 from its table. All five added. OQ-8 updated to "size met, language mix and rights verification still open".
+  - **ADR-0008 status** now records that ADR-0011 partly supersedes it (in-process service layer → CLI client); the toolkit choice and Qt-free-core constraint stand.
+  - **docs/index.md** now links TASK_BREAKDOWN, PERFORMANCE_BUDGET, ACCEPTANCE_CRITERIA and DEVELOPMENT_SETUP, which it never listed.
+  - **Nine "Last verified" dates** refreshed on documents whose content this session series materially changed, each saying what changed.
+  - No code touched; suite unchanged at **502 passed, 1 skipped**.
 - 2026-10-29 — Session 67 (**`--jobs` for batch and for the corpus fetch — one is a real gain, the other measured a loss**):
   - **`lexora batch --jobs N`** processes files in parallel. Threads were tried first and **measured useless**: python-zstandard holds the GIL for the whole compress call (two threads × four compressions = **3.04 s vs 1.62 s sequential**, exactly 2×). The worker is now a module-level picklable function run in a **process** pool. Results, ordering and the report are byte-identical to `--jobs 1` (asserted by tests), but on this 2-vCPU container it is **20–40 % slower** for typical file sizes, so the flag is documented as **experimental**, not as a speedup.
   - **`corpus-fetch --jobs N`** is a genuine gain: the work is network-bound, so eight threads fetched **73 files in one 229 s pass** against ~50 sequentially. The record is still assembled in id order, so sidecars do not depend on completion order.
