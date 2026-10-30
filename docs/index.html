@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LEXORA — Byte-exact compression for document collections</title>
-<meta name="description" content="LEXORA is a text-cleaning and exact-compression architecture for document collections: conservative, versioned canonicalization followed by compression with guaranteed byte-exact recovery, decode(encode(C)) == C. Phase 1 prototype, PolyForm Noncommercial licensed.">
+<meta name="description" content="LEXORA is a text-cleaning and exact-compression architecture for document collections: conservative, versioned canonicalization followed by compression with guaranteed byte-exact recovery, decode(encode(C)) == C. Phase 1 complete, Phase 2 in progress, PolyForm Noncommercial licensed.">
 <meta name="keywords" content="LEXORA, byte-exact compression, lossless compression, canonicalization, zstandard, zstd, .lxz container, document collections, text compression, Dr. Sohil Momin, Python, CLI">
 <meta name="author" content="Dr. Sohil Momin">
 <meta name="robots" content="index, follow, max-image-preview:large">
@@ -17,7 +17,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="LEXORA">
 <meta property="og:title" content="LEXORA — Byte-exact compression for document collections">
-<meta property="og:description" content="Conservative, versioned canonicalization followed by compression with guaranteed byte-exact recovery. A Phase 1 prototype for exact-text document archives.">
+<meta property="og:description" content="Conservative, versioned canonicalization followed by compression with guaranteed byte-exact recovery. Phase 1 complete; Phase 2 is the benchmark programme.">
 <meta property="og:url" content="https://drsamonline.github.io/lexora/">
 <meta property="og:image" content="https://socialify.git.ci/drsamonline/lexora/image?name=1&amp;owner=1&amp;description=1&amp;language=1&amp;theme=Dark&amp;font=Inter">
 <meta property="og:image:alt" content="LEXORA repository card">
@@ -25,7 +25,7 @@
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="LEXORA — Byte-exact compression for document collections">
-<meta name="twitter:description" content="Conservative, versioned canonicalization followed by compression with guaranteed byte-exact recovery. A Phase 1 prototype for exact-text document archives.">
+<meta name="twitter:description" content="Conservative, versioned canonicalization followed by compression with guaranteed byte-exact recovery. Phase 1 complete; Phase 2 is the benchmark programme.">
 <meta name="twitter:image" content="https://socialify.git.ci/drsamonline/lexora/image?name=1&amp;owner=1&amp;description=1&amp;language=1&amp;theme=Dark&amp;font=Inter">
 
 <style>
@@ -371,7 +371,7 @@
   <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <span class="eyebrow">Phase 1 prototype · exact-text compression</span>
+        <span class="eyebrow">Phase 1 complete · exact-text compression</span>
         <h1>LEX<span>ORA</span></h1>
         <p class="sub"><b>Layered EXact-text Repository &amp; Adaptive compression architecture.</b>
         A text-cleaning and exact-compression system for document collections: canonicalize conservatively,
@@ -406,16 +406,16 @@
           <div class="row">
             <span>input</span>
             <span class="track"><span class="fill dim" data-w="100"></span></span>
-            <span class="val">7,124,095 B</span>
+            <span class="val">1.05 GiB corpus</span>
           </div>
           <div class="row">
             <span>zstd-19</span>
-            <span class="track"><span class="fill" data-w="30.04"></span></span>
-            <span class="val"><b>2,139,962</b> B</span>
+            <span class="track"><span class="fill" data-w="31.01"></span></span>
+            <span class="val"><b>0.3101</b> ratio</span>
           </div>
           <div class="row">
             <span>xz-9</span>
-            <span class="track"><span class="fill" data-w="29.75"></span></span>
+            <span class="track"><span class="fill" data-w="30.77"></span></span>
             <span class="val"><b>2,119,756</b> B</span>
           </div>
         </div>
@@ -462,8 +462,8 @@
         <div class="card reveal">
           <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="#84cc16" stroke-width="1.5"/><path d="M7 9l3 3-3 3M13 15h4" stroke="#84cc16" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <h3>A real CLI</h3>
-          <p>Five tested subcommands — <code>canon</code>, <code>zround</code>, <code>pipe</code>, <code>pack</code>, <code>unpack</code> — with a stable exit-code contract (0, 2–7) exercised by the test suite.</p>
-          <span class="tag">canon/zround/pipe/pack/unpack</span>
+          <p>Nine tested subcommands — <code>canon</code>, <code>zround</code>, <code>pipe</code>, <code>pack</code>, <code>unpack</code>, <code>verify</code>, <code>inspect</code>, <code>batch</code>, <code>doctor</code> — with a stable exit-code contract (0–7), exercised by 502 tests including reader/writer fuzzing and real-signal interruption tests.</p>
+          <span class="tag">canon · zround · pipe · pack · unpack · verify · inspect · batch · doctor</span>
         </div>
         <div class="card reveal">
           <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" stroke="#84cc16" stroke-width="1.5"/><rect x="8" y="8" width="8" height="8" rx="1" stroke="#84cc16" stroke-width="1.5"/><path d="M4 8h0M4 12h0M4 16h0" stroke="#84cc16" stroke-width="1.6" stroke-linecap="round"/></svg></div>
@@ -507,8 +507,8 @@
             <p class="kicker" style="margin-top:8px">round-trip verified &middot; decode(encode(C)) == C</p>
             <div class="pv-ratios">
               <div class="pv-rrow"><span>input</span><span class="pv-rtrack"><span class="pv-rfill dim" style="width:100%"></span></span><span class="num">7.1 MB</span></div>
-              <div class="pv-rrow"><span>zstd-19</span><span class="pv-rtrack"><span class="pv-rfill" style="width:30.04%"></span></span><span class="num">0.3004</span></div>
-              <div class="pv-rrow"><span>xz-9</span><span class="pv-rtrack"><span class="pv-rfill" style="width:29.75%"></span></span><span class="num">0.2975</span></div>
+              <div class="pv-rrow"><span>LEXORA</span><span class="pv-rtrack"><span class="pv-rfill" style="width:31.01%"></span></span><span class="num">0.3101</span></div>
+              <div class="pv-rrow"><span>zstd-19</span><span class="pv-rtrack"><span class="pv-rfill" style="width:31.20%"></span></span><span class="num">0.3120</span></div>
             </div>
             <div class="pv-summary">
               <div class="k">Output container</div>
@@ -522,7 +522,7 @@
         </div>
       </div>
 
-      <p class="pv-cap">Interface illustration &mdash; LEXORA is a Phase 1 prototype with no releases and no stable API; the figures shown are the project's published T1-gutenberg-p0 smoke snapshot (baseline-vs-baseline).</p>
+      <p class="pv-cap">Interface illustration &mdash; LEXORA has no releases and no stable API; the figures shown are the project's R5 measurement on the T1-gutenberg-p0 corpus (LEXORA vs both frozen baselines, smoke scope).</p>
     </div>
   </section>
 
@@ -585,30 +585,34 @@ lexora unpack --in archive.lxz --out back.txt</pre>
     <div class="wrap">
       <span class="eyebrow">Benchmarks</span>
       <h2 class="sec">Measured results — reported honestly</h2>
-      <p class="lede">There is <b>no validated LEXORA-vs-baseline result yet</b>. The figures below are the only
-      published numbers: a Tier-1 smoke snapshot comparing frozen generic baselines against each other, not a
-      gate verdict. Every number carries its mandatory tier label.</p>
+      <p class="lede">LEXORA has now been measured <b>against both frozen baselines</b>, on the real corpus — and
+      the result is small, and unflattering in one direction, so it is reported in full. This is <b>smoke scope</b>:
+      bounded subsets of a 1.05&nbsp;GiB corpus, 3 repetitions, one machine class. It is <b>not</b> a gate verdict,
+      and the project does not claim one.</p>
 
-      <p style="margin-top:20px"><span class="tier">Corpus tier: T1-gutenberg-p0</span></p>
+      <p style="margin-top:20px"><span class="tier">Corpus tier: T1-gutenberg-p0</span> <span class="tier">1.05 GiB corpus</span> <span class="tier">manifest 56d9443d…</span> <span class="tier">smoke scope — not a gate verdict</span></p>
 
       <div class="gates">
-        <div class="gate"><div class="big">7,124,095 B</div><div class="lbl">Corpus input (6 English public-domain texts, 5 train / 1 held-out)</div><span class="st">R1 · R2 · 2026-10-16</span></div>
-        <div class="gate"><div class="big">0.3004</div><div class="lbl">Zstd-19 ratio — 2,139,962 B stored</div><span class="st">baseline</span></div>
-        <div class="gate"><div class="big">0.2975</div><div class="lbl">XZ-9 ratio — 2,119,756 B stored</div><span class="st">baseline</span></div>
+        <div class="gate"><div class="big">0.3101</div><div class="lbl">LEXORA at zstd level 19 — 184 files, 80.4 MiB, 3 reps</div><span class="st">R5 · 2026-10-29</span></div>
+        <div class="gate"><div class="big">0.3120</div><div class="lbl">Zstd-19 — LEXORA is 0.60% smaller, on 178 of 184 files</div><span class="st">baseline</span></div>
+        <div class="gate"><div class="big">0.3077</div><div class="lbl">XZ-9 — LEXORA is 0.77% larger; xz wins every file</div><span class="st">baseline</span></div>
       </div>
 
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>File</th><th>Split</th><th>Input B</th><th>Zstd-19 B (ratio)</th><th>XZ-9 B (ratio)</th></tr>
+            <tr><th>File</th><th>Split</th><th>Input B</th><th>LEXORA B (ratio)</th><th>Zstd-19 B (ratio)</th><th>XZ-9 B (ratio)</th></tr>
           </thead>
           <tbody>
-            <tr><td>gutenberg-1184.txt</td><td>heldout</td><td class="num">2,787,124</td><td class="num"><b>782,892</b> (0.2809)</td><td class="num">776,472 (0.2786)</td></tr>
-            <tr><td>gutenberg-1342.txt</td><td>train</td><td class="num">772,386</td><td class="num">226,028 (0.2926)</td><td class="num">223,512 (0.2894)</td></tr>
-            <tr><td>gutenberg-1400.txt</td><td>train</td><td class="num">1,058,204</td><td class="num">324,526 (0.3067)</td><td class="num">321,664 (0.3040)</td></tr>
-            <tr><td>gutenberg-1661.txt</td><td>train</td><td class="num">607,606</td><td class="num">191,034 (0.3144)</td><td class="num">188,860 (0.3108)</td></tr>
-            <tr><td>gutenberg-2701.txt</td><td>train</td><td class="num">1,276,315</td><td class="num">422,220 (0.3308)</td><td class="num">418,184 (0.3276)</td></tr>
-            <tr><td>gutenberg-76.txt</td><td>train</td><td class="num">622,460</td><td class="num">193,262 (0.3105)</td><td class="num">191,064 (0.3069)</td></tr>
+            <tr><td>gutenberg-10.txt</td><td>train</td><td class="num">4,455,950</td><td class="num"><b>1,063,041</b> (0.2386)</td><td class="num">1,076,108 (0.2415)</td><td class="num">1,058,492 (0.2375)</td></tr>
+            <tr><td>gutenberg-1002.txt</td><td>train</td><td class="num">249,087</td><td class="num"><b>83,910</b> (0.3369)</td><td class="num">84,056 (0.3375)</td><td class="num">82,764 (0.3323)</td></tr>
+            <tr><td>gutenberg-1003.txt</td><td>train</td><td class="num">249,847</td><td class="num"><b>82,842</b> (0.3316)</td><td class="num">83,069 (0.3325)</td><td class="num">81,984 (0.3281)</td></tr>
+            <tr><td>gutenberg-1007.txt</td><td>validation</td><td class="num">227,938</td><td class="num"><b>83,119</b> (0.3647)</td><td class="num">83,231 (0.3651)</td><td class="num">81,912 (0.3594)</td></tr>
+            <tr><td>gutenberg-1022.txt</td><td>validation</td><td class="num">89,009</td><td class="num"><b>32,972</b> (0.3704)</td><td class="num">33,077 (0.3716)</td><td class="num">32,504 (0.3652)</td></tr>
+            <tr><td>gutenberg-103.txt</td><td>validation</td><td class="num">403,712</td><td class="num"><b>127,388</b> (0.3155)</td><td class="num">128,290 (0.3178)</td><td class="num">126,244 (0.3127)</td></tr>
+            <tr><td>gutenberg-100.txt</td><td>heldout</td><td class="num">5,638,481</td><td class="num"><b>1,678,603</b> (0.2977)</td><td class="num">1,691,408 (0.3000)</td><td class="num">1,673,784 (0.2969)</td></tr>
+            <tr><td>gutenberg-1001.txt</td><td>heldout</td><td class="num">249,139</td><td class="num"><b>83,220</b> (0.3340)</td><td class="num">83,458 (0.3350)</td><td class="num">82,272 (0.3302)</td></tr>
+            <tr><td>gutenberg-101.txt</td><td>heldout</td><td class="num">676,855</td><td class="num"><b>220,417</b> (0.3256)</td><td class="num">222,011 (0.3280)</td><td class="num">218,328 (0.3226)</td></tr>
           </tbody>
         </table>
       </div>
@@ -618,8 +622,9 @@ lexora unpack --in archive.lxz --out back.txt</pre>
           <div class="viz-head"><span>stored size vs input · log-ish</span><b>lower is better</b></div>
           <svg class="strip" viewBox="0 0 340 64" preserveAspectRatio="none" id="benchStrip"></svg>
           <div class="sizebar">
-            <div class="row"><span>zstd-19</span><span class="track"><span class="fill" data-w="30.04"></span></span><span class="val">0.3004</span></div>
-            <div class="row"><span>xz-9</span><span class="track"><span class="fill" data-w="29.75"></span></span><span class="val">0.2975</span></div>
+            <div class="row"><span>LEXORA</span><span class="track"><span class="fill" data-w="31.01"></span></span><span class="val">0.3101</span></div>
+            <div class="row"><span>zstd-19</span><span class="track"><span class="fill" data-w="31.20"></span></span><span class="val">0.3120</span></div>
+            <div class="row"><span>xz-9</span><span class="track"><span class="fill" data-w="30.77"></span></span><span class="val">0.3077</span></div>
             <div class="row"><span>held-out zstd</span><span class="track"><span class="fill dim" data-w="28.09"></span></span><span class="val">0.2809</span></div>
             <div class="row"><span>held-out xz</span><span class="track"><span class="fill dim" data-w="27.86"></span></span><span class="val">0.2786</span></div>
           </div>
@@ -643,8 +648,8 @@ lexora unpack --in archive.lxz --out back.txt</pre>
     <div class="wrap">
       <span class="eyebrow">Get started</span>
       <h2 class="sec">Clone it, install it, run the gate</h2>
-      <p class="lede">LEXORA is an early Phase 1 prototype. Nothing here is a shipped or released feature —
-      install from source and treat the test suite as the contract.</p>
+      <p class="lede">Phase 1 is complete; Phase 2 is the benchmark programme. Nothing here is a shipped or
+      released feature — install from source and treat the test suite (502 passing) as the contract.</p>
 
       <div class="dl">
         <div class="dl-card">
@@ -664,7 +669,7 @@ python3 -m pytest -q</pre>
             <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>canonicalize.py</b> — conservative v0 rule set with golden vectors</span></li>
             <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>zstd_core.py</b> — frame codec with round-trip verification</span></li>
             <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>container.py</b> — <code>.lxz</code> v0 pack/unpack (ADR-0007)</span></li>
-            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>cli.py</b> — the five-subcommand CLI with stable exit codes</span></li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>cli.py</b> — the nine-subcommand CLI with stable exit codes</span></li>
             <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>benchmarks/</b> — harness + frozen corpus manifest</span></li>
           </ul>
           <p class="kicker" style="margin-top:14px">No releases, no download artifacts, and no coverage/release badges exist — those claims are not yet true.</p>
@@ -682,12 +687,12 @@ python3 -m pytest -q</pre>
         <details open>
           <summary><span class="q">Q01</span>Is LEXORA released or production-ready?
             <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-          <div class="ans">No. It is a <b>Phase 1 prototype in development</b> with no stable API and no releases. Early implementation code exists (canonicalization, a Zstd core baseline, the <code>.lxz</code> v0 container, a benchmark harness, a CLI, and experimental PySide6 GUI milestones).</div>
+          <div class="ans">No. <b>Phase 1 is complete</b> — canonicalization, a Zstd core baseline, the frozen <code>.lxz</code> v0 container, streaming encode/decode/canonicalize, a nine-verb CLI and a benchmark harness all exist and are tested — but there are <b>no releases and no stable API</b>, and the GUI work is unfinished (ADR-0011 chose process separation; that implementation has not started).</div>
         </details>
         <details>
           <summary><span class="q">Q02</span>Does LEXORA beat Zstd, Brotli or XZ?
             <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-          <div class="ans">No validated evidence exists either way, and the project says so explicitly. The only published numbers are baseline-vs-baseline on a Tier-1 smoke corpus. Claiming any advantage before reproducible benchmark evidence would be out of scope by design.</div>
+          <div class="ans">Partly — and it is reported exactly as measured. On 184 files / 80.4&nbsp;MiB of the real corpus at 3 repetitions: LEXORA is <b>0.60% smaller than Zstd-19</b> (178 of 184 files) and <b>0.77% larger than XZ-9</b> (xz wins every file), so it sits <em>between</em> the two frozen baselines. Because v0 is canonicalization plus zstd, no zstd level will carry it past xz — that is the design's ceiling, and the reason the roadmap adds PPMd, Brotli and trained dictionaries. <b>Smoke-scope numbers, not a gate verdict.</b></div>
         </details>
         <details>
           <summary><span class="q">Q03</span>What exactly does "byte-exact" mean here?
@@ -707,7 +712,7 @@ python3 -m pytest -q</pre>
         <details>
           <summary><span class="q">Q06</span>What is the licence, and who maintains it?
             <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-          <div class="ans">PolyForm Noncommercial 1.0.0 © 2026 Dr. Sohil Momin, who owns the project. The source is public and may be read, run, changed and shared for any noncommercial purpose; commercial use needs a separate licence from the owner — see <a href="https://github.com/drsamonline/lexora/blob/main/LICENSE" target="_blank" rel="noopener">LICENSE</a> and ADR-0009. CI runs are currently paused by owner decision (free-tier minutes exhausted); the verification gate is local — <code>pytest -q</code> plus a docs link check before every commit.</div>
+          <div class="ans">PolyForm Noncommercial 1.0.0 © 2026 Dr. Sohil Momin, who owns the project. The source is public and may be read, run, changed and shared for any noncommercial purpose; commercial use needs a separate licence from the owner — see <a href="https://github.com/drsamonline/lexora/blob/main/LICENSE" target="_blank" rel="noopener">LICENSE</a> and ADR-0009. CI runs on every push to <code>main</code>; the same gate runs locally before every commit — <code>pytest -q</code> plus <code>python scripts/linkcheck.py</code>.</div>
         </details>
       </div>
     </div>
@@ -725,7 +730,7 @@ python3 -m pytest -q</pre>
           </svg>
           <span>LEX<b>ORA</b></span>
         </div>
-        <p class="kicker" style="margin-top:12px;max-width:40ch">Layered EXact-text Repository &amp; Adaptive compression architecture. Phase 1 prototype — no releases, no stable API.</p>
+        <p class="kicker" style="margin-top:12px;max-width:40ch">Layered EXact-text Repository &amp; Adaptive compression architecture. Phase 1 complete — no releases, no stable API.</p>
       </div>
       <nav class="foot-links">
         <a href="https://github.com/drsamonline/lexora" target="_blank" rel="noopener">Repository</a>

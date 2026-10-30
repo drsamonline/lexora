@@ -14,6 +14,7 @@ both a generated corpus sample and the committed golden vector file.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -215,10 +216,20 @@ def _cli_pack_bytes(tmp_path: Path, payload: bytes) -> bytes:
     inp = tmp_path / "in.bin"
     outp = tmp_path / "out.lxz"
     inp.write_bytes(payload)
+    # The child process does not inherit pytest's `pythonpath` setting, so it can
+    # only import `lexora` if the package is installed. Pass the source tree
+    # explicitly and the parity test works in both worlds — installed (as CI does)
+    # and run-from-source without an install. Without this, five tests failed on a
+    # bare `pytest -q` while passing under `pip install -e .`, which is the same
+    # invocation-dependence bug that broke CI's collection step.
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(
+        [str(REPO / "src")] + ([env["PYTHONPATH"]] if env.get("PYTHONPATH") else [])
+    )
     r = subprocess.run(
         [sys.executable, "-m", "lexora.cli", "pack",
          "--in", str(inp), "--out", str(outp), "--level", str(CLI_LEVEL)],
-        cwd=REPO, capture_output=True,
+        cwd=REPO, capture_output=True, env=env,
     )
     assert r.returncode == 0, r.stderr.decode()
     return outp.read_bytes()

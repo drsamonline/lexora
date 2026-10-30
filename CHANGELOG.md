@@ -5,7 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
-### Changed
+### Fixed
+- 2026-10-29 — Session 69 (**CI was red on every push — and the landing page still described a prototype from ten sessions ago**):
+  - **`pytest -q` in CI failed collection with 9 errors** (`ModuleNotFoundError: No module named 'benchmarks'`). Root cause: `pytest` does **not** put the working directory on `sys.path` — only `python -m pytest` does — and the harness suites import `from benchmarks import corpus`. Every local run used `PYTHONPATH=src python3 -m pytest`, which masked it completely. Fixed by pinning `pythonpath = ["src", "."]` in `pyproject.toml`, so the suite imports the same way however it is launched.
+  - **A second instance of the same bug**: five GUI parity tests compared GUI bytes against a `python -m lexora.cli` **subprocess** that could only import the package if it was installed. They passed after `pip install -e .` and failed on a bare `pytest`. The child now receives the source tree on `PYTHONPATH` explicitly, so the suite is green installed or not.
+  - **A regression test pins the config**: `test_pytest_config_makes_the_harness_importable` reads `pyproject.toml` and fails if either `pythonpath` entry is removed.
+  - **Landing page (`docs/index.html`) brought up to date**: "Phase 1 prototype" → **Phase 1 complete, Phase 2 in progress** (meta/OG/Twitter descriptions, hero, FAQ, footer); **five subcommands → nine**, named; the benchmarks section no longer says "no validated LEXORA-vs-baseline result yet" — it now reports the **R5** figures (LEXORA 0.3101 vs zstd-19 0.3120 vs xz-9 0.3077, smoke scope, labelled as such), with the **per-file table rebuilt from the R5 artifacts** (9 files across all three splits, three systems) and the ratio bars and preview mock updated to match. FAQ Q02 now states plainly that LEXORA is smaller than zstd-19 and larger than xz-9.
+  - The "CI is paused" wording was removed from the page: CI runs on push again, and the local gate is documented alongside it.
+  - Suite **502 → 503 passed**, 1 skipped.
 - 2026-10-29 — Session 68 (**documentation reconciliation — twenty sessions of drift, audited and fixed**):
   - **Test counts corrected everywhere they were wrong** (192 → **502 passed, 1 skipped**): STATUS.md (2 places), PROGRESS.md (2), README badge, docs/index.html (badge + code sample), TASK_BREAKDOWN's gate snippet. Test-file count 8 → **23**.
   - **Corpus figures corrected**: README, RELEASE_NOTES, NEXT_SESSION, FORMAT_LXDB's G2 row and the R4 draft all described a 587–746 MB corpus; the snapshot is **2395 files / 1.054 GiB** and the ≥1 GiB requirement is **met**. FORMAT_LXDB's G2 stays "not met" but now for the honest reason: the size half is satisfied, a protocol-scope run and owner sign-off are not.

@@ -1102,3 +1102,23 @@ The re-fetch produced a **different manifest digest** (`56d9443d…` vs `abffa16
 **Gate:** `python3 -m pytest -q` → **502 passed, 1 skipped** (documentation only, no code touched); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK. Every claim above was verified against the code or the artifacts, not against memory — including the test count, which was read from a live run.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–68 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 69 — 2026-10-29 (CI red on every push; landing page ten sessions stale)
+
+**The CI failure, and why the local gate never saw it.** CI died at collection with `ModuleNotFoundError: No module named 'benchmarks'` — nine errors, exit 2. The cause is a difference between two invocation styles that looks cosmetic and is not: **`pytest` does not add the working directory to `sys.path`; `python -m pytest` does.** The harness suites do `from benchmarks import corpus`, so they imported fine in every local run — all of which used `PYTHONPATH=src python3 -m pytest` — and could never import in CI, which runs plain `pytest -q`.
+
+The fix is one line of configuration: `pythonpath = ["src", "."]` in `[tool.pytest.ini_options]`. That is better than a `conftest.py` sys.path hack because it is declarative, applies to every entry point, and is visible to anyone reading the project file.
+
+**The same bug was hiding in a second place.** With `pythonpath` pinned but no install, five GUI parity tests still failed: they compare the GUI's bytes against a `python -m lexora.cli` **subprocess**, and a subprocess does not inherit pytest's `pythonpath`. They passed under `pip install -e .` (what CI does) and failed on a bare `pytest`. The child now gets the source tree on `PYTHONPATH` explicitly, so the suite is green whether or not the package is installed — verified both ways.
+
+A regression test now reads `pyproject.toml` and fails if either `pythonpath` entry is removed, because the failure mode here is *silence*: everything works until the day someone runs the suite the other way.
+
+**The landing page was describing a project that no longer exists.** `docs/index.html` still said "Phase 1 prototype", "five subcommands", and — worst of all — **"No validated evidence exists either way"** about LEXORA vs the baselines, which stopped being true in Session 60. It now says Phase 1 complete / Phase 2 in progress, names all **nine** verbs, and reports the **R5** numbers with the unflattering half included: LEXORA is **0.60 % smaller than zstd-19** and **0.77 % larger than xz-9**, on 184 files, labelled smoke scope. The per-file table was rebuilt from the R5 artifacts rather than edited by hand (9 files across all three splits, three systems, ratios recomputed from stored bytes), and the ratio bars and preview mock were updated to match.
+
+Also removed: the "CI runs are currently paused" claim, which was true when written and is not now.
+
+**Gate:** `python3 -m pytest -q` → **503 passed, 1 skipped**, verified under **both** invocation styles (installed and not, with and without `PYTHONPATH`); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK; `docs/index.html` re-parsed for tag balance after the table surgery (116 `<div>` / 116 `</div>`).
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–69 are delivered as one patch.

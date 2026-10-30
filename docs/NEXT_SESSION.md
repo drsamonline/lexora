@@ -1,6 +1,6 @@
 # Next Session Resume Card
 
-**Last verified state:** 2026-10-29, **Session 68 complete** (documentation reconciliation: test counts 192 → 502, corpus figures updated to the finished 2395 files / 1.054 GiB, ADR-0008 marked partly superseded by ADR-0011, and IMPLEMENTATION_MATRIX rows for 13 implemented requirements moved from "Not started" to **Verified** with real code paths and evidence). Prior: **Session 67** (`--jobs` on batch and corpus-fetch — the batch flag is a measured *loss* on 2 vCPUs and ships experimental; the fetch flag is a real gain; corpus finished at 1.054 GiB).
+**Last verified state:** 2026-10-29, **Session 69 complete** (CI fixed: `pytest` does not put the CWD on `sys.path`, so `from benchmarks import corpus` failed collection — `pythonpath` pinned in pyproject and a regression test added; the same bug fixed in the GUI parity subprocess; landing page brought up to date with nine verbs and the R5 numbers). Prior: **Session 68** (documentation reconciliation).
 
 **Current phase:** P1 complete; P2 (benchmark harness & first numbers) in progress. Load-bearing open items: **a protocol-scope benchmark run** (corpus is now 1.054 GiB, so size no longer blocks it — the run itself plus owner sign-off do), and **Sarvam widening the brokered GitHub credential** (read-only today, so every change arrives as a patch).
 

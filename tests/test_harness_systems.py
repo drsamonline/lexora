@@ -99,3 +99,19 @@ def test_lexora19_is_smaller_than_the_default_on_varied_text(tmp_path) -> None:
     default_n = harness.SYSTEMS["lexora"](payload, tmp_path / "a.lxz")
     level19_n = harness.SYSTEMS["lexora19"](payload, tmp_path / "b.lxz")
     assert level19_n < default_n
+
+
+def test_pytest_config_makes_the_harness_importable() -> None:
+    """Regression test for the CI breakage of Session 69.
+
+    `pytest -q` does not put the working directory on `sys.path` (only
+    `python -m pytest` does), so `from benchmarks import corpus` failed collection in
+    CI while passing locally under `PYTHONPATH=src python3 -m pytest`. The fix pins
+    `pythonpath` in pyproject; this test fails loudly if someone removes it.
+    """
+    import tomllib
+
+    cfg = tomllib.loads((REPO / "pyproject.toml").read_text())
+    paths = cfg["tool"]["pytest"]["ini_options"].get("pythonpath", [])
+    assert "src" in paths, "the package would not import under a bare `pytest`"
+    assert "." in paths, "`benchmarks` would not import under a bare `pytest`"

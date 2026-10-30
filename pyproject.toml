@@ -44,6 +44,14 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Make both the package and the benchmark harness importable however pytest is
+# invoked. `pytest -q` does NOT put the working directory on sys.path (only
+# `python -m pytest` does), so the harness suites — which do
+# `from benchmarks import corpus` — failed collection in CI while passing locally
+# under `PYTHONPATH=src python3 -m pytest`. That difference is exactly the kind of
+# thing a local gate can hide for months, so it is pinned here instead of relying
+# on how the suite happens to be launched.
+pythonpath = ["src", "."]
 # Container images sometimes ship a broken third-party `libtmux` pytest plugin
 # (applies marks to fixtures -> collection crash under pytest>=9). Unregister it
 # so the local gate `python3 -m pytest -q` works with no extra flags.
