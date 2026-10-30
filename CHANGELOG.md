@@ -6,6 +6,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 66 (**R5: the R4 result reproduces on the ≥1 GiB corpus**):
+  - Corpus re-fetched to **1.014 GiB** (2322 files) after a sandbox recycle reverted the working copy; manifest `56d9443d…` over 2344 files verifies with **0 problems**, splits 1659/218/467, no lineage straddling.
+  - **R5 — 184 files / 80.4 MiB, three splits, 3 reps, on the 1 GiB corpus:** `lexora19` **0.3101**, `zstd19` **0.3120** (−0.60 %, 178/184 files smaller), `xz9-lzma` **0.3077** (+0.77 %, 0/184), shipped default **0.3360**.
+  - **The conclusions did not move.** Same ordering and the same effect sizes to within **0.03 percentage points** as R4 on a 746 MB corpus with a different file set — the result is a property of the pipeline and corpus class, not of one sample. Still a small effect, still smoke scope, still not an ADR-0001 verdict.
+  - Documented the reproducibility caveat the recycle exposed: corpus texts are gitignored, so a fresh host re-fetches and gets a **different manifest digest**; the committed sidecar is the provenance of record for what was measured, and a re-fetch must be re-manifested, re-verified and re-audited before its numbers count.
+  - No code changed; suite unchanged at **496 passed, 1 skipped**.
 - 2026-10-29 — Session 65 (**the corpus gate is met — 1.014 GiB — after fixing three resume costs that were mistaken for a slow network**):
   - **2323 files / 1038.4 MB (1.014 GiB)** in `gutenberg-cat-partial`, from 746.5 MB at the start of the session. Manifest `abffa16e…` over 2333 files verifies with **0 problems**; splits 1648/218/467, no lineage straddling. 102 failures recorded.
   - **Three fetcher costs fixed, each of which looked like "the network is slow" and was not:**

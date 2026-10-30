@@ -1027,3 +1027,30 @@ Fixing (3) alone tripled the yield in one measurement. Per-pass went from ~4–9
 **Gate:** `python3 -m pytest -q` → **496 passed, 1 skipped** (4 new); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–65 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 66 — 2026-10-29 (R5: the result reproduces on the 1 GiB corpus)
+
+**What happened first, because it matters.** The session began with the working copy reverted — `/scratch/work` came back at the Session-61 state (1586 files / 754 MB) after a sandbox recycle, so the 1 GiB snapshot recorded in Session 65's provenance was no longer on disk. The texts are gitignored by design, so the honest recovery was to **re-fetch**, which took five passes at the now-fast rate (~35–45 MB each) to get back to **1.014 GiB / 2322 files**.
+
+The re-fetch produced a **different manifest digest** (`56d9443d…` vs `abffa16e…`) and a slightly different file set, because Gutenberg's cache and the failure set move between fetches. That is now written into CORPUS_POLICY: the committed sidecar is the provenance of record for what was measured; a re-fetched snapshot is a *new* snapshot and must be manifested, verified and audited again before its numbers count for anything.
+
+**R5 — the run the gate was opened for.** 184 files / 80.4 MiB, three splits, 3 reps, 4 systems, against the 1 GiB corpus:
+
+| system | R5 (1 GiB) | R4 (746 MB) |
+|---|---|---|
+| `lexora` (default, L9) | 0.3360 | 0.3352 |
+| `lexora19` | **0.3101** | 0.3090 |
+| `zstd19` | 0.3120 | 0.3109 |
+| `xz9-lzma` | **0.3077** | 0.3068 |
+
+`lexora19` beats `zstd19` on **178 of 184 files** (−0.60 %) and loses to `xz9-lzma` on **all 184** (+0.77 %).
+
+**The result reproduces.** Same ordering, same effect sizes to within **0.03 percentage points**, on a different file set drawn from a corpus 39 % larger. That is the most useful thing the two revisions together establish: this is a property of the pipeline and the corpus class, not of one lucky sample. What it still is not: a *large* effect (0.6–0.8 %), or a verdict — protocol scope needs all three splits at full size, `xz9` via the CLI, a second machine class and owner sign-off.
+
+**Cost note for whoever runs the full thing.** At the measured rates (level 19 ≈ 1.4 MiB/s, xz ≈ 1.1 MiB/s), a full-corpus run — 1 GiB × 4 systems × 3 reps — is roughly **6–8 hours** of wall time on this class of machine. The bounded subsets are why two revisions exist at all; the full run is a machine you leave alone, not a chat turn.
+
+**Gate:** `python3 -m pytest -q` → **496 passed, 1 skipped** (no code touched); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–66 are delivered as one patch on top of `19cc1a9`.

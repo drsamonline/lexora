@@ -1,7 +1,7 @@
 # R4 smoke revision — LEXORA against the frozen baseline (DRAFT, not published)
 
 > **Status:** DRAFT for owner review (Session 60, 2026-10-29). **Smoke scope, not protocol scope.** Nothing here may be published into [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) without owner sign-off per QUALITY_PLAN, and **no ADR-0001 verdict is implied** — the corpus is 593 MB against a ≥1 GiB requirement and the run used a 12.1 MiB subset with 2 reps.
-> **Artifacts:** `benchmarks/results-r4-train.json`, `-validation.json`, `-heldout.json` (three splits, 3 reps each; the earlier 12.1 MiB `results-r4-smoke.json` is kept as the first cut).
+> **Artifacts:** `benchmarks/results-r4-train.json`, `-validation.json`, `-heldout.json` — now at **revision 5** against the 1 GiB corpus (Session 66); the same three files held revision 4 against the 746 MB corpus, and `results-r4-smoke.json` is the original 12.1 MiB cut.
 > **Related:** [BENCHMARK_PROTOCOL.md](BENCHMARK_PROTOCOL.md) · [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) · [COST_MODEL.md](COST_MODEL.md) · [ADR-0001](ADR/ADR-0001-gate-scope.md) · [ADR-0012](ADR/ADR-0012-default-encode-level.md) · [CORPUS_POLICY.md](CORPUS_POLICY.md)
 
 ## Why this exists
@@ -17,7 +17,22 @@ The harness now registers **`lexora`** (canonicalize → `.lxz` v0 at the shippe
 - **Reps:** 2. **Machine:** 2 vCPU container, Linux/gVisor, zstandard 0.25.0, Python 3.12.13.
 - **Systems:** `lexora` (default level 9, ADR-0012), `lexora19`, `zstd19`.
 
-## Results — all three splits, 3 reps (Session 63)
+## R5 — repeated on the full ≥1 GiB corpus (Session 66)
+
+The corpus reached 1.014 GiB in Session 65, so the run was repeated against it: **revision 5**, parent manifest `56d9443d…` (2344 files, verifies with 0 problems), **184 files / 80.4 MiB**, three splits, 3 reps.
+
+| system | ratio (R5, 1 GiB corpus) | ratio (R4, 746 MB corpus) |
+|---|---|---|
+| `lexora` (default, L9) | 0.3360 | 0.3352 |
+| `lexora19` | **0.3101** | 0.3090 |
+| `zstd19` | 0.3120 | 0.3109 |
+| `xz9-lzma` | **0.3077** | 0.3068 |
+
+`lexora19` vs `zstd19`: **178 of 184 files smaller, −0.60 %**. Against `xz9-lzma`: **0 of 184, +0.77 %**.
+
+**The conclusions did not move.** Same ordering, same effect sizes to within 0.03 percentage points, on a different file set drawn from a corpus 39 % larger. That reproducibility is the most useful thing these two revisions establish: the result is a property of the pipeline and the corpus class, not of one lucky sample. It is still a *small* effect and still smoke scope — see the five protocol-scope conditions at the end.
+
+## Results — all three splits, 3 reps (Session 63, 746 MB corpus)
 
 **172 files, 78.6 MiB, every split, 3 reps.** This supersedes the 12.1 MiB single-split cut below, which is kept because it was the first measurement and its numbers are unchanged.
 

@@ -1,8 +1,8 @@
 {
-  "benchmark_revision": 4,
+  "benchmark_revision": 5,
   "corpus_tier": "T1-gutenberg-p0",
-  "date": "2026-10-30T03:31:03Z",
-  "manifest_sha256": "1785040d507b00913fdc3991a30b56745840e2ae7ff40f5ba1748c497fa5667a",
+  "date": "2026-10-30T07:08:22Z",
+  "manifest_sha256": "56d9443d4acfe10b54a619f024577cb5024acfb52abde42379651599cf7e6de3",
   "note": "Harness output. Publication into docs/BENCHMARK_RESULTS.md requires owner review per QUALITY_PLAN. Tier label above is MANDATORY alongside any published number from this artifact.",
   "peak_rss_kib_by_system": null,
   "peak_rss_method": null,
@@ -11,9 +11,9 @@
   "reps": 3,
   "rows": [
     {
-      "encode_s_max": 0.6298928950000118,
-      "encode_s_median": 0.5236518769999066,
-      "encode_s_min": 0.5086984690000236,
+      "encode_s_max": 0.6341727529998025,
+      "encode_s_median": 0.4556518619997405,
+      "encode_s_min": 0.4225358110002162,
       "input_bytes": 5638481,
       "path": "gutenberg-100.txt",
       "split": "heldout",
@@ -23,9 +23,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 8.933667677000017,
-      "encode_s_median": 7.54094816199995,
-      "encode_s_min": 6.7951257510000005,
+      "encode_s_max": 4.593993190999754,
+      "encode_s_median": 4.582550905000062,
+      "encode_s_min": 4.544469899999967,
       "input_bytes": 5638481,
       "path": "gutenberg-100.txt",
       "split": "heldout",
@@ -35,9 +35,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 9.169471963000092,
-      "encode_s_median": 8.50160186200003,
-      "encode_s_min": 8.244855799999982,
+      "encode_s_max": 4.833056712999678,
+      "encode_s_median": 4.782732464999754,
+      "encode_s_min": 4.589440454999931,
       "input_bytes": 5638481,
       "path": "gutenberg-100.txt",
       "split": "heldout",
@@ -47,9 +47,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 6.764710553999976,
-      "encode_s_median": 6.017665406999981,
-      "encode_s_min": 5.7755366080000385,
+      "encode_s_max": 6.686465389000205,
+      "encode_s_median": 5.483250402000067,
+      "encode_s_min": 5.444355260000066,
       "input_bytes": 5638481,
       "path": "gutenberg-100.txt",
       "split": "heldout",
@@ -59,9 +59,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.03784479600005852,
-      "encode_s_median": 0.019178270999987035,
-      "encode_s_min": 0.018392331000086415,
+      "encode_s_max": 0.04457970000021305,
+      "encode_s_median": 0.01399287899994306,
+      "encode_s_min": 0.013588464000349632,
       "input_bytes": 249139,
       "path": "gutenberg-1001.txt",
       "split": "heldout",
@@ -71,9 +71,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.17289408499993897,
-      "encode_s_median": 0.1313937669999632,
-      "encode_s_min": 0.12257158600004914,
+      "encode_s_max": 0.12527555699989534,
+      "encode_s_median": 0.12346580499979609,
+      "encode_s_min": 0.11502357199969993,
       "input_bytes": 249139,
       "path": "gutenberg-1001.txt",
       "split": "heldout",
@@ -83,9 +83,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.13140711400001237,
-      "encode_s_median": 0.1225699499999564,
-      "encode_s_min": 0.11929139799997301,
+      "encode_s_max": 0.1334971360001873,
+      "encode_s_median": 0.1329734279997865,
+      "encode_s_min": 0.11853418400005467,
       "input_bytes": 249139,
       "path": "gutenberg-1001.txt",
       "split": "heldout",
@@ -95,9 +95,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.26281984899992494,
-      "encode_s_median": 0.255895449000036,
-      "encode_s_min": 0.23718174699990868,
+      "encode_s_max": 0.2749522640001487,
+      "encode_s_median": 0.24491446100000758,
+      "encode_s_min": 0.22623446400029934,
       "input_bytes": 249139,
       "path": "gutenberg-1001.txt",
       "split": "heldout",
@@ -107,9 +107,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.062172459999942475,
-      "encode_s_median": 0.04565111500005514,
-      "encode_s_min": 0.0397309380000479,
+      "encode_s_max": 0.05807656200022393,
+      "encode_s_median": 0.03805905999979586,
+      "encode_s_min": 0.037480313000287424,
       "input_bytes": 676855,
       "path": "gutenberg-101.txt",
       "split": "heldout",
@@ -119,9 +119,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.5590730149999672,
-      "encode_s_median": 0.42704285500008154,
-      "encode_s_min": 0.38171226400004343,
+      "encode_s_max": 0.3351439529997151,
+      "encode_s_median": 0.31672134099972027,
+      "encode_s_min": 0.30970914599993193,
       "input_bytes": 676855,
       "path": "gutenberg-101.txt",
       "split": "heldout",
@@ -131,9 +131,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.49990089999994325,
-      "encode_s_median": 0.4529801950000092,
-      "encode_s_min": 0.43256271300003846,
+      "encode_s_max": 0.3361684599999535,
+      "encode_s_median": 0.33366278700032126,
+      "encode_s_min": 0.3134118039997702,
       "input_bytes": 676855,
       "path": "gutenberg-101.txt",
       "split": "heldout",
@@ -143,9 +143,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.6702966670000023,
-      "encode_s_median": 0.6421214399999826,
-      "encode_s_min": 0.5823193559999709,
+      "encode_s_max": 0.6077545170001031,
+      "encode_s_median": 0.528398425999967,
+      "encode_s_min": 0.44068646799996714,
       "input_bytes": 676855,
       "path": "gutenberg-101.txt",
       "split": "heldout",
@@ -155,9 +155,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.021979906999945342,
-      "encode_s_median": 0.021930185000087477,
-      "encode_s_min": 0.019696165000027577,
+      "encode_s_max": 0.016565040000386944,
+      "encode_s_median": 0.016395179000028293,
+      "encode_s_min": 0.014444565000303555,
       "input_bytes": 259831,
       "path": "gutenberg-1026.txt",
       "split": "heldout",
@@ -167,9 +167,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.22156528400000752,
-      "encode_s_median": 0.19888288899994677,
-      "encode_s_min": 0.16536410499998055,
+      "encode_s_max": 0.18015457199999219,
+      "encode_s_median": 0.16221786400001292,
+      "encode_s_min": 0.1484701069998664,
       "input_bytes": 259831,
       "path": "gutenberg-1026.txt",
       "split": "heldout",
@@ -179,9 +179,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.1687743989999717,
-      "encode_s_median": 0.16525638299992806,
-      "encode_s_min": 0.14903437600003144,
+      "encode_s_max": 0.15542413800039867,
+      "encode_s_median": 0.14016678400003002,
+      "encode_s_min": 0.13820973900010358,
       "input_bytes": 259831,
       "path": "gutenberg-1026.txt",
       "split": "heldout",
@@ -191,9 +191,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.3070191980000345,
-      "encode_s_median": 0.2815782650000074,
-      "encode_s_min": 0.2605068789999905,
+      "encode_s_max": 0.26989909500025533,
+      "encode_s_median": 0.24064199699978417,
+      "encode_s_min": 0.23617988299974968,
       "input_bytes": 259831,
       "path": "gutenberg-1026.txt",
       "split": "heldout",
@@ -203,9 +203,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.00444872800005669,
-      "encode_s_median": 0.004260965999947075,
-      "encode_s_min": 0.004208285000004253,
+      "encode_s_max": 0.006185713999911968,
+      "encode_s_median": 0.005027591000271059,
+      "encode_s_min": 0.004486913999699027,
       "input_bytes": 66918,
       "path": "gutenberg-1034.txt",
       "split": "heldout",
@@ -215,9 +215,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.06004932200005442,
-      "encode_s_median": 0.04021060200000193,
-      "encode_s_min": 0.03855674999999792,
+      "encode_s_max": 0.04668038499994509,
+      "encode_s_median": 0.04228491200001372,
+      "encode_s_min": 0.03215116899991699,
       "input_bytes": 66918,
       "path": "gutenberg-1034.txt",
       "split": "heldout",
@@ -227,9 +227,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.04957087399998272,
-      "encode_s_median": 0.04803260300002421,
-      "encode_s_min": 0.04796336300000803,
+      "encode_s_max": 0.036213607999798114,
+      "encode_s_median": 0.035330418000285135,
+      "encode_s_min": 0.034052821999921434,
       "input_bytes": 66918,
       "path": "gutenberg-1034.txt",
       "split": "heldout",
@@ -239,9 +239,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.18258628099999896,
-      "encode_s_median": 0.16329561999998532,
-      "encode_s_min": 0.14968229299995528,
+      "encode_s_max": 0.16155745399964871,
+      "encode_s_median": 0.14473994199988738,
+      "encode_s_min": 0.13099863499974163,
       "input_bytes": 66918,
       "path": "gutenberg-1034.txt",
       "split": "heldout",
@@ -251,9 +251,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.021453098000051796,
-      "encode_s_median": 0.01896709599998303,
-      "encode_s_min": 0.009620104999953583,
+      "encode_s_max": 0.006130224000116868,
+      "encode_s_median": 0.005962202999853616,
+      "encode_s_min": 0.005822820000048523,
       "input_bytes": 113470,
       "path": "gutenberg-1035.txt",
       "split": "heldout",
@@ -263,9 +263,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.10868681099998412,
-      "encode_s_median": 0.09629076999999597,
-      "encode_s_min": 0.0902883879999763,
+      "encode_s_max": 0.07373646199994255,
+      "encode_s_median": 0.06425819800006138,
+      "encode_s_min": 0.062099610999666766,
       "input_bytes": 113470,
       "path": "gutenberg-1035.txt",
       "split": "heldout",
@@ -275,9 +275,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.08345228899997892,
-      "encode_s_median": 0.08297084200000882,
-      "encode_s_min": 0.08153488400000697,
+      "encode_s_max": 0.06549743200002922,
+      "encode_s_median": 0.06415491600000678,
+      "encode_s_min": 0.06326252500002738,
       "input_bytes": 113470,
       "path": "gutenberg-1035.txt",
       "split": "heldout",
@@ -287,9 +287,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.222217019000027,
-      "encode_s_median": 0.20265515399989908,
-      "encode_s_min": 0.18026926100003493,
+      "encode_s_max": 0.19017233899967323,
+      "encode_s_median": 0.17829869700017298,
+      "encode_s_min": 0.15012198500016893,
       "input_bytes": 113470,
       "path": "gutenberg-1035.txt",
       "split": "heldout",
@@ -299,9 +299,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.036321343000054185,
-      "encode_s_median": 0.01943953300008161,
-      "encode_s_min": 0.01941629299994929,
+      "encode_s_max": 0.03727892100005192,
+      "encode_s_median": 0.019924871000057465,
+      "encode_s_min": 0.01747860099976606,
       "input_bytes": 313716,
       "path": "gutenberg-1037.txt",
       "split": "heldout",
@@ -311,9 +311,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.24429072500004168,
-      "encode_s_median": 0.22362964600006308,
-      "encode_s_min": 0.21300220799992076,
+      "encode_s_max": 0.17597334099991713,
+      "encode_s_median": 0.16481705099977262,
+      "encode_s_min": 0.16173606999973345,
       "input_bytes": 313716,
       "path": "gutenberg-1037.txt",
       "split": "heldout",
@@ -323,9 +323,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.21224743899995246,
-      "encode_s_median": 0.20703551299993705,
-      "encode_s_min": 0.20301901799996358,
+      "encode_s_max": 0.1806270570000379,
+      "encode_s_median": 0.18033222400026716,
+      "encode_s_min": 0.16769266200026323,
       "input_bytes": 313716,
       "path": "gutenberg-1037.txt",
       "split": "heldout",
@@ -335,9 +335,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.327719352000031,
-      "encode_s_median": 0.3228790900000149,
-      "encode_s_min": 0.30076816999996936,
+      "encode_s_max": 0.3064585629999783,
+      "encode_s_median": 0.28503027700025996,
+      "encode_s_min": 0.2790854209997633,
       "input_bytes": 313716,
       "path": "gutenberg-1037.txt",
       "split": "heldout",
@@ -347,9 +347,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.02931733099990197,
-      "encode_s_median": 0.026348242000040045,
-      "encode_s_min": 0.021146265000083986,
+      "encode_s_max": 0.022403862999908597,
+      "encode_s_median": 0.019555207000394148,
+      "encode_s_min": 0.018007068999850162,
       "input_bytes": 324984,
       "path": "gutenberg-1048.txt",
       "split": "heldout",
@@ -359,9 +359,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.23353259600003184,
-      "encode_s_median": 0.2116263020000133,
-      "encode_s_min": 0.20206850700003542,
+      "encode_s_max": 0.21754557499980365,
+      "encode_s_median": 0.20736680000027263,
+      "encode_s_min": 0.17870605500002057,
       "input_bytes": 324984,
       "path": "gutenberg-1048.txt",
       "split": "heldout",
@@ -371,9 +371,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.2665315519999467,
-      "encode_s_median": 0.250786688000062,
-      "encode_s_min": 0.18613960499999394,
+      "encode_s_max": 0.17587335000007442,
+      "encode_s_median": 0.15918914900021264,
+      "encode_s_min": 0.15714489400033926,
       "input_bytes": 324984,
       "path": "gutenberg-1048.txt",
       "split": "heldout",
@@ -383,9 +383,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.4058205409999118,
-      "encode_s_median": 0.38229133400000137,
-      "encode_s_min": 0.3647625370000469,
+      "encode_s_max": 0.28755082699990453,
+      "encode_s_median": 0.27292769700034114,
+      "encode_s_min": 0.26913224400004765,
       "input_bytes": 324984,
       "path": "gutenberg-1048.txt",
       "split": "heldout",
@@ -395,9 +395,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.0439141000000518,
-      "encode_s_median": 0.03648120299999391,
-      "encode_s_min": 0.03225776900001165,
+      "encode_s_max": 0.04966002199989816,
+      "encode_s_median": 0.02955334899979789,
+      "encode_s_min": 0.026108416999704787,
       "input_bytes": 513055,
       "path": "gutenberg-1051.txt",
       "split": "heldout",
@@ -407,9 +407,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.3338494020000553,
-      "encode_s_median": 0.33290402000000086,
-      "encode_s_min": 0.31598628899996584,
+      "encode_s_max": 0.28352649499993277,
+      "encode_s_median": 0.2659883610003817,
+      "encode_s_min": 0.26433626100015317,
       "input_bytes": 513055,
       "path": "gutenberg-1051.txt",
       "split": "heldout",
@@ -419,9 +419,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.35374555299995336,
-      "encode_s_median": 0.341623133999974,
-      "encode_s_min": 0.30358846999990874,
+      "encode_s_max": 0.25620043299977624,
+      "encode_s_median": 0.24813955799982068,
+      "encode_s_min": 0.21814493600004425,
       "input_bytes": 513055,
       "path": "gutenberg-1051.txt",
       "split": "heldout",
@@ -431,9 +431,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.6307474799999682,
-      "encode_s_median": 0.5887044019999621,
-      "encode_s_min": 0.4603887930001065,
+      "encode_s_max": 0.4024024069999541,
+      "encode_s_median": 0.3841206219999549,
+      "encode_s_min": 0.3581710779999412,
       "input_bytes": 513055,
       "path": "gutenberg-1051.txt",
       "split": "heldout",
@@ -443,9 +443,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.042744373000005,
-      "encode_s_median": 0.03889451299994562,
-      "encode_s_min": 0.03476309999996374,
+      "encode_s_max": 0.021906864999891695,
+      "encode_s_median": 0.020806001999972068,
+      "encode_s_min": 0.020242564999989554,
       "input_bytes": 375089,
       "path": "gutenberg-1053.txt",
       "split": "heldout",
@@ -455,9 +455,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.2644771180000589,
-      "encode_s_median": 0.20896017699999447,
-      "encode_s_min": 0.19713406300002134,
+      "encode_s_max": 0.19542429600005562,
+      "encode_s_median": 0.1777353120000953,
+      "encode_s_min": 0.1679956900002253,
       "input_bytes": 375089,
       "path": "gutenberg-1053.txt",
       "split": "heldout",
@@ -467,9 +467,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.2189595790000567,
-      "encode_s_median": 0.2159303240000554,
-      "encode_s_min": 0.21508902699997634,
+      "encode_s_max": 0.1906438240002899,
+      "encode_s_median": 0.17313540199984345,
+      "encode_s_min": 0.17220485100006044,
       "input_bytes": 375089,
       "path": "gutenberg-1053.txt",
       "split": "heldout",
@@ -479,9 +479,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.31909174299994447,
-      "encode_s_median": 0.30460914499997216,
-      "encode_s_min": 0.29659934000005705,
+      "encode_s_max": 0.34253731700027856,
+      "encode_s_median": 0.2955090780001228,
+      "encode_s_min": 0.29520428700016055,
       "input_bytes": 375089,
       "path": "gutenberg-1053.txt",
       "split": "heldout",
@@ -491,9 +491,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.04037436599992361,
-      "encode_s_median": 0.01779311100005998,
-      "encode_s_min": 0.016611146000059307,
+      "encode_s_max": 0.03057476999993014,
+      "encode_s_median": 0.01709877699977369,
+      "encode_s_min": 0.017079365999961738,
       "input_bytes": 325420,
       "path": "gutenberg-1054.txt",
       "split": "heldout",
@@ -503,9 +503,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.18639360899999247,
-      "encode_s_median": 0.18077232499990714,
-      "encode_s_min": 0.1642202200000611,
+      "encode_s_max": 0.18318857300027958,
+      "encode_s_median": 0.1795783150000716,
+      "encode_s_min": 0.17875420400014264,
       "input_bytes": 325420,
       "path": "gutenberg-1054.txt",
       "split": "heldout",
@@ -515,9 +515,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.16075766500000555,
-      "encode_s_median": 0.1569341040000154,
-      "encode_s_min": 0.15556064400004743,
+      "encode_s_max": 0.1781953880004039,
+      "encode_s_median": 0.1721416450000106,
+      "encode_s_min": 0.1588032640001984,
       "input_bytes": 325420,
       "path": "gutenberg-1054.txt",
       "split": "heldout",
@@ -527,9 +527,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.34471430700000383,
-      "encode_s_median": 0.31947625700001936,
-      "encode_s_min": 0.29355307900004846,
+      "encode_s_max": 0.28126592300031916,
+      "encode_s_median": 0.2778208509998876,
+      "encode_s_min": 0.24763843700020516,
       "input_bytes": 325420,
       "path": "gutenberg-1054.txt",
       "split": "heldout",
@@ -539,9 +539,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.02565324399995461,
-      "encode_s_median": 0.018926727000007304,
-      "encode_s_min": 0.018158696999989843,
+      "encode_s_max": 0.01559591899967927,
+      "encode_s_median": 0.013685096000244812,
+      "encode_s_min": 0.013618755000152305,
       "input_bytes": 263479,
       "path": "gutenberg-1057.txt",
       "split": "heldout",
@@ -551,9 +551,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.19371983700000328,
-      "encode_s_median": 0.1753181770000083,
-      "encode_s_min": 0.17326363000006495,
+      "encode_s_max": 0.15150177800023812,
+      "encode_s_median": 0.14003932900004656,
+      "encode_s_min": 0.12781171799997537,
       "input_bytes": 263479,
       "path": "gutenberg-1057.txt",
       "split": "heldout",
@@ -563,9 +563,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.1826356549998991,
-      "encode_s_median": 0.17587317499999244,
-      "encode_s_min": 0.16835864100005438,
+      "encode_s_max": 0.15157221199979176,
+      "encode_s_median": 0.1464971609998429,
+      "encode_s_min": 0.13021357399975386,
       "input_bytes": 263479,
       "path": "gutenberg-1057.txt",
       "split": "heldout",
@@ -575,9 +575,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.30700322900008814,
-      "encode_s_median": 0.268348981000031,
-      "encode_s_min": 0.2490328789999694,
+      "encode_s_max": 0.25338910200025566,
+      "encode_s_median": 0.2496684309999182,
+      "encode_s_min": 0.22229054699982953,
       "input_bytes": 263479,
       "path": "gutenberg-1057.txt",
       "split": "heldout",
@@ -587,9 +587,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.050058623000040825,
-      "encode_s_median": 0.02554132299997036,
-      "encode_s_min": 0.022458923000044706,
+      "encode_s_max": 0.04216486999985136,
+      "encode_s_median": 0.022305990000404563,
+      "encode_s_min": 0.021704382999814698,
       "input_bytes": 407125,
       "path": "gutenberg-1059.txt",
       "split": "heldout",
@@ -599,9 +599,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.1935655049999241,
-      "encode_s_median": 0.1924630700000307,
-      "encode_s_min": 0.1903508929999589,
+      "encode_s_max": 0.22275859499995931,
+      "encode_s_median": 0.1862799539999287,
+      "encode_s_min": 0.18251503800001956,
       "input_bytes": 407125,
       "path": "gutenberg-1059.txt",
       "split": "heldout",
@@ -611,9 +611,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.21365953700001228,
-      "encode_s_median": 0.1973090950000369,
-      "encode_s_min": 0.18337048299997605,
+      "encode_s_max": 0.18748322700002973,
+      "encode_s_median": 0.1809831089999534,
+      "encode_s_min": 0.17985961500016856,
       "input_bytes": 407125,
       "path": "gutenberg-1059.txt",
       "split": "heldout",
@@ -623,9 +623,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.3837921890000189,
-      "encode_s_median": 0.34386577099996884,
-      "encode_s_min": 0.31109928000000764,
+      "encode_s_max": 0.37825175400030275,
+      "encode_s_median": 0.3740021130001878,
+      "encode_s_min": 0.32138444600013827,
       "input_bytes": 407125,
       "path": "gutenberg-1059.txt",
       "split": "heldout",
@@ -635,9 +635,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.07866854000008061,
-      "encode_s_median": 0.06172687799994492,
-      "encode_s_min": 0.06138783299991246,
+      "encode_s_max": 0.06543861100044523,
+      "encode_s_median": 0.057236412999827735,
+      "encode_s_min": 0.05516729800001485,
       "input_bytes": 919690,
       "path": "gutenberg-1068.txt",
       "split": "heldout",
@@ -647,9 +647,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.5470211059999883,
-      "encode_s_median": 0.5302251120000392,
-      "encode_s_min": 0.48129019999998945,
+      "encode_s_max": 0.5336050209998575,
+      "encode_s_median": 0.4721783380000488,
+      "encode_s_min": 0.45380811399991217,
       "input_bytes": 919690,
       "path": "gutenberg-1068.txt",
       "split": "heldout",
@@ -659,9 +659,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.6159426879999046,
-      "encode_s_median": 0.5993877139999313,
-      "encode_s_min": 0.5868622990000176,
+      "encode_s_max": 0.5466002100001788,
+      "encode_s_median": 0.5094047150000733,
+      "encode_s_min": 0.46994277900012094,
       "input_bytes": 919690,
       "path": "gutenberg-1068.txt",
       "split": "heldout",
@@ -671,9 +671,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.7778345220000347,
-      "encode_s_median": 0.6897611050000023,
-      "encode_s_min": 0.6522330289999445,
+      "encode_s_max": 0.7911421530002372,
+      "encode_s_median": 0.7359028959999705,
+      "encode_s_min": 0.7070660760000465,
       "input_bytes": 919690,
       "path": "gutenberg-1068.txt",
       "split": "heldout",
@@ -683,9 +683,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.09123580300001777,
-      "encode_s_median": 0.08065734499996324,
-      "encode_s_min": 0.07677819399998498,
+      "encode_s_max": 0.08582538799964823,
+      "encode_s_median": 0.08356054100022448,
+      "encode_s_min": 0.08060484399993584,
       "input_bytes": 1224120,
       "path": "gutenberg-1069.txt",
       "split": "heldout",
@@ -695,9 +695,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.9317519699999366,
-      "encode_s_median": 0.8770875769999975,
-      "encode_s_min": 0.7784130320000031,
+      "encode_s_max": 0.870541330999913,
+      "encode_s_median": 0.8170240499998727,
+      "encode_s_min": 0.7424533009998413,
       "input_bytes": 1224120,
       "path": "gutenberg-1069.txt",
       "split": "heldout",
@@ -707,9 +707,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.8890444209999941,
-      "encode_s_median": 0.8510282259999258,
-      "encode_s_min": 0.778541625999992,
+      "encode_s_max": 0.7510661209998943,
+      "encode_s_median": 0.7456387369998083,
+      "encode_s_min": 0.7195734570000241,
       "input_bytes": 1224120,
       "path": "gutenberg-1069.txt",
       "split": "heldout",
@@ -719,9 +719,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 1.027118001999952,
-      "encode_s_median": 1.0039363670000512,
-      "encode_s_min": 1.0006206829999655,
+      "encode_s_max": 0.9467313300001479,
+      "encode_s_median": 0.9154028860002654,
+      "encode_s_min": 0.8913423270000749,
       "input_bytes": 1224120,
       "path": "gutenberg-1069.txt",
       "split": "heldout",
@@ -731,9 +731,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.04299259900005836,
-      "encode_s_median": 0.022456661999967764,
-      "encode_s_min": 0.018406699000024673,
+      "encode_s_max": 0.020978693999950337,
+      "encode_s_median": 0.017751105000115786,
+      "encode_s_min": 0.01763296299986905,
       "input_bytes": 332596,
       "path": "gutenberg-1077.txt",
       "split": "heldout",
@@ -743,9 +743,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.2027577860000065,
-      "encode_s_median": 0.20043140600000697,
-      "encode_s_min": 0.16095229799998378,
+      "encode_s_max": 0.1849001649998172,
+      "encode_s_median": 0.17167954499973348,
+      "encode_s_min": 0.1584893560002456,
       "input_bytes": 332596,
       "path": "gutenberg-1077.txt",
       "split": "heldout",
@@ -755,9 +755,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.19280400899992856,
-      "encode_s_median": 0.17914340999993783,
-      "encode_s_min": 0.16770282999993924,
+      "encode_s_max": 0.1624243139999635,
+      "encode_s_median": 0.1575690949998716,
+      "encode_s_min": 0.1499707530001615,
       "input_bytes": 332596,
       "path": "gutenberg-1077.txt",
       "split": "heldout",
@@ -767,9 +767,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.3141953839999587,
-      "encode_s_median": 0.29811783599996033,
-      "encode_s_min": 0.28944023099995775,
+      "encode_s_max": 0.3036224200000106,
+      "encode_s_median": 0.28694785900006536,
+      "encode_s_min": 0.2768109469998308,
       "input_bytes": 332596,
       "path": "gutenberg-1077.txt",
       "split": "heldout",
@@ -779,9 +779,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.05753384900003766,
-      "encode_s_median": 0.041815075000045,
-      "encode_s_min": 0.04181305399993107,
+      "encode_s_max": 0.05619977900005324,
+      "encode_s_median": 0.04362119799998254,
+      "encode_s_min": 0.04001354399997581,
       "input_bytes": 719650,
       "path": "gutenberg-108.txt",
       "split": "heldout",
@@ -791,9 +791,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.4760568849999345,
-      "encode_s_median": 0.4406673570000521,
-      "encode_s_min": 0.4176443759999984,
+      "encode_s_max": 0.3989301539995722,
+      "encode_s_median": 0.3648704820002422,
+      "encode_s_min": 0.3538202680001632,
       "input_bytes": 719650,
       "path": "gutenberg-108.txt",
       "split": "heldout",
@@ -803,9 +803,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.5008489059999874,
-      "encode_s_median": 0.44098021100001006,
-      "encode_s_min": 0.4208779080000795,
+      "encode_s_max": 0.39656504000004134,
+      "encode_s_median": 0.39383977000034065,
+      "encode_s_min": 0.3624769580001157,
       "input_bytes": 719650,
       "path": "gutenberg-108.txt",
       "split": "heldout",
@@ -815,9 +815,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.6763820400000213,
-      "encode_s_median": 0.60534304600003,
-      "encode_s_min": 0.5518294309999874,
+      "encode_s_max": 0.6690549019999708,
+      "encode_s_median": 0.6515275410001777,
+      "encode_s_min": 0.5989983859999484,
       "input_bytes": 719650,
       "path": "gutenberg-108.txt",
       "split": "heldout",
@@ -827,9 +827,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.008591183000021374,
-      "encode_s_median": 0.007646410000006654,
-      "encode_s_min": 0.007522478000055344,
+      "encode_s_max": 0.00762008199990305,
+      "encode_s_median": 0.007504230999984429,
+      "encode_s_min": 0.006330396000066685,
       "input_bytes": 121578,
       "path": "gutenberg-1086.txt",
       "split": "heldout",
@@ -839,9 +839,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.09730237999997371,
-      "encode_s_median": 0.07806574899996122,
-      "encode_s_min": 0.07766916399998536,
+      "encode_s_max": 0.0752645190000294,
+      "encode_s_median": 0.07489728600012313,
+      "encode_s_min": 0.0739194740003768,
       "input_bytes": 121578,
       "path": "gutenberg-1086.txt",
       "split": "heldout",
@@ -851,9 +851,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.12097750899999937,
-      "encode_s_median": 0.10819091199994091,
-      "encode_s_min": 0.08180423699991479,
+      "encode_s_max": 0.07874659200024325,
+      "encode_s_median": 0.07109735899985026,
+      "encode_s_min": 0.06761778700001742,
       "input_bytes": 121578,
       "path": "gutenberg-1086.txt",
       "split": "heldout",
@@ -863,9 +863,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.23971578900000168,
-      "encode_s_median": 0.19874973299999965,
-      "encode_s_min": 0.16800987700003134,
+      "encode_s_max": 0.17754665700022088,
+      "encode_s_median": 0.16969502100027967,
+      "encode_s_min": 0.15057092999995803,
       "input_bytes": 121578,
       "path": "gutenberg-1086.txt",
       "split": "heldout",
@@ -875,9 +875,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.023736238999958914,
-      "encode_s_median": 0.01874364399998285,
-      "encode_s_min": 0.013481015000024854,
+      "encode_s_max": 0.009218442000019422,
+      "encode_s_median": 0.009087569999792322,
+      "encode_s_min": 0.009042818999660085,
       "input_bytes": 184389,
       "path": "gutenberg-1094.txt",
       "split": "heldout",
@@ -887,9 +887,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.1340853450000168,
-      "encode_s_median": 0.1249066950000497,
-      "encode_s_min": 0.11676894000004268,
+      "encode_s_max": 0.13271914300003118,
+      "encode_s_median": 0.1297570279998581,
+      "encode_s_min": 0.12011652099999992,
       "input_bytes": 184389,
       "path": "gutenberg-1094.txt",
       "split": "heldout",
@@ -899,9 +899,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.1175351800000044,
-      "encode_s_median": 0.10719715300001553,
-      "encode_s_min": 0.10470610200002284,
+      "encode_s_max": 0.11190162200000486,
+      "encode_s_median": 0.10761260000026596,
+      "encode_s_min": 0.10153640600037761,
       "input_bytes": 184389,
       "path": "gutenberg-1094.txt",
       "split": "heldout",
@@ -911,9 +911,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.21550674100001288,
-      "encode_s_median": 0.21383506899996974,
-      "encode_s_min": 0.2080165529999931,
+      "encode_s_max": 0.22879338400025517,
+      "encode_s_median": 0.22703899399994043,
+      "encode_s_min": 0.19185493799977849,
       "input_bytes": 184389,
       "path": "gutenberg-1094.txt",
       "split": "heldout",
@@ -923,9 +923,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.06289845699996022,
-      "encode_s_median": 0.04582057499999337,
-      "encode_s_min": 0.043476555000097505,
+      "encode_s_max": 0.0635614389998409,
+      "encode_s_median": 0.04942748799976471,
+      "encode_s_min": 0.044430657000248175,
       "input_bytes": 743923,
       "path": "gutenberg-1095.txt",
       "split": "heldout",
@@ -935,9 +935,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.39210092899998017,
-      "encode_s_median": 0.3842922249999674,
-      "encode_s_min": 0.3790214849999529,
+      "encode_s_max": 0.3680468530001235,
+      "encode_s_median": 0.36407646299994667,
+      "encode_s_min": 0.36303246999978,
       "input_bytes": 743923,
       "path": "gutenberg-1095.txt",
       "split": "heldout",
@@ -947,9 +947,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.5030839290000131,
-      "encode_s_median": 0.4484473210000033,
-      "encode_s_min": 0.4012891559999616,
+      "encode_s_max": 0.49927821599976596,
+      "encode_s_median": 0.4660171850000552,
+      "encode_s_min": 0.36056605200019476,
       "input_bytes": 743923,
       "path": "gutenberg-1095.txt",
       "split": "heldout",
@@ -959,9 +959,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.6026127730000326,
-      "encode_s_median": 0.600203869999973,
-      "encode_s_min": 0.5807564360000015,
+      "encode_s_max": 0.6848100279999016,
+      "encode_s_median": 0.6661737649997121,
+      "encode_s_min": 0.6516555690000132,
       "input_bytes": 743923,
       "path": "gutenberg-1095.txt",
       "split": "heldout",
@@ -971,9 +971,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.041885155000045415,
-      "encode_s_median": 0.015509061999978258,
-      "encode_s_min": 0.015452351000021736,
+      "encode_s_max": 0.02709566800012908,
+      "encode_s_median": 0.016137454999807233,
+      "encode_s_min": 0.01578998099967066,
       "input_bytes": 285086,
       "path": "gutenberg-1096.txt",
       "split": "heldout",
@@ -983,9 +983,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.13713686599999164,
-      "encode_s_median": 0.1327257579999923,
-      "encode_s_min": 0.12838111300004584,
+      "encode_s_max": 0.18327977399985684,
+      "encode_s_median": 0.16558248899991668,
+      "encode_s_min": 0.1587593089998336,
       "input_bytes": 285086,
       "path": "gutenberg-1096.txt",
       "split": "heldout",
@@ -995,9 +995,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.1345166319999862,
-      "encode_s_median": 0.13347191900004418,
-      "encode_s_min": 0.1291692540000895,
+      "encode_s_max": 0.16349912399982713,
+      "encode_s_median": 0.16296134899994286,
+      "encode_s_min": 0.1593995459998041,
       "input_bytes": 285086,
       "path": "gutenberg-1096.txt",
       "split": "heldout",
@@ -1007,9 +1007,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.3303273320000244,
-      "encode_s_median": 0.2922389599999633,
-      "encode_s_min": 0.2751722680000057,
+      "encode_s_max": 0.31741106499976013,
+      "encode_s_median": 0.30717420300015874,
+      "encode_s_min": 0.28067212199994174,
       "input_bytes": 285086,
       "path": "gutenberg-1096.txt",
       "split": "heldout",
@@ -1019,9 +1019,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.07531445500001155,
-      "encode_s_median": 0.06329789900007654,
-      "encode_s_min": 0.059175835999894844,
+      "encode_s_max": 0.08083490400031224,
+      "encode_s_median": 0.061402671999985614,
+      "encode_s_min": 0.05962389100022847,
       "input_bytes": 895508,
       "path": "gutenberg-110.txt",
       "split": "heldout",
@@ -1031,9 +1031,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.5412310250000019,
-      "encode_s_median": 0.5406642780000084,
-      "encode_s_min": 0.49637684200001786,
+      "encode_s_max": 0.6116373129998465,
+      "encode_s_median": 0.6100466430002598,
+      "encode_s_min": 0.5903956449997168,
       "input_bytes": 895508,
       "path": "gutenberg-110.txt",
       "split": "heldout",
@@ -1043,9 +1043,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.5226467710000406,
-      "encode_s_median": 0.519601396999974,
-      "encode_s_min": 0.518597031000013,
+      "encode_s_max": 0.6616875059999074,
+      "encode_s_median": 0.6184485899998435,
+      "encode_s_min": 0.601503811999919,
       "input_bytes": 895508,
       "path": "gutenberg-110.txt",
       "split": "heldout",
@@ -1055,9 +1055,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.8065811699999585,
-      "encode_s_median": 0.7736089290000336,
-      "encode_s_min": 0.7433664080000426,
+      "encode_s_max": 0.7860782590000781,
+      "encode_s_median": 0.7474962870001036,
+      "encode_s_min": 0.735240409999733,
       "input_bytes": 895508,
       "path": "gutenberg-110.txt",
       "split": "heldout",
@@ -1067,9 +1067,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.013031259999934264,
-      "encode_s_median": 0.011040412999932414,
-      "encode_s_min": 0.00668406700003743,
+      "encode_s_max": 0.00833055900011459,
+      "encode_s_median": 0.006792351000058261,
+      "encode_s_min": 0.0066237690002708405,
       "input_bytes": 125209,
       "path": "gutenberg-1108.txt",
       "split": "heldout",
@@ -1079,9 +1079,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.09296530799997527,
-      "encode_s_median": 0.09130873599997358,
-      "encode_s_min": 0.07607325800006492,
+      "encode_s_max": 0.09262689200022578,
+      "encode_s_median": 0.07552538800018738,
+      "encode_s_min": 0.0718966750000618,
       "input_bytes": 125209,
       "path": "gutenberg-1108.txt",
       "split": "heldout",
@@ -1091,9 +1091,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.08080726399998639,
-      "encode_s_median": 0.07454976400003943,
-      "encode_s_min": 0.07134970100003102,
+      "encode_s_max": 0.07216566799979773,
+      "encode_s_median": 0.06873735799990754,
+      "encode_s_min": 0.0680758200001037,
       "input_bytes": 125209,
       "path": "gutenberg-1108.txt",
       "split": "heldout",
@@ -1103,9 +1103,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.19453875900001094,
-      "encode_s_median": 0.17681580800001484,
-      "encode_s_min": 0.17668850600000496,
+      "encode_s_max": 0.1898774489995958,
+      "encode_s_median": 0.18045013600021775,
+      "encode_s_min": 0.1586519969996516,
       "input_bytes": 125209,
       "path": "gutenberg-1108.txt",
       "split": "heldout",
@@ -1115,9 +1115,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.03268572599995423,
-      "encode_s_median": 0.011890765000089232,
-      "encode_s_min": 0.011712512000030983,
+      "encode_s_max": 0.01205877300026259,
+      "encode_s_median": 0.010259151999889582,
+      "encode_s_min": 0.010102339999775722,
       "input_bytes": 163481,
       "path": "gutenberg-1112.txt",
       "split": "heldout",
@@ -1127,9 +1127,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.09615323599996373,
-      "encode_s_median": 0.09596395900007337,
-      "encode_s_min": 0.09071768399996927,
+      "encode_s_max": 0.12543952299984085,
+      "encode_s_median": 0.1153608150002583,
+      "encode_s_min": 0.10318510000024617,
       "input_bytes": 163481,
       "path": "gutenberg-1112.txt",
       "split": "heldout",
@@ -1139,9 +1139,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.09524492500008819,
-      "encode_s_median": 0.09419085100000757,
-      "encode_s_min": 0.09174136900003305,
+      "encode_s_max": 0.11857810400033486,
+      "encode_s_median": 0.1177095430002737,
+      "encode_s_min": 0.10571310000023004,
       "input_bytes": 163481,
       "path": "gutenberg-1112.txt",
       "split": "heldout",
@@ -1151,9 +1151,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.21864307500004543,
-      "encode_s_median": 0.20302414200000385,
-      "encode_s_min": 0.19716732000006232,
+      "encode_s_max": 0.24710363499980303,
+      "encode_s_median": 0.23497229099984906,
+      "encode_s_min": 0.2304464779999762,
       "input_bytes": 163481,
       "path": "gutenberg-1112.txt",
       "split": "heldout",
@@ -1163,9 +1163,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.014841864000004534,
-      "encode_s_median": 0.012068708000015249,
-      "encode_s_min": 0.011433089999968615,
+      "encode_s_max": 0.01245929900005649,
+      "encode_s_median": 0.012387388000206556,
+      "encode_s_min": 0.011825450999822351,
       "input_bytes": 191297,
       "path": "gutenberg-1122.txt",
       "split": "heldout",
@@ -1175,9 +1175,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.11209859699999924,
-      "encode_s_median": 0.11195178600007694,
-      "encode_s_min": 0.10808606499995221,
+      "encode_s_max": 0.12599762199988618,
+      "encode_s_median": 0.12060092799993072,
+      "encode_s_min": 0.11324229000001651,
       "input_bytes": 191297,
       "path": "gutenberg-1122.txt",
       "split": "heldout",
@@ -1187,9 +1187,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.12626070299995718,
-      "encode_s_median": 0.11230446000001848,
-      "encode_s_min": 0.10765132899996388,
+      "encode_s_max": 0.14898807600002328,
+      "encode_s_median": 0.1241693199999645,
+      "encode_s_min": 0.1228908559996853,
       "input_bytes": 191297,
       "path": "gutenberg-1122.txt",
       "split": "heldout",
@@ -1199,9 +1199,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.2197513329999765,
-      "encode_s_median": 0.2136216770001056,
-      "encode_s_min": 0.21299807099990176,
+      "encode_s_max": 0.22157455300020956,
+      "encode_s_median": 0.1994073290002234,
+      "encode_s_min": 0.19738423499984492,
       "input_bytes": 191297,
       "path": "gutenberg-1122.txt",
       "split": "heldout",
@@ -1211,9 +1211,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.018645871999979136,
-      "encode_s_median": 0.01268646500000159,
-      "encode_s_min": 0.01164337099999102,
+      "encode_s_max": 0.022435086999848863,
+      "encode_s_median": 0.009565484000177094,
+      "encode_s_min": 0.009337900999980775,
       "input_bytes": 179324,
       "path": "gutenberg-1124.txt",
       "split": "heldout",
@@ -1223,9 +1223,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.11494896199997129,
-      "encode_s_median": 0.10499217300002783,
-      "encode_s_min": 0.09920787800001563,
+      "encode_s_max": 0.12319602699972165,
+      "encode_s_median": 0.09005933400021604,
+      "encode_s_min": 0.08971430999963559,
       "input_bytes": 179324,
       "path": "gutenberg-1124.txt",
       "split": "heldout",
@@ -1235,9 +1235,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.10351963400000841,
-      "encode_s_median": 0.10226363800006766,
-      "encode_s_min": 0.09631784999999127,
+      "encode_s_max": 0.10476284800006397,
+      "encode_s_median": 0.10046594699997513,
+      "encode_s_min": 0.08829244200023822,
       "input_bytes": 179324,
       "path": "gutenberg-1124.txt",
       "split": "heldout",
@@ -1247,9 +1247,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.2310617559999173,
-      "encode_s_median": 0.2307014609999669,
-      "encode_s_min": 0.2105090489999384,
+      "encode_s_max": 0.2080149580001489,
+      "encode_s_median": 0.19981765000011364,
+      "encode_s_min": 0.17764119499997832,
       "input_bytes": 179324,
       "path": "gutenberg-1124.txt",
       "split": "heldout",
@@ -1259,9 +1259,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.01016096099999686,
-      "encode_s_median": 0.00985762799996337,
-      "encode_s_min": 0.009683205999976963,
+      "encode_s_max": 0.01077094800029954,
+      "encode_s_median": 0.01002890000017942,
+      "encode_s_min": 0.00970011599974896,
       "input_bytes": 184414,
       "path": "gutenberg-1133.txt",
       "split": "heldout",
@@ -1271,9 +1271,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.11227388600002541,
-      "encode_s_median": 0.1037680750000618,
-      "encode_s_min": 0.08629103800001303,
+      "encode_s_max": 0.10191926600009538,
+      "encode_s_median": 0.09740718300008666,
+      "encode_s_min": 0.09505330399997547,
       "input_bytes": 184414,
       "path": "gutenberg-1133.txt",
       "split": "heldout",
@@ -1283,9 +1283,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.08763192700007494,
-      "encode_s_median": 0.08522323500005768,
-      "encode_s_min": 0.08432951299994329,
+      "encode_s_max": 0.10383399000011195,
+      "encode_s_median": 0.10047867899993435,
+      "encode_s_min": 0.09403930199960087,
       "input_bytes": 184414,
       "path": "gutenberg-1133.txt",
       "split": "heldout",
@@ -1295,9 +1295,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.21260535199996866,
-      "encode_s_median": 0.20101348000002872,
-      "encode_s_min": 0.17254004799997347,
+      "encode_s_max": 0.21888419000015347,
+      "encode_s_median": 0.2160702979999769,
+      "encode_s_min": 0.207601302999592,
       "input_bytes": 184414,
       "path": "gutenberg-1133.txt",
       "split": "heldout",
@@ -1307,9 +1307,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.055813398000054804,
-      "encode_s_median": 0.04070973300008518,
-      "encode_s_min": 0.03814011500003289,
+      "encode_s_max": 0.053849900999921374,
+      "encode_s_median": 0.049805933000243385,
+      "encode_s_min": 0.043040292999648955,
       "input_bytes": 672462,
       "path": "gutenberg-1138.txt",
       "split": "heldout",
@@ -1319,9 +1319,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.3342036359999838,
-      "encode_s_median": 0.31687344099998427,
-      "encode_s_min": 0.2907446719999598,
+      "encode_s_max": 0.3730080820000694,
+      "encode_s_median": 0.3557847399997627,
+      "encode_s_min": 0.3394089329999588,
       "input_bytes": 672462,
       "path": "gutenberg-1138.txt",
       "split": "heldout",
@@ -1331,9 +1331,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.3304460790000121,
-      "encode_s_median": 0.3261849140000095,
-      "encode_s_min": 0.31843836400003056,
+      "encode_s_max": 0.3768720339999163,
+      "encode_s_median": 0.37681962499982546,
+      "encode_s_min": 0.3696831420002127,
       "input_bytes": 672462,
       "path": "gutenberg-1138.txt",
       "split": "heldout",
@@ -1343,9 +1343,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.5531248979999646,
-      "encode_s_median": 0.5344709269999157,
-      "encode_s_min": 0.5045311140000877,
+      "encode_s_max": 0.6455543850001959,
+      "encode_s_median": 0.6267437360002077,
+      "encode_s_min": 0.5626327959998889,
       "input_bytes": 672462,
       "path": "gutenberg-1138.txt",
       "split": "heldout",
@@ -1355,9 +1355,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.03891041499991843,
-      "encode_s_median": 0.01826135700002851,
-      "encode_s_min": 0.015608993000000737,
+      "encode_s_max": 0.03784429799998179,
+      "encode_s_median": 0.019424324999818054,
+      "encode_s_min": 0.018632306000199605,
       "input_bytes": 285399,
       "path": "gutenberg-1139.txt",
       "split": "heldout",
@@ -1367,9 +1367,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.1537318130000358,
-      "encode_s_median": 0.15248246600003768,
-      "encode_s_min": 0.14957599600006688,
+      "encode_s_max": 0.18008919100020648,
+      "encode_s_median": 0.16893394599992462,
+      "encode_s_min": 0.16241828600004737,
       "input_bytes": 285399,
       "path": "gutenberg-1139.txt",
       "split": "heldout",
@@ -1379,9 +1379,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.19077639500005716,
-      "encode_s_median": 0.18971781099992313,
-      "encode_s_min": 0.17380071200000202,
+      "encode_s_max": 0.15550574099961523,
+      "encode_s_median": 0.14340281499971752,
+      "encode_s_min": 0.1409333050000896,
       "input_bytes": 285399,
       "path": "gutenberg-1139.txt",
       "split": "heldout",
@@ -1391,9 +1391,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.30771020000008775,
-      "encode_s_median": 0.29719590600006995,
-      "encode_s_min": 0.28850173000000723,
+      "encode_s_max": 0.29556282500016096,
+      "encode_s_median": 0.2700896040000771,
+      "encode_s_min": 0.24761494499989567,
       "input_bytes": 285399,
       "path": "gutenberg-1139.txt",
       "split": "heldout",
@@ -1403,9 +1403,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.030017158999953608,
-      "encode_s_median": 0.01990956700001334,
-      "encode_s_min": 0.016821388000039406,
+      "encode_s_max": 0.01546031599991693,
+      "encode_s_median": 0.01527187400006369,
+      "encode_s_min": 0.014654277000317961,
       "input_bytes": 275278,
       "path": "gutenberg-1146.txt",
       "split": "heldout",
@@ -1415,9 +1415,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 0.16595188799999505,
-      "encode_s_median": 0.14695576099995833,
-      "encode_s_min": 0.14239026699999613,
+      "encode_s_max": 0.1444758960001309,
+      "encode_s_median": 0.14060881900013555,
+      "encode_s_min": 0.1310743740000362,
       "input_bytes": 275278,
       "path": "gutenberg-1146.txt",
       "split": "heldout",
@@ -1427,9 +1427,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 0.17490912499999922,
-      "encode_s_median": 0.15736556800004564,
-      "encode_s_min": 0.14751506999994035,
+      "encode_s_max": 0.1474970049998774,
+      "encode_s_median": 0.14342269299959298,
+      "encode_s_min": 0.13240519999999378,
       "input_bytes": 275278,
       "path": "gutenberg-1146.txt",
       "split": "heldout",
@@ -1439,9 +1439,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 0.3396125589999883,
-      "encode_s_median": 0.3041267959999914,
-      "encode_s_min": 0.2789436069999738,
+      "encode_s_max": 0.3205271389997506,
+      "encode_s_median": 0.2900287090001257,
+      "encode_s_min": 0.2813630139999077,
       "input_bytes": 275278,
       "path": "gutenberg-1146.txt",
       "split": "heldout",
@@ -1451,9 +1451,9 @@
       "system": "xz9-lzma"
     },
     {
-      "encode_s_max": 0.11883012800001325,
-      "encode_s_median": 0.11013645299999553,
-      "encode_s_min": 0.10816087800003515,
+      "encode_s_max": 0.1239050799999859,
+      "encode_s_median": 0.11289240699989023,
+      "encode_s_min": 0.1065838409999742,
       "input_bytes": 2066086,
       "path": "gutenberg-115.txt",
       "split": "heldout",
@@ -1463,9 +1463,9 @@
       "system": "lexora"
     },
     {
-      "encode_s_max": 2.303314657000101,
-      "encode_s_median": 2.198525688000018,
-      "encode_s_min": 2.1975700410000627,
+      "encode_s_max": 2.748840091999682,
+      "encode_s_median": 2.590673496999898,
+      "encode_s_min": 2.284438175000105,
       "input_bytes": 2066086,
       "path": "gutenberg-115.txt",
       "split": "heldout",
@@ -1475,9 +1475,9 @@
       "system": "lexora19"
     },
     {
-      "encode_s_max": 2.5185513019999917,
-      "encode_s_median": 2.299935739000034,
-      "encode_s_min": 2.171333689999983,
+      "encode_s_max": 2.718835115999809,
+      "encode_s_median": 2.4254917220000607,
+      "encode_s_min": 2.2425599120001607,
       "input_bytes": 2066086,
       "path": "gutenberg-115.txt",
       "split": "heldout",
@@ -1487,9 +1487,9 @@
       "system": "zstd19"
     },
     {
-      "encode_s_max": 2.144494387000009,
-      "encode_s_median": 2.0234818559999894,
-      "encode_s_min": 1.9635982730000023,
+      "encode_s_max": 2.2764169829997627,
+      "encode_s_median": 2.1066325140000117,
+      "encode_s_min": 1.8140983260000212,
       "input_bytes": 2066086,
       "path": "gutenberg-115.txt",
       "split": "heldout",
@@ -1497,14 +1497,206 @@
       "stored_bytes_median": 295236,
       "stored_bytes_min": 295236,
       "system": "xz9-lzma"
+    },
+    {
+      "encode_s_max": 0.05413711399978638,
+      "encode_s_median": 0.0352559759999167,
+      "encode_s_min": 0.033891469000082,
+      "input_bytes": 598320,
+      "path": "gutenberg-1151.txt",
+      "split": "heldout",
+      "stored_bytes_max": 196608,
+      "stored_bytes_median": 196608,
+      "stored_bytes_min": 196608,
+      "system": "lexora"
+    },
+    {
+      "encode_s_max": 0.32613014399976237,
+      "encode_s_median": 0.3098746799996661,
+      "encode_s_min": 0.2999863190002543,
+      "input_bytes": 598320,
+      "path": "gutenberg-1151.txt",
+      "split": "heldout",
+      "stored_bytes_max": 182548,
+      "stored_bytes_median": 182548,
+      "stored_bytes_min": 182548,
+      "system": "lexora19"
+    },
+    {
+      "encode_s_max": 0.3065662630001498,
+      "encode_s_median": 0.2979208239999025,
+      "encode_s_min": 0.28312803100016026,
+      "input_bytes": 598320,
+      "path": "gutenberg-1151.txt",
+      "split": "heldout",
+      "stored_bytes_max": 183729,
+      "stored_bytes_median": 183729,
+      "stored_bytes_min": 183729,
+      "system": "zstd19"
+    },
+    {
+      "encode_s_max": 0.5187921339997956,
+      "encode_s_median": 0.5062823939997543,
+      "encode_s_min": 0.4915620330002639,
+      "input_bytes": 598320,
+      "path": "gutenberg-1151.txt",
+      "split": "heldout",
+      "stored_bytes_max": 181304,
+      "stored_bytes_median": 181304,
+      "stored_bytes_min": 181304,
+      "system": "xz9-lzma"
+    },
+    {
+      "encode_s_max": 0.05692991700016137,
+      "encode_s_median": 0.05005343399989215,
+      "encode_s_min": 0.046679293000124744,
+      "input_bytes": 754489,
+      "path": "gutenberg-1156.txt",
+      "split": "heldout",
+      "stored_bytes_max": 268166,
+      "stored_bytes_median": 268166,
+      "stored_bytes_min": 268166,
+      "system": "lexora"
+    },
+    {
+      "encode_s_max": 0.5271140710001418,
+      "encode_s_median": 0.510628208000071,
+      "encode_s_min": 0.4222216979997029,
+      "input_bytes": 754489,
+      "path": "gutenberg-1156.txt",
+      "split": "heldout",
+      "stored_bytes_max": 250816,
+      "stored_bytes_median": 250816,
+      "stored_bytes_min": 250816,
+      "system": "lexora19"
+    },
+    {
+      "encode_s_max": 0.4964208090000284,
+      "encode_s_median": 0.4915649740000845,
+      "encode_s_min": 0.4155512530001033,
+      "input_bytes": 754489,
+      "path": "gutenberg-1156.txt",
+      "split": "heldout",
+      "stored_bytes_max": 252883,
+      "stored_bytes_median": 252883,
+      "stored_bytes_min": 252883,
+      "system": "zstd19"
+    },
+    {
+      "encode_s_max": 0.8509744369998771,
+      "encode_s_median": 0.7877040539997324,
+      "encode_s_min": 0.6615668199997344,
+      "input_bytes": 754489,
+      "path": "gutenberg-1156.txt",
+      "split": "heldout",
+      "stored_bytes_max": 249444,
+      "stored_bytes_median": 249444,
+      "stored_bytes_min": 249444,
+      "system": "xz9-lzma"
+    },
+    {
+      "encode_s_max": 0.019449894999979733,
+      "encode_s_median": 0.015895111999725486,
+      "encode_s_min": 0.01195845400025064,
+      "input_bytes": 214458,
+      "path": "gutenberg-1157.txt",
+      "split": "heldout",
+      "stored_bytes_max": 73834,
+      "stored_bytes_median": 73834,
+      "stored_bytes_min": 73834,
+      "system": "lexora"
+    },
+    {
+      "encode_s_max": 0.15917217400010486,
+      "encode_s_median": 0.151567550999971,
+      "encode_s_min": 0.14388505899978554,
+      "input_bytes": 214458,
+      "path": "gutenberg-1157.txt",
+      "split": "heldout",
+      "stored_bytes_max": 69470,
+      "stored_bytes_median": 69470,
+      "stored_bytes_min": 69470,
+      "system": "lexora19"
+    },
+    {
+      "encode_s_max": 0.14373152400003164,
+      "encode_s_median": 0.12249644000030457,
+      "encode_s_min": 0.11436483999978009,
+      "input_bytes": 214458,
+      "path": "gutenberg-1157.txt",
+      "split": "heldout",
+      "stored_bytes_max": 69876,
+      "stored_bytes_median": 69876,
+      "stored_bytes_min": 69876,
+      "system": "zstd19"
+    },
+    {
+      "encode_s_max": 0.21664771400037353,
+      "encode_s_median": 0.2097527999999329,
+      "encode_s_min": 0.19701847699980135,
+      "input_bytes": 214458,
+      "path": "gutenberg-1157.txt",
+      "split": "heldout",
+      "stored_bytes_max": 68528,
+      "stored_bytes_median": 68528,
+      "stored_bytes_min": 68528,
+      "system": "xz9-lzma"
+    },
+    {
+      "encode_s_max": 0.034577717000047414,
+      "encode_s_median": 0.02154448000010234,
+      "encode_s_min": 0.021533159999762574,
+      "input_bytes": 402570,
+      "path": "gutenberg-1159.txt",
+      "split": "heldout",
+      "stored_bytes_max": 134075,
+      "stored_bytes_median": 134075,
+      "stored_bytes_min": 134075,
+      "system": "lexora"
+    },
+    {
+      "encode_s_max": 0.19111857999996573,
+      "encode_s_median": 0.1818050880001465,
+      "encode_s_min": 0.17865433999986635,
+      "input_bytes": 402570,
+      "path": "gutenberg-1159.txt",
+      "split": "heldout",
+      "stored_bytes_max": 125863,
+      "stored_bytes_median": 125863,
+      "stored_bytes_min": 125863,
+      "system": "lexora19"
+    },
+    {
+      "encode_s_max": 0.19126021299962304,
+      "encode_s_median": 0.1874295530001291,
+      "encode_s_min": 0.1798596649996398,
+      "input_bytes": 402570,
+      "path": "gutenberg-1159.txt",
+      "split": "heldout",
+      "stored_bytes_max": 126971,
+      "stored_bytes_median": 126971,
+      "stored_bytes_min": 126971,
+      "system": "zstd19"
+    },
+    {
+      "encode_s_max": 0.35149205500010794,
+      "encode_s_median": 0.33545829099966795,
+      "encode_s_min": 0.32108981700002914,
+      "input_bytes": 402570,
+      "path": "gutenberg-1159.txt",
+      "split": "heldout",
+      "stored_bytes_max": 124944,
+      "stored_bytes_median": 124944,
+      "stored_bytes_min": 124944,
+      "system": "xz9-lzma"
     }
   ],
   "subset": {
-    "files": 31,
-    "input_bytes": 19097052,
+    "files": 35,
+    "input_bytes": 21066889,
     "note": "smoke-scope subset of the parent manifest \u2014 never protocol scope",
     "selector": {
-      "max_bytes": 18874368,
+      "max_bytes": 20971520,
       "split": "heldout"
     }
   },
