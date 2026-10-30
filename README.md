@@ -75,8 +75,8 @@ Generic compressors (Zstandard, XZ, Brotli) treat text as opaque bytes. Document
 
 | Status | Capability |
 |---|---|
-| **Implemented** | Early Phase 1 prototype: conservative canonicalizer (`src/lexora/canonicalize.py`), Zstd core baseline (`src/lexora/zstd_core.py`), `.lxz` v0 container (`src/lexora/container.py`, ADR-0007), full CLI (`canon`/`zround`/`pipe`/`pack`/`unpack` — see [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)), benchmark harness (`benchmarks/harness.py` + `corpus.py`), test suite (192 passed locally, re-verified 2026-10-17) |
-| **In progress** | GUI milestones M1–M3 landed & offscreen-tested (experimental, not released — PySide6 via `[gui]` extra, ADR-0008; see [docs/DESIGN_GUI.md](docs/DESIGN_GUI.md)); Phase 1 closure evidence awaiting owner verdict ([docs/P1_EVIDENCE_DRAFT.md](docs/P1_EVIDENCE_DRAFT.md)); GitHub Actions paused by owner (OQ-15) — local gate is `pytest -q` + linkcheck |
+| **Implemented** | Conservative canonicalizer (`src/lexora/canonicalize.py`), Zstd core baseline (`src/lexora/zstd_core.py`), `.lxz` v0 container (`src/lexora/container.py`, ADR-0007), **nine CLI verbs** (`canon`/`zround`/`pipe`/`pack`/`unpack`/`verify`/`inspect`/`batch`/`doctor` — see [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)), benchmark harness (`benchmarks/harness.py` + `corpus.py`, reproducible per [benchmarks/README.md](benchmarks/README.md)), test suite (**492 passed, 1 skipped**, verified 2026-10-29). **Every core path streams** — encode, decode and canonicalization are flat in document size (measured: 126 MiB / 35 MiB / 35 MiB peak) |
+| **In progress** | GUI milestones M1–M3 landed & offscreen-tested but **not released**; ADR-0011 decided the GUI becomes a *client of the CLI* (process separation) and that implementation has not started — it needs a Qt-capable machine. Corpus at **746.5 MB** of the ≥1 GiB benchmark requirement (OQ-8). GitHub Actions paused by owner (OQ-15) — local gate is `pytest -q` + linkcheck |
 | **Planned** | TXT/PDF ingestion; experimental candidates (dictionaries, Re-Pair, bounded token PPM, numeric/record coding, template+residual); `.lxdb` database mode; optional encryption profile; GUI stretch items (batch queue, drag-and-drop, shortcuts) |
 
 ## Architecture overview (proposed)
@@ -104,29 +104,59 @@ pip install -e ".[dev]"     # + pytest for the test suite
 pip install -e ".[gui]"     # + PySide6 for the experimental GUI (opt-in extra, ADR-0008)
 ```
 
-Then try the CLI: `lexora --help` (subcommands: `canon`, `zround`, `pipe`, `pack`, `unpack` — documented in [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)) or the GUI launcher `lexora-gui` (requires the `[gui]` extra; exits 2 with guidance without it).
+Then try the CLI — `lexora --help` for the nine subcommands, all documented in [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md):
+
+```bash
+lexora doctor                                    # install health, incl. a live round-trip self-test
+printf 'alpha\r\nbeta\r\n' > in.txt
+lexora canon --in in.txt --out canon.txt
+lexora pack  --in canon.txt --out a.lxz          # default zstd level 9 (ADR-0012)
+lexora verify  --in a.lxz                        # audit: structure + every block's SHA-256
+lexora inspect --in a.lxz --verify               # readable summary + accounting identity
+lexora unpack  --in a.lxz --out back.txt
+lexora batch   --in DIR --out-dir OUT --op canon  # a whole tree, per-file JSON report
+```
+
+The GUI launcher `lexora-gui` requires the `[gui]` extra and exits 2 with guidance without it.
 
 ## Build & test commands
 
-Verified in-container (2026-10-17):
+Verified in-container (2026-10-29):
 
 ```bash
-python3 -m pytest -q                     # test suite (192 passed; addopts neutralizes a stale libtmux plugin)
+python3 -m pytest -q                     # 492 passed, 1 skipped (~30 s; includes fuzz + interruption suites)
 QT_QPA_PLATFORM=offscreen python3 -m pytest -q   # same, incl. offscreen GUI widget tests (needs pyside6 + libegl1)
 python3 scripts/linkcheck.py             # docs integrity gate — ALL INTERNAL LINKS OK
 ```
 
 ## Benchmarks
 
-**No validated LEXORA-vs-baseline results exist.** The acceptance gates are defined in the blueprint (Pass ≥ 10%, Partial ≥ 3% smaller total stored size vs. best frozen baseline) and formalized in `docs/BENCHMARK_PROTOCOL.md`. Baselines: Zstandard level 19, plus pinned Brotli/XZ/PPMd comparisons per protocol. First published figures — Revision R1 in [docs/BENCHMARK_RESULTS.md](docs/BENCHMARK_RESULTS.md) (2026-10-16) — are a **Tier T1-gutenberg-p0 smoke baseline** (7.1 MB public-domain English text; Zstd-19 ratio 0.3004 vs XZ-9 0.2975 on that snapshot), not gate verdicts.
+**LEXORA has now been measured against both frozen baselines — at smoke scope, not verdict scope.** The acceptance gates are defined in the blueprint (Pass ≥ 10%, Partial ≥ 3% smaller total stored size vs. the best frozen baseline) and formalized in `docs/BENCHMARK_PROTOCOL.md`.
+
+R4, three splits, 172 files / 78.6 MiB, 3 reps (draft, awaiting owner review):
+
+| system | ratio |
+|---|---|
+| `lexora` (shipped default, level 9) | 0.3352 |
+| `lexora19` | **0.3090** |
+| `zstd19` (baseline) | 0.3109 |
+| `xz9` (baseline) | **0.3068** |
+
+So the pipeline sits **between** the two baselines: a small, consistent advantage over zstd-19 (167 of 172 files smaller) and a small, consistent deficit against xz-9 (xz wins every file). **Neither is a gate verdict**, the corpus is 746.5 MB against a ≥1 GiB requirement, and the honest reading is in [docs/R4_SMOKE_DRAFT.md](docs/R4_SMOKE_DRAFT.md). Reproduce it from [benchmarks/README.md](benchmarks/README.md).
 
 ## Security & privacy notes
 
-- No security guarantees are claimed. No formal review has been performed.
+- No security guarantees are claimed and no formal review has been performed.
+- **What is tested:** deterministic fuzz suites throw truncations, byte flips, end-drops and random blobs at seven reader entry points and assert that every mutant either decodes to the original bytes or raises `ContainerError` — never another exception and never a wrong answer; the reader enforces absolute limits (LIM-01/LIM-02) rather than trusting a header's declared caps; the atomic-write guarantee is verified against real SIGINT/SIGTERM/SIGKILL.
 - Design intent: decoders enforce resource limits (bounded blocks, memory caps) to survive hostile archives; sensitive/clinical corpora must not train shared dictionaries by default.
 - Vulnerability reporting instructions live in [SECURITY.md](SECURITY.md).
 
 ## Documentation index
+
+- [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md) — what this unreleased tree contains, its limits, and what a release would need
+- [benchmarks/README.md](benchmarks/README.md) — reproduce every measurement from a clean checkout
+- [docs/R4_SMOKE_DRAFT.md](docs/R4_SMOKE_DRAFT.md) — LEXORA vs both baselines, and what the numbers do not say
+- [docs/DEPENDENCY_LICENCE_REVIEW.md](docs/DEPENDENCY_LICENCE_REVIEW.md) — third-party obligations under PolyForm
 
 Start at **[docs/index.md](docs/index.md)**. Key entry points:
 

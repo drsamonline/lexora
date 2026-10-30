@@ -6,6 +6,11 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-10-29 — Session 64 (**release notes + a reproducible-benchmark guide; README brought back in line with reality**):
+  - **`docs/RELEASE_NOTES.md`** — what this unreleased tree actually contains (no release or tag exists, OQ-9): the streaming rewrite with its measured numbers, the four new CLI verbs, the hardening work with the bugs it found, the first LEXORA-vs-baseline measurement, the licence position, the two decisions that shape what comes next, a working quick-start, and a **Known limits** section that states the corpus shortfall, the unstarted GUI work, the missing `.lxdb` layout, the fact that `lexora` does not beat xz-9, and the read-only push credential.
+  - **`benchmarks/README.md`** — reproduction from a clean checkout: env capture, catalog selection and its resumability, reconcile, manifest/verify/split-audit, the run command with its system table (`lexora`/`lexora19`/`zstd19`/`xz9`/`xz9-lzma`), the separate RSS/throughput probe, how to read an artifact, and the three traps that cost real afternoons (probe overwrite guard, no `VmHWM` here, and unrealistically compressible test input).
+  - **README refreshed against what ships**, not what was planned: nine CLI verbs (was five), 492 passed / 1 skipped (was 192), streaming memory numbers, the R4 table with its "between the two baselines" reading and its smoke-scope caveat, an honest security section describing what is actually tested, and links to the three new documents. Claims verified by running `--help` and counting subcommands rather than by memory.
+  - No code changed; suite unchanged at **492 passed, 1 skipped**.
 - 2026-10-29 — Session 63 (**R4 across all three splits, 3 reps — the ordering is stable**):
   - **172 files / 78.6 MiB, train + validation + heldout, 3 reps, 4 systems.** `lexora19` **0.3090**, `zstd19` **0.3109** (−0.60 %, **167 of 172 files** smaller), `xz9-lzma` **0.3068** (+0.74 %, **0 of 172**), shipped default **0.3352** at ~9× the speed.
   - **The ordering is identical in every split** (train 0.3077/0.3097/0.3056, validation 0.3176/0.3194/0.3154), which is stronger than the single-split first cut.

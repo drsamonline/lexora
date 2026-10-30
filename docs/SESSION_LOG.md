@@ -985,3 +985,23 @@ File-level, across all 172: `lexora19` beats `zstd19` on **167 files** (−0.60 
 **Gate:** `python3 -m pytest -q` → **492 passed, 1 skipped** (no code touched); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–63 are delivered as one patch on top of `19cc1a9`.
+
+---
+
+## Session 64 — 2026-10-29 (release notes, a reproducible-benchmark guide, README brought back in line)
+
+**Why this stage.** The tree had accumulated a great deal that no single document described: nine CLI verbs, three streaming rewrites, two fuzz suites, three ADRs, a licence change, and the first real LEXORA-vs-baseline numbers. Meanwhile the README still said five verbs, "192 passed", and **"No validated LEXORA-vs-baseline results exist"** — every one of which had become false. Documentation that understates the work is as misleading as documentation that overstates it.
+
+**Three documents, each with a different job.**
+
+`docs/RELEASE_NOTES.md` describes what exists, for someone who has never seen the project: the streaming rewrite with measured before/after numbers, the four new verbs, the hardening work *including the bugs it found* (the trusted-header limits, the allocation attempt from a corrupt frame, the traceback on an unwritable destination, the SIGTERM debris), the R4 result, the licence position, and a **Known limits** section that says plainly that the corpus is 746.5 MB against a ≥1 GiB requirement, that no GUI work landed, that `.lxdb` has no byte layout, that `lexora` does not beat xz-9, and that the agent environment cannot push.
+
+`benchmarks/README.md` is the reproducibility guide the project was missing: env capture first (an artifact with an unknown environment is not evidence), catalog selection and why it is id-ordered, resumability and `corpus-reconcile`, manifest/verify/split-audit, the run command with a table explaining each registered system, the separate RSS/throughput probe, how to read an artifact, and — deliberately — the three traps that have each cost a session: the probe's overwrite guard, the absence of `VmHWM` in this container, and unrealistically compressible test input (which has now bitten three times).
+
+`README.md` was rewritten against reality rather than memory: nine verbs (verified by counting the parser's choices, not by recall), 492 tests, the streaming memory numbers, the R4 table with its "between the two baselines" reading *and* its smoke-scope caveat, and a security section that describes what is actually tested instead of only what is intended.
+
+**The judgement call inside the README.** The benchmarks section now leads with a table where LEXORA is **worse than one of its baselines**. It would have been easy to publish only the zstd comparison. The xz row is the more informative one — it tells a reader exactly where the design stands and why the roadmap's later codec phases exist — and a README that omitted it would be advertising, not documentation.
+
+**Gate:** `python3 -m pytest -q` → **492 passed, 1 skipped**; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK. Cross-checked that every relative link in the three new/edited documents resolves, and that the verb count and test count in the README match the code.
+
+**Push state:** unchanged — read-only brokered credential. Sessions 42–64 are delivered as one patch on top of `19cc1a9`.
