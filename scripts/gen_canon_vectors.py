@@ -5,7 +5,7 @@ P1-T2 gate (docs/CANONICALIZATION.md "Test vectors"): each vector is a
 directory with input.bin, expected_output.bin and meta.json (canonicalizer
 version + applied rules). Expected outputs are produced by the CURRENT
 implementation and then reviewed; from then on tests/test_canon_vectors.py
-locks them byte-exactly, so any behavioral change to lexcAN-0.1 breaks the
+locks them byte-exactly, so any behavioral change to lexcan-0.1 breaks the
 conformance run instead of passing silently.
 
 Idempotent: regenerates all files deterministically. Run this ONLY when the

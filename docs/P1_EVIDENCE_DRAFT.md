@@ -13,7 +13,7 @@ $ python3 -c "import lexora; print(lexora.__file__)"
 /workspace/src/lexora/__init__.py      # resolves to the working tree, not site-packages copy
 $ lexora --help                        # rc 0
 $ printf 'line1\r\nline2  spaced\ttab\r\n' > t.txt
-$ lexora canon --in t.txt --out o.txt  # rc 0, stderr: "canon: 26 -> 24 bytes (rules CAN-R01,R02,R05; lexcAN-0.1)"
+$ lexora canon --in t.txt --out o.txt  # rc 0, stderr: "canon: 26 -> 24 bytes (rules CAN-R01,R02,R05; lexcan-0.1)"
 $ od -c o.txt | head -1
 0000000   l   i   n   e   1  \n   l   i   n   e   2     s   p   a ...    # CRLF->LF applied (CAN-R02); interior spaces/tabs preserved (CAN-R03 NOT in v0 scope)
 $ lexora-gui --help                    # rc 0 on bare headless box (regression-tested)

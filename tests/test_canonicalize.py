@@ -1,6 +1,6 @@
 """Tests for lexora.canonicalize (REQ-CAN-001..003, 005).
 
-These are behavioral tests written alongside lexcAN-0.1. NOTE: docs/CANONICALIZATION.md
+These are behavioral tests written alongside lexcan-0.1. NOTE: docs/CANONICALIZATION.md
 requires *golden vectors* before any rule ships to a release; these tests lock v0
 behaviour for development but do not replace the golden-vector gate (P1-T2, open).
 """

@@ -103,7 +103,7 @@ def canonicalize(raw: bytes, *, declared_encoding: str | None = None) -> bytes:
     """Return canonical UTF-8 bytes C for raw extracted bytes.
 
     Guarantees: deterministic (REQ-CAN-001), UTF-8 without BOM, LF newlines
-    (REQ-CAN-002; newline policy fixed for lexcAN-0.1), only whitelisted
+    (REQ-CAN-002; newline policy fixed for lexcan-0.1), only whitelisted
     rules applied (REQ-CAN-003).
     """
     text = _detect_and_decode(raw, declared_encoding)

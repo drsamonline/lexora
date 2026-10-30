@@ -42,7 +42,7 @@ lexora canon --in RAW --out CANONICAL [--encoding DECLARED] [--meta]
 
 Behavior notes:
 - Output is always UTF-8 without BOM, LF newlines (REQ-CAN-002).
-- A summary line (`canon: N -> M bytes (rules ...; lexcAN-0.1)`) goes to **stderr**; data goes to the file/stdout only.
+- A summary line (`canon: N -> M bytes (rules ...; lexcan-0.1)`) goes to **stderr**; data goes to the file/stdout only.
 
 ### `lexora zround` — zstd compress + verify byte-exact round-trip
 

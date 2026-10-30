@@ -129,7 +129,7 @@ def cmd_canon(args: argparse.Namespace) -> int:
                 print(json.dumps(meta, indent=2, sort_keys=True))
                 print(
                     f"canon: {meta['input_bytes']} -> {meta['output_bytes']} bytes "
-                    f"(rules CAN-R01,R02,R05; lexcAN-0.1; --meta audit)",
+                    f"(rules CAN-R01,R02,R05; lexcan-0.1; --meta audit)",
                     file=sys.stderr,
                 )
                 return EXIT_OK
@@ -143,7 +143,7 @@ def cmd_canon(args: argparse.Namespace) -> int:
             _write(args.outfile, out)
         print(
             f"canon: {len(raw)} -> {len(out)} bytes "
-            f"(rules CAN-R01,R02,R05; lexcAN-0.1)",
+            f"(rules CAN-R01,R02,R05; lexcan-0.1)",
             file=sys.stderr,
         )
         return EXIT_OK
@@ -180,13 +180,13 @@ def cmd_canon(args: argparse.Namespace) -> int:
         print(json.dumps(meta, indent=2, sort_keys=True))
         print(
             f"canon: {meta['input_bytes']} -> {meta['output_bytes']} bytes "
-            f"(rules CAN-R01,R02,R05; lexcAN-0.1; --meta audit)",
+            f"(rules CAN-R01,R02,R05; lexcan-0.1; --meta audit)",
             file=sys.stderr,
         )
         return EXIT_OK
     print(
         f"canon: {meta['input_bytes']} -> {meta['output_bytes']} bytes "
-        f"(rules CAN-R01,R02,R05; lexcAN-0.1)",
+        f"(rules CAN-R01,R02,R05; lexcan-0.1)",
         file=sys.stderr,
     )
     return EXIT_OK

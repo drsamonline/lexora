@@ -1,4 +1,4 @@
-"""Golden-vector conformance suite for lexcAN-0.1 (P1-T2 gate).
+"""Golden-vector conformance suite for lexcan-0.1 (P1-T2 gate).
 
 Every directory under tests/vectors/canonicalization/ holds input.bin,
 expected_output.bin and meta.json. This suite locks the shipped rule set
