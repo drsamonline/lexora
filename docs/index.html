@@ -336,6 +336,18 @@
     .pv-body{grid-template-columns:1fr}
     .pv-list{border-right:0;border-bottom:1px solid var(--line)}
   }
+
+  /* ---------- light theme ----------
+     Added so the page reads on paper. It overrides the page's own variables and
+     nothing else — no markup, no layout, no type. */
+  :root, html {
+    color-scheme: light;
+    --bg: #f7f6f2;
+    --panel: #ffffff;
+    --line: #e2ddd2;
+    --text: #14161a;
+    --muted: #5c6470;
+  }
 </style>
 </head>
 <body>
