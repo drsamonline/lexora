@@ -45,6 +45,7 @@ from lexora import DEFAULT_LEVEL, __version__
 from lexora import codec_registry as codecs
 from lexora.canonicalize import CanonicalizationError, canonicalize, canonicalize_stream
 from lexora.catalog import Catalog, CatalogError
+from lexora.ingest import IngestError, describe as describe_ingest, extract as extract_text
 from lexora.container import ContainerError, read_index
 from lexora.container import (
     pack as lxz_pack,
@@ -835,20 +836,34 @@ def cmd_db(args) -> int:
                 return EXIT_OK
 
             if args.db_cmd == "add":
-                raw = _read(args.infile)
-                payload = raw if getattr(args, "no_canon", False) else canonicalize(raw)
+                # Ingestion decides the bytes: a PDF contributes its text layer, a
+                # text file its own bytes. Provenance travels with the document so a
+                # reader can tell where the text came from and with what engine.
+                try:
+                    ingested = extract_text(args.infile, declared_encoding=args.encoding)
+                except IngestError as exc:
+                    print(f"ingest error: {exc}", file=sys.stderr)
+                    return EXIT_FILE
+                if getattr(args, "no_canon", False) and ingested.provenance.get("mode") == "text":
+                    payload = _read(args.infile)
+                else:
+                    payload = canonicalize(ingested.text.encode("utf-8"))
+                metadata = describe_ingest(ingested)
+                metadata.update(_parse_pairs(args.meta, "--meta"))  # explicit --meta wins
                 hit = cat.add(
                     args.path or str(args.infile),
                     payload,
                     title=args.title,
-                    metadata=_parse_pairs(args.meta, "--meta"),
+                    metadata=metadata,
                     codec=args.codec,
                     level=args.level,
                 )
                 if args.json:
                     print(json.dumps(hit.as_dict(), indent=2))
                 else:
-                    print(f"added {hit.path} v{hit.version}: "
+                    mode = metadata.get("mode", "?")
+                    extra = (f", {metadata['pages']} page(s)" if "pages" in metadata else "")
+                    print(f"added {hit.path} v{hit.version} [{mode}{extra}]: "
                           f"{hit.canonical_bytes} -> {hit.stored_bytes} bytes "
                           f"({hit.codec})", file=sys.stderr)
                     print(json.dumps(hit.as_dict()))
@@ -1054,8 +1069,12 @@ def build_parser() -> argparse.ArgumentParser:
                     help="metadata field, repeatable; queryable with --filter")
     d1.add_argument("--codec", choices=codecs.names(), default=codecs.DEFAULT_CODEC)
     d1.add_argument("--level", type=int, default=DEFAULT_LEVEL)
+    d1.add_argument("--encoding", default=None,
+                    help="declared source encoding for text files (default: try UTF-8, "
+                         "then cp1252, and refuse rather than mangle)")
     d1.add_argument("--no-canon", action="store_true",
-                    help="store the bytes as given instead of canonicalising them")
+                    help="text files only: store the bytes as given instead of "
+                         "canonicalising them (a PDF always contributes its text layer)")
     d1.add_argument("--json", action="store_true")
 
     d2 = dbs.add_parser("search", help="full-text and/or metadata query")

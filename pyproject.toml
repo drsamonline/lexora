@@ -28,6 +28,12 @@ dev = [
 gui = [
     "pyside6>=6.6,<7",
 ]
+# ADR-0017: PDF text-layer ingestion is an opt-in extra, and the engine is pypdf
+# (BSD-3-Clause) rather than PyMuPDF (AGPL-3.0) — a permissive dependency avoids the
+# copyleft question ADR-0009 left open entirely. Pinned to the version actually tested.
+pdf = [
+    "pypdf>=5,<7",
+]
 
 [project.scripts]
 lexora = "lexora.cli:main"

@@ -1461,3 +1461,65 @@ PATH (**566 passed, 2 skipped** without it, the extra skip being the real-binary
 **Where the project now stands:** P0 (close gate G2) is the only thing blocking the headline
 claim and `.lxdb`; P2 (GUI) and P3 (PDF/OCR) are independent and could run in parallel on a
 machine with Qt and a PDF fixture set.
+
+---
+
+## Session 76 — 2026-11-07 (PDF ingestion, and an AGPL question removed rather than answered)
+
+**P0 was the next item and it cannot be done from here — so the arithmetic was stated instead
+of attempted.** The full protocol run is 1.054 GiB × 6 systems × 3 reps, and the harness
+compresses every file twice per rep (measurement + forked RSS probe), so the two CHCE systems
+alone are ~9 hours of encoding at 0.4 MiB/s in a sandbox with a 300-second per-command limit —
+plus a second machine class and a CLI `xz` that cannot be installed without root. P0 stays
+open, honestly, for a real machine.
+
+**So the session took P3, which was doable and is half the original pitch.** `src/lexora/
+ingest.py` turns a file into text plus provenance, and `lexora db add` consumes it — so a PDF
+goes straight into the queryable archive, which is the thing the owner has actually been
+asking for.
+
+**The licence decision was the interesting part.** ADR-0009 had left PyMuPDF flagged: AGPL-3.0,
+which PolyForm Noncommercial does not satisfy, "adding it requires its own ADR". Rather than
+write an ADR accepting a copyleft obligation, this session picked **pypdf (BSD-3-Clause)** and
+recorded why (ADR-0017) — the question is *removed*, not answered. The trade is real and
+written down: slower than MuPDF, weaker on hard layouts and unusual encodings, no OCR. All
+acceptable because ingestion is a one-time cost, is not on the query path, and the engine and
+version are stored in provenance so a badly-extracted document can be re-ingested later without
+silently changing what is archived.
+
+**Refusals over empty archives.** A scanned PDF — pages, no text layer — raises an error naming
+OCR and REQ-ING-003, and stores nothing. A mixed PDF keeps its text pages and reports the rest
+in `pages_without_text`, which is a deliberate choice (partial extraction beats none) that a
+user has to read the provenance to know about.
+
+**The fixtures are generated from raw PDF syntax inside the test file**, not built with pypdf.
+A fixture made by the library under test would pass even if extraction were broken — the test
+would be measuring the generator, not the extractor.
+
+**Two mistakes, both mine, both caught.** The first `db add` JSON test failed because `db init`
+prints to stdout as well, so the parse saw two documents; and an earlier pass on this same
+feature would have stored `--no-canon` PDF bytes that were never PDF bytes at all — caught
+while wiring, before it shipped, and the flag is now documented as text-only.
+
+**Verified on a real PDF, which found a bug the fixtures could not.** A 15-page arXiv paper
+(2.2 MB, 39,599 characters, no pages without text) ingested, canonicalised, stored at ratio
+0.377 and retrieved correctly. Extraction took **6.8 s** — pypdf's known weakness, recorded in
+ADR-0017 rather than glossed.
+
+That run also exposed a real search bug: **`self-attention` returned zero results** against a
+paper full of the word. FTS5 treats the hyphen as a syntax error, and the fallback quoted the
+whole query as a *phrase* — which matches nothing on a `detail=column` index, because phrases
+need positions. A silent zero-result failure, the worst kind. The fallback now retries the
+query as its word tokens ANDed (`self AND attention`), with the single-token case handled
+separately, and the phrase attempt is gone precisely because it cannot work on this index.
+Two regression tests, one of them asserting that `self-referential` — words not both present —
+does *not* match.
+
+**And one number that needed explaining rather than reporting.** `db stats` showed the index at
+**185 % of text** for a single 40 KB PDF, against 7.5 % for the 19-book catalog. It is not a
+bug: an empty catalog is 57,344 bytes, so the index is `~56 KiB fixed + ~7.5 % of text`, and a
+one-document archive is dominated by the constant. Now written into the guide as a formula, so
+the next person does not read 185 % as a regression.
+
+**Gate:** **584 passed, 1 skipped** with the ziptastic binary on PATH (15 ingestion tests, 25
+catalog tests); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
