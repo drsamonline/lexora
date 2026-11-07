@@ -252,3 +252,23 @@ def test_cli_get_by_id(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> No
     capsys.readouterr()
     assert cli.main(["db", "get", "--root", root, "--id", "1"]) == cli.EXIT_OK
     assert "identifiable" in capsys.readouterr().out
+
+
+def test_hyphenated_query_matches_its_words(store: Catalog) -> None:
+    """`self-attention` must find text containing it, not silently match nothing.
+
+    FTS5 reads the hyphen as a syntax error, and the first fallback here quoted the
+    whole query as a phrase — which matches nothing at all on a `detail=column`
+    index (no positions). Found on a real 15-page paper where a search for
+    `self-attention` returned zero results against text full of the word.
+    """
+    store.add("paper.pdf", b"we introduce the self-attention mechanism here\n")
+    assert [h.path for h in store.search("self-attention")] == ["paper.pdf"]
+    # and a hyphenated term whose words are not both present must not match
+    assert store.search("self-referential") == []
+
+
+def test_single_word_query_that_is_fts_syntax_still_returns_a_list(store: Catalog) -> None:
+    store.add("a.txt", b"boolean operators and such\n")
+    for query in ("AND", "OR", "NOT", "NEAR"):
+        assert isinstance(store.search(query), list)

@@ -160,9 +160,8 @@ def test_bad_integer_field_refused_without_io(window, tmp_path):
     lineedits = window.findChildren(QLineEdit)
     in_edit = next(le for le in lineedits if "input file" in le.placeholderText())
     # The level field shows lexora.DEFAULT_LEVEL (9 since ADR-0012). This used to
-    # hard-code "3" — the pre-ADR-0012 shipped default — and the assertion only
-    # ever ran on machines with the [gui] extra installed, so it rotted silently
-    # until Qt was available (2026-11-07).
+    # hard-code "3" — the pre-ADR-0012 default — and only ran on machines with the
+    # [gui] extra, so it rotted silently until CI started installing Qt (2026-11-07).
     lvl = next(le for le in lineedits if le.text() == str(DEFAULT_LEVEL))
     run_btn = _find(window, QPushButton, "Run")
     log = _find(window, QTextEdit)

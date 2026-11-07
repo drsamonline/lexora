@@ -161,7 +161,7 @@ lexora db stats   --root DIR
 | Verb | Notes |
 |---|---|
 | `init` | creates `catalog.sqlite` + `blobs/` under `--root` |
-| `add` | **canonicalises by default** (the store holds canonical text); same `--path` again = new version, previous superseded; identical content is stored once |
+| `add` | **ingests then canonicalises**: `.txt`/`.md`/`.csv` contribute their bytes, `.pdf` contributes its **text layer** (needs `lexora[pdf]`), and provenance is stored per document (`mode`, `engine`, `pages`, `text_sha256`). Same `--path` again = new version, previous superseded; identical content stored once. A scanned PDF is **refused** with OCR named, never archived empty |
 | `search` | `--query` is FTS5 syntax; **no phrase/NEAR** (`detail=column`), and an unparseable query returns no matches rather than an error. `--filter` matches metadata exactly; `--text` decodes each match's body |
 | `get` | decodes the `.lxz` and checks it against the blob SHA-256 before printing |
 | `delete` | tombstones; the document disappears from queries immediately, bytes remain until `compact` |
