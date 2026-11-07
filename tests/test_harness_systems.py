@@ -27,9 +27,13 @@ def test_every_registered_system_is_reachable() -> None:
     assert "lexora19" in harness.SYSTEMS
     assert "zstd19" in harness.SYSTEMS
     assert {"xz9", "xz9-lzma"} & set(harness.SYSTEMS), "no xz implementation registered"
+    # ADR-0015 makes the CHCE preset measurable at protocol scope; without these
+    # rows the decision to keep it non-default could never be revisited on evidence.
+    assert {"chce-raw", "lexora-chce"} <= set(harness.SYSTEMS)
 
 
-@pytest.mark.parametrize("name", ["lexora", "lexora19", "zstd19", "xz9-lzma"])
+@pytest.mark.parametrize("name", ["lexora", "lexora19", "zstd19", "xz9-lzma",
+                                  "chce-raw", "lexora-chce"])
 def test_available_systems_never_drops_a_request_silently(name: str) -> None:
     """Every requested system must land in `ok` or `skipped` — never in neither.
 
@@ -115,3 +119,41 @@ def test_pytest_config_makes_the_harness_importable() -> None:
     paths = cfg["tool"]["pytest"]["ini_options"].get("pythonpath", [])
     assert "src" in paths, "the package would not import under a bare `pytest`"
     assert "." in paths, "`benchmarks` would not import under a bare `pytest`"
+
+
+def test_chce_systems_skip_with_a_reason_when_the_binary_is_absent(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    """No binary must mean an explicit skip naming the env var — never a stub.
+
+    The whole point of ADR-0015 is that CHCE is optional. A harness that quietly
+    produced a CHCE number without the binary, or dropped the system silently,
+    would poison the register this project treats as its record.
+    """
+    from lexora import ziptastic_core
+
+    monkeypatch.delenv(ziptastic_core.BINARY_ENV, raising=False)
+    monkeypatch.setattr(ziptastic_core.shutil, "which", lambda _n: None)
+    ok, skipped = harness._available_systems(["chce-raw", "lexora-chce"])
+    assert ok == []
+    for name in ("chce-raw", "lexora-chce"):
+        assert ziptastic_core.BINARY_ENV in skipped[name]
+
+
+def test_chce_systems_are_available_when_the_binary_is_present(
+        tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake = tmp_path / "ziptastic"
+    fake.write_text("#!/bin/sh\nexit 0\n")
+    fake.chmod(0o755)
+    from lexora import ziptastic_core
+
+    monkeypatch.setenv(ziptastic_core.BINARY_ENV, str(fake))
+    ok, skipped = harness._available_systems(["chce-raw", "lexora-chce"])
+    assert ok == ["chce-raw", "lexora-chce"] and skipped == {}
+
+
+def test_every_requested_system_lands_in_exactly_one_list() -> None:
+    """The Session-62 invariant, asserted over the whole registry at once."""
+    names = sorted(harness.SYSTEMS)
+    ok, skipped = harness._available_systems(names)
+    assert set(ok) | set(skipped) == set(names)
+    assert not (set(ok) & set(skipped))

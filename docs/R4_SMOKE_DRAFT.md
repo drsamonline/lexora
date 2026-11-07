@@ -1,6 +1,6 @@
-# R4 smoke revision — LEXORA against the frozen baseline (DRAFT, not published)
+# R4/R5 — LEXORA against the frozen baseline (PUBLISHED 2026-11-07)
 
-> **Status:** DRAFT for owner review (Session 60, 2026-10-29). **Smoke scope, not protocol scope.** Nothing here may be published into [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) without owner sign-off per QUALITY_PLAN, and **no ADR-0001 verdict is implied** — the corpus is 593 MB against a ≥1 GiB requirement and the run used a 12.1 MiB subset with 2 reps.
+> **Status:** **PUBLISHED 2026-11-07 under owner sign-off** (Sessions 60–66, 2026-10-29). The filename is historical — it keeps the `_DRAFT` name so existing links do not break; the content below is the published revision. **Still not an ADR-0001 verdict:** see "What protocol scope would require" at the end — corpus size, all three splits and 3 reps are now met, a second machine class and `xz` via the CLI are not. R4's first cut used a 12.1 MiB subset with 2 reps and is kept only as history; **R5 (184 files / 80.4 MiB from the 1.014 GiB corpus, three splits, 3 reps) is the number to cite.**
 > **Artifacts:** `benchmarks/results-r4-train.json`, `-validation.json`, `-heldout.json` — now at **revision 5** against the 1 GiB corpus (Session 66); the same three files held revision 4 against the 746 MB corpus, and `results-r4-smoke.json` is the original 12.1 MiB cut.
 > **Related:** [BENCHMARK_PROTOCOL.md](BENCHMARK_PROTOCOL.md) · [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) · [COST_MODEL.md](COST_MODEL.md) · [ADR-0001](ADR/ADR-0001-gate-scope.md) · [ADR-0012](ADR/ADR-0012-default-encode-level.md) · [CORPUS_POLICY.md](CORPUS_POLICY.md)
 

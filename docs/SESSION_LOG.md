@@ -1246,3 +1246,75 @@ held-out), which is the next session's first task.
 `LEXORA_ZIPTASTIC` set); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 Artifact: `benchmarks/results-chce-smoke.json` (per-file rows, binary checksum, corpus
 list, environment).
+
+---
+
+## Session 72 — 2026-11-07 (owner decisions: merge, codec policy, R4/R5 published)
+
+**Three owner decisions, recorded rather than interpreted.** The owner was working down
+the open list from Session 71: *merge*, *zstd default and chce max ratio*, *adr*, *r4r5
+done*. Each became a recorded artefact rather than a code change, because none of them
+was actually a code change.
+
+**PR #16 merged.** `audit/ziptastic-codec-2026-11-07` → `main` (`96a5520`), CI green
+(23 s), two commits: the codec registry and the CHCE measurement. The branch that had
+been "delivered as a patch" for twenty-nine sessions because the credential was read-only
+is now simply merged; the read-only state was stale, and the audit caught that too.
+
+**ADR-0015 — codec policy, accepted by explicit owner decision, closing OQ-16.** zstd
+stays `DEFAULT_CODEC`; CHCE is the documented max-ratio preset. The ratio argument for
+flipping the default is strong — −19.75 % vs `xz -9`, nineteen of nineteen files — and
+the ADR says so plainly, then declines it for three reasons that are not about ratio: a
+base install must not require a platform-specific external binary; a default that
+silently costs 30× the encode time is a bad first impression; and the evidence is smoke
+scope, so the one codec decision that cannot be undone for archives already written
+should follow the protocol run rather than precede it. The ADR also states that changing
+`DEFAULT_CODEC` later should fail *its* review, not merely a test.
+
+**R4 and R5 published — with the caveats intact.** The owner signed off, so the register
+no longer calls them drafts. What was *not* done is quietly upgrading the scope label:
+of the five protocol-scope conditions, corpus size, all three splits and 3 reps are met,
+while a second machine class (REF-4G) and `xz` via the CLI are not — and R5 measured a
+**184-file / 80.4 MiB subset** of the 1.014 GiB corpus, not the whole of it. So the
+revision publishes as a revision and still says "no ADR-0001 verdict". The file keeps its
+historical `R4_SMOKE_DRAFT.md` name so existing links do not break; the status line
+explains why.
+
+**Two documents that had become false.** `IMPLEMENTATION_MATRIX.md` described the codec
+as zstd-only (REQ-CMP-002 now names the registry and both implementations, with the tests
+that cover dispatch and every adapter failure mode). `docs/index.md` still said "two
+smoke-scope revisions published (R1 + R2) … no LEXORA-vs-baseline results exist", which
+stopped being true at Session 60; it now carries R4/R5 with their numbers, links the CHCE
+measurement and the audit, and lists ADR-0014/0015. One process note: the first edit of
+DECISIONS.md left a malformed placeholder row in the open-questions table — caught and
+removed before commit, which is the only reason it is not in this entry as a bug.
+
+**The harness could not measure CHCE, so the protocol run was impossible.** ADR-0015 makes
+the default revisitable only on a protocol-scope run, and the harness registered
+`lexora`, `lexora19`, `zstd19`, `xz9`, `xz9-lzma` — no CHCE at all. Two systems added:
+`chce-raw` (backend only, the size-comparable row against `zstd19`) and `lexora-chce`
+(same canonicalisation and container as `lexora19`, only the codec differs, so the
+difference between those two rows is the backend and not the pipeline). Availability is
+an explicit skip naming `$LEXORA_ZIPTASTIC` — never a stub, because a CHCE number
+produced without the binary would poison the register this project treats as its record.
+Verified end-to-end rather than assumed: 5 files / 5.8 MiB gives `lexora-chce` **0.2227**
+against `lexora19` 0.2838 (**−21.55 %**) and `zstd19` 0.2856, with `chce-raw` 0.2225 —
+the two CHCE rows agreeing to 0.0002, which is what the 224-byte container overhead
+should look like on 5.8 MiB.
+
+**One near-miss worth recording.** The first edit of `_available_systems` left a stray
+`continue` ahead of the fallback `ok.append(name)`, which would have made `lexora` and
+`lexora19` disappear from every run — the exact Session-62 failure class this file's own
+docstring warns about, reintroduced while adding the fix for a different one. Caught by
+reading the diff, and then made unrepeatable: `test_every_requested_system_lands_in_exactly_one_list`
+now asserts the totality invariant across the whole registry rather than one name at a
+time.
+
+**Gate:** **546 passed, 1 skipped** with the ziptastic binary on PATH, **545 passed,
+2 skipped** without it (5 new harness tests); suite still **541 passed, 1 skipped** with
+the ziptastic binary on PATH; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Still open after this session:** the protocol-scope CHCE run (the only thing between the
+smoke result and an ADR-0001 verdict), the `.lxdb` byte layout (ADR-0013), the GUI process
+separation (ADR-0011 implementation), the `codec_id` naming question (finding F1), and the
+Session-69→71 hole in this log's predecessor work.

@@ -37,7 +37,12 @@ is still blocked** by the read-only credential.
    on **19/19** files; throughput 0.50 MiB/s against zstd-9's 15.9. Full write-up and
    artifact: [CHCE_SMOKE_2026-11-07.md](CHCE_SMOKE_2026-11-07.md),
    `benchmarks/results-chce-smoke.json`.
-   **Next step is the protocol-scope version of the same comparison** — R4/R5 corpus,
+   **The harness can now run it (Session 72):** `chce-raw` and `lexora-chce` are
+   registered systems, so the protocol comparison is one command —
+   `--systems lexora,lexora19,zstd19,xz9-lzma,lexora-chce` — with the ziptastic
+   binary on `PATH` or `$LEXORA_ZIPTASTIC`. A 5-file harness run already reproduces
+   the smoke result (`lexora-chce` −21.55 % vs `lexora19`). Budget hours, not
+   minutes: CHCE is ~30× slower than the zstd rows. **Next step is the protocol-scope version of the same comparison** — R4/R5 corpus,
    184 files / 1.054 GiB, three splits, `--systems` including the CHCE path — because
    that is what an ADR-0001 verdict needs. A default-codec flip waits on it; the
    recommendation on the table is to keep zstd default and CHCE as the max-ratio
