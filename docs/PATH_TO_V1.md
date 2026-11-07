@@ -90,8 +90,8 @@ Per ADR-0011 the GUI is a **client of the CLI**, so the contract is fixed: searc
 | ~~P2.1~~ | ~~Query panel (search + metadata filters + result list)~~ | **DONE 2026-11-07** — `gui/query.py`, reachable from the ribbon; 14 offscreen tests |
 | ~~P2.2~~ | ~~Preview pane decoding only the selected document~~ | **DONE 2026-11-07** — test asserts the other match's text is absent from the preview |
 | P2.3 | Ingest/compact actions from the GUI, and moving `gui/service.py` onto subprocess calls (the open half of ADR-0011) | Parity test: GUI bytes == CLI bytes |
-| P2.3a | **Decide the exit code for an out-of-range `--level` before the refactor** — measured 2026-11-07: the CLI returns **5** (codec error), the GUI returns **2** (usage), while `service.py`'s own comment claims it "mirrors `lexora pack --level`". Moving the GUI onto the CLI forces them to agree, so this is a decision, not plumbing | One surface's behaviour changes, with the choice recorded |
-| P2.3b | The CLI cannot read stdin (`_read("-")` opens a file named `-`), so a byte-level subprocess service layer needs that first; a raw-frame `zdecode` verb is also missing | `pack --in -` works; both surfaces share one implementation |
+| ~~P2.3a~~ | ~~Decide the exit code for an out-of-range `--level`~~ | **DECIDED 2026-11-07 by [ADR-0018](ADR/ADR-0018-level-usage-error.md): exit 2 on every surface.** The CLI moved to where the GUI already was, so no GUI code changed. 23 tests, including a CLI↔GUI parity assertion |
+| P2.3b | **Still open.** The CLI cannot read stdin (`_read("-")` opens a file named `-`), so a byte-level subprocess service layer needs that first; a raw-frame `zdecode` verb is also missing | `pack --in -` works; both surfaces share one implementation |
 | P2.4 | Notices for the `[gui]` extra if it ships (R3 obligation) | NOTICE + LGPL/GPL texts + About-view notice |
 
 Needs a **Qt-capable machine** (PySide6 + `libegl1`); nothing here can be honestly claimed

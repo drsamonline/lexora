@@ -47,6 +47,9 @@ class CodecSpec:
     magic: bytes | None
     compress: Callable[..., bytes]
     decompress: Callable[..., bytes]
+    #: Returns an error message when a level is illegal for this codec, else None.
+    #: Defined by the codec module, called by the CLI at the boundary (ADR-0018).
+    validate_level: Callable[[int], str | None]
 
     def __post_init__(self) -> None:
         # The header field is 16 bytes NUL-padded; a longer id would be silently
@@ -65,6 +68,7 @@ SPECS: tuple[CodecSpec, ...] = (
         magic=ZSTD_MAGIC,
         compress=zstd_core.compress,
         decompress=zstd_core.decompress,
+        validate_level=zstd_core.validate_level,
     ),
     CodecSpec(
         name="ziptastic",
@@ -72,6 +76,7 @@ SPECS: tuple[CodecSpec, ...] = (
         magic=ziptastic_core.MAGIC,
         compress=ziptastic_core.compress,
         decompress=ziptastic_core.decompress,
+        validate_level=ziptastic_core.validate_level,
     ),
 )
 

@@ -1634,3 +1634,41 @@ licence would make the outbound one hard to enforce.
 
 **Gate:** **625 passed, 0 skipped** with PySide6 and the ziptastic binary present;
 `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+---
+
+## Session 79 — 2026-11-07 (P2.3a decided: an illegal `--level` is exit 2, everywhere)
+
+**The owner delegated the decision ("p2.3a u decide"), so it was made on evidence rather than
+taste.** The candidates were: CLI moves to 2 (usage), or GUI moves to 5 (codec error). Three
+facts settled it.
+
+**The same command disagreed with itself.** `pack --block-size 0` already returned **2**;
+`pack --level 99` returned **5**. Two out-of-range flags in one verb, two different codes —
+that alone is a defect independent of which answer is "right".
+
+**Exit 5 asserts something false.** `EXIT_CODEC` means the codec failed. With `--level 99` the
+codec was never called with a level it could accept; no archive was attempted. Sending the user
+looking for a codec problem when they typed a bad number is misattribution.
+
+**And the user's next action is identical either way:** fix the flag. That is what a usage
+error is for.
+
+**So the CLI moved to where the GUI already was** — which is the direction that deletes work
+rather than adding it: no GUI code changed, and P2.3's refactor is now mechanical instead of
+blocked. The range lives in the codec (`CodecSpec.validate_level`, supplied by `zstd_core` and
+`ziptastic_core`) and is applied at the boundary in `pack`, `batch`, `zround` and `pipe`, before
+any I/O — the same ordering `--block-size` already had. `EXIT_CODEC` keeps its real meaning: a
+corrupt frame, a missing ziptastic binary.
+
+**The gap that let this hide is now closed.** Nothing compared the two surfaces, so a comment
+saying "mirrors `lexora pack --level`" sat next to code that did not. There is now a parity test
+that asserts the CLI and `AppService` return the same exit code for the same bad level — the
+claim ADR-0011 relies on and nothing had ever checked.
+
+**One self-inflicted break, caught by the gate.** Adding a required `validate_level` field to
+`CodecSpec` broke a test that constructs the dataclass directly. The fix went into the test, not
+into the dataclass: defaulting the field would have let a codec be registered with no level rule
+at all, which is the invariant this ADR exists to hold.
+
+**Gate:** **648 passed, 0 skipped**; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.

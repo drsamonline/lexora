@@ -56,7 +56,7 @@ lexora zround --in CANONICAL [--out FRAME] [--level N]
 |---|---|---|---|
 | `--in PATH` | yes | — | payload file (bytes; normally canonical UTF-8) |
 | `--out PATH` | no | `-` | frame destination; `-` skips writing |
-| `--level N` | no | 19 | zstd level, enforced range 1..22 (outside range → exit 5) |
+| `--level N` | no | 19 | zstd level, enforced range 1..22 (outside range → exit 5). An **out-of-range level exits 2** (usage), not 5 — see [ADR-0018](ADR/ADR-0018-level-usage-error.md) |
 
 Behavior notes:
 - The frame is written **only if** the decode-back comparison passes.
