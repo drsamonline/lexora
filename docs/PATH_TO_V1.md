@@ -112,6 +112,7 @@ without offscreen tests.
 | P4.1 | **F1: `codec_id` says `zstd-raw-l19` on level-9 archives** | Every default archive names a level it did not use; level 9 vs 19 indistinguishable. Frozen format field → needs an ADR and a rename window at v0→v1 |
 | P4.2 | `--jobs` is documented experimental and measured 20–40 % *slower* | Either find a workload where it wins or drop the flag |
 | P4.3 | Second machine class / resource limits at 4 GiB with the index in RAM | ADR-0013 puts the index in memory (~7 % of text); must be tested against the target machine |
+| P4.4 | **`pyside6<6.12` is a workaround, not a preference** | 6.12 aborts with a Bus error *after* the GUI suite passes, at Qt teardown on a headless runner. The tests are green; the exit code is not. Revisit when a later release fixes it, or when the GUI suite stops leaking widgets at exit |
 
 ### P5 — Documentation debt
 

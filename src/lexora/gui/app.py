@@ -188,11 +188,16 @@ def build_window():
     def on_open_query() -> None:
         from lexora.gui.query import build_panel
 
-        qwin = QMainWindow(win)
+        # Top-level, not a child of `win`: a QMainWindow parented to the main window
+        # is destroyed with it, out of order with the widgets inside it, and Qt says
+        # so — "QObject: shared QObject was deleted directly. The program is
+        # malformed and may crash." That is a real crash risk on some platforms,
+        # not just a noisy warning.
+        qwin = QMainWindow()
         qwin.setWindowTitle("LEXORA — query archive")
         qwin.setCentralWidget(build_panel("", parent=qwin))
         qwin.resize(960, 720)
-        _query_windows["w"] = qwin  # keep a reference; Qt would collect it
+        _query_windows["w"] = qwin  # keep a reference; Qt would collect it otherwise
         qwin.show()
 
     query_button.clicked.connect(on_open_query)
