@@ -56,3 +56,15 @@ When Phase 1 code begins (blocked on OQ-7 Python version), this file will gain e
 - Privacy rules for corpus/dictionary data: [docs/PRIVACY_AND_DATA_HANDLING.md](docs/PRIVACY_AND_DATA_HANDLING.md).
 
 Questions? Open an issue — there is no other contact channel, and inventing one would violate rule #1.
+
+## Licensing of contributions
+
+LEXORA is licensed **PolyForm Noncommercial 1.0.0** ([LICENSE](LICENSE), [ADR-0009](docs/ADR/ADR-0009-license-polyform-noncommercial.md)) — source-available, **not** OSI-approved open source; commercial use needs a separate licence.
+
+By submitting a patch, issue or pull request you agree that:
+
+1. you have the right to submit it, and it is your own work or properly attributed;
+2. it is licensed to this project under the **same terms** as the project (PolyForm Noncommercial 1.0.0), so the project can ship it under one licence without a compatibility puzzle;
+3. you are **not** granting the project permission to relicense your contribution commercially on your behalf — that needs a separate agreement.
+
+If you cannot agree to (2), please open an issue describing the change instead of sending a patch. This section exists because the project deliberately uses a non-OSI licence: an inbound contribution under an incompatible licence would make the outbound licence hard to enforce, which is worse than a missing feature.
