@@ -1672,3 +1672,51 @@ into the dataclass: defaulting the field would have let a codec be registered wi
 at all, which is the invariant this ADR exists to hold.
 
 **Gate:** **648 passed, 0 skipped**; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+---
+
+## Session 80 — 2026-11-07 (OCR lands as an external plugin, and the owner's scan rewrites the plan)
+
+**The owner asked whether Tesseract could be used "as external plugin" and sent a real document
+with the question: a 99-page declassified CIA scan.** Both were answered by measuring rather
+than arguing.
+
+**The question.** Yes — and `pytesseract` is the wrong way to do it. It is a thin subprocess
+wrapper, so adopting it adds a Python dependency *without* removing the binary dependency.
+`ocr_core.py` calls `tesseract stdin stdout -l LANG` directly, discovered via
+`$LEXORA_TESSERACT` then `PATH`, exactly like the ziptastic codec (ADR-0015): version and
+installed languages read from the binary and stored per document.
+
+**The blocker that turned out not to be one.** OCR of a scanned PDF was assumed to need a PDF
+*renderer* — poppler (`pdftoppm`, GPL) or PyMuPDF (AGPL, blocked by ADR-0009). The real document
+says otherwise: **99 of 99 pages carry exactly one embedded image**, 1-bit, ~2544×3240 (~300 dpi),
+extractable in **77 ms/page**. So the embedded scan is pulled out with pypdf + Pillow and handed
+straight to Tesseract. No renderer, no new licence question, and the scanner's own resolution is
+preserved instead of resampled.
+
+**What the document taught the plan, which no synthetic fixture would have.**
+
+1. **It contains Chinese, not Hindi or Gujarati.** A table on page 40 has Chinese column headers
+   (特异功能组, 对照组). English-only OCR mangles those cells. The charter's G5 names Devanagari and
+   Gujarati; the corpus in hand needs `chi_sim`. OQ-10 is therefore closed on *engine* and still
+   open on *language scope* — recorded that way rather than quietly marked done.
+2. **Every page repeats a boilerplate stamp** ("Approved For Release 2001/03/07 : …", "LN734-85",
+   a page number) — 99 repetitions of the same line. Header/footer dedup is a *cleaning* rule and
+   belongs in the canonicaliser's whitelist (REQ-CAN-003), not in OCR. Noted, not done.
+3. **Pages carry underlines and handwritten annotation** over the typescript, which is exactly
+   the kind of mark that produces stray artefacts. Another reason OCR output must be labelled as
+   a guess, not as text.
+
+**Verified end to end on the real file**, with a stub binary standing in for Tesseract: 99/99
+pages extracted and OCR'd, provenance recorded (`mode: ocr`, engine, version, languages,
+`pages_ocrd: 99`, `pages_failed: []`), 30 s total. **No accuracy claim is made and none could
+be** — a stub returns fixed text, so the tests prove discovery, invocation, provenance and every
+refusal path, and prove nothing about OCR quality. That needs the real binary and a human-checked
+sample.
+
+**Two mistakes, both mine, both caught by running things.** The test stub was templated with
+`.format()`, which ate the stub's *own* f-string braces (`KeyError: 'lang'`). And an assertion
+hardcoded "19 bytes" for a 16-byte payload — replaced with a derived value rather than a
+corrected constant, because the constant was the bug.
+
+**Gate:** **663 passed, 0 skipped**; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.

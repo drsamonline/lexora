@@ -2,10 +2,13 @@
 
 Scope
 -----
-This is REQ-ING-001 (TXT), REQ-ING-002 (PDF text layer) and REQ-ING-004
-(provenance), and the *graceful-skip* half of REQ-ING-003 (OCR): a scanned page
-with no text layer produces a clear refusal naming OCR as the missing piece,
-rather than an empty document that silently archives nothing.
+This is REQ-ING-001 (TXT), REQ-ING-002 (PDF text layer), REQ-ING-003 (OCR, as an
+*optional external plugin* — see `ocr_core`) and REQ-ING-004 (provenance).
+
+Two paths for a PDF: if it has a text layer, that is used (it is exact and free);
+if it has none, `--ocr` runs Tesseract over the embedded page images, and without
+`--ocr` — or without the binary — the document is refused with a message naming
+what is missing rather than archived empty.
 
 Why pypdf and not PyMuPDF
 -------------------------
@@ -37,6 +40,7 @@ PDF_SUFFIXES = {".pdf"}
 
 ENGINE_TEXT = "lexora-text"
 ENGINE_PDF = "pypdf"
+ENGINE_OCR = "tesseract"
 
 
 class IngestError(Exception):
@@ -97,7 +101,7 @@ def _read_text(path: Path, declared_encoding: str | None) -> IngestResult:
     )
 
 
-def _read_pdf(path: Path) -> IngestResult:
+def _read_pdf(path: Path, *, ocr: bool = False, ocr_lang: str = "eng") -> IngestResult:
     try:
         from pypdf import PdfReader
     except ImportError as exc:  # pragma: no cover - dependency is declared
@@ -142,18 +146,51 @@ def _read_pdf(path: Path) -> IngestResult:
     }
 
     if not text.strip():
-        # A scanned PDF. REQ-ING-003 says the pipeline must run with OCR absent and
-        # say so clearly — an empty archive would be the silent failure this
-        # project treats as the worst kind.
-        raise IngestError(
-            f"{path.name} has {len(pages)} page(s) and no extractable text layer "
-            "(scanned or image-only). OCR is not available in this build "
-            "(REQ-ING-003); nothing was archived."
+        # A scanned PDF. With --ocr and the plugin present, OCR it; otherwise refuse
+        # clearly. REQ-ING-003: the pipeline must run with OCR absent and say so —
+        # an empty archive would be the silent failure this project treats as worst.
+        if not ocr:
+            raise IngestError(
+                f"{path.name} has {len(pages)} page(s) and no extractable text layer "
+                "(scanned or image-only). Pass --ocr to run OCR over it "
+                f"(REQ-ING-003); nothing was archived."
+            )
+        from lexora import ocr_core
+
+        if not ocr_core.available():
+            raise IngestError(
+                f"{path.name} needs OCR, but the `tesseract` binary is not on PATH "
+                f"(set ${ocr_core.BINARY_ENV} or install tesseract). Nothing was "
+                "archived — see REQ-ING-003."
+            )
+        try:
+            result = ocr_core.ocr_pdf(str(path), lang=ocr_lang)
+        except ocr_core.OcrError as exc:
+            raise IngestError(f"{path.name}: OCR failed: {exc}") from exc
+        if not result.text.strip():
+            raise IngestError(
+                f"{path.name}: OCR ran over {result.pages_ocrd} page(s) and produced "
+                f"no text with language {result.languages!r}. Nothing was archived."
+            )
+        return IngestResult(
+            text=result.text,
+            provenance={
+                "mode": "ocr",
+                "engine": ENGINE_OCR,
+                "engine_version": result.engine_version,
+                "languages": result.languages,
+                "renderer": result.renderer,
+                "pages": len(pages),
+                "pages_ocrd": result.pages_ocrd,
+                "pages_failed": result.pages_failed,
+                "source_bytes": path.stat().st_size,
+            },
         )
     return IngestResult(text=text, provenance=provenance)
 
 
-def extract(path: str | Path, *, declared_encoding: str | None = None) -> IngestResult:
+def extract(path: str | Path, *, declared_encoding: str | None = None,
+            ocr: bool = False, ocr_lang: str = "eng") -> IngestResult:
     """Extract text and provenance from a supported file.
 
     Supported today: plain text (TXT/MD/CSV…) and the PDF text layer. Anything
@@ -169,7 +206,7 @@ def extract(path: str | Path, *, declared_encoding: str | None = None) -> Ingest
     if suffix in TEXT_SUFFIXES:
         return _read_text(path, declared_encoding)
     if suffix in PDF_SUFFIXES:
-        return _read_pdf(path)
+        return _read_pdf(path, ocr=ocr, ocr_lang=ocr_lang)
     raise IngestError(
         f"unsupported input {suffix or '(no extension)'}: supported are "
         f"{sorted(TEXT_SUFFIXES | PDF_SUFFIXES)}"

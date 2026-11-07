@@ -872,7 +872,8 @@ def cmd_db(args) -> int:
                 # text file its own bytes. Provenance travels with the document so a
                 # reader can tell where the text came from and with what engine.
                 try:
-                    ingested = extract_text(args.infile, declared_encoding=args.encoding)
+                    ingested = extract_text(args.infile, declared_encoding=args.encoding,
+                                            ocr=args.ocr, ocr_lang=args.lang)
                 except IngestError as exc:
                     print(f"ingest error: {exc}", file=sys.stderr)
                     return EXIT_FILE
@@ -1104,6 +1105,12 @@ def build_parser() -> argparse.ArgumentParser:
     d1.add_argument("--encoding", default=None,
                     help="declared source encoding for text files (default: try UTF-8, "
                          "then cp1252, and refuse rather than mangle)")
+    d1.add_argument("--ocr", action="store_true",
+                    help="OCR a scanned PDF (no text layer) using the external tesseract "
+                         "binary; without it such a PDF is refused, never archived empty")
+    d1.add_argument("--lang", default="eng",
+                    help="tesseract language(s) for --ocr, e.g. 'eng' or 'eng+chi_sim' "
+                         "(default: eng)")
     d1.add_argument("--no-canon", action="store_true",
                     help="text files only: store the bytes as given instead of "
                          "canonicalising them (a PDF always contributes its text layer)")

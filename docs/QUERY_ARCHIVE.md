@@ -36,8 +36,23 @@ Provenance is stored with every document — `mode` (`text` / `pdf-text-layer`),
 lexora db search --root myarchive --filter mode=pdf-text-layer
 ```
 
-A **scanned PDF** (no text layer) is refused with a message naming OCR, and nothing is
-archived. A mixed PDF keeps the pages that had text and reports the rest in
+A **scanned PDF** (no text layer) is refused with a message naming `--ocr`, and nothing is
+archived. With the OCR plugin installed and `--ocr`, the pages are OCR'd instead:
+
+```bash
+pip install 'lexora[ocr]'          # pypdf + Pillow
+# plus the system binary: apt install tesseract-ocr  (or brew install tesseract)
+lexora db add --root myarchive --in scan.pdf --path "scans/scan.pdf" --ocr --lang eng
+```
+
+OCR runs the **external `tesseract` binary** (`$LEXORA_TESSERACT`, else `PATH`) — it is not
+vendored, exactly like the ziptastic codec. No PDF renderer is involved: the embedded page
+image is pulled out of the PDF directly, which keeps the scanner's own resolution. Provenance
+records `mode: "ocr"`, the engine and its version, the languages, `pages_ocrd` and
+`pages_failed`, so OCR'd text is never mistaken for a real text layer.
+
+`--lang` takes Tesseract's own codes and accepts combinations: `--lang eng+chi_sim` for a
+mixed-script document. A language whose `traineddata` is not installed will fail loudly. A mixed PDF keeps the pages that had text and reports the rest in
 `pages_without_text`. Use `--no-canon` for text files to store bytes as given (a PDF
 always contributes its text layer).
 
