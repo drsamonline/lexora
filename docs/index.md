@@ -59,6 +59,7 @@ The Phase-1 CLI exists and is tested (`canon`, `zround`, `pipe`, `pack`, `unpack
 - [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) — active register; **R1 + R2 (baselines) and R4 + R5 (LEXORA vs both baselines) are published** (R4/R5 signed off 2026-11-07). R5: `lexora19` 0.3101 vs `zstd19` 0.3120 (−0.60 %, 178/184 files) and `xz9-lzma` 0.3077 (+0.77 %) on 184 files / 80.4 MiB. **Still no ADR-0001 verdict** — the scope caveats are in the revision itself. Any number outside a published revision or without its tier label is invalid.
 - [CHCE_SMOKE_2026-11-07.md](CHCE_SMOKE_2026-11-07.md) — **smoke measurement, not a revision:** ziptastic's CHCE codec is **−19.75 % vs `xz -9`** on 19 Gutenberg texts (19.4 MB canonical), 19/19 files, at 0.50 MiB/s. This is why [ADR-0015](ADR/ADR-0015-codec-policy.md) ships CHCE as the max-ratio preset.
 - [AUDIT_2026-11-07.md](AUDIT_2026-11-07.md) — audit of this repo against ziptastic: four findings with evidence, and what was fixed.
+- [QUERY_ARCHIVE.md](QUERY_ARCHIVE.md) — **`lexora db`**: the archive as a queryable compressed store (SQLite index over `.lxz` payloads). Metadata filters + full-text, append/version/delete/compact, index cost measured at 7.6 % of text. Design: [ADR-0016](ADR/ADR-0016-queryable-archive.md).
 
 ## Security & privacy
 

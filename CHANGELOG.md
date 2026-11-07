@@ -6,6 +6,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-11-07 — Session 73 (**`lexora db` — the archive becomes queryable**, [ADR-0016](docs/ADR/ADR-0016-queryable-archive.md)):
+  - **SQLite is the index, lexora is the payload store.** A catalog is `catalog.sqlite` plus content-addressed `.lxz` blobs. Metadata columns are filterable with SQL, document text is full-text searchable, and `get` decodes only the document you asked for. **No new format bytes** — the `.lxdb` layout stays gated behind G2 as ADR-0010 requires.
+  - Seven verbs: `db init / add / search / get / delete / compact / stats`. `add` canonicalises by default and re-adding the same path makes a new version (the old one is superseded and drops out of queries at once). `compact` is the only lossy operation and reports exactly what it removed.
+  - **Measured, not assumed:** on 19 Gutenberg books (19.4 MB canonical) the payload is 6.5 MB (ratio 0.335) and the index 1.48 MB — **7.6 % of text**. The naive version that stored the body inside FTS5 measured **421 % of payload**; contentless FTS5 at `detail=column` was chosen over `detail=full` (38 %) because positions are not worth 32 points of text. Phrase/NEAR search is therefore unavailable, and the docs say so.
+  - Query **0.34 s**, retrieval **0.47 s**; identical content is stored once; every returned byte is decoded and checked against its blob SHA-256 before it is handed back.
+  - New: `docs/QUERY_ARCHIVE.md` (user guide), 21 tests in `tests/test_catalog.py` — including stale reads, corrupted blobs, a blob shared by two live documents, and FTS queries a user can type. Two of those tests caught real bugs during development (orphan detection counting dead rows; an FTS fallback that could itself raise).
+  - **Not done: the GUI.** It is the top item on the next card; the CLI surface above is its backend contract per ADR-0011.
+
+### Added
 - 2026-11-07 — Session 72 (**the benchmark harness can now measure CHCE**):
   - `chce-raw` and `lexora-chce` registered as harness systems, so the protocol-scope comparison ADR-0015 requires is one command: `--systems lexora,lexora19,zstd19,xz9-lzma,lexora-chce`. `chce-raw` is the backend alone (comparable to `zstd19`); `lexora-chce` is canon + `.lxz` with CHCE (comparable to `lexora19`), so the difference between those two rows is the backend and not the pipeline.
   - Availability is an explicit skip naming `$LEXORA_ZIPTASTIC`, never a stub — a CHCE number produced without the binary would poison the register.

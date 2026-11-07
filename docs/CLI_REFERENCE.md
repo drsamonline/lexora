@@ -141,6 +141,36 @@ Exit codes: **0** everything verified; **7** a refusal (bad header/index/limits)
 
 Library equivalent: `container.verify_stream(handle)` — and `verify_archive(bytes)` is now a thin wrapper over it, so a verification costs one pass over the archive instead of one pass *per block*.
 
+### `lexora db` — a queryable compressed archive
+
+Turns documents into a compressed archive you can query: SQL over metadata, full-text
+search, and retrieval of only what you ask for. Design and trade-offs:
+[ADR-0016](ADR/ADR-0016-queryable-archive.md); usage: [QUERY_ARCHIVE.md](QUERY_ARCHIVE.md).
+
+```text
+lexora db init    --root DIR
+lexora db add     --root DIR --in FILE [--path P] [--title T] [--meta K=V ...]
+                  [--codec C] [--level N] [--no-canon] [--json]
+lexora db search  --root DIR [--query Q] [--filter K=V ...] [--limit N] [--text] [--json]
+lexora db get     --root DIR [PATH] [--id N] [--out FILE] [--json]
+lexora db delete  --root DIR PATH
+lexora db compact --root DIR [--dry-run]
+lexora db stats   --root DIR
+```
+
+| Verb | Notes |
+|---|---|
+| `init` | creates `catalog.sqlite` + `blobs/` under `--root` |
+| `add` | **canonicalises by default** (the store holds canonical text); same `--path` again = new version, previous superseded; identical content is stored once |
+| `search` | `--query` is FTS5 syntax; **no phrase/NEAR** (`detail=column`), and an unparseable query returns no matches rather than an error. `--filter` matches metadata exactly; `--text` decodes each match's body |
+| `get` | decodes the `.lxz` and checks it against the blob SHA-256 before printing |
+| `delete` | tombstones; the document disappears from queries immediately, bytes remain until `compact` |
+| `compact` | removes superseded/deleted rows and orphaned blobs, then rebuilds the index (re-verifying every live document). `--dry-run` reports only |
+| `stats` | documents, bytes, ratio, and the **index cost** (`index_vs_canonical_pct`) |
+
+Measured on 19 Gutenberg books (19.4 MB canonical): payload 6.5 MB (ratio 0.335),
+index 1.48 MB (**7.6 % of text**), query 0.34 s, single-document retrieval 0.47 s.
+
 ### `lexora batch` — process many files in one invocation
 
 The core a queue needs, built where it can be tested: every file goes through the

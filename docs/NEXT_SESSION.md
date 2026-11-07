@@ -29,6 +29,12 @@ is still blocked** by the read-only credential.
 
 ## Tasks in order
 
+0. **GUI for the query archive (owner request, Session 73).** The backend is done and
+   tested (`lexora db`, 21 tests); the panel is not. Per ADR-0011 the GUI shells out to
+   the CLI, so the contract is fixed: search box → `db search --json`, result list,
+   preview → `db get`. Needs a Qt-capable machine (PySide6 + `libegl1` for offscreen
+   tests) and the same parity-test discipline as the existing panels.
+
 1. **~~Measure CHCE on lexora's own corpus (OQ-16)~~ DONE — Session 71.** The assumed
    blocker (a build machine) was not one: ziptastic ships a prebuilt
    `ziptastic-1.2.0-linux-x86_64`. Measured on 19 Gutenberg texts (19.4 MB canonical,

@@ -44,6 +44,7 @@ from pathlib import Path
 from lexora import DEFAULT_LEVEL, __version__
 from lexora import codec_registry as codecs
 from lexora.canonicalize import CanonicalizationError, canonicalize, canonicalize_stream
+from lexora.catalog import Catalog, CatalogError
 from lexora.container import ContainerError, read_index
 from lexora.container import (
     pack as lxz_pack,
@@ -805,6 +806,115 @@ def cmd_batch(args) -> int:
     return EXIT_OK
 
 
+
+def _parse_pairs(pairs: list[str] | None, flag: str) -> dict:
+    """`--meta k=v` / `--filter k=v` -> dict, refusing anything without a key."""
+    out: dict = {}
+    for item in pairs or []:
+        if "=" not in item:
+            raise CatalogError(f"{flag} expects key=value, got {item!r}")
+        key, _, value = item.partition("=")
+        if not key:
+            raise CatalogError(f"{flag} expects a non-empty key, got {item!r}")
+        out[key] = value
+    return out
+
+
+def cmd_db(args) -> int:
+    """The queryable compressed archive: SQLite index over `.lxz` blobs.
+
+    Every verb opens the catalog, does one thing, and closes it. Exit codes follow
+    the rest of the CLI: 0 ok, 2 usage, 3 file, 4 container, 5 codec.
+    """
+    try:
+        with Catalog(args.root, create=(args.db_cmd == "init")) as cat:
+            if args.db_cmd == "init":
+                st = cat.stats()
+                print(f"catalog: {cat.index_path} (schema {st['documents']} docs)", file=sys.stderr)
+                print(f"index:   {cat.index_path}")
+                return EXIT_OK
+
+            if args.db_cmd == "add":
+                raw = _read(args.infile)
+                payload = raw if getattr(args, "no_canon", False) else canonicalize(raw)
+                hit = cat.add(
+                    args.path or str(args.infile),
+                    payload,
+                    title=args.title,
+                    metadata=_parse_pairs(args.meta, "--meta"),
+                    codec=args.codec,
+                    level=args.level,
+                )
+                if args.json:
+                    print(json.dumps(hit.as_dict(), indent=2))
+                else:
+                    print(f"added {hit.path} v{hit.version}: "
+                          f"{hit.canonical_bytes} -> {hit.stored_bytes} bytes "
+                          f"({hit.codec})", file=sys.stderr)
+                    print(json.dumps(hit.as_dict()))
+                return EXIT_OK
+
+            if args.db_cmd == "search":
+                hits = cat.search(
+                    args.query,
+                    filters=_parse_pairs(args.filter, "--filter"),
+                    limit=args.limit,
+                    with_text=args.text,
+                )
+                if args.json:
+                    print(json.dumps([h.as_dict() for h in hits], indent=2))
+                else:
+                    for h in hits:
+                        print(f"{h.doc_id:>6}  {h.path}  v{h.version}  "
+                              f"{h.stored_bytes}B  {h.title or ''}")
+                    if not hits:
+                        print("(no matches)", file=sys.stderr)
+                return EXIT_OK
+
+            if args.db_cmd == "get":
+                hit = cat.get(args.id if args.id is not None else args.path, text=True)
+                if hit is None:
+                    print(f"error: no live document for "
+                          f"{args.id if args.id is not None else args.path}", file=sys.stderr)
+                    return EXIT_FILE
+                if args.out and args.out != "-":
+                    _write_atomic(args.out, hit.text.encode("utf-8"))
+                    print(f"wrote {hit.path} ({len(hit.text)} chars) to {args.out}",
+                          file=sys.stderr)
+                elif args.json:
+                    print(json.dumps(hit.as_dict(), indent=2))
+                else:
+                    sys.stdout.write(hit.text)
+                return EXIT_OK
+
+            if args.db_cmd == "delete":
+                n = cat.delete(args.path)
+                if n == 0:
+                    print(f"error: no live document at {args.path}", file=sys.stderr)
+                    return EXIT_FILE
+                print(f"tombstoned {n} version(s) of {args.path} "
+                      f"(run `db compact` to reclaim)", file=sys.stderr)
+                return EXIT_OK
+
+            if args.db_cmd == "compact":
+                report = cat.compact(dry_run=args.dry_run)
+                print(json.dumps(report, indent=2))
+                return EXIT_OK
+
+            if args.db_cmd == "stats":
+                print(json.dumps(cat.stats(), indent=2))
+                return EXIT_OK
+
+            print(f"usage error: unknown db command {args.db_cmd!r}", file=sys.stderr)
+            return 2
+    except CatalogError as exc:
+        print(f"catalog error: {exc}", file=sys.stderr)
+        return EXIT_FILE
+    except (ContainerError, CodecError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return EXIT_CONTAINER
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="lexora",
@@ -923,6 +1033,61 @@ def build_parser() -> argparse.ArgumentParser:
     bt.add_argument("--report", default=None, help="write the JSON report to this path")
     bt.add_argument("--json", action="store_true", help="print the JSON report to stdout")
     bt.set_defaults(func=cmd_batch)
+
+    dbp = sub.add_parser(
+        "db",
+        help="queryable compressed archive: a SQLite index over .lxz blobs "
+             "(documents with metadata filters + full-text search)",
+    )
+    dbs = dbp.add_subparsers(dest="db_cmd", required=True)
+
+    d0 = dbs.add_parser("init", help="create a catalog at --root")
+    d0.add_argument("--root", required=True)
+
+    d1 = dbs.add_parser("add", help="append a document (canonicalised by default)")
+    d1.add_argument("--root", required=True)
+    d1.add_argument("--in", dest="infile", required=True)
+    d1.add_argument("--path", default=None,
+                    help="logical path/identity (default: the --in path as given)")
+    d1.add_argument("--title", default=None)
+    d1.add_argument("--meta", action="append", metavar="K=V",
+                    help="metadata field, repeatable; queryable with --filter")
+    d1.add_argument("--codec", choices=codecs.names(), default=codecs.DEFAULT_CODEC)
+    d1.add_argument("--level", type=int, default=DEFAULT_LEVEL)
+    d1.add_argument("--no-canon", action="store_true",
+                    help="store the bytes as given instead of canonicalising them")
+    d1.add_argument("--json", action="store_true")
+
+    d2 = dbs.add_parser("search", help="full-text and/or metadata query")
+    d2.add_argument("--root", required=True)
+    d2.add_argument("--query", default=None, help="FTS5 query (omit to list by filter)")
+    d2.add_argument("--filter", action="append", metavar="K=V",
+                    help="metadata equality filter, repeatable")
+    d2.add_argument("--limit", type=int, default=20)
+    d2.add_argument("--text", action="store_true",
+                    help="decode and print each match's body (slow: decodes the payload)")
+    d2.add_argument("--json", action="store_true")
+
+    d3 = dbs.add_parser("get", help="decode one live document")
+    d3.add_argument("--root", required=True)
+    d3.add_argument("path", nargs="?", default=None)
+    d3.add_argument("--id", type=int, default=None)
+    d3.add_argument("--out", default="-")
+    d3.add_argument("--json", action="store_true")
+
+    d4 = dbs.add_parser("delete", help="tombstone a document (space reclaimed by compact)")
+    d4.add_argument("--root", required=True)
+    d4.add_argument("path")
+
+    d5 = dbs.add_parser("compact", help="remove superseded/deleted rows and orphan blobs")
+    d5.add_argument("--root", required=True)
+    d5.add_argument("--dry-run", action="store_true",
+                    help="report what would be removed without removing it")
+
+    d6 = dbs.add_parser("stats", help="documents, bytes, ratio and index overhead")
+    d6.add_argument("--root", required=True)
+
+    dbp.set_defaults(func=cmd_db)
     return p
 
 

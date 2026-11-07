@@ -1318,3 +1318,56 @@ the ziptastic binary on PATH; `python3 scripts/linkcheck.py` → ALL INTERNAL LI
 smoke result and an ADR-0001 verdict), the `.lxdb` byte layout (ADR-0013), the GUI process
 separation (ADR-0011 implementation), the `codec_id` naming question (finding F1), and the
 Session-69→71 hole in this log's predecessor work.
+
+---
+
+## Session 73 — 2026-11-07 (the archive becomes queryable: `lexora db`)
+
+**The ask was "like SQLite — run a query, give me the requested data", plus a GUI.** The
+first useful thing was to notice that the primitive already existed: `.lxz` v0 has a
+per-block index, per-block SHA-256 and bounded decode of a single block. Random access at
+block granularity is the hard part of a compressed store, and it was already there. What
+was missing was *document* addressability and an index.
+
+**What was deliberately not done: writing `.lxdb`.** `FORMAT_LXDB.md` forbids a byte
+layout before the protocol-scope benchmark closes gate G2, and it is right to — freezing a
+layout before the benchmark that would judge it is the sequencing error ADR-0007 avoided
+for `.lxz`. So the design puts the index *outside* the payload and writes only frozen
+`.lxz` bytes. SQLite holds the metadata, the full-text index and the document→blob map;
+lexora holds the compressed text. That is also the honest division of labour: SQLite is
+good at indexes and crash recovery, lexora is good at making bulk text small, and neither
+is asked to do the other's job.
+
+**The measurement that changed the design mid-build.** The first working version put the
+document body inside the FTS5 table, and `db stats` reported the index at **421 % of the
+payload** — it was storing the whole text a second time, uncompressed. Rather than tune
+blindly, the four sensible FTS configurations were measured on 18.2 MiB of Gutenberg
+prose: body-inline costs 106–140 % of the text; **contentless at `detail=column` costs
+6.4 %**; contentless at `detail=full` costs 38 %. Chosen: contentless + `detail=column`,
+which keeps per-column scoping and gives up phrase/NEAR search. That trade is now stated
+in the ADR and the user guide instead of being discovered later by someone whose phrase
+query silently behaved as an AND.
+
+**Two real bugs the tests caught.** Orphan detection in `compact()` counted *dead* rows as
+references, so every blob still looked referenced and `bytes_freed` was always 0 — a
+compaction that appeared to work and reclaimed nothing. And an FTS fallback that could
+itself throw: `C++`, `AND` and an unbalanced quote all raised instead of returning no
+matches. Both are now regression-tested, along with the failures that make such a store
+untrustworthy rather than merely broken: stale reads after supersede/delete, returning a
+blob whose hash no longer matches, and `compact()` removing a blob shared by two live
+documents.
+
+**Verified on real data, not fixtures.** 19 Gutenberg books (19.4 MB canonical) indexed:
+payload 6.5 MB (ratio 0.335), index 1.48 MB (**7.6 % of text**, 22.7 % of payload), query
+**0.34 s**, single-document retrieval **0.47 s**. Then a full mutation cycle — add v2 of a
+book (supersedes v1), delete another, `compact` — removed 2 documents and 1 orphan blob,
+freed 49 KB, and left 18 live documents with the index still at 7.45 %.
+
+**What is not done: the GUI.** The owner asked for it and it is the top item on the next
+card. The backend is complete and is the GUI's contract (ADR-0011 process separation), but
+building a Qt panel here would be untested code — there is no PySide6 and no `libegl1` in
+this container, and the project's own rule is that a GUI surface is tested offscreen before
+it is claimed.
+
+**Gate:** **567 passed, 1 skipped** with the ziptastic binary present (21 new catalog
+tests); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
