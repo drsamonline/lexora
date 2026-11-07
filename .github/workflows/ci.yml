@@ -42,7 +42,10 @@ jobs:
 
       - name: Run test suite
         # Skips are allowed (benchmark tests skip without corpus data);
-        # failures fail the job.
+        # failures fail the job. QT_QPA_PLATFORM=offscreen lets the GUI suite run
+        # headless instead of aborting on a missing display.
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: pytest -q
 
       - name: Internal link check
