@@ -41,7 +41,7 @@ multi-user concurrency, cloud anything.
 | `.lxdb` single-file | **Proposed, no bytes** | ADR-0013, gated on G2 |
 | Protocol-scope benchmark (G2) | **Shape done, scale not** | R6: 3 splits, 3 reps, 6 systems, leak audit clean, at 5.9 MB |
 | PDF ingestion (text layer) | **Done** | ADR-0017; `ingest.py`; 15 tests |
-| OCR | **Not started** | OQ-10 / P3.3 |
+| OCR (external Tesseract plugin) | **Done** | ADR-0019; `ocr_core.py`; 15 tests; real 99-page scan |
 | Multilingual (hi, gu) | **Not started** | deferred by owner; English-only build scope |
 | GUI query view | **Done** | `gui/query.py`; 14 offscreen tests; parity with the CLI asserted |
 | GUI on subprocess (ADR-0011) | **Partly** — the query view is a CLI client; `service.py` is still in-process | PATH_TO_V1 P2.3 |
@@ -103,7 +103,7 @@ without offscreen tests.
 |---|---|---|
 | ~~P3.1~~ | ~~PDF text layer extraction, page order preserved (REQ-ING-002)~~ | **DONE 2026-11-07** — `src/lexora/ingest.py`, pypdf, page order asserted, 15 tests |
 | ~~P3.2~~ | ~~Provenance in archive metadata (REQ-ING-004)~~ | **DONE 2026-11-07** — `mode`/`engine`/`engine_version`/`pages`/`pages_without_text`/`text_sha256` stored and filterable |
-| P3.3 | Optional OCR with graceful skip (REQ-ING-003) | CI job with and without OCR |
+| ~~P3.3~~ | ~~Optional OCR with graceful skip (REQ-ING-003)~~ | **DONE 2026-11-07** — [ADR-0019](ADR/ADR-0019-ocr-plugin.md): Tesseract as an external binary, `--ocr --lang`, no PDF renderer needed; 15 tests; verified on a real 99-page scan. **Language scope still open** (that scan needs `eng+chi_sim`) |
 | ~~P3.4~~ | ~~PyMuPDF needs its own ADR first (AGPL)~~ | **RESOLVED 2026-11-07 by [ADR-0017](ADR/ADR-0017-pdf-engine.md):** pypdf (BSD-3) chosen instead — the copyleft question is removed, not answered |
 | P3.5 | Cleaning-error rate ≤1 % operationalised (REQ-CAN-007, ADR-0004) | Sample-review report |
 

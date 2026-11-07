@@ -38,6 +38,13 @@ gui = [
 pdf = [
     "pypdf>=5,<7",
 ]
+# ADR-0019: OCR needs pypdf (to pull the embedded page image) and Pillow (to
+# re-encode it for tesseract). Both permissive. The `tesseract` *binary* is a
+# system dependency the user installs — it is not vendored, exactly like ziptastic.
+ocr = [
+    "pypdf>=5,<7",
+    "pillow>=10,<14",
+]
 
 [project.scripts]
 lexora = "lexora.cli:main"
