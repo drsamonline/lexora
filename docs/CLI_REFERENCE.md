@@ -89,14 +89,15 @@ Behavior notes:
 Implements the ADR-0007 frozen layout (LXZ-0.1): 128-byte header (full SHA-256 over bytes [0,96)), blocks each exactly one complete zstd frame, 56-byte index entries `{u64 offset; u64 compressed; u64 uncompressed; sha256[32]}`, 40-byte trailer `{u64 index_offset; u64 index_bytes; sha256-prefix[24]}`. Every block is decode-verified before the archive is written (SPEC §8.1); the write itself is atomic (temp + fsync + rename).
 
 ```text
-lexora pack --in CANONICAL --out ARCHIVE.lxz [--level N] [--block-size B]
+lexora pack --in CANONICAL --out ARCHIVE.lxz [--level N] [--block-size B] [--codec C]
 ```
 
 | Flag | Required | Default | Meaning |
 |---|---|---|---|
 | `--in PATH` | yes | — | payload file (normally `canon` output; `pack` does not canonicalize) |
 | `--out PATH` | yes | — | archive destination; `-` writes to stdout (binary) |
-| `--level N` | no | **9** (`lexora.DEFAULT_LEVEL`, ADR-0012) | zstd level 1..22; 19 remains the archival choice |
+| `--level N` | no | **9** (`lexora.DEFAULT_LEVEL`, ADR-0012) | zstd level 1..22; 19 remains the archival choice. With `--codec ziptastic`, only 9 (`-9`) and 19 (`-9 --max-ratio`) are legal; other values are refused rather than rounded |
+| `--codec C` | no | `zstd` | `zstd` or `ziptastic` (CHCE, ADR-0014). Written into the header, so `unpack`/`verify`/`inspect` need **no flag** — the archive says what compressed it. `ziptastic` needs the binary on `PATH` or `$LEXORA_ZIPTASTIC`; without it the command fails rather than falling back. ~11.8 % under `xz -9` on a text-heavy Silesia subset, at 0.3–0.6 MB/s |
 | `--block-size B` | no | 8388608 | max uncompressed bytes per block, legal range 1..8388608 (LIM-01); out-of-range → exit 2 before any read/write (Session 26 bounds messaging); declared in header and enforced by readers |
 | `--no-stream` | no | off (streaming) | buffer the whole input in memory instead of streaming block-by-block. Same output bytes, far higher peak RSS (measured 196.9 MiB vs 126.1 MiB at a 32 MiB input, Session 39) — kept for A/B evidence runs only |
 
@@ -150,7 +151,7 @@ structure is preserved under `--out-dir`.
 
 ```text
 lexora batch --in DIR --out-dir DIR [--op canon|pack] [--pattern G] [--suffix S]
-             [--encoding E] [--level N] [--block-size B]
+             [--encoding E] [--level N] [--block-size B] [--codec C]
              [--stop-on-error] [--report F] [--json]
 ```
 
@@ -163,6 +164,7 @@ lexora batch --in DIR --out-dir DIR [--op canon|pack] [--pattern G] [--suffix S]
 | `--suffix S` | no | `.canon` / `.lxz` / *stripped* | appended to each output name; for `unpack` the `.lxz` is stripped instead, so a round trip returns the names it started with |
 | `--encoding E` | no | — | declared source encoding (canon only) |
 | `--level N`, `--block-size B` | no | 9 (`DEFAULT_LEVEL`), 8 MiB | pack only |
+| `--codec C` | no | `zstd` | pack only; `zstd` or `ziptastic` (ADR-0014), written into each archive's header |
 | `--jobs N` | no | 1 | process N files concurrently. **Results, ordering and the report are identical to `--jobs 1`** — only the wall clock may differ. **Experimental: measured 20–40 % SLOWER than sequential on the 2-vCPU container these numbers come from** (process start-up plus CPU contention). It is opt-in for hosts with real parallel cores; measure before relying on it |
 | `--stop-on-error` | no | off | abort at the first failure, exit with that file's code |
 | `--report F`, `--json` | no | — | write / print the JSON report (per-file `ok`, `code`, sizes) |

@@ -8,6 +8,10 @@ __version__ = "0.0.1.dev1"
 
 CANONICALIZER_VERSION = "lexcan-0.1"
 CODEC_ID_ZSTD = "zstd-raw-l19"  # registry-style ID; retired IDs are never reused
+# ziptastic's CHCE stream (ADR-0014). A new id, never a reuse of the zstd one:
+# the reader dispatches on this string, so an archive packed with CHCE must say
+# so, and an older reader must refuse it rather than attempt a zstd decode.
+CODEC_ID_ZIPTASTIC = "ziptastic-1"
 
 # Default zstd level for every surface (library, CLI, GUI settings).
 #

@@ -5,8 +5,22 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
+### Added
+- 2026-11-07 — Session 70 (**second codec: ziptastic (CHCE) behind a codec registry** — [ADR-0014](docs/ADR/ADR-0014-ziptastic-codec.md)):
+  - **`--codec {zstd,ziptastic}`** on `pack` and `batch`. `ziptastic` selects CHCE, which measures **−11.83 % vs `xz -9`** on a text-heavy 10-file Silesia subset (ziptastic's own numbers) — the ratio lever the R5 result said tuning zstd could not provide. It runs at 0.3–0.6 MB/s, so it is opt-in; **zstd stays the default** and a default `pack` is byte-identical to before (asserted by a test).
+  - **`src/lexora/codec_registry.py`** — one mapping from CLI name to header `codec_id` to implementation. `container.py` no longer names a codec anywhere; an unknown id is still a hard `E-CMP-006` refusal, so older readers refuse new-codec archives rather than guessing.
+  - **`src/lexora/ziptastic_core.py`** — a shell-out adapter against the documented CLI contract (`ziptastic c -9` / `d` as stdin→stdout filters, `CHCE` magic, serial path only so determinism holds per pinned binary). No silent fallback: a missing binary fails with guidance naming `$LEXORA_ZIPTASTIC` and `--codec zstd`.
+  - **`lexora doctor`** now reports the ziptastic binary as INFO (absent is not a fault — zstd is the default).
+  - **`docs/AUDIT_2026-11-07.md`** — the audit this came from: four findings with evidence, plus the correction that the −11.83 % headline is a subset whose two largest files (`webster`, `mozilla`) are unmeasured.
+  - 27 new tests (26 passing + the real-binary skip). Suite **514 → 540 passed**, 2 skipped (the new skip is the real-binary round trip; the binary is not vendored and cannot be built here).
+
 ### Fixed
-- 2026-10-29 — Session 69 (**CI was red on every push — and the landing page still described a prototype from ten sessions ago**):
+- 2026-11-07 — Session 70 (**four defects found by audit, all fixed**):
+  - **The GUI's codec defaults were still level 19** (`AppService.run_compress`, `run_pack`) while library, CLI and `DEFAULT_SETTINGS` all said 9 — the exact drift ADR-0012 was written to end, missed by a regression test that only inspected `DEFAULT_SETTINGS`. Now `DEFAULT_LEVEL`, with a test that reads both signatures.
+  - **zstd was hard-coded in five places** (the id written into the header, the reader's accept-list, and three literal frame-magic checks), so "the container is codec-agnostic" was true of the layout and not the code. Now the registry, with per-codec magic.
+  - **`unpack --block N` mislabelled its errors as "block 0"** — the loop enumerated the selected list rather than the archive's indices, in exactly the case the flag exists for. Now absolute indices, with a regression test.
+  - **Recorded, not fixed: the header's `codec_id` says `zstd-raw-l19` while the default level is 9**, so every default archive names a level it did not use and level 9 vs 19 are indistinguishable. It is a frozen format field (ADR-0007), so it needs an ADR and a rename window — options are in the audit.
+ (**CI was red on every push — and the landing page still described a prototype from ten sessions ago**):
   - **`pytest -q` in CI failed collection with 9 errors** (`ModuleNotFoundError: No module named 'benchmarks'`). Root cause: `pytest` does **not** put the working directory on `sys.path` — only `python -m pytest` does — and the harness suites import `from benchmarks import corpus`. Every local run used `PYTHONPATH=src python3 -m pytest`, which masked it completely. Fixed by pinning `pythonpath = ["src", "."]` in `pyproject.toml`, so the suite imports the same way however it is launched.
   - **A second instance of the same bug**: five GUI parity tests compared GUI bytes against a `python -m lexora.cli` **subprocess** that could only import the package if it was installed. They passed after `pip install -e .` and failed on a bare `pytest`. The child now receives the source tree on `PYTHONPATH` explicitly, so the suite is green installed or not.
   - **A regression test pins the config**: `test_pytest_config_makes_the_harness_importable` reads `pyproject.toml` and fails if either `pythonpath` entry is removed.
