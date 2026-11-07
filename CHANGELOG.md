@@ -6,6 +6,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-11-07 — Session 74 (**protocol-shaped run: CHCE reproduces in every split; `.lxdb` shape proposed, not built**):
+  - **R6** — all three splits, 3 reps, six systems, leak audit clean, at 5.9 MB of Gutenberg text. `lexora-chce` measures **−19.36 % vs `lexora19`** and **−18.51 % vs `xz -9`**, with `chce-raw` at −18.81 %; stored sizes are byte-stable across reps for every system. Two corpora now agree to within 1.2 points (smoke −19.75 %, R6 −18.51 %), and the ordering holds in train, validation and heldout. `lexora19` still measures +1.05 % against `xz -9`, i.e. v0 is still slightly worse than xz exactly as published.
+  - **It does not close G2**, and is not published as a revision: 5.9 MB of a 1.054 GiB snapshot, one machine class, `xz9-lzma` rather than the CLI, no sign-off. The gap is now environmental, not analytical.
+  - **[ADR-0013](docs/ADR/ADR-0013-lxdb-layout.md) — Proposed, no byte layout**: the single-file `.lxdb` shape and the mutation model, answering the owner's "can `.lxdb` replace SQLite?" with a measured basis — a serialised SQLite index image compresses to **27 %** of its raw size and opens in **10 ms**, so the index can live inside the file. Mutation: **append payload, rewrite index, commit by superblock flip**; a full-file rewrite would cost 35–40 min per edit at CHCE speed, and in-place page updates would mean hand-writing SQLite's B-tree layer.
+  - Artifacts: `benchmarks/results-r6-{train,validation,heldout,summary}.json`, `docs/R6_PROTOCOL_SHAPED_2026-11-07.md`.
+
+### Added
 - 2026-11-07 — Session 73 (**`lexora db` — the archive becomes queryable**, [ADR-0016](docs/ADR/ADR-0016-queryable-archive.md)):
   - **SQLite is the index, lexora is the payload store.** A catalog is `catalog.sqlite` plus content-addressed `.lxz` blobs. Metadata columns are filterable with SQL, document text is full-text searchable, and `get` decodes only the document you asked for. **No new format bytes** — the `.lxdb` layout stays gated behind G2 as ADR-0010 requires.
   - Seven verbs: `db init / add / search / get / delete / compact / stats`. `add` canonicalises by default and re-adding the same path makes a new version (the old one is superseded and drops out of queries at once). `compact` is the only lossy operation and reports exactly what it removed.

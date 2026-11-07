@@ -1,0 +1,176 @@
+{
+  "benchmark_revision": 6,
+  "corpus_tier": "T0-owner-supplied",
+  "date": "2026-11-07T15:40:00Z",
+  "manifest_sha256": "1acc8cd81cc04a832260efbc5bee49e28835d34b1a05f88709293e20061cb133",
+  "note": "Harness output. Publication into docs/BENCHMARK_RESULTS.md requires owner review per QUALITY_PLAN. Tier label above is MANDATORY alongside any published number from this artifact.",
+  "peak_rss_kib_by_system": null,
+  "peak_rss_method": null,
+  "peak_rss_skipped_reason": "peak-RSS capture unavailable or every forked measurement failed (VmHWM sampling is Linux-only; child failures are recorded as -1, never faked); P1-T6 remains open for this run",
+  "provenance_present": false,
+  "reps": 3,
+  "rows": [
+    {
+      "encode_s_max": 0.07427273699977377,
+      "encode_s_median": 0.03267452399995818,
+      "encode_s_min": 0.01872776199979853,
+      "input_bytes": 342105,
+      "path": "pg132.txt",
+      "split": "validation",
+      "stored_bytes_max": 119242,
+      "stored_bytes_median": 119242,
+      "stored_bytes_min": 119242,
+      "system": "lexora"
+    },
+    {
+      "encode_s_max": 0.21510446399997818,
+      "encode_s_median": 0.18115701599981548,
+      "encode_s_min": 0.17244470200012074,
+      "input_bytes": 342105,
+      "path": "pg132.txt",
+      "split": "validation",
+      "stored_bytes_max": 112534,
+      "stored_bytes_median": 112534,
+      "stored_bytes_min": 112534,
+      "system": "lexora19"
+    },
+    {
+      "encode_s_max": 0.2143146519997572,
+      "encode_s_median": 0.18274931799987826,
+      "encode_s_min": 0.17778668399978415,
+      "input_bytes": 342105,
+      "path": "pg132.txt",
+      "split": "validation",
+      "stored_bytes_max": 113403,
+      "stored_bytes_median": 113403,
+      "stored_bytes_min": 113403,
+      "system": "zstd19"
+    },
+    {
+      "encode_s_max": 0.31704442999989624,
+      "encode_s_median": 0.2959311859999616,
+      "encode_s_min": 0.2720625279998785,
+      "input_bytes": 342105,
+      "path": "pg132.txt",
+      "split": "validation",
+      "stored_bytes_max": 111448,
+      "stored_bytes_median": 111448,
+      "stored_bytes_min": 111448,
+      "system": "xz9-lzma"
+    },
+    {
+      "encode_s_max": 0.6174067000001742,
+      "encode_s_median": 0.6128753870002583,
+      "encode_s_min": 0.5667333390001659,
+      "input_bytes": 342105,
+      "path": "pg132.txt",
+      "split": "validation",
+      "stored_bytes_max": 90713,
+      "stored_bytes_median": 90713,
+      "stored_bytes_min": 90713,
+      "system": "chce-raw"
+    },
+    {
+      "encode_s_max": 0.9462688429998707,
+      "encode_s_median": 0.7753690009999445,
+      "encode_s_min": 0.6372980149999421,
+      "input_bytes": 342105,
+      "path": "pg132.txt",
+      "split": "validation",
+      "stored_bytes_max": 90953,
+      "stored_bytes_median": 90953,
+      "stored_bytes_min": 90953,
+      "system": "lexora-chce"
+    },
+    {
+      "encode_s_max": 0.009243021999736811,
+      "encode_s_median": 0.008048869000049308,
+      "encode_s_min": 0.00804421899965746,
+      "input_bytes": 141840,
+      "path": "pg844.txt",
+      "split": "validation",
+      "stored_bytes_max": 47667,
+      "stored_bytes_median": 47667,
+      "stored_bytes_min": 47667,
+      "system": "lexora"
+    },
+    {
+      "encode_s_max": 0.0981390859997191,
+      "encode_s_median": 0.08558752400040248,
+      "encode_s_min": 0.0791077620001488,
+      "input_bytes": 141840,
+      "path": "pg844.txt",
+      "split": "validation",
+      "stored_bytes_max": 45346,
+      "stored_bytes_median": 45346,
+      "stored_bytes_min": 45346,
+      "system": "lexora19"
+    },
+    {
+      "encode_s_max": 0.10242359899984876,
+      "encode_s_median": 0.09113228300020637,
+      "encode_s_min": 0.0881014349997713,
+      "input_bytes": 141840,
+      "path": "pg844.txt",
+      "split": "validation",
+      "stored_bytes_max": 45566,
+      "stored_bytes_median": 45566,
+      "stored_bytes_min": 45566,
+      "system": "zstd19"
+    },
+    {
+      "encode_s_max": 0.2003314959997624,
+      "encode_s_median": 0.17711987199982104,
+      "encode_s_min": 0.1680115249996561,
+      "input_bytes": 141840,
+      "path": "pg844.txt",
+      "split": "validation",
+      "stored_bytes_max": 44728,
+      "stored_bytes_median": 44728,
+      "stored_bytes_min": 44728,
+      "system": "xz9-lzma"
+    },
+    {
+      "encode_s_max": 0.35315266599991446,
+      "encode_s_median": 0.3290135580000424,
+      "encode_s_min": 0.3110152190001827,
+      "input_bytes": 141840,
+      "path": "pg844.txt",
+      "split": "validation",
+      "stored_bytes_max": 36160,
+      "stored_bytes_median": 36160,
+      "stored_bytes_min": 36160,
+      "system": "chce-raw"
+    },
+    {
+      "encode_s_max": 0.39814885300029346,
+      "encode_s_median": 0.3514233159999094,
+      "encode_s_min": 0.3497165320000022,
+      "input_bytes": 141840,
+      "path": "pg844.txt",
+      "split": "validation",
+      "stored_bytes_max": 36401,
+      "stored_bytes_median": 36401,
+      "stored_bytes_min": 36401,
+      "system": "lexora-chce"
+    }
+  ],
+  "subset": {
+    "files": 2,
+    "input_bytes": 483945,
+    "note": "smoke-scope subset of the parent manifest \u2014 never protocol scope",
+    "selector": {
+      "max_bytes": 2000000,
+      "split": "validation"
+    }
+  },
+  "systems_run": [
+    "lexora",
+    "lexora19",
+    "zstd19",
+    "xz9-lzma",
+    "chce-raw",
+    "lexora-chce"
+  ],
+  "systems_skipped": {}
+}
