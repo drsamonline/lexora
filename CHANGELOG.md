@@ -5,6 +5,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
+### Changed
+- 2026-11-07 — Session 72 (**owner decisions recorded: codec policy, and R4/R5 published**):
+  - **[ADR-0015](docs/ADR/ADR-0015-codec-policy.md) — codec policy, accepted by explicit owner decision; OQ-16 closed.** `zstd` stays `DEFAULT_CODEC`; CHCE is the documented **max-ratio preset** (`--codec ziptastic`). The ADR records why the better-ratio codec is *not* the default: a base install must not require a platform-specific external binary, a default that silently costs 30× the encode time is a bad first impression, and the evidence is smoke scope. Changing the default later should fail that ADR's review, not just a test.
+  - **R4 and R5 published** under owner sign-off. The scope label was *not* upgraded with it: corpus size, all three splits and 3 reps are met, but a second machine class (REF-4G) and `xz` via the CLI are not, and R5 measured a 184-file / 80.4 MiB subset of the 1.014 GiB corpus — so the revision publishes as a revision and still carries **no ADR-0001 verdict**. `R4_SMOKE_DRAFT.md` keeps its historical filename so existing links stay valid.
+  - **`IMPLEMENTATION_MATRIX.md`**: REQ-CMP-002 no longer describes a zstd-only codec — it names `codec_registry.py` and both implementations, with the tests covering dispatch and every adapter failure mode.
+  - **`docs/index.md`**: still claimed "no LEXORA-vs-baseline results exist", false since Session 60. Now carries R4/R5 with their numbers, links the CHCE measurement and the audit, and lists ADR-0014/0015.
+  - No code touched; suite unchanged at **541 passed, 1 skipped**.
+
 ### Added
 - 2026-11-07 — Session 71 (**CHCE measured on this project's own corpus — the effect transfers, and is larger on prose**):
   - The ADR-0014 default question could not be answered on ziptastic's Silesia numbers. It can now: on **19 Gutenberg texts, 19.4 MB of canonical bytes**, with every codec on identical input and every CHCE frame decoded and compared before its size was counted, **CHCE is −19.75 % vs `xz -9`** and −27.67 % vs zstd-9 — smaller on **19 of 19** files, per-file range −16.40 % to −21.61 %.
