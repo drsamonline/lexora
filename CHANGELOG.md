@@ -6,6 +6,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-11-07 — Session 71 (**CHCE measured on this project's own corpus — the effect transfers, and is larger on prose**):
+  - The ADR-0014 default question could not be answered on ziptastic's Silesia numbers. It can now: on **19 Gutenberg texts, 19.4 MB of canonical bytes**, with every codec on identical input and every CHCE frame decoded and compared before its size was counted, **CHCE is −19.75 % vs `xz -9`** and −27.67 % vs zstd-9 — smaller on **19 of 19** files, per-file range −16.40 % to −21.61 %.
+  - Throughput on the same sample: CHCE **0.50 MiB/s**, `xz -9` 1.08, zstd-9 15.9. The ratio is bought with time, as documented.
+  - **No build machine was needed after all**: ziptastic ships a prebuilt `ziptastic-1.2.0-linux-x86_64` release, checksum-verified against its own `SHA256SUMS`. The previously-skipped real-binary test now passes (541 passed, 1 skipped with the binary on PATH; 540/2 without).
+  - End-to-end through the CLI on a 3.3 MB document: `pack --codec ziptastic` → 742,139 bytes vs 1,052,408 for zstd-9 (−29.5 %), `verify` OK, `unpack` byte-exact, `inspect` reporting `codec ziptastic-1`.
+  - New: [docs/CHCE_SMOKE_2026-11-07.md](docs/CHCE_SMOKE_2026-11-07.md) and `benchmarks/results-chce-smoke.json` (per-file rows, binary checksum, corpus list, environment). OQ-16 updated with the evidence and a recommendation — **zstd stays the default**, CHCE stays the documented max-ratio preset, because flipping it would make an external binary mandatory on smoke-scope numbers. An ADR-0001 verdict still needs the protocol-scope run on the R4/R5 corpus.
+
+### Added
 - 2026-11-07 — Session 70 (**second codec: ziptastic (CHCE) behind a codec registry** — [ADR-0014](docs/ADR/ADR-0014-ziptastic-codec.md)):
   - **`--codec {zstd,ziptastic}`** on `pack` and `batch`. `ziptastic` selects CHCE, which measures **−11.83 % vs `xz -9`** on a text-heavy 10-file Silesia subset (ziptastic's own numbers) — the ratio lever the R5 result said tuning zstd could not provide. It runs at 0.3–0.6 MB/s, so it is opt-in; **zstd stays the default** and a default `pack` is byte-identical to before (asserted by a test).
   - **`src/lexora/codec_registry.py`** — one mapping from CLI name to header `codec_id` to implementation. `container.py` no longer names a codec anywhere; an unknown id is still a hard `E-CMP-006` refusal, so older readers refuse new-codec archives rather than guessing.

@@ -1,6 +1,6 @@
 # Next Session Resume Card
 
-**Last verified state:** 2026-11-07, **Session 70 complete** (audit of lexora against
+**Last verified state:** 2026-11-07, **Session 71 complete** (CHCE measured on lexora's own corpus class: **−19.75 % vs `xz -9`**, 19/19 files, smoke scope — the release binary works, so no build machine was needed. Gate **541 passed, 1 skipped** with the real binary present). Prior: **Session 70** (audit of lexora against
 ziptastic + the second codec landed: a codec registry, `--codec ziptastic` (CHCE,
 ADR-0014), four defects fixed, suite **540 passed, 2 skipped**). Full findings:
 [AUDIT_2026-11-07.md](AUDIT_2026-11-07.md). Prior: **Session 69** (CI collection
@@ -29,21 +29,19 @@ is still blocked** by the read-only credential.
 
 ## Tasks in order
 
-1. **Measure CHCE on lexora's own corpus (OQ-16 — the default-codec decision).**
-   The seam exists; the measurement does not. Needs a machine with **cmake + ninja
-   + g++** and the 23 vendored submodules (none exist in the agent sandbox, so the
-   adapter's ratio is untested here by necessity — its contract is covered by a stub).
-   ```bash
-   # on a build machine, once ziptastic is built and on PATH:
-   lexora doctor                                   # should report the ziptastic row
-   lexora pack --in corpus_sample.txt --out a.lxz --codec ziptastic
-   lexora pack --in corpus_sample.txt --out b.lxz                  # zstd-9, the default
-   lexora inspect --in a.lxz ; lexora verify --in a.lxz
-   ```
-   Then the same on the R5 corpus at the protocol block size, and compare against
-   `xz -9` and zstd-19 per split. **Do not move the default on the Silesia number
-   alone** — that corpus is not this corpus, and its largest English-text file
-   (`webster`, a dictionary) is unmeasured even there.
+1. **~~Measure CHCE on lexora's own corpus (OQ-16)~~ DONE — Session 71.** The assumed
+   blocker (a build machine) was not one: ziptastic ships a prebuilt
+   `ziptastic-1.2.0-linux-x86_64`. Measured on 19 Gutenberg texts (19.4 MB canonical,
+   every codec on identical canonical bytes, every CHCE frame decoded and compared
+   before its size counted): **CHCE −19.75 % vs `xz -9`**, −27.67 % vs zstd-9, smaller
+   on **19/19** files; throughput 0.50 MiB/s against zstd-9's 15.9. Full write-up and
+   artifact: [CHCE_SMOKE_2026-11-07.md](CHCE_SMOKE_2026-11-07.md),
+   `benchmarks/results-chce-smoke.json`.
+   **Next step is the protocol-scope version of the same comparison** — R4/R5 corpus,
+   184 files / 1.054 GiB, three splits, `--systems` including the CHCE path — because
+   that is what an ADR-0001 verdict needs. A default-codec flip waits on it; the
+   recommendation on the table is to keep zstd default and CHCE as the max-ratio
+   preset.
 2. **Decide finding F1 — the `codec_id` string.** `CODEC_ID_ZSTD` is `zstd-raw-l19`
    while `DEFAULT_LEVEL` is 9, so every default archive names a level it did not
    use and a level-9 archive is indistinguishable from a level-19 one. It is a

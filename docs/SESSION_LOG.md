@@ -1190,3 +1190,59 @@ open in DECISIONS.md rather than answered on someone else's corpus.
 
 **Push state:** unchanged — read-only brokered credential. Session 70 is delivered as a
 patch on top of `cc7317d`.
+
+---
+
+## Session 71 — 2026-11-07 (the blocker was not a blocker: CHCE measured on this corpus)
+
+**Session 70 ended with an assumption that turned out to be wrong, in the cheap
+direction.** ADR-0014 left the default codec at zstd because the only ratio evidence
+for CHCE was ziptastic's own Silesia subset — and the note said measuring it here would
+need cmake, ninja, g++ and 23 submodules, none of which exist in this environment. True
+for *building* ziptastic. Irrelevant, because **ziptastic publishes a prebuilt
+`ziptastic-1.2.0-linux-x86_64` release**. Downloaded, checked against the release's own
+`SHA256SUMS` (`4bebce37…`), and it runs: `ziptastic 1.2.0 (CHCE format v8)`. A
+two-minute check removed the whole blocker. The lesson is the one this project keeps
+relearning: verify the premise before designing around it.
+
+**The measurement, and why it is constructed the way it is.** Every codec saw identical
+bytes — Gutenberg text passed through lexora's own `canonicalize()`, because that is what
+an archive stores; comparing codecs on raw text would measure a pipeline this project
+does not ship. Before any CHCE size was counted the frame was decoded and compared to its
+input. 19 files, 19,824,293 raw → 19,432,350 canonical bytes:
+
+| codec | total | ratio |
+|---|---|---|
+| zstd-9 (shipped default) | 6,514,541 | 0.3352 |
+| zstd-19 | 5,944,104 | 0.3059 |
+| `xz -9` | 5,871,796 | 0.3022 |
+| **CHCE `-9`** | **4,712,272** | **0.2425** |
+
+**CHCE −19.75 % vs `xz -9`, −27.67 % vs zstd-9, smaller on 19 of 19 files**, per-file
+range −16.40 % to −21.61 %. Throughput 0.50 MiB/s against zstd-9's 15.9 and `xz -9`'s
+1.08 — the ratio is bought with time, exactly as advertised.
+
+**Two sanity checks that the number is real rather than lucky.** The zstd-19 ratio here
+(0.3059) sits within 2 % of R5's published 0.3120 for the same pipeline, so the sample
+behaves like the real corpus. And the per-file spread is only five points wide across
+nineteen different books, which is what a modelling win looks like; a lucky sample would
+be spikier. Silesia's −11.83 % was dragged down by two binary files where CHCE is level
+with `xz`; pure prose shows what the text case alone is worth.
+
+**End to end, not just in a script.** War and Peace through the real CLI: canon →
+`pack --codec ziptastic` → 742,139 bytes against 1,052,408 for the zstd archive (−29.5 %)
+→ `verify` OK → `unpack` byte-exact → `inspect` reporting `codec ziptastic-1`. The
+previously-skipped real-binary test now runs and passes; the suite is **541 passed,
+1 skipped** with the binary present, 540/2 without.
+
+**What this does not do.** It does not flip the default. CHCE would make an external
+binary mandatory for a base install that today needs only zstandard, and these are
+smoke-scope numbers. OQ-16 keeps its recommendation — zstd default, CHCE as the
+documented max-ratio preset — and now carries the evidence. An ADR-0001 verdict still
+needs the protocol-scope run on the R4/R5 corpus (184 files, 1.054 GiB, three splits,
+held-out), which is the next session's first task.
+
+**Gate:** `python3 -m pytest -q` → **541 passed, 1 skipped** (with
+`LEXORA_ZIPTASTIC` set); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+Artifact: `benchmarks/results-chce-smoke.json` (per-file rows, binary checksum, corpus
+list, environment).
