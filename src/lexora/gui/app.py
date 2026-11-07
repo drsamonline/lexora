@@ -177,7 +177,30 @@ def build_window():
     view_box.addItems(VIEWS)
     bar.addWidget(view_box)
     bar.addStretch(1)
+    # The query view is a separate window (ADR-0016/ADR-0011): it talks to
+    # `lexora db` as a client, so it does not share this window's service layer.
+    query_button = QPushButton("Query archive…")
+    bar.addWidget(query_button)
     root.addLayout(bar)
+
+    _query_windows: dict[str, object] = {}
+
+    def on_open_query() -> None:
+        from lexora.gui.query import build_panel
+
+        # Top-level, not a child of `win`: a QMainWindow parented to the main window
+        # is destroyed with it, out of order with the widgets inside it, and Qt says
+        # so — "QObject: shared QObject was deleted directly. The program is
+        # malformed and may crash." That is a real crash risk on some platforms,
+        # not just a noisy warning.
+        qwin = QMainWindow()
+        qwin.setWindowTitle("LEXORA — query archive")
+        qwin.setCentralWidget(build_panel("", parent=qwin))
+        qwin.resize(960, 720)
+        _query_windows["w"] = qwin  # keep a reference; Qt would collect it otherwise
+        qwin.show()
+
+    query_button.clicked.connect(on_open_query)
 
     # --- shared form widgets ------------------------------------------------
     settings = load_settings()           # G7: persisted defaults (or shipped)

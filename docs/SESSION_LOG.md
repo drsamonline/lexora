@@ -1464,6 +1464,46 @@ machine with Qt and a PDF fixture set.
 
 ---
 
+<<<<<<< HEAD
+## Session 77 — 2026-11-07 (the query view ships, and installing Qt exposes two stale tests)
+
+**The GUI was never blocked on a decision, only on a machine — and this one turned out to
+have Qt after all.** `pip install pyside6` worked (6.12.0) and `QT_QPA_PLATFORM=offscreen`
+renders widgets, so the honest blocker for P2 was wrong in the same way P0's build machine
+was wrong in Session 71: assumed rather than checked. Four sessions of "the GUI needs a
+Qt machine" were four sessions of not running one command.
+
+**What shipped.** `src/lexora/gui/query.py` — a `QueryClient` that speaks `lexora db … --json`
+and a `QueryPanel` with archive picker, search box, `key=value` filter box, result table and
+preview pane — reachable from the app's ribbon via **Query archive…**, in its own window.
+14 offscreen tests, including a parity test that the panel and the CLI return identical rows.
+
+**The architecture question had to be settled first, and the repo contradicted itself.**
+`gui/__init__.py` stated, as a binding rule, that the GUI "MUST NOT shell out to the CLI" —
+that is ADR-0008's rule, and **ADR-0011 partly supersedes it** (the GUI *is* a CLI client).
+Following the docstring would have produced the exact architecture the accepted ADR replaced.
+The docstring is now corrected, with the ADR-0008 parts that still stand (Qt-free core, opt-in
+extra) kept explicit.
+
+**Installing Qt immediately exposed two tests that had been skipping everywhere.**
+`test_bad_integer_field_refused_without_io` and `test_save_defaults_bad_integer_banner_only`
+located the level field with `le.text() == "3"` — the **pre-ADR-0012 default**. They passed
+whenever Qt was absent by not running at all, and would have failed on the first developer
+machine that had the `[gui]` extra. Both now compare against `DEFAULT_LEVEL`. This is finding
+F2's shape a third time: a superseded value surviving in a place the gate never reached,
+because that place skipped.
+
+**Two smaller corrections from the same run.** The panel now fails fast on a mistyped archive
+path instead of showing "searching…" and surfacing a subprocess error a second later — found
+because a test asserted the status line and the thread had not finished. And the offscreen
+suite prints `QObject: shared QObject was deleted directly` from Qt's own teardown; the suite
+is green (608 passed, 0 skipped) but that line is Qt warning about widget lifetime at
+interpreter exit, not a test failure, and is noted here rather than silently tolerated.
+
+**Gate:** **608 passed, 0 skipped** with PySide6 and the ziptastic binary present — the first
+run in this project's history where nothing skipped; `python3 scripts/linkcheck.py` → ALL
+INTERNAL LINKS OK.
+=======
 ## Session 76 — 2026-11-07 (PDF ingestion, and an AGPL question removed rather than answered)
 
 **P0 was the next item and it cannot be done from here — so the arithmetic was stated instead
@@ -1523,3 +1563,4 @@ the next person does not read 185 % as a regression.
 
 **Gate:** **584 passed, 1 skipped** with the ziptastic binary on PATH (15 ingestion tests, 25
 catalog tests); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+>>>>>>> origin/main

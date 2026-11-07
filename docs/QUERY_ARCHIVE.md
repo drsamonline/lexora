@@ -114,8 +114,18 @@ archive is intact.
 
 ## GUI
 
-The GUI is a client of these commands, per [ADR-0011](ADR/ADR-0011-gui-process-separation.md):
-the search box, result list and preview pane all shell out to `lexora db`, and the
-preview decodes only the selected document. The CLI surface above is therefore the
-GUI's backend contract — it is complete and tested here, and the panel is the remaining
-work.
+**The query view ships.** Launch `lexora-gui` and press **Query archive…** in the ribbon, or
+open it directly:
+
+```python
+from lexora.gui.query import build_panel
+panel = build_panel("/path/to/archive")
+```
+
+It is a client of these commands, per [ADR-0011](ADR/ADR-0011-gui-process-separation.md):
+the search box, filter box, result table and preview all shell out to `lexora db --json`,
+so the GUI and the CLI cannot drift into two implementations — a parity test asserts they
+return the same rows. The preview decodes **only** the selected document.
+
+Still open: ingest and compact actions from the GUI, and moving `gui/service.py` onto
+subprocess calls (the rest of ADR-0011).
