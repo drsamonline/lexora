@@ -15,6 +15,13 @@ credential is read-only, so every change arrives as a patch).
 **Working-tree state:** Session-70 work is uncommitted on the fetched tree; **push
 is still blocked** by the read-only credential.
 
+## The plan
+
+**Read [PATH_TO_V1.md](PATH_TO_V1.md) first — it is the single list of remaining
+work** (P0 gate → P1 `.lxdb` → P2 GUI → P3 ingestion → P4/P5 debt → P6 release), with
+each item's blocker and its definition of done. This card is only the resume point;
+the plan is the map.
+
 ## Read first
 - [ ] `docs/AUDIT_2026-11-07.md` — the four findings, what was fixed, and the
       correction to ziptastic's −11.83 % headline (it is a 10-file subset; the two

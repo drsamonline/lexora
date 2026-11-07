@@ -1420,3 +1420,44 @@ repeat them.
 **Gate:** **567 passed, 1 skipped**; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 **G2 remains open** — corpus scale, a second machine class, CLI `xz` and owner sign-off.
 `.lxdb` stays unbuilt, by the owner's decision.
+
+---
+
+## Session 75 — 2026-11-07 (the remaining work becomes one document)
+
+**The owner's instruction was to keep the plan and not lose it: "we have to do, and have
+final product."** That is a request for durability, not for more code — the risk in a project
+this size is not running out of tasks, it is a task surviving only in a chat transcript. So
+this session produced [PATH_TO_V1.md](PATH_TO_V1.md) and wired it into every entry point
+(README, `docs/index.md`, STATUS, the resume card, ROADMAP).
+
+**What the document is.** v1.0 defined as **six testable conditions** — ingest, exactness, a
+measured claim, one queryable file, a GUI, a release — followed by the work ordered **P0–P6**
+by dependency, each item with its blocker and its definition of done. It also carries a
+**do-not-forget register**: CHCE stays a preset; `.lxdb` was deliberately not built yet; the
+GUI is a CLI client; word-dictionary/delta/byte-shuffle are measured dead; CAN-R01 makes
+compressed output bigger for non-ASCII text *on purpose*; the index costs ~7 % and is stored
+uncompressed by design; multilingual and PDF/OCR are still unbuilt. Each of those is
+someone's actual decision, and each would be cheap to lose.
+
+**The rule that makes it usable:** this file wins on *sequencing*, accepted ADRs still win on
+*decisions*, and an item that is done but still listed is worse than no list. Without that
+sentence a plan document becomes a wish list that nobody trusts.
+
+**Two PRs merged first**, so the plan describes `main` rather than a branch: #18 (the
+queryable archive, ADR-0016) and #19 (R6 + ADR-0013). `main` is now `bc6e58b`.
+
+**Two mistakes, both caught by the tooling rather than by luck.** The first pass at wiring the
+plan died mid-script on a stale STATUS header — the header still said Session 71 because
+Session 74 updated DECISIONS and NEXT_SESSION but never touched STATUS, which is exactly the
+drift class finding F5 describes. And `linkcheck` caught a `PATH_TO_V1` link to
+`ADR-0016-queryable-archive.md` missing its `ADR/` prefix. Neither would have been visible in
+a diff.
+
+**Gate:** documentation only — suite **567 passed, 1 skipped** with the ziptastic binary on
+PATH (**566 passed, 2 skipped** without it, the extra skip being the real-binary round trip);
+`python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Where the project now stands:** P0 (close gate G2) is the only thing blocking the headline
+claim and `.lxdb`; P2 (GUI) and P3 (PDF/OCR) are independent and could run in parallel on a
+machine with Qt and a PDF fixture set.
