@@ -60,6 +60,7 @@ The Phase-1 CLI exists and is tested (`canon`, `zround`, `pipe`, `pack`, `unpack
 - [CHCE_SMOKE_2026-11-07.md](CHCE_SMOKE_2026-11-07.md) — **smoke measurement, not a revision:** ziptastic's CHCE codec is **−19.75 % vs `xz -9`** on 19 Gutenberg texts (19.4 MB canonical), 19/19 files, at 0.50 MiB/s. This is why [ADR-0015](ADR/ADR-0015-codec-policy.md) ships CHCE as the max-ratio preset.
 - [AUDIT_2026-11-07.md](AUDIT_2026-11-07.md) — audit of this repo against ziptastic: four findings with evidence, and what was fixed.
 - [QUERY_ARCHIVE.md](QUERY_ARCHIVE.md) — **`lexora db`**: the archive as a queryable compressed store (SQLite index over `.lxz` payloads). Metadata filters + full-text, append/version/delete/compact, index cost measured at 7.6 % of text. Design: [ADR-0016](ADR/ADR-0016-queryable-archive.md).
+- [R6_PROTOCOL_SHAPED_2026-11-07.md](R6_PROTOCOL_SHAPED_2026-11-07.md) — **protocol-shaped run (3 splits, 3 reps, 6 systems, leak audit clean) at 5.9 MB**: CHCE reproduces at **−18.51 % vs `xz -9`** in every split, byte-stable across reps. **Not published, does not close G2** — full-corpus scale, a second machine class and CLI `xz` are still missing. Shape for the single-file `.lxdb`: [ADR-0013](ADR/ADR-0013-lxdb-layout.md) (Proposed, no bytes).
 
 ## Security & privacy
 

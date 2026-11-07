@@ -29,6 +29,22 @@ is still blocked** by the read-only credential.
 
 ## Tasks in order
 
+0. **Close gate G2 — it is now environmental, not analytical (Session 74).** R6 ran the
+   protocol's *shape* (all three splits, 3 reps, 6 systems, leak audit clean) at 5.9 MB and
+   CHCE reproduced at **−18.51 % vs `xz -9`** in every split, byte-stable across reps. What
+   remains is scale and hardware, not analysis:
+   - the **1.054 GiB** snapshot instead of 5.9 MB (it exists; it is just not in the repo);
+   - a **second machine class** (REF-4G) for the reference profile;
+   - **`xz` via the CLI** rather than `xz9-lzma`;
+   - **owner sign-off**, then a published revision.
+   Budget **hours, not minutes**: CHCE runs at 0.39–0.45 MiB/s and the harness compresses
+   every file twice per rep (measurement + forked RSS probe). See
+   [R6_PROTOCOL_SHAPED_2026-11-07.md](R6_PROTOCOL_SHAPED_2026-11-07.md).
+   **When G2 closes**, `.lxdb` becomes buildable against
+   [ADR-0013](ADR/ADR-0013-lxdb-layout.md) (Proposed: single file, embedded compressed
+   index, append-payload/rewrite-index/commit-by-superblock-flip). Do not start it before —
+   the owner declined to override the gate on 2026-11-07.
+
 0. **GUI for the query archive (owner request, Session 73).** The backend is done and
    tested (`lexora db`, 21 tests); the panel is not. Per ADR-0011 the GUI shells out to
    the CLI, so the contract is fixed: search box → `db search --json`, result list,

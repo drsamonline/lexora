@@ -1,0 +1,91 @@
+{
+  "revision": 6,
+  "scope": "PROTOCOL-SHAPED, SMALL SCALE \u2014 three splits, 3 reps, 6 systems, leak audit clean. Does NOT close gate G2: the corpus used is 5.9 MB of a 1.054 GiB snapshot, there is one machine class, and xz is liblzma not the CLI.",
+  "measured": "2026-11-07",
+  "session": 74,
+  "parent_manifest_sha256": "1acc8cd81cc04a832260efbc5bee49e28835d34b1a05f88709293e20061cb133",
+  "corpus": {
+    "files_total": 27,
+    "bytes_total": 6187000,
+    "note": "Project Gutenberg top-90 English selection, filtered to <400 KB per file so each split holds many files; 10/2/5 files actually measured per split"
+  },
+  "systems": [
+    "chce-raw",
+    "lexora",
+    "lexora-chce",
+    "lexora19",
+    "xz9-lzma",
+    "zstd19"
+  ],
+  "summary": {
+    "lexora": {
+      "ratio": 0.3498080761022753,
+      "stored_bytes": 1314761,
+      "vs_lexora19_pct": 6.115717020665253,
+      "vs_xz9_pct": 7.233588239516113,
+      "measured_mib_s": 13.072544092687552,
+      "reps_byte_stable": true,
+      "file_runs": 17
+    },
+    "lexora19": {
+      "ratio": 0.32964775240047883,
+      "stored_bytes": 1238988,
+      "vs_lexora19_pct": 0.0,
+      "vs_xz9_pct": 1.053445474654017,
+      "measured_mib_s": 1.4079204863023473,
+      "reps_byte_stable": true,
+      "file_runs": 17
+    },
+    "zstd19": {
+      "ratio": 0.3315218938513314,
+      "stored_bytes": 1246032,
+      "vs_lexora19_pct": 0.56852850875069,
+      "vs_xz9_pct": 1.6279631212522592,
+      "measured_mib_s": 1.4462928263879065,
+      "reps_byte_stable": true,
+      "file_runs": 17
+    },
+    "xz9-lzma": {
+      "ratio": 0.3262112942830438,
+      "stored_bytes": 1226072,
+      "vs_lexora19_pct": -1.0424636881067453,
+      "vs_xz9_pct": 0.0,
+      "measured_mib_s": 0.8078982391707679,
+      "reps_byte_stable": true,
+      "file_runs": 17
+    },
+    "chce-raw": {
+      "ratio": 0.2648525843011121,
+      "stored_bytes": 995454,
+      "vs_lexora19_pct": -19.65588044436266,
+      "vs_xz9_pct": -18.80949895275318,
+      "measured_mib_s": 0.4537204307822294,
+      "reps_byte_stable": true,
+      "file_runs": 17
+    },
+    "lexora-chce": {
+      "ratio": 0.2658338213355732,
+      "stored_bytes": 999142,
+      "vs_lexora19_pct": -19.3582181586908,
+      "vs_xz9_pct": -18.508700957203168,
+      "measured_mib_s": 0.39007157358117833,
+      "reps_byte_stable": true,
+      "file_runs": 17
+    }
+  },
+  "environment": {
+    "machine": "2 vCPU / 2 GiB container \u2014 throughput indicative only, sizes exact",
+    "xz": "xz9-lzma (stdlib lzma preset 9); no xz CLI in this image",
+    "ziptastic": "1.2.0, CHCE format v8, serial path"
+  },
+  "protocol_conditions": {
+    "corpus_ge_1GiB": false,
+    "all_three_splits": true,
+    "leak_audit": true,
+    "three_reps": true,
+    "second_machine_class": false,
+    "xz_via_cli": false,
+    "owner_signoff": false
+  },
+  "verdict": "The CHCE advantage reproduces on a different corpus, in every split, across 3 reps, with byte-stable stored sizes. It is not a single-sample artefact. It is still not an ADR-0001 verdict and does not close G2."
+}

@@ -32,5 +32,6 @@ Use [ADR-0001-template.md](ADR-0001-template.md) as the starting point (it doubl
 | [ADR-0014](ADR-0014-ziptastic-codec.md) | Second codec — ziptastic (CHCE) behind a codec registry | **Accepted** (owner delegation) | 2026-11-07 |
 | [ADR-0015](ADR-0015-codec-policy.md) | Codec policy — zstd stays the default, CHCE is the documented max-ratio preset (closes OQ-16) | **Accepted** (owner decision) | 2026-11-07 |
 | [ADR-0016](ADR-0016-queryable-archive.md) | Queryable compressed archive — SQLite index over `.lxz` payloads (no new format bytes; `.lxdb` still gated) | **Accepted** (owner decision) | 2026-11-07 |
+| [ADR-0013](ADR-0013-lxdb-layout.md) | `.lxdb` single-file shape + mutation model (append payload, rewrite index, commit by superblock flip) — **no byte layout** | **Proposed** (blocked on G2) | 2026-11-07 |
 
 Template location note: the canonical template now lives at [../templates/ADR_TEMPLATE.md](../templates/ADR_TEMPLATE.md); `ADR-0001-template.md` remains for historical continuity only.

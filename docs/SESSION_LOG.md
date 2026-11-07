@@ -1371,3 +1371,52 @@ it is claimed.
 
 **Gate:** **567 passed, 1 skipped** with the ziptastic binary present (21 new catalog
 tests); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+---
+
+## Session 74 — 2026-11-07 (can `.lxdb` replace SQLite? Shape yes, code not yet)
+
+**The owner asked whether `.lxdb` could replace SQLite as a directly queryable file.** The
+honest answer needed one fact checked rather than assumed: can a SQLite database live
+*inside* another file and still be queried? It can — `Connection.serialize()` produces a byte
+image, and for the reference catalog that image is **1,437,696 bytes raw, 389,352 compressed
+at zstd-9 (27 %)**, opening and querying in **10 ms**. So the index can live inside `.lxdb`,
+compressed, and the query engine stays SQLite. `deserialize()` — loading it straight into
+memory — raises "unable to open database file" in this build, so the working path is an
+unlinked temp file; that is a portability note, not a blocker.
+
+**Then the owner made the sequencing call, and it was the right one.** `FORMAT_LXDB.md`
+forbids `.lxdb` code before gate G2, and asked whether to override it the owner said: *run
+the protocol-scope benchmark first, then build on measured ground.* So this session did not
+write a single `.lxdb` byte, and instead (a) recorded the shape and mutation model as
+**ADR-0013 Proposed** with no magic, widths or offsets, and (b) ran as much of G2 as the
+environment allows.
+
+**The mutation model, with the reasoning that produced it.** Append the payload, rewrite the
+index, commit by superblock flip. The two halves have opposite cost profiles: the payload is
+the gigabyte that CHCE encodes at 0.4–0.5 MB/s, so rewriting it is 35–40 minutes per edit,
+while the index is ~7 % of the text compressing to ~27 % of that, so rewriting it is
+sub-second even at 1 GiB — and keeping it as one contiguous object removes the
+two-indexes-to-reconcile bug class ADR-0010 warned about. Rejected: full-file rewrite
+(unusable at CHCE speed), in-place page updates (that is hand-writing SQLite's B-tree), and
+append-without-compaction (unbounded growth).
+
+**R6 — the protocol's shape at 1/180th the scale.** All three splits, 3 reps, six systems,
+leak audit clean, 5.9 MB of Gutenberg text (10/2/5 files per split). `lexora-chce`
+**−19.36 % vs `lexora19`**, **−18.51 % vs `xz -9`**; `chce-raw` −18.81 %. Stored sizes are
+byte-stable across reps for every system. Two corpora now agree to within 1.2 points (smoke
+−19.75 %, R6 −18.51 %) and the ordering holds in every split — which is what the smoke run
+could not show. `lexora19` still sits at **+1.05 %** against `xz -9`, so the published v0
+result stands unchanged and only the CHCE rows move the sign.
+
+**Two things went wrong and are worth recording.** A 6 MB-per-split run timed out at 290 s
+because the harness compresses every file **twice** per rep — once for the measurement, once
+inside the forked peak-RSS probe — which is a factor of two nobody budgets for. And a
+`--max-bytes` selector includes the first file regardless of budget, so a corpus of large
+books yields a *one-file* "split"; the fix was filtering the corpus to files under 400 KB so
+each split holds many documents. Both are now written into R6 so the next run does not
+repeat them.
+
+**Gate:** **567 passed, 1 skipped**; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+**G2 remains open** — corpus scale, a second machine class, CLI `xz` and owner sign-off.
+`.lxdb` stays unbuilt, by the owner's decision.
