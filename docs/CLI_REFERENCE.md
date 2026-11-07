@@ -195,7 +195,7 @@ lexora batch --in DIR --out-dir DIR [--op canon|pack] [--pattern G] [--suffix S]
 | `--encoding E` | no | — | declared source encoding (canon only) |
 | `--level N`, `--block-size B` | no | 9 (`DEFAULT_LEVEL`), 8 MiB | pack only |
 | `--codec C` | no | `zstd` | pack only; `zstd` or `ziptastic` (ADR-0014), written into each archive's header |
-| `--jobs N` | no | 1 | process N files concurrently. **Results, ordering and the report are identical to `--jobs 1`** — only the wall clock may differ. **Experimental: measured 20–40 % SLOWER than sequential on the 2-vCPU container these numbers come from** (process start-up plus CPU contention). It is opt-in for hosts with real parallel cores; measure before relying on it |
+| `--jobs N` | no | 1 | process N files concurrently. **Results, ordering and the report are identical to `--jobs 1`** — only the wall clock may differ. **Experimental, and measured slower twice**: 20–40 % on the 2-vCPU container these numbers come from, and re-measured at scale (88 files / 79 MB) `canon` went **1.53 s → 2.27 s** and `pack` **6.14 s → 8.45 s** from `--jobs 1` to `--jobs 4`. Opt-in for hosts with real parallel cores; measure first |
 | `--stop-on-error` | no | off | abort at the first failure, exit with that file's code |
 | `--report F`, `--json` | no | — | write / print the JSON report (per-file `ok`, `code`, sizes) |
 

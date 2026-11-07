@@ -1125,6 +1125,35 @@ Also removed: the "CI runs are currently paused" claim, which was true when writ
 
 ---
 
+## GAP — 2026-10-30 to 2026-11-03 (work with no session record)
+
+**This entry exists so the hole is visible instead of silent.** Between Session 69 (2026-10-29)
+and Session 70 (2026-11-07) the project moved, and no session entry records how. What *is*
+recorded elsewhere, and can therefore be stated here without inventing anything:
+
+- **2026-10-30 — OQ-6 resolved:** repository URL, visibility (public) and default branch (`main`)
+  fixed, per [DECISIONS.md](DECISIONS.md).
+- **2026-10-30 — OQ-15 resolved:** CI running again and green on `main` (runs `41045077241` and
+  `41104306951`, both **503 passed**), with `actions/checkout` v5 and `actions/setup-python` v6
+  pinned after GitHub's Node-20 deprecation warning.
+- **2026-11-03 — 514 tests measured** (from 503), recorded in [STATUS.md](STATUS.md), together
+  with restoring the committed golden vector `tests/vectors/lxz_format/golden_1byte.lxz` whose
+  SHA-256 matches the pinned digest. That is ~11 new tests and a fixture fix with no entry here.
+- **OQ-9** (Conventional Commits / Keep-a-Changelog / PEP 440) recorded as resolved *in practice*
+  on 2026-10-30 — the commit history since Session 42 shows it.
+
+**What cannot be recovered:** who decided what, in what order, and what was tried and rejected.
+The artifacts survive (benchmark JSON, provenance, ADRs); the reasoning for that window does not.
+Future sessions should treat 2026-10-30…11-03 as evidence-of-outcome only, and should not cite
+a rationale for those changes that is not written in an ADR.
+
+**Why this is written down rather than quietly fixed:** finding F5 in
+[AUDIT_2026-11-07.md](AUDIT_2026-11-07.md) named this as the one item it deliberately left open.
+A gap that is labelled is a known unknown; a gap that is silently closed by guesswork is a
+fabrication.
+
+---
+
 ## Session 70 — 2026-11-07 (audit against ziptastic; the second codec lands)
 
 **The task was an audit, so the first thing done was to run the gate rather than read
@@ -1564,3 +1593,44 @@ the next person does not read 185 % as a regression.
 **Gate:** **584 passed, 1 skipped** with the ziptastic binary on PATH (15 ingestion tests, 25
 catalog tests); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
 >>>>>>> origin/main
+
+---
+
+## Session 78 — 2026-11-07 (what was left that this box could actually do)
+
+**P0, P1 and P3.3 are not doable here, and each for a specific reason rather than a vague
+one.** P0 needs the 1.054 GiB snapshot at protocol scope (~9 hours of CHCE at 0.4 MiB/s,
+plus a second machine class and a CLI `xz`). P1 is gated on P0 by the owner's own decision.
+P3.3 needs an OCR engine, which needs root to install. So this session took the items that
+are genuinely open and genuinely doable, and refused to fake the rest.
+
+**P2.3 turned out to be a decision wearing plumbing's clothes.** The plan said "replace
+`AppService` bodies with subprocess calls". Before doing that I checked whether the two
+surfaces agree, and they do not: **`lexora pack --level 99` exits 5** (codec error) while
+**`AppService.run_pack(level=99)` returns 2** (usage error) — and `service.py`'s own comment
+claims it "mirrors `lexora pack --level`". Moving the GUI onto the CLI forces them to agree,
+so someone has to choose which behaviour changes. That is now **P2.3a** in the plan, recorded
+with the measured evidence, instead of being discovered halfway through a refactor. Two
+smaller blockers went in beside it: the CLI cannot read stdin (`_read("-")` opens a file
+named `-`), and there is no raw-frame `zdecode` verb — both needed before a byte-level
+subprocess layer can exist (P2.3b).
+
+**`--jobs` is now measured at scale, twice over.** Over 88 files / 79 MB: `canon`
+**1.53 s → 2.27 s** and `pack` **6.14 s → 8.45 s** going from `--jobs 1` to `--jobs 4`. The
+flag was already documented as "20–40 % slower"; that figure now has a second, larger
+measurement behind it, and P4.2 closes as *kept and documented* rather than removed — dropping
+a flag is a behaviour change with no upside.
+
+**The session-log hole is now labelled rather than silent.** Finding F5 named the
+2026-10-30…11-03 window as the one thing it left open. There is a `GAP` entry now that states
+what *is* recoverable from other documents (OQ-6 and OQ-15 resolved 2026-10-30, CI green at 503
+passed, 514 tests measured 2026-11-03 with a restored golden vector) and says plainly what is
+not: the reasoning, the ordering, and what was tried and rejected. A labelled gap is a known
+unknown; a gap closed by guesswork would be a fabrication.
+
+**And the contribution-licensing line exists.** `CONTRIBUTING.md` had none, which matters
+because the project's licence is deliberately non-OSI: an inbound patch under an incompatible
+licence would make the outbound one hard to enforce.
+
+**Gate:** **625 passed, 0 skipped** with PySide6 and the ziptastic binary present;
+`python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
