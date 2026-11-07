@@ -49,6 +49,25 @@ def test_gui_settings_default_follows_the_constant() -> None:
     assert DEFAULT_SETTINGS["level"] == DEFAULT_LEVEL
 
 
+def test_gui_service_method_defaults_follow_the_constant() -> None:
+    """The service's own keyword defaults, not just the settings dict.
+
+    Session 53 pinned the settings default and the CLI parsers but missed these
+    two signatures, which still said 19 while everything else said 9 — the same
+    class of drift ADR-0012 was written to end, and invisible to a suite that
+    only looked at DEFAULT_SETTINGS. Found by audit 2026-11-07.
+    """
+    import inspect
+
+    from lexora.gui.service import AppService
+
+    for method in (AppService.run_compress, AppService.run_pack):
+        default = inspect.signature(method).parameters["level"].default
+        assert default == DEFAULT_LEVEL, (
+            f"{method.__name__} defaults to level {default}, not {DEFAULT_LEVEL}"
+        )
+
+
 def test_cli_pack_with_no_level_matches_the_library_default(tmp_path) -> None:
     payload = tmp_path / "in.bin"
     payload.write_bytes(b"cli default level " * 200)

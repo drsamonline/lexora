@@ -1,38 +1,72 @@
 # Next Session Resume Card
 
-**Last verified state:** 2026-10-29, **Session 69 complete** (CI fixed: `pytest` does not put the CWD on `sys.path`, so `from benchmarks import corpus` failed collection — `pythonpath` pinned in pyproject and a regression test added; the same bug fixed in the GUI parity subprocess; landing page brought up to date with nine verbs and the R5 numbers). Prior: **Session 68** (documentation reconciliation).
+**Last verified state:** 2026-11-07, **Session 71 complete** (CHCE measured on lexora's own corpus class: **−19.75 % vs `xz -9`**, 19/19 files, smoke scope — the release binary works, so no build machine was needed. Gate **541 passed, 1 skipped** with the real binary present). Prior: **Session 70** (audit of lexora against
+ziptastic + the second codec landed: a codec registry, `--codec ziptastic` (CHCE,
+ADR-0014), four defects fixed, suite **540 passed, 2 skipped**). Full findings:
+[AUDIT_2026-11-07.md](AUDIT_2026-11-07.md). Prior: **Session 69** (CI collection
+failure fixed — `pytest` does not put the CWD on `sys.path`; landing page brought up
+to date).
 
-**Current phase:** P1 complete; P2 (benchmark harness & first numbers) in progress. Load-bearing open items: **a protocol-scope benchmark run** (corpus is now 1.054 GiB, so size no longer blocks it — the run itself plus owner sign-off do), and **Sarvam widening the brokered GitHub credential** (read-only today, so every change arrives as a patch).
+**Current phase:** P1 complete; P2 (benchmark harness & first numbers) in progress.
+The load-bearing open items are unchanged in kind but one is now cheaper: the
+protocol-scope benchmark run, and a write-scoped credential (the brokered GitHub
+credential is read-only, so every change arrives as a patch).
 
-**Branch/commit:** working branch (verify with `git log --oneline -3`).
-**Working-tree state:** Session-39 work committed locally; **push blocked** — the GitHub App credential available in-session is read-only (`git push` → 403, `gh api` ref creation → "Resource not accessible by integration") despite admin role on the repo. Needs a write-scoped credential or an owner push.
+**Working-tree state:** Session-70 work is uncommitted on the fetched tree; **push
+is still blocked** by the read-only credential.
 
 ## Read first
-- [ ] `docs/SESSION_LOG.md` Sessions 39–40 — the streaming/RSS work and the licence resolution; also the session-numbering drift note (no Session-38 log entry; S38 = commit `c7cbac4`)
-- [ ] `docs/ADR/ADR-0009-license-polyform-noncommercial.md` — licence of record + the two open dependency-licence review items
-- [ ] `docs/P1_EVIDENCE_DRAFT.md` — item 2 now carries live Core-path numbers; still a DRAFT (no publication without owner sign-off)
-- [ ] `benchmarks/results-rss-core.json` (`summary` block) + `benchmarks/rss_probe.py` (how to re-measure)
-- [ ] `docs/PERFORMANCE_BUDGET.md` memory table — measured rows, decode scaling limit
-- [ ] `docs/CLI_REFERENCE.md` `lexora pack` — streaming default + `--no-stream`
+- [ ] `docs/AUDIT_2026-11-07.md` — the four findings, what was fixed, and the
+      correction to ziptastic's −11.83 % headline (it is a 10-file subset; the two
+      largest files are unmeasured there)
+- [ ] `docs/ADR/ADR-0014-ziptastic-codec.md` — why zstd stays the default, and the
+      determinism caveat (per pinned binary, not per format)
+- [ ] `src/lexora/codec_registry.py` — the one place a codec is named now
+- [ ] `docs/ZIPTASTIC_NOTES.md` — updated: the codec seam is built, the negative
+      results that must not be re-proposed, and the CAN-R01 objective conflict
+- [ ] `docs/ADR/ADR-0012-default-encode-level.md` + `tests/test_level_default.py` —
+      the drift class that produced finding F2
 
 ## Tasks in order
-1. **~~Owner decision — `.lxdb` direction~~ DECIDED 2026-10-29 (ADR-0010 Accepted):** container of `.lxz` members as v0, block pool as the named successor. Next step is gated, not blocked: the byte layout waits on **G2**, whose corpus-size half is now met (2395 files / 1.054 GiB); what remains is a protocol-scope benchmark run plus owner sign-off. The layout becomes **ADR-0013**.
-2. **~~Owner decision — GUI dependency licences~~ DECIDED 2026-10-29 (ADR-0011 Accepted):** the GUI is a **client of the CLI**, not an in-process library consumer. **Implementation is the open work**, and it needs a Qt-capable machine: replace `AppService` bodies with subprocess calls, re-aim the parity test at argv construction, add Qt-free tests against the real CLI, and only then touch widgets. [DEPENDENCY_LICENCE_REVIEW.md](DEPENDENCY_LICENCE_REVIEW.md) finds no conflict between LGPL-3.0 and PolyForm and bounds the exposure to the optional `[gui]` extra, then asks the owner to pick: A comply-and-ship (NOTICE + LGPL/GPL texts + About-view notice + relinking statement), B process separation, C drop `[gui]` from distribution, D commercial Qt licence. Until it is recorded, R3 carries the notices obligation as an open sub-item. **Also verify at packaging time:** which Qt modules the installed wheel actually provides — the review read the imports from source because PySide6 is not installed in the agent environment.
-2. **~~Owner decision — licence contradiction~~ RESOLVED 2026-10-29 (Session 40):** PolyForm Noncommercial 1.0.0 is the licence of record via [ADR-0009](ADR/ADR-0009-license-polyform-noncommercial.md), superseding ADR-0006; metadata swept (pyproject SPDX, README, docs site, STATUS/PROGRESS/DECISIONS/RELEASE_PROCESS, ADR index). **Two review items the ADR leaves open:** (a) a dependency-licence re-read of **PySide6 LGPL + PolyForm** for the `[gui]` extra; (b) **PyMuPDF (AGPL)** still needs its own ADR before it can become a dependency. Also add a contribution-licensing line to `CONTRIBUTING.md` if outside patches are ever taken.
-2. **Owner decision — the CLI's default encode level (opened S45, evidenced S46).** zstd-19 gives 0.7 MiB/s on real prose against a soft ≥2 MB/s target. The sweep in PERFORMANCE_BUDGET.md (8 MiB of Gutenberg text, `benchmarks/results-level-sweep.json`) prices the options: 19 → 3 costs **26.7 % more bytes** for **~18× speed** and 76 MiB less RAM; level 9 costs 13.6 % more bytes for ~9× speed and still meets the target. Pick one of: keep 19 and revise the target, default to 6–9, or keep 19 as the default and document a fast preset. Do not change the default without a decision record — it changes every archive the project produces.
-3. **~~P1-T8 — streaming `unpack`~~ CLOSED (Session 41):** `container.unpack_stream()` + `read_index_stream()`, CLI streams by default with `--no-stream` for A/B; decode peak RSS is flat at ~34 MiB (34.8 at a 32 MiB archive, 34.1 at 64 MiB) versus 116.1/188.6 MiB buffered. Both encode and decode are now memory-bounded in document size — the P1 memory work is done.
-3. **P2 — corpus growth / R3 (in progress, Session 42).** Egress works (`www.gutenberg.org` 200; `aleph.gutenberg.org` 502 — do not depend on it). Fetch is now **resumable**, so growth is a matter of repetition, not design:
-   ```bash
-   # repeat until sources.json reports complete: true; each pass adds ~100 files / ~54 MB here
-   python3 benchmarks/harness.py corpus-fetch --catalog-limit 1400 --min-mb 0.05 \
-       --dest corpus/gutenberg-cat --catalog-cache corpus/_catalog
-   ```
-   **GATE MET (Session 65): 2323 files / 1038.4 MB (1.014 GiB)** of a 2500-id selection (`benchmarks/provenance/gutenberg-cat-partial/`, catalog digest `3cece81a…`). Manifest `abffa16e…` verifies with 0 problems; splits 1648/218/467, no lineage straddling. **Next step is the protocol-shape R4 at this size**, not more fetching: `run --systems lexora,lexora19,zstd19,xz9-lzma --reps 3` per split, then owner sign-off before publication. If more bytes are ever wanted, `--catalog-limit` appends and reuses; passes now yield ~35–40 MB since the three resume costs were fixed (S65). If a pass is ever killed, run `python3 benchmarks/harness.py corpus-reconcile --root corpus/gutenberg-cat` — it rebuilds the record from the bytes on disk in seconds instead of re-walking the id list (Session 43: a lossy checkpoint had recorded 587 texts as 232). At ~1.1 MB/file, 1400 ids yields roughly 1.4 GB, so one full selection should clear the ≥1 GiB OQ-8 bar; if it falls short, raise `--catalog-limit` (the selection is id-ordered, so existing files are reused). Then: `manifest` → `verify` → `audit-splits` → `run --revision 4 --reps 3`, and owner review before anything enters BENCHMARK_RESULTS.md.
-   **Open item carried forward:** the PG catalog has no rights column, so bulk selection inherits Gutenberg's US-PD posture — a per-item RDF rights check is still unbuilt (see CORPUS_POLICY.md).
-4. **Housekeeping:** `docs/STATUS.md` header line still carries a long pre-S39 trail — trim at the next reconciliation pass; `docs/index.md`/`docs/404.html` licence text should follow whatever the owner decides in task 1.
+
+1. **~~Measure CHCE on lexora's own corpus (OQ-16)~~ DONE — Session 71.** The assumed
+   blocker (a build machine) was not one: ziptastic ships a prebuilt
+   `ziptastic-1.2.0-linux-x86_64`. Measured on 19 Gutenberg texts (19.4 MB canonical,
+   every codec on identical canonical bytes, every CHCE frame decoded and compared
+   before its size counted): **CHCE −19.75 % vs `xz -9`**, −27.67 % vs zstd-9, smaller
+   on **19/19** files; throughput 0.50 MiB/s against zstd-9's 15.9. Full write-up and
+   artifact: [CHCE_SMOKE_2026-11-07.md](CHCE_SMOKE_2026-11-07.md),
+   `benchmarks/results-chce-smoke.json`.
+   **Next step is the protocol-scope version of the same comparison** — R4/R5 corpus,
+   184 files / 1.054 GiB, three splits, `--systems` including the CHCE path — because
+   that is what an ADR-0001 verdict needs. A default-codec flip waits on it; the
+   recommendation on the table is to keep zstd default and CHCE as the max-ratio
+   preset.
+2. **Decide finding F1 — the `codec_id` string.** `CODEC_ID_ZSTD` is `zstd-raw-l19`
+   while `DEFAULT_LEVEL` is 9, so every default archive names a level it did not
+   use and a level-9 archive is indistinguishable from a level-19 one. It is a
+   frozen format field (ADR-0007), so this needs an ADR, not an edit. Cheapest at
+   the v0→v1 boundary, where a rename costs nothing. Options are in the audit.
+3. **`.lxdb` byte layout (ADR-0013).** Gated, not blocked: the corpus half of G2 is
+   met (2395 files / 1.054 GiB). What remains is a protocol-scope benchmark run plus
+   owner sign-off. Note the new codec changes the calculus: an `.lxdb` of CHCE
+   members is a different size/speed point than one of zstd members.
+4. **GUI process separation (ADR-0011 implementation).** Needs a Qt-capable machine:
+   replace `AppService` bodies with subprocess calls, re-aim the parity test at argv
+   construction, add Qt-free tests against the real CLI. Start from the now-consistent
+   `run_compress`/`run_pack` defaults (F2 was fixed in Session 70).
+5. **Documentation reconciliation (finding F5).** `SESSION_LOG.md` ends at Session 69
+   (2026-10-29) but `DECISIONS.md` records OQ-6/OQ-15 resolved 2026-10-30 and
+   `STATUS.md` a 2026-11-03 verification — that work has no session record. Also:
+   `IMPLEMENTATION_MATRIX.md` has no row for the codec registry or `--codec`, and
+   `docs/index.md` should link the audit.
 
 ## Environment notes (this container)
-- `pip install "zstandard>=0.23,<0.26" pytest` then `PYTHONPATH=src python3 -m pytest -q` — no editable install needed for the gate.
-- GUI tests skip without PySide6 (+`libegl1` for offscreen Qt); the 1 skip in the gate is that.
-- This box is 2 vCPU / 2 GiB and noisy: zstd-19 packs at ~1–3 s/MiB with high variance. Peak-RSS numbers are stable; **wall-clock numbers from this box are not quotable**.
-- `/proc/self/status` here exposes no `VmHWM`; use `os.wait4()` `ru_maxrss` (the probe already does).
+- `pip install "zstandard>=0.23,<0.26" pytest` then `PYTHONPATH=src python3 -m pytest -q`.
+- GUI tests skip without PySide6 (+`libegl1` for offscreen Qt); the first skip in the
+  gate is that. The second is the real-ziptastic round trip.
+- **No cmake, ninja, g++ or zig here** — ziptastic cannot be built in the agent
+  sandbox, which is why the codec adapter ships with a stub-based contract test and
+  a `skipif` for the real binary.
+- This box is 2 vCPU / 2 GiB and noisy: **wall-clock and throughput numbers from it
+  are not quotable.**

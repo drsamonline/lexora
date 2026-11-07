@@ -100,6 +100,19 @@ def run_checks(repo_root: Path | None = None) -> dict:
 
     checks.append(_check("lexora", INFO,
                          f"{__version__} (canonicalizer {CANONICALIZER_VERSION})"))
+
+    # The optional max-ratio codec. Absence is not a fault: zstd is the default
+    # and the only backend a base install needs, so this reports INFO, not WARN.
+    from lexora import ziptastic_core
+
+    zt_path = ziptastic_core.find_binary()
+    if zt_path:
+        checks.append(_check("ziptastic codec", INFO,
+                             f"{ziptastic_core.version() or 'present'} at {zt_path}"))
+    else:
+        checks.append(_check("ziptastic codec", INFO,
+                             "binary not on PATH (optional: --codec ziptastic); set "
+                             f"${ziptastic_core.BINARY_ENV} to point at it"))
     checks.append(_check("platform", INFO,
                          f"{platform.system()} {platform.release()} {platform.machine()}"))
 

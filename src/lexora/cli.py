@@ -42,6 +42,7 @@ import tempfile
 from pathlib import Path
 
 from lexora import DEFAULT_LEVEL, __version__
+from lexora import codec_registry as codecs
 from lexora.canonicalize import CanonicalizationError, canonicalize, canonicalize_stream
 from lexora.container import ContainerError, read_index
 from lexora.container import (
@@ -396,7 +397,8 @@ def cmd_pack(args) -> int:
     if not streaming:
         payload = _read(args.infile)
         try:
-            archive = lxz_pack(payload, level=args.level, block_size=args.block_size)
+            archive = lxz_pack(payload, level=args.level, block_size=args.block_size,
+                               codec=args.codec)
         except ContainerError as exc:
             print(f"container refusal on pack: {exc}", file=sys.stderr)
             return EXIT_CONTAINER
@@ -421,7 +423,8 @@ def cmd_pack(args) -> int:
 
             def _writer(fh) -> None:
                 captured["info"] = lxz_pack_stream(
-                    src, fh, level=args.level, block_size=args.block_size
+                    src, fh, level=args.level, block_size=args.block_size,
+                    codec=args.codec,
                 )
 
             try:
@@ -649,7 +652,8 @@ def _batch_one(spec: dict) -> dict:
                 meta = canonicalize_stream(src, dst, declared_encoding=spec["encoding"])
             elif spec["op"] == "pack":
                 info = lxz_pack_stream(src, dst, level=spec["level"],
-                                       block_size=spec["block_size"])
+                                       block_size=spec["block_size"],
+                                       codec=spec["codec"])
                 meta = {"input_bytes": src_path.stat().st_size,
                         "output_bytes": dst_path.stat().st_size,
                         "blocks": len(info.blocks)}
@@ -742,6 +746,7 @@ def cmd_batch(args) -> int:
             "level": args.level,
             "block_size": args.block_size,
             "encoding": args.encoding,
+            "codec": args.codec,
         })
 
     jobs = max(1, int(getattr(args, "jobs", 1) or 1))
@@ -841,6 +846,11 @@ def build_parser() -> argparse.ArgumentParser:
     pk.add_argument("--in", dest="infile", required=True)
     pk.add_argument("--out", dest="outfile", required=True, help="'-' for stdout")
     pk.add_argument("--level", type=int, default=DEFAULT_LEVEL)
+    pk.add_argument("--codec", choices=codecs.names(), default=codecs.DEFAULT_CODEC,
+                    help="block codec: zstd (default) or ziptastic (CHCE, ~11-25%% "
+                         "smaller, 0.3-0.6 MB/s, needs the ziptastic binary on PATH). "
+                         "The choice is written into the header, so unpack/verify need "
+                         "no flag")
     pk.add_argument("--no-stream", action="store_true",
                     help="buffer the whole input in memory instead of streaming "
                          "block-by-block (same output bytes, much higher peak RSS)")
@@ -899,6 +909,8 @@ def build_parser() -> argparse.ArgumentParser:
                          "for unpack the .lxz is stripped instead)")
     bt.add_argument("--encoding", default=None, help="declared source encoding (canon only)")
     bt.add_argument("--level", type=int, default=DEFAULT_LEVEL, help="zstd level (pack only)")
+    bt.add_argument("--codec", choices=codecs.names(), default=codecs.DEFAULT_CODEC,
+                    help="block codec (pack only; written into each header)")
     bt.add_argument("--block-size", type=int, default=8 * 1024 * 1024)
     bt.add_argument("--jobs", type=int, default=1,
                     help="process this many files concurrently (default 1). Results and "

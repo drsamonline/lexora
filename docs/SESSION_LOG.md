@@ -1122,3 +1122,127 @@ Also removed: the "CI runs are currently paused" claim, which was true when writ
 **Gate:** `python3 -m pytest -q` → **503 passed, 1 skipped**, verified under **both** invocation styles (installed and not, with and without `PYTHONPATH`); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK; `docs/index.html` re-parsed for tag balance after the table surgery (116 `<div>` / 116 `</div>`).
 
 **Push state:** unchanged — read-only brokered credential. Sessions 42–69 are delivered as one patch.
+
+---
+
+## Session 70 — 2026-11-07 (audit against ziptastic; the second codec lands)
+
+**The task was an audit, so the first thing done was to run the gate rather than read
+the claims.** 514 passed, 1 skipped on the fetched tree — the docs were right about
+that much. Then the source was read against the two documents that make promises about
+it (`ZIPTASTIC_NOTES.md`, `STATUS.md`) and four defects came out. All four were the
+same species: a hard-coded zstd assumption, or a default that had moved in one place
+and not another. None was a broken guarantee, which is the useful part of the result —
+the integrity story (validate-before-allocate, per-block SHA-256, determinism) survived
+reading.
+
+**F1 — the header names a level the archive did not use.** `CODEC_ID_ZSTD` is
+`zstd-raw-l19` (frozen by ADR-0007), but ADR-0012 moved the default level to 9 in
+Session 53. Printed live from a `pack()`: header `zstd-raw-l19`, and
+`zstd_core.verify_roundtrip(level=9)` reporting `zstd-raw-l9` for the same bytes. So
+`inspect` reports a level that was not used, and a level-9 and a level-19 archive are
+indistinguishable. **Not fixed** — it is a frozen format field, so it needs an ADR and
+a rename window, not a sed. Recorded in the audit with three options.
+
+**F2 — the GUI still defaulted to level 19.** `AppService.run_compress(level=19)` and
+`run_pack(level=19)` survived the very ADR written to end that drift, because
+`test_level_default.py` only inspected `DEFAULT_SETTINGS`. Fixed to `DEFAULT_LEVEL`,
+with a test that reads both signatures — the dead-code default would have been
+inherited by the batch queue ADR-0011 still has to build.
+
+**F3 — "the container is codec-agnostic" was true of the layout and not the code.**
+`codec_id[16]` is in the header, but zstd was hard-coded in five places: the id written,
+the reader's accept-list, and three literal `b"\x28\xB5\x2F\xFD"` frame-magic checks.
+Now a registry (`src/lexora/codec_registry.py`) owns name → id → implementation and the
+per-codec magic; `container.py` names no codec at all. The reader's accept-list is
+still closed: an unknown id remains a hard `E-CMP-006`.
+
+**F4 — `unpack --block N` mislabelled its errors.** The loop enumerated the *selected*
+list, so a bounded decode always said "block 0" — in exactly the case the flag exists
+for. Fixed to carry absolute indices.
+
+**Then the codec itself, because that is what the notes said was the smallest change
+with the largest effect — and they were right.** `src/lexora/ziptastic_core.py` shells
+out to `ziptastic c -9` / `ziptastic d` as stdin→stdout filters, a contract read from
+ziptastic's `src/main.cpp` rather than guessed. `--codec {zstd,ziptastic}` on `pack`
+and `batch`; `unpack`/`verify`/`inspect` take no flag, because the header already says
+which codec was used and a flag that can disagree with the header is a way to be wrong.
+zstd remains the default and a default `pack` is byte-identical to before (asserted).
+
+**One correction to the sibling's headline.** The −11.83 % vs `xz -9` that both notes
+quote is a **10-file, 119,259,397-byte subset** of Silesia's 12 files; the two excluded
+are the largest — `webster` (41 MiB, a dictionary) and `mozilla` (51 MiB, binary) —
+unmeasured because they exceed ziptastic's 300 s per-command limit. The measured subset
+is text-weighted (reymont −22.2 %, mr −18.2 %, dickens −16.8 %), which is lexora's
+corpus class, and also contains two binary files where CHCE is level with `xz`
+(samba −0.64 %, sao −0.001 %). Read it as a large *text* win, not a large win. The
+notes now say so.
+
+**Honesty about what the tests prove.** The ziptastic binary is not vendored and cannot
+be built here (no cmake, ninja, g++ or zig), so the adapter is tested against a stub
+that speaks the documented contract. That proves the seam, the failure modes and the
+header dispatch. It proves **nothing** about ratio or throughput, and the one test that
+would need the real binary is `skipif`-guarded and reports why it skipped. OQ-16 is
+open in DECISIONS.md rather than answered on someone else's corpus.
+
+**Gate:** `python3 -m pytest -q` → **540 passed, 2 skipped** (27 new tests (26 passing + the real-binary skip));
+`python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+**Push state:** unchanged — read-only brokered credential. Session 70 is delivered as a
+patch on top of `cc7317d`.
+
+---
+
+## Session 71 — 2026-11-07 (the blocker was not a blocker: CHCE measured on this corpus)
+
+**Session 70 ended with an assumption that turned out to be wrong, in the cheap
+direction.** ADR-0014 left the default codec at zstd because the only ratio evidence
+for CHCE was ziptastic's own Silesia subset — and the note said measuring it here would
+need cmake, ninja, g++ and 23 submodules, none of which exist in this environment. True
+for *building* ziptastic. Irrelevant, because **ziptastic publishes a prebuilt
+`ziptastic-1.2.0-linux-x86_64` release**. Downloaded, checked against the release's own
+`SHA256SUMS` (`4bebce37…`), and it runs: `ziptastic 1.2.0 (CHCE format v8)`. A
+two-minute check removed the whole blocker. The lesson is the one this project keeps
+relearning: verify the premise before designing around it.
+
+**The measurement, and why it is constructed the way it is.** Every codec saw identical
+bytes — Gutenberg text passed through lexora's own `canonicalize()`, because that is what
+an archive stores; comparing codecs on raw text would measure a pipeline this project
+does not ship. Before any CHCE size was counted the frame was decoded and compared to its
+input. 19 files, 19,824,293 raw → 19,432,350 canonical bytes:
+
+| codec | total | ratio |
+|---|---|---|
+| zstd-9 (shipped default) | 6,514,541 | 0.3352 |
+| zstd-19 | 5,944,104 | 0.3059 |
+| `xz -9` | 5,871,796 | 0.3022 |
+| **CHCE `-9`** | **4,712,272** | **0.2425** |
+
+**CHCE −19.75 % vs `xz -9`, −27.67 % vs zstd-9, smaller on 19 of 19 files**, per-file
+range −16.40 % to −21.61 %. Throughput 0.50 MiB/s against zstd-9's 15.9 and `xz -9`'s
+1.08 — the ratio is bought with time, exactly as advertised.
+
+**Two sanity checks that the number is real rather than lucky.** The zstd-19 ratio here
+(0.3059) sits within 2 % of R5's published 0.3120 for the same pipeline, so the sample
+behaves like the real corpus. And the per-file spread is only five points wide across
+nineteen different books, which is what a modelling win looks like; a lucky sample would
+be spikier. Silesia's −11.83 % was dragged down by two binary files where CHCE is level
+with `xz`; pure prose shows what the text case alone is worth.
+
+**End to end, not just in a script.** War and Peace through the real CLI: canon →
+`pack --codec ziptastic` → 742,139 bytes against 1,052,408 for the zstd archive (−29.5 %)
+→ `verify` OK → `unpack` byte-exact → `inspect` reporting `codec ziptastic-1`. The
+previously-skipped real-binary test now runs and passes; the suite is **541 passed,
+1 skipped** with the binary present, 540/2 without.
+
+**What this does not do.** It does not flip the default. CHCE would make an external
+binary mandatory for a base install that today needs only zstandard, and these are
+smoke-scope numbers. OQ-16 keeps its recommendation — zstd default, CHCE as the
+documented max-ratio preset — and now carries the evidence. An ADR-0001 verdict still
+needs the protocol-scope run on the R4/R5 corpus (184 files, 1.054 GiB, three splits,
+held-out), which is the next session's first task.
+
+**Gate:** `python3 -m pytest -q` → **541 passed, 1 skipped** (with
+`LEXORA_ZIPTASTIC` set); `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+Artifact: `benchmarks/results-chce-smoke.json` (per-file rows, binary checksum, corpus
+list, environment).

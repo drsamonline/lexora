@@ -1,0 +1,293 @@
+{
+  "scope": "SMOKE \u2014 not a protocol-scope benchmark revision. Answers 'does the CHCE effect transfer to this corpus class', nothing about ADR-0001.",
+  "measured": "2026-11-07",
+  "environment": {
+    "note": "2 vCPU / 2 GiB container; wall-clock and throughput from it are indicative, not quotable (PERFORMANCE_BUDGET.md). Sizes are exact.",
+    "python": "Python 3.12.13",
+    "zstandard": "0.25.0"
+  },
+  "codec_under_test": {
+    "name": "ziptastic (CHCE)",
+    "binary": "ziptastic-1.2.0-linux-x86_64",
+    "release": "v1.2.0",
+    "sha256": "4bebce37580d7bafe19bae1836058ac8ef9d2b0bc029e0c3fb2c878e496faf13",
+    "version_line": "ziptastic 1.2.0 (CHCE format v8)",
+    "arguments": "c -9 (serial path)"
+  },
+  "baselines": {
+    "zstd9": "python-zstandard 0.25.x, ZstdCompressionParameters.from_level(9) \u2014 lexora's shipped default",
+    "zstd19": "same library, level 19 \u2014 the R5 baseline tool setting",
+    "xz9": "python lzma preset=9, FORMAT_XZ \u2014 equivalent to `xz -9` (not -9e)"
+  },
+  "input": {
+    "what": "Project Gutenberg plain text, canonicalised with lexora's own canonicalize() (CAN-R01/R02/R05, lexcan-0.1) \u2014 the bytes an archive actually stores",
+    "corpus_class": "English prose, the same class as the R4/R5 corpus",
+    "files": [
+      "pg11.txt",
+      "pg1184.txt",
+      "pg1232.txt",
+      "pg1342.txt",
+      "pg1399.txt",
+      "pg1400.txt",
+      "pg145.txt",
+      "pg1524.txt",
+      "pg174.txt",
+      "pg219.txt",
+      "pg2542.txt",
+      "pg2554.txt",
+      "pg2600.txt",
+      "pg2701.txt",
+      "pg345.txt",
+      "pg4300.txt",
+      "pg5200.txt",
+      "pg84.txt",
+      "pg98.txt"
+    ],
+    "total_raw_bytes": 19824293,
+    "total_canonical_bytes": 19432350,
+    "round_trip": "every CHCE frame was decoded and compared to its input before its size was counted; 19/19 byte-exact"
+  },
+  "summary": {
+    "files": 19,
+    "totals": {
+      "raw": 19824293,
+      "canon": 19432350,
+      "zstd9": 6514541,
+      "zstd19": 5944104,
+      "xz9": 5871796,
+      "chce": 4712272
+    },
+    "ratio_canon": {
+      "zstd9": 0.33524205770274823,
+      "zstd19": 0.30588703888104113,
+      "xz9": 0.3021660272689613,
+      "chce": 0.24249624981023912
+    },
+    "chce_vs_xz9_pct": -19.747348170815197,
+    "chce_vs_zstd9_pct": -27.665325922424927,
+    "chce_vs_zstd19_pct": -20.723594338187894,
+    "files_chce_smaller_than_xz9": 19,
+    "median_chce_vs_xz9_pct": -19.488294597723872,
+    "seconds": {
+      "zstd9": 1.16,
+      "xz9": 17.1,
+      "chce": 37.15
+    },
+    "mb_per_s": {
+      "zstd9": 15.94,
+      "xz9": 1.08,
+      "chce": 0.5
+    }
+  },
+  "rows": [
+    {
+      "file": "pg11.txt",
+      "raw": 174311,
+      "canon": 170549,
+      "zstd9": 57896,
+      "zstd19": 54453,
+      "xz9": 53508,
+      "chce": 43982,
+      "chce_vs_xz9_pct": -17.802945353965764,
+      "chce_vs_zstd9_pct": -24.03274837639906
+    },
+    {
+      "file": "pg1184.txt",
+      "raw": 2785469,
+      "canon": 2723812,
+      "zstd9": 869946,
+      "zstd19": 777826,
+      "xz9": 769728,
+      "chce": 608769,
+      "chce_vs_xz9_pct": -20.911153030680968,
+      "chce_vs_zstd9_pct": -30.02220827499638
+    },
+    {
+      "file": "pg1232.txt",
+      "raw": 308019,
+      "canon": 302840,
+      "zstd9": 103126,
+      "zstd19": 96600,
+      "xz9": 94908,
+      "chce": 77597,
+      "chce_vs_xz9_pct": -18.239769039490874,
+      "chce_vs_zstd9_pct": -24.75515388941683
+    },
+    {
+      "file": "pg1342.txt",
+      "raw": 772386,
+      "canon": 757471,
+      "zstd9": 243404,
+      "zstd19": 224411,
+      "xz9": 221580,
+      "chce": 173705,
+      "chce_vs_xz9_pct": -21.60619189457532,
+      "chce_vs_zstd9_pct": -28.635108708155986
+    },
+    {
+      "file": "pg1399.txt",
+      "raw": 2067952,
+      "canon": 2027723,
+      "zstd9": 645610,
+      "zstd19": 579245,
+      "xz9": 573364,
+      "chce": 454961,
+      "chce_vs_xz9_pct": -20.65058148052546,
+      "chce_vs_zstd9_pct": -29.53005684546398
+    },
+    {
+      "file": "pg1400.txt",
+      "raw": 1058204,
+      "canon": 1037424,
+      "zstd9": 350682,
+      "zstd19": 322357,
+      "xz9": 318552,
+      "chce": 254806,
+      "chce_vs_xz9_pct": -20.01117556945177,
+      "chce_vs_zstd9_pct": -27.33986916921884
+    },
+    {
+      "file": "pg145.txt",
+      "raw": 1865684,
+      "canon": 1832023,
+      "zstd9": 610722,
+      "zstd19": 554485,
+      "xz9": 548788,
+      "chce": 432042,
+      "chce_vs_xz9_pct": -21.273424346013396,
+      "chce_vs_zstd9_pct": -29.257174295342235
+    },
+    {
+      "file": "pg1524.txt",
+      "raw": 206895,
+      "canon": 199813,
+      "zstd9": 75416,
+      "zstd19": 71425,
+      "xz9": 70020,
+      "chce": 57327,
+      "chce_vs_xz9_pct": -18.127677806341044,
+      "chce_vs_zstd9_pct": -23.9856263922775
+    },
+    {
+      "file": "pg174.txt",
+      "raw": 465814,
+      "canon": 456904,
+      "zstd9": 158440,
+      "zstd19": 148114,
+      "xz9": 145732,
+      "chce": 117412,
+      "chce_vs_xz9_pct": -19.43293168281503,
+      "chce_vs_zstd9_pct": -25.894976016157536
+    },
+    {
+      "file": "pg219.txt",
+      "raw": 237074,
+      "canon": 233340,
+      "zstd9": 87558,
+      "zstd19": 82852,
+      "xz9": 81504,
+      "chce": 66910,
+      "chce_vs_xz9_pct": -17.905869650569297,
+      "chce_vs_zstd9_pct": -23.582082733730783
+    },
+    {
+      "file": "pg2542.txt",
+      "raw": 169080,
+      "canon": 163523,
+      "zstd9": 55991,
+      "zstd19": 52616,
+      "xz9": 51736,
+      "chce": 41653,
+      "chce_vs_xz9_pct": -19.489330446884182,
+      "chce_vs_zstd9_pct": -25.60768694968834
+    },
+    {
+      "file": "pg2554.txt",
+      "raw": 1202773,
+      "canon": 1180023,
+      "zstd9": 386266,
+      "zstd19": 353009,
+      "xz9": 348772,
+      "chce": 277658,
+      "chce_vs_xz9_pct": -20.3898248712626,
+      "chce_vs_zstd9_pct": -28.117411317589436
+    },
+    {
+      "file": "pg2600.txt",
+      "raw": 3359610,
+      "canon": 3293569,
+      "zstd9": 1052184,
+      "zstd19": 936414,
+      "xz9": 926852,
+      "chce": 741915,
+      "chce_vs_xz9_pct": -19.953239567913755,
+      "chce_vs_zstd9_pct": -29.48809333728701
+    },
+    {
+      "file": "pg2701.txt",
+      "raw": 1276315,
+      "canon": 1253984,
+      "zstd9": 453213,
+      "zstd19": 419732,
+      "xz9": 414784,
+      "chce": 338242,
+      "chce_vs_xz9_pct": -18.453460114179908,
+      "chce_vs_zstd9_pct": -25.36798370743999
+    },
+    {
+      "file": "pg345.txt",
+      "raw": 890348,
+      "canon": 874495,
+      "zstd9": 301550,
+      "zstd19": 278845,
+      "xz9": 275052,
+      "chce": 221518,
+      "chce_vs_xz9_pct": -19.463228771286882,
+      "chce_vs_zstd9_pct": -26.54020892057702
+    },
+    {
+      "file": "pg4300.txt",
+      "raw": 1586344,
+      "canon": 1553126,
+      "zstd9": 589906,
+      "zstd19": 551364,
+      "xz9": 542524,
+      "chce": 453530,
+      "chce_vs_xz9_pct": -16.40369826956964,
+      "chce_vs_zstd9_pct": -23.11825951931325
+    },
+    {
+      "file": "pg5200.txt",
+      "raw": 141933,
+      "canon": 139673,
+      "zstd9": 48857,
+      "zstd19": 46279,
+      "xz9": 45464,
+      "chce": 37134,
+      "chce_vs_xz9_pct": -18.322188984691184,
+      "chce_vs_zstd9_pct": -23.99451460384387
+    },
+    {
+      "file": "pg84.txt",
+      "raw": 448885,
+      "canon": 441144,
+      "zstd9": 153437,
+      "zstd19": 143682,
+      "xz9": 141644,
+      "chce": 114040,
+      "chce_vs_xz9_pct": -19.488294597723872,
+      "chce_vs_zstd9_pct": -25.676336216166895
+    },
+    {
+      "file": "pg98.txt",
+      "raw": 807197,
+      "canon": 790914,
+      "zstd9": 270337,
+      "zstd19": 250395,
+      "xz9": 247284,
+      "chce": 199071,
+      "chce_vs_xz9_pct": -19.49701557723104,
+      "chce_vs_zstd9_pct": -26.361911244113827
+    }
+  ]
+}

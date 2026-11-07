@@ -40,8 +40,9 @@ from dataclasses import dataclass
 
 import zstandard as zstd
 
-from lexora import CANONICALIZER_VERSION, CODEC_ID_ZSTD, DEFAULT_LEVEL, __version__
-from lexora.zstd_core import CodecError, compress, decompress
+from lexora import CANONICALIZER_VERSION, DEFAULT_LEVEL, __version__
+from lexora import codec_registry as codecs
+from lexora.zstd_core import CodecError
 
 MAGIC = b"LXZ|"
 FORMAT_MAJOR = 0
@@ -118,11 +119,16 @@ def pack(data: bytes, *, level: int = DEFAULT_LEVEL,
          block_size: int = DEFAULT_MAX_BLOCK_UNCOMPRESSED,
          max_block_compressed: int = DEFAULT_MAX_BLOCK_COMPRESSED,
          max_total_uncompressed: int = DEFAULT_MAX_TOTAL_UNCOMPRESSED,
-         generator_version: str | None = None) -> bytes:
+         generator_version: str | None = None,
+         codec: str = codecs.DEFAULT_CODEC) -> bytes:
     """Serialize `data` into a `.lxz` v0 archive. Raises ContainerError on any
     limit violation; never returns a partially verified archive (SPEC §8.1)."""
     if not isinstance(data, bytes):
         raise ContainerError("E-USAGE-001", "pack() expects bytes")
+    try:
+        spec = codecs.by_name(codec)
+    except codecs.UnknownCodec as exc:
+        raise ContainerError("E-USAGE-004", str(exc)) from None
     if block_size < 1:
         raise ContainerError("E-USAGE-002", "block_size must be >= 1")
     if len(data) > max_total_uncompressed:
@@ -139,14 +145,14 @@ def pack(data: bytes, *, level: int = DEFAULT_LEVEL,
     for chunk in chunks:
         if len(chunk) > DEFAULT_MAX_BLOCK_UNCOMPRESSED and len(chunk) > block_size:
             raise ContainerError("E-RES-001", "internal chunking error")  # unreachable
-        frame = compress(chunk, level=level)
+        frame = spec.compress(chunk, level=level)
         if len(frame) > max_block_compressed:
             raise ContainerError(
                 "E-RES-002",
                 f"block compressed {len(frame)} > max_block_compressed {max_block_compressed}",
             )
         # verify this block decodes byte-exact BEFORE trusting it (round-trip gate)
-        back = decompress(frame, expected_original_size=len(chunk))
+        back = spec.decompress(frame, expected_original_size=len(chunk))
         if back != chunk:
             raise CodecError("block round-trip mismatch (should be impossible)")
         entries.append(BlockEntry(
@@ -170,6 +176,7 @@ def pack(data: bytes, *, level: int = DEFAULT_LEVEL,
         max_total_uncompressed=max_total_uncompressed,
         block_count=len(entries),
         gen=gen,
+        codec_id=spec.registry_id,
     )
 
     trailer = struct.pack("<QQ", index_offset, len(index))
@@ -184,13 +191,14 @@ def pack(data: bytes, *, level: int = DEFAULT_LEVEL,
 
 
 def _build_header(*, block_size: int, max_block_compressed: int,
-                  max_total_uncompressed: int, block_count: int, gen: str) -> bytes:
+                  max_total_uncompressed: int, block_count: int, gen: str,
+                  codec_id: str = codecs.DEFAULT_CODEC_ID) -> bytes:
     """Serialize the fixed 128-byte header (ADR-0007 layout, flags = 0)."""
     header = bytearray(BLOCK_START)
     header[0:4] = MAGIC
     struct.pack_into("<HH", header, 4, FORMAT_MAJOR, FORMAT_MINOR)
     struct.pack_into("<Q", header, 8, 0)  # flags: v0 writer emits 0
-    header[16:32] = _pad(CODEC_ID_ZSTD, 16)
+    header[16:32] = _pad(codec_id, 16)
     header[32:48] = _pad(CANONICALIZER_VERSION, 16)
     struct.pack_into("<Q", header, 48, block_size)
     struct.pack_into("<Q", header, 56, max_block_compressed)
@@ -205,7 +213,8 @@ def pack_stream(src, dst, *, level: int = DEFAULT_LEVEL,
                 block_size: int = DEFAULT_MAX_BLOCK_UNCOMPRESSED,
                 max_block_compressed: int = DEFAULT_MAX_BLOCK_COMPRESSED,
                 max_total_uncompressed: int = DEFAULT_MAX_TOTAL_UNCOMPRESSED,
-                generator_version: str | None = None) -> ArchiveInfo:
+                generator_version: str | None = None,
+                codec: str = codecs.DEFAULT_CODEC) -> ArchiveInfo:
     """Serialize `src` (binary readable) into `dst` (binary, seekable) with
     memory bounded by ONE block instead of the whole input.
 
@@ -234,6 +243,10 @@ def pack_stream(src, dst, *, level: int = DEFAULT_LEVEL,
         raise ContainerError("E-USAGE-002", "block_size must be >= 1")
     if not (hasattr(dst, "seek") and hasattr(dst, "tell")):
         raise ContainerError("E-USAGE-003", "pack_stream() needs a seekable dst")
+    try:
+        spec = codecs.by_name(codec)
+    except codecs.UnknownCodec as exc:
+        raise ContainerError("E-USAGE-004", str(exc)) from None
 
     gen = generator_version or f"lexora-{__version__}"
     dst.write(b"\x00" * HEADER_SIZE)  # placeholder; backfilled once the count is known
@@ -245,13 +258,13 @@ def pack_stream(src, dst, *, level: int = DEFAULT_LEVEL,
 
     def emit(chunk: bytes) -> None:
         nonlocal offset, emitted
-        frame = compress(chunk, level=level)
+        frame = spec.compress(chunk, level=level)
         if len(frame) > max_block_compressed:
             raise ContainerError(
                 "E-RES-002",
                 f"block compressed {len(frame)} > max_block_compressed {max_block_compressed}",
             )
-        back = decompress(frame, expected_original_size=len(chunk))
+        back = spec.decompress(frame, expected_original_size=len(chunk))
         if back != chunk:
             raise CodecError("block round-trip mismatch (should be impossible)")
         entries.append(BlockEntry(
@@ -297,6 +310,7 @@ def pack_stream(src, dst, *, level: int = DEFAULT_LEVEL,
         max_total_uncompressed=max_total_uncompressed,
         block_count=len(entries),
         gen=gen,
+        codec_id=spec.registry_id,
     )
     dst.seek(0)
     dst.write(header)
@@ -322,7 +336,7 @@ def pack_stream(src, dst, *, level: int = DEFAULT_LEVEL,
         format_major=FORMAT_MAJOR,
         format_minor=FORMAT_MINOR,
         flags=0,
-        codec_id=CODEC_ID_ZSTD,
+        codec_id=spec.registry_id,
         canonicalizer_version=CANONICALIZER_VERSION,
         max_block_uncompressed=block_size,
         max_block_compressed=max_block_compressed,
@@ -368,8 +382,10 @@ def _validate_header(header: bytes, file_len: int) -> ArchiveInfo:
             "E-FMT-HEAD-002",
             f"unknown must-understand flag bits set: 0x{flags & 0xFF:02x}",
         )
-    if codec_id != CODEC_ID_ZSTD:
-        raise ContainerError("E-CMP-006", f"unknown codec id {codec_id!r}")
+    try:
+        codecs.by_registry_id(codec_id)
+    except codecs.UnknownCodec:
+        raise ContainerError("E-CMP-006", f"unknown codec id {codec_id!r}") from None
     if block_count < 1:
         raise ContainerError("E-FMT-IDX-002", "block_count must be >= 1")
     # RESOURCE_LIMITS promises the reader enforces LIM-01/LIM-02 as ceilings, but
@@ -512,20 +528,24 @@ def unpack(archive: bytes, *, only_block: int | None = None) -> bytes:
     without touching other blocks' payloads.
     """
     info, _, _ = read_index(archive)
+    spec = codecs.by_registry_id(info.codec_id)
     if only_block is not None:
         if not (0 <= only_block < len(info.blocks)):
             raise ContainerError("E-FMT-IDX-006", f"block index {only_block} out of range")
-        want = [info.blocks[only_block]]
+        # Absolute index, not position-in-selection: `--block 7` failing must say
+        # "block 7", which is the only number the caller can act on (audit
+        # 2026-11-07 — the selection was enumerated, so it always said 0).
+        want = [(only_block, info.blocks[only_block])]
     else:
-        want = info.blocks
+        want = list(enumerate(info.blocks))
 
     out = bytearray()
-    for i, e in enumerate(want if only_block is None else [e for e in want]):
+    for i, e in want:
         frame = archive[e.offset:e.offset + e.compressed_size]
-        if frame[:4] != b"\x28\xB5\x2F\xFD":
-            raise ContainerError("E-CMP-003", f"block {i} is not a zstd frame")
+        if spec.magic is not None and not frame.startswith(spec.magic):
+            raise ContainerError("E-CMP-003", f"block {i} is not a {spec.name} frame")
         try:
-            payload = decompress(frame, expected_original_size=e.uncompressed_size)
+            payload = spec.decompress(frame, expected_original_size=e.uncompressed_size)
         except CodecError as exc:
             raise ContainerError("E-CMP-004", f"block {i} decode failed: {exc}") from exc
         if hashlib.sha256(payload).digest() != e.sha256:
@@ -556,6 +576,7 @@ def unpack_stream(src, dst, *, only_block: int | None = None) -> tuple[ArchiveIn
     writes through a temp file and renames). Returns (info, bytes_written).
     """
     info, _, _ = read_index_stream(src)
+    spec = codecs.by_registry_id(info.codec_id)
     if only_block is not None:
         if not (0 <= only_block < len(info.blocks)):
             raise ContainerError("E-FMT-IDX-006", f"block index {only_block} out of range")
@@ -571,10 +592,10 @@ def unpack_stream(src, dst, *, only_block: int | None = None) -> tuple[ArchiveIn
         if len(frame) != e.compressed_size:
             raise ContainerError("E-FMT-IDX-001",
                                  f"block {i} truncated ({len(frame)} of {e.compressed_size} bytes)")
-        if frame[:4] != b"\x28\xB5\x2F\xFD":
-            raise ContainerError("E-CMP-003", f"block {i} is not a zstd frame")
+        if spec.magic is not None and not frame.startswith(spec.magic):
+            raise ContainerError("E-CMP-003", f"block {i} is not a {spec.name} frame")
         try:
-            payload = decompress(frame, expected_original_size=e.uncompressed_size)
+            payload = spec.decompress(frame, expected_original_size=e.uncompressed_size)
         except CodecError as exc:
             raise ContainerError("E-CMP-004", f"block {i} decode failed: {exc}") from exc
         if hashlib.sha256(payload).digest() != e.sha256:
@@ -649,6 +670,7 @@ def verify_stream(src, *, only_block: int | None = None) -> VerifyResult:
     else:
         wanted = range(len(info.blocks))
 
+    spec = codecs.by_registry_id(info.codec_id)
     results: list[tuple[int, bool, str | None]] = []
     for i in wanted:
         e = info.blocks[i]
@@ -658,9 +680,9 @@ def verify_stream(src, *, only_block: int | None = None) -> VerifyResult:
             if len(frame) != e.compressed_size:
                 raise ContainerError("E-FMT-IDX-001",
                                      f"block {i} truncated ({len(frame)} of {e.compressed_size} bytes)")
-            if frame[:4] != b"\x28\xB5\x2F\xFD":
-                raise ContainerError("E-CMP-003", f"block {i} is not a zstd frame")
-            payload = decompress(frame, expected_original_size=e.uncompressed_size)
+            if spec.magic is not None and not frame.startswith(spec.magic):
+                raise ContainerError("E-CMP-003", f"block {i} is not a {spec.name} frame")
+            payload = spec.decompress(frame, expected_original_size=e.uncompressed_size)
             if hashlib.sha256(payload).digest() != e.sha256:
                 raise ContainerError("E-INTEGRITY-001",
                                      f"block {i} sha256 mismatch — refusing block, zero output")

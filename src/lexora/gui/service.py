@@ -404,7 +404,7 @@ class AppService:
         except CanonicalizationError as exc:
             return JobResult(False, error=str(exc), exit_code=exit_code_for(exc))
 
-    def run_compress(self, canonical: bytes, *, level: int = 19) -> JobResult:
+    def run_compress(self, canonical: bytes, *, level: int = DEFAULT_LEVEL) -> JobResult:
         try:
             _check_level(level)
             return JobResult(True, compress(canonical, level=level))
@@ -418,7 +418,7 @@ class AppService:
             return JobResult(False, error=str(exc), exit_code=exit_code_for(exc))
 
     # ---- G3 container pieces ------------------------------------------
-    def run_pack(self, canonical: bytes, *, level: int = 19,
+    def run_pack(self, canonical: bytes, *, level: int = DEFAULT_LEVEL,
                  block_size: int = MAX_BLOCK_SIZE) -> JobResult:
         try:
             _check_level(level)

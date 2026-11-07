@@ -13,22 +13,41 @@ been measured and lost.
 
 ## 1. The biggest win available to lexora: replace the codec
 
-lexora's Phase-1 backend is **zstd-19** (`src/lexora/zstd_core.py`).
+> **Update 2026-11-07 — this is now built.** The backend is selectable:
+> `lexora pack --codec ziptastic` (ADR-0014). The container dispatches on
+> `codec_id` through `src/lexora/codec_registry.py`, and the adapter is
+> `src/lexora/ziptastic_core.py`. What is **not** done is the measurement on
+> lexora's own corpus, so zstd remains the default. See
+> [AUDIT_2026-11-07.md](AUDIT_2026-11-07.md).
 
-Measured on the Silesia corpus, 10 files, 119 MB:
+lexora's Phase-1 backend is **zstd** — at **level 9** since ADR-0012 (this note
+said 19, which was true until Session 53).
+
+Measured on Silesia, **10 files, 119,259,397 bytes** — a *subset* of the 12-file
+211,938,580-byte corpus. `webster` (41 MiB, a dictionary) and `mozilla` (51 MiB,
+binary) are **unmeasured** in ziptastic: both exceed its 300 s per-command limit at
+every block size tried.
 
 | codec | total |
 |---|---|
 | `xz -9` | 27,035,452 |
 | **ziptastic** | **23,838,035 (−11.83%)** |
 
+The win is concentrated in text and XML, which is lexora's corpus class: `reymont`
+−22.2 %, `mr` −18.2 %, `osdb` −17.6 %, `xml` −17.3 %, `dickens` −16.8 %,
+`nci` −16.7 %. It is **not** general: `samba` −0.64 % and `sao` −0.001 % are binary
+files where CHCE is level with `xz`. Read the headline as "a large text win", not
+as "a large win".
+
 ziptastic beats `xz -9` on every file it measured, and `xz -9` beats zstd-19 on most
 text. So **lexora's ratio is currently leaving a double-digit percentage on the
 table**, and the fix is not a lexora change — it is swapping the backend.
 
-The container is already codec-agnostic: `codec_id[16]` in the header. A
-`ziptastic_core.py` sitting beside `zstd_core.py`, shelling out to the ziptastic
-binary, would be the smallest possible change with the largest possible effect.
+The container was already codec-agnostic in *layout* (`codec_id[16]` in the
+header) but not in code: zstd was hard-coded in five places — the id written, the
+reader's accept-list, and three literal frame-magic checks. That is now a registry
+(`src/lexora/codec_registry.py`), and `ziptastic_core.py` sits beside
+`zstd_core.py` shelling out to the binary, exactly as this note proposed.
 
 Caveat worth knowing before you start: ziptastic encodes at roughly **0.3–0.5 MB/s**
 at `-9`. It is a ratio codec, not a speed codec. lexora should keep zstd for its
