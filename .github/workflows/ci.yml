@@ -46,7 +46,7 @@ jobs:
           # covered: a test that only runs on a machine with the extra installed
           # is a test nobody runs (found 2026-11-07 — PR #21 went red because the
           # PDF tests needed pypdf and CI installed only [dev]).
-          pip install -e ".[dev,pdf,gui]"
+          pip install -e ".[dev,pdf,gui,ocr]"
 
       - name: Run test suite
         # Skips are allowed (benchmark tests skip without corpus data);

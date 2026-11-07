@@ -23,14 +23,17 @@ import zlib
 from pathlib import Path
 
 import pytest
-from PIL import Image
 
 from lexora import cli, ocr_core
 from lexora.catalog import Catalog
 from lexora.ingest import IngestError, extract
 
 _HAS_PYPDF = importlib.util.find_spec("pypdf") is not None
+_HAS_PIL = importlib.util.find_spec("PIL") is not None
 requires_pdf = pytest.mark.skipif(not _HAS_PYPDF, reason="lexora[pdf] not installed")
+# The scanned-PDF fixtures and page-image extraction need Pillow; the discovery and
+# invocation tests do not, so they run on a base install.
+requires_pillow = pytest.mark.skipif(not _HAS_PIL, reason="lexora[ocr] (Pillow) not installed")
 
 STUB = '''#!{python}
 """Stand-in for tesseract: same CLI contract, fixed output."""
@@ -60,6 +63,8 @@ if __name__ == "__main__":
 
 def _scanned_pdf(pages: int = 1, w: int = 320, h: int = 120) -> bytes:
     """A PDF with no text layer: each page carries one embedded grayscale image."""
+    from PIL import Image  # imported here so collection never needs Pillow
+
     img = Image.new("L", (w, h), 255)
     for y in range(10, h - 10, 6):
         for x in range(10, w - 10, 4):
@@ -175,6 +180,7 @@ def test_nonzero_exit_surfaces_stderr(tmp_path: Path, monkeypatch) -> None:
 # --------------------------------------------------------------------------- #
 
 @requires_pdf
+@requires_pillow
 def test_scan_pages_extracts_embedded_images_without_poppler(tmp_path: Path) -> None:
     pdf = tmp_path / "scan.pdf"
     pdf.write_bytes(_scanned_pdf(pages=3))
@@ -184,6 +190,7 @@ def test_scan_pages_extracts_embedded_images_without_poppler(tmp_path: Path) -> 
 
 
 @requires_pdf
+@requires_pillow
 def test_scan_pages_reports_pages_it_cannot_handle(tmp_path: Path) -> None:
     """A page with no embedded image must be reported, not silently skipped."""
     from test_ingest import _pdf as text_pdf  # a text-layer PDF: no images
@@ -195,6 +202,7 @@ def test_scan_pages_reports_pages_it_cannot_handle(tmp_path: Path) -> None:
 
 
 @requires_pdf
+@requires_pillow
 def test_ocr_pdf_returns_provenance_worthy_facts(tmp_path: Path, stub_tesseract) -> None:
     pdf = tmp_path / "scan.pdf"
     pdf.write_bytes(_scanned_pdf(pages=2))
@@ -210,6 +218,7 @@ def test_ocr_pdf_returns_provenance_worthy_facts(tmp_path: Path, stub_tesseract)
 # --------------------------------------------------------------------------- #
 
 @requires_pdf
+@requires_pillow
 def test_scanned_pdf_without_ocr_is_refused_and_names_the_flag(tmp_path: Path) -> None:
     pdf = tmp_path / "scan.pdf"
     pdf.write_bytes(_scanned_pdf())
@@ -219,6 +228,7 @@ def test_scanned_pdf_without_ocr_is_refused_and_names_the_flag(tmp_path: Path) -
 
 
 @requires_pdf
+@requires_pillow
 def test_scanned_pdf_with_ocr_disabled_but_no_binary_says_so(tmp_path: Path,
                                                              no_tesseract) -> None:
     pdf = tmp_path / "scan.pdf"
@@ -229,6 +239,7 @@ def test_scanned_pdf_with_ocr_disabled_but_no_binary_says_so(tmp_path: Path,
 
 
 @requires_pdf
+@requires_pillow
 def test_scanned_pdf_through_ocr_records_its_provenance(tmp_path: Path,
                                                         stub_tesseract) -> None:
     pdf = tmp_path / "scan.pdf"
@@ -245,6 +256,7 @@ def test_scanned_pdf_through_ocr_records_its_provenance(tmp_path: Path,
 
 
 @requires_pdf
+@requires_pillow
 def test_cli_ocr_end_to_end_lands_in_the_catalog(tmp_path: Path, stub_tesseract,
                                                  capsys) -> None:
     root = str(tmp_path / "db")
@@ -263,6 +275,7 @@ def test_cli_ocr_end_to_end_lands_in_the_catalog(tmp_path: Path, stub_tesseract,
 
 
 @requires_pdf
+@requires_pillow
 def test_cli_refuses_a_scan_without_ocr_and_stores_nothing(tmp_path: Path, capsys) -> None:
     root = str(tmp_path / "db")
     pdf = tmp_path / "scan.pdf"
