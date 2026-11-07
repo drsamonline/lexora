@@ -26,7 +26,17 @@ dev = [
 ]
 # ADR-0008 decision 1: GUI is an opt-in extra; core install stays Qt-free.
 gui = [
-    "pyside6>=6.6,<7",
+    # <6.12 on purpose: 6.12 aborts with a Bus error *after* the suite passes, at
+    # Qt teardown on a headless runner (found in CI 2026-11-07). The tests
+    # themselves are green; the process exit code is not. Revisit when a later
+    # release fixes it — the pin is a workaround, and is recorded as one.
+    "pyside6>=6.6,<6.12",
+]
+# ADR-0017: PDF text-layer ingestion is an opt-in extra, and the engine is pypdf
+# (BSD-3-Clause) rather than PyMuPDF (AGPL-3.0) — a permissive dependency avoids the
+# copyleft question ADR-0009 left open entirely. Pinned to the version actually tested.
+pdf = [
+    "pypdf>=5,<7",
 ]
 
 [project.scripts]

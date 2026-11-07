@@ -43,6 +43,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -376,14 +377,25 @@ class Catalog:
         return payload
 
     def _fts_rowids(self, query: str) -> list[int]:
-        """Rowids matching `query`, degrading to a literal phrase instead of raising.
+        """Rowids matching `query`, degrading gracefully instead of raising.
 
         FTS5 raises on syntax it does not understand, and users type things like
-        `C++`, `AND`, or an unbalanced quote. First attempt is the query as given
-        (so real FTS syntax works); the second treats it as one literal phrase; if
-        that also fails the answer is "no matches", never a stack trace.
+        `self-attention`, `C++`, `AND`, or an unbalanced quote. Three attempts, in
+        order of how much they preserve the user's intent:
+
+        1. the query as given, so real FTS syntax (`a OR b`, `title:x`, `foo*`) works;
+        2. the query **reduced to its word tokens, ANDed** — this is what rescues
+           `self-attention`, which FTS5 reads as a syntax error rather than as two
+           words;
+        3. a single quoted token, for a one-word query that FTS5 still objects to.
+
+        A quoted *phrase* is deliberately not an attempt: this index is built with
+        `detail=column`, which stores no positions, so a multi-word phrase matches
+        nothing at all — a silent zero-result failure, which is worse than an error.
         """
-        for candidate in (query, f'"{query}"'):
+        for candidate in (query, self._and_of_tokens(query), self._single_token(query)):
+            if not candidate:
+                continue
             try:
                 return [
                     r["rowid"]
@@ -395,6 +407,21 @@ class Catalog:
             except sqlite3.OperationalError:
                 continue
         return []
+
+    @staticmethod
+    def _and_of_tokens(query: str) -> str | None:
+        """`self-attention` -> `self AND attention`; None when there are no words."""
+        tokens = [t for t in re.split(r"\W+", query, flags=re.UNICODE) if t]
+        if len(tokens) < 2:
+            return None
+        return " AND ".join(f'"{t}"' for t in tokens)
+
+    @staticmethod
+    def _single_token(query: str) -> str | None:
+        tokens = [t for t in re.split(r"\W+", query, flags=re.UNICODE) if t]
+        if len(tokens) != 1:
+            return None
+        return f'"{tokens[0]}"'
 
     def search(
         self,

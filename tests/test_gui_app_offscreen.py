@@ -20,6 +20,7 @@ pytest.importorskip("PySide6")
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+from lexora import DEFAULT_LEVEL
 from PySide6.QtWidgets import QApplication, QComboBox, QLineEdit, QPushButton, QTextEdit  # noqa: E402
 
 from lexora.gui.app import VIEWS, build_window  # noqa: E402
@@ -158,7 +159,10 @@ def test_bad_integer_field_refused_without_io(window, tmp_path):
     combo = _find(window, QComboBox)
     lineedits = window.findChildren(QLineEdit)
     in_edit = next(le for le in lineedits if "input file" in le.placeholderText())
-    lvl = next(le for le in lineedits if le.text() == "3")
+    # The level field shows lexora.DEFAULT_LEVEL (9 since ADR-0012). This used to
+    # hard-code "3" — the pre-ADR-0012 default — and only ran on machines with the
+    # [gui] extra, so it rotted silently until CI started installing Qt.
+    lvl = next(le for le in lineedits if le.text() == str(DEFAULT_LEVEL))
     run_btn = _find(window, QPushButton, "Run")
     log = _find(window, QTextEdit)
 
@@ -384,7 +388,8 @@ def test_save_defaults_button_persists_and_refills(qapp, tmp_path, monkeypatch):
 def test_save_defaults_bad_integer_banner_only(qapp, tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     win = build_window()
-    level_edit = next(le for le in win.findChildren(QLineEdit) if le.text() == "3")
+    level_edit = next(le for le in win.findChildren(QLineEdit)
+                      if le.text() == str(DEFAULT_LEVEL))
     level_edit.setText("abc")
     _find(win, QPushButton, "Save as defaults").click()
     log = _find(win, QTextEdit)

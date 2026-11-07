@@ -4,7 +4,7 @@
 > session note or a chat summary, this file wins on *sequencing*; accepted ADRs still win on
 > *decisions*. Update it whenever something lands — an item that is done and still listed
 > here is worse than no list.
-> **Last verified:** 2026-11-07 (Session 75, against `main` at `bc6e58b`, gate 567 passed / 1 skipped)
+> **Last verified:** 2026-11-07 (Session 76, PDF ingestion landed — P3.1/P3.2/P3.4 done. Session 75, against `main` at `bc6e58b`, gate 567 passed / 1 skipped)
 > **Related:** [ROADMAP.md](ROADMAP.md) (milestones) · [PHASES.md](PHASES.md) (phases) · [DECISIONS.md](DECISIONS.md) (ADRs + open questions) · [STATUS.md](STATUS.md) (verified state) · [NEXT_SESSION.md](NEXT_SESSION.md) (resume card)
 
 ## 1. The final product — v1.0, defined
@@ -40,7 +40,8 @@ multi-user concurrency, cloud anything.
 | Queryable archive (`lexora db`) | **Done, sidecar design** | ADR-0016; 21 tests; 0.34 s query / 0.47 s retrieval |
 | `.lxdb` single-file | **Proposed, no bytes** | ADR-0013, gated on G2 |
 | Protocol-scope benchmark (G2) | **Shape done, scale not** | R6: 3 splits, 3 reps, 6 systems, leak audit clean, at 5.9 MB |
-| PDF / OCR ingestion | **Not started** | M3 / P3 |
+| PDF ingestion (text layer) | **Done** | ADR-0017; `ingest.py`; 15 tests |
+| OCR | **Not started** | OQ-10 / P3.3 |
 | Multilingual (hi, gu) | **Not started** | deferred by owner; English-only build scope |
 | GUI | **Partly** — M1–M3 panels exist, no query panel | ADR-0011 implementation open |
 | Release | **Not started** | M7 / P7 |
@@ -97,10 +98,10 @@ without offscreen tests.
 
 | # | Item | Done when |
 |---|---|---|
-| P3.1 | PDF text layer extraction, page order preserved (REQ-ING-002) | Fixture PDFs → canonical text |
-| P3.2 | Provenance in archive metadata: source, mode, engine/version (REQ-ING-004) | Schema + round-trip test |
+| ~~P3.1~~ | ~~PDF text layer extraction, page order preserved (REQ-ING-002)~~ | **DONE 2026-11-07** — `src/lexora/ingest.py`, pypdf, page order asserted, 15 tests |
+| ~~P3.2~~ | ~~Provenance in archive metadata (REQ-ING-004)~~ | **DONE 2026-11-07** — `mode`/`engine`/`engine_version`/`pages`/`pages_without_text`/`text_sha256` stored and filterable |
 | P3.3 | Optional OCR with graceful skip (REQ-ING-003) | CI job with and without OCR |
-| P3.4 | PyMuPDF needs **its own ADR** first (AGPL vs PolyForm) | ADR accepted, or a different engine chosen |
+| ~~P3.4~~ | ~~PyMuPDF needs its own ADR first (AGPL)~~ | **RESOLVED 2026-11-07 by [ADR-0017](ADR/ADR-0017-pdf-engine.md):** pypdf (BSD-3) chosen instead — the copyleft question is removed, not answered |
 | P3.5 | Cleaning-error rate ≤1 % operationalised (REQ-CAN-007, ADR-0004) | Sample-review report |
 
 ### P4 — Correctness and consistency debt

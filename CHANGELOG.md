@@ -6,6 +6,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-11-07 — Session 76 (**PDF ingestion — and the AGPL question removed rather than answered**, [ADR-0017](docs/ADR/ADR-0017-pdf-engine.md)):
+  - `src/lexora/ingest.py`: `.txt`/`.md`/`.csv` contribute their bytes, **`.pdf` contributes its text layer**, and `lexora db add` consumes both — so a PDF lands in the queryable archive with full-text search and metadata filters.
+  - **pypdf (BSD-3-Clause) rather than PyMuPDF (AGPL-3.0)**, as the optional `lexora[pdf]` extra. ADR-0009 had flagged PyMuPDF as needing its own ADR before it could become a dependency; choosing a permissive engine removes that question instead of accepting a copyleft obligation. The cost is recorded: slower, weaker on hard layouts, no OCR.
+  - **Provenance per document** (REQ-ING-004): `mode`, `engine`, `engine_version`, `pages`, `pages_without_text`, `text_sha256` — all filterable (`db search --filter mode=pdf-text-layer`). Explicit `--meta` wins over provenance.
+  - **A scanned PDF is refused with OCR named and nothing archived** (REQ-ING-003's graceful-skip half); a mixed PDF keeps its text pages and reports the rest.
+  - `--encoding` added for text files; `--no-canon` is now documented as text-only.
+  - 15 tests, with PDF fixtures **generated from raw PDF syntax in the test file** — a fixture built by the library under test would pass even if extraction were broken.
+
+### Added
 - 2026-11-07 — Session 75 (**one document for the remaining work** — [docs/PATH_TO_V1.md](docs/PATH_TO_V1.md)):
   - **v1.0 defined as six testable conditions** (ingest, exactness, a measured claim, one queryable file, a GUI, a release) rather than a mood.
   - **The work ordered P0–P6 by dependency**, each item with its blocker and its definition of done: P0 close gate G2 → P1 `.lxdb` → P2 GUI → P3 PDF/OCR ingestion → P4 correctness debt → P5 documentation debt → P6 release.
@@ -61,6 +70,9 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
   - **`lexora doctor`** now reports the ziptastic binary as INFO (absent is not a fault — zstd is the default).
   - **`docs/AUDIT_2026-11-07.md`** — the audit this came from: four findings with evidence, plus the correction that the −11.83 % headline is a subset whose two largest files (`webster`, `mozilla`) are unmeasured.
   - 27 new tests (26 passing + the real-binary skip). Suite **514 → 540 passed**, 2 skipped (the new skip is the real-binary round trip; the binary is not vendored and cannot be built here).
+
+### Fixed
+- 2026-11-07 — Session 76 (**a search that silently returned nothing**): `lexora db search` on a hyphenated query such as `self-attention` matched zero documents against text full of the word. FTS5 reads the hyphen as a syntax error, and the fallback quoted the whole query as a phrase — which cannot match on a `detail=column` index, because phrases need positions. The fallback now retries as word tokens ANDed (`self AND attention`), handles the single-token case separately, and no longer attempts phrases at all, since on this index they cannot work. Found on a real 15-page paper, not by a fixture; two regression tests added, including one asserting that `self-referential` does *not* match.
 
 ### Fixed
 - 2026-11-07 — Session 70 (**four defects found by audit, all fixed**):

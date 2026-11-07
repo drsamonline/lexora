@@ -20,8 +20,26 @@ lexora db get    --root myarchive "books/book.txt" --out moby.txt
 lexora db stats  --root myarchive
 ```
 
-`add` **canonicalises by default** (CAN-R01/R02/R05), so what is stored is the canonical
-text — the same bytes `canon` would produce. Use `--no-canon` to store bytes as given.
+`add` **ingests, then canonicalises** (CAN-R01/R02/R05). A `.txt` contributes its own
+bytes; a **`.pdf` contributes its text layer** and needs the optional extra:
+
+```bash
+pip install 'lexora[pdf]'
+lexora db add --root myarchive --in paper.pdf --path "papers/paper.pdf" \
+              --meta collection=biology
+```
+
+Provenance is stored with every document — `mode` (`text` / `pdf-text-layer`), `engine`,
+`engine_version`, `pages`, `pages_without_text`, `text_sha256` — so you can filter on it:
+
+```bash
+lexora db search --root myarchive --filter mode=pdf-text-layer
+```
+
+A **scanned PDF** (no text layer) is refused with a message naming OCR, and nothing is
+archived. A mixed PDF keeps the pages that had text and reports the rest in
+`pages_without_text`. Use `--no-canon` for text files to store bytes as given (a PDF
+always contributes its text layer).
 
 ## What it costs
 
@@ -38,14 +56,21 @@ The index is the price of queryability, and it is stored uncompressed on purpose
 cannot search a compressed index without decompressing it, which defeats the point.
 `db stats` reports it rather than hiding it.
 
+**It is a formula, not a percentage: `index ≈ 56 KiB fixed + ~7.5 % of text`.** Measured:
+an empty catalog is 57,344 bytes; the 19-book catalog is 1.44 MB against 19.3 MB of text
+(7.5 %); a *single* 40 KB document shows 185 %, because the fixed cost dominates it. So a
+small archive pays for the index regardless of how little is in it, and only past a few MB
+does the 7.5 % figure describe what you are paying.
+
 ## Searching
 
 `--query` takes FTS5 syntax. **Phrase and NEAR search are not available** — the index is
 built with `detail=column`, so `"captain ahab"` behaves as `captain AND ahab`. That is a
 deliberate trade: positions would cost roughly 32 % of the text in index size.
 
-Queries a user can actually type are safe: `C++`, `AND`, or an unbalanced quote return no
-matches instead of an error.
+Queries a user can actually type are handled: `self-attention` is retried as
+`self AND attention` (FTS5 reads the hyphen as a syntax error), and `C++`, `AND` or an
+unbalanced quote return no matches instead of a traceback.
 
 `--filter key=value` matches a metadata field exactly (repeatable, ANDed with `--query`).
 Metadata is stored as JSON per document, so any field you pass to `--meta` is filterable.
