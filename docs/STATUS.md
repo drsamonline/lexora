@@ -1,7 +1,7 @@
 # LEXORA Project Status
 
 > **Status:** Active — update at every session end
-> **Last verified:** 2026-11-07 (Session 71: **CHCE measured on this project's own corpus class** — on 19 Gutenberg texts (19.4 MB canonical) ziptastic's CHCE is **−19.75 % vs `xz -9`** and −27.67 % vs zstd-9, smaller on **19/19** files, at 0.50 MiB/s against zstd-9's 15.9. Smoke scope: this answers whether the Silesia effect transfers (it does, and is larger on pure prose), not the ADR-0001 gate. Gate **541 passed, 1 skipped** with the real binary present. Prior: Session 70 (second codec behind a registry, ADR-0014; four audit defects fixed).)
+> **Last verified:** 2026-11-07 (Session 75: **the remaining work now lives in one place — [PATH_TO_V1.md](PATH_TO_V1.md)** — v1.0 defined as six testable conditions, the work ordered P0–P6 by dependency, and a do-not-forget register for decisions that would otherwise be lost. PRs #18 (queryable archive) and #19 (R6 + ADR-0013) merged. Prior: Session 74 (ADR-0013 proposed; R6 protocol-shaped run); Session 71 (CHCE measured).)
 
 ## Current phase
 

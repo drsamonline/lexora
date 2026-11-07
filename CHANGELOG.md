@@ -6,6 +6,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 ## [Unreleased]
 
 ### Added
+- 2026-11-07 — Session 75 (**one document for the remaining work** — [docs/PATH_TO_V1.md](docs/PATH_TO_V1.md)):
+  - **v1.0 defined as six testable conditions** (ingest, exactness, a measured claim, one queryable file, a GUI, a release) rather than a mood.
+  - **The work ordered P0–P6 by dependency**, each item with its blocker and its definition of done: P0 close gate G2 → P1 `.lxdb` → P2 GUI → P3 PDF/OCR ingestion → P4 correctness debt → P5 documentation debt → P6 release.
+  - **A do-not-forget register** for the decisions that would be cheap to lose: CHCE stays a preset; `.lxdb` deliberately not built yet; GUI is a CLI client; the measured-dead preprocessing ideas; CAN-R01's deliberate size cost; the index's 7 %; and the fact that multilingual and PDF/OCR are still unbuilt.
+  - Wired into README, `docs/index.md`, STATUS, `NEXT_SESSION.md` and ROADMAP so it is reachable from every entry point, with the rule that it wins on sequencing while accepted ADRs win on decisions.
+  - `ROADMAP.md` milestone statuses corrected (M2 in progress with R4/R5/R6; M5 direction decided, no bytes).
+  - PRs #18 and #19 merged first, so the plan describes `main` (`bc6e58b`).
+
+### Added
 - 2026-11-07 — Session 74 (**protocol-shaped run: CHCE reproduces in every split; `.lxdb` shape proposed, not built**):
   - **R6** — all three splits, 3 reps, six systems, leak audit clean, at 5.9 MB of Gutenberg text. `lexora-chce` measures **−19.36 % vs `lexora19`** and **−18.51 % vs `xz -9`**, with `chce-raw` at −18.81 %; stored sizes are byte-stable across reps for every system. Two corpora now agree to within 1.2 points (smoke −19.75 %, R6 −18.51 %), and the ordering holds in train, validation and heldout. `lexora19` still measures +1.05 % against `xz -9`, i.e. v0 is still slightly worse than xz exactly as published.
   - **It does not close G2**, and is not published as a revision: 5.9 MB of a 1.054 GiB snapshot, one machine class, `xz9-lzma` rather than the CLI, no sign-off. The gap is now environmental, not analytical.

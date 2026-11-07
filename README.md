@@ -18,6 +18,7 @@ Canonicalize text conservatively, then compress it with guaranteed byte-exact re
 <a href="https://drsamonline.github.io/lexora/#start">Install from source</a> &nbsp;·&nbsp;
 <a href="https://drsamonline.github.io/lexora/#benchmarks">Benchmarks</a> &nbsp;·&nbsp;
 <a href="https://drsamonline.github.io/lexora/#faq">FAQ</a> &nbsp;·&nbsp;
+<a href="docs/PATH_TO_V1.md">Roadmap to v1.0</a> &nbsp;·&nbsp;
 <a href="docs/STATUS.md">Status</a> &nbsp;·&nbsp;
 <a href="https://github.com/drsamonline/lexora">Repository</a> &nbsp;·&nbsp;
 <a href="https://drsamonline.github.io/">All projects</a>
