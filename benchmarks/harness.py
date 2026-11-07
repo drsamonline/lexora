@@ -445,12 +445,53 @@ def _sys_xz9_lzma(data: bytes, out_path: Path) -> int:
     return len(blob)
 
 
+def _sys_chce_raw(data: bytes, out_path: Path) -> int:
+    """CHCE alone on the raw bytes — the size-comparable row against `zstd19`.
+
+    No canonicalization and no container, exactly like `_sys_zstd19`: the pair exists
+    to isolate what the backend does, so the pipeline rows can be read against it.
+    """
+    from lexora import ziptastic_core
+
+    blob = ziptastic_core.compress(data, level=9)
+    out_path.write_bytes(blob)
+    return len(blob)
+
+
+def _sys_lexora_chce(data: bytes, out_path: Path) -> int:
+    """LEXORA's full pipeline with CHCE as the block codec (ADR-0014/0015).
+
+    Same canonicalisation and same `.lxz` v0 container as `_sys_lexora19` — only the
+    codec differs — so the two rows are directly comparable and the difference is the
+    backend, not the pipeline. Container overhead is included for the same reason it
+    is in `_sys_lexora`: if the decoder needs it, it counts (REQ-CMP-004).
+
+    Two honest notes for whoever reads the resulting numbers:
+      * this row spawns one `ziptastic` process per block, so the peak-RSS figure the
+        harness records **includes that child**, which is the true cost of the system
+        rather than an artefact of measuring it;
+      * it is roughly 30x slower than the zstd row, so a protocol-scope run needs a
+        budget in hours, not minutes.
+    """
+    from lexora.canonicalize import canonicalize
+    from lexora.container import pack as lxz_pack
+
+    archive = lxz_pack(canonicalize(data), level=9, codec="ziptastic")
+    out_path.write_bytes(archive)
+    return len(archive)
+
+
 SYSTEMS = {
     "lexora": _sys_lexora,
     "lexora19": _sys_lexora19,
     "zstd19": _sys_zstd19,
     "xz9": _sys_xz9,
     "xz9-lzma": _sys_xz9_lzma,
+    # The CHCE pair (ADR-0014/0015). Not the default codec — they exist so the
+    # max-ratio preset can be measured at protocol scope, which is the condition
+    # ADR-0015 puts on ever revisiting the default.
+    "chce-raw": _sys_chce_raw,
+    "lexora-chce": _sys_lexora_chce,
     # "lexora" is OUR pipeline (canon + .lxz v0), not a baseline: it exists so the
     # project's own numbers appear beside the frozen baselines on identical inputs.
     # brotli_q11 / ppmd: intentionally absent — tools not installed in this
@@ -493,6 +534,24 @@ def _available_systems(requested: list[str]) -> tuple[list[str], dict]:
                 ok.append(name)
             except ImportError:  # pragma: no cover
                 skipped[name] = "python-zstandard not installed"
+            continue
+        if name in ("chce-raw", "lexora-chce"):
+            # The binary is optional everywhere else in this project (ADR-0015), so
+            # it must be an explicit skip with a reason here too — never a silent
+            # drop, and never a stub that produces a number nobody can reproduce.
+            try:
+                from lexora import ziptastic_core
+            except ImportError:  # pragma: no cover
+                skipped[name] = "lexora.ziptastic_core not importable"
+                continue
+            path = ziptastic_core.find_binary()
+            if path:
+                ok.append(name)
+            else:
+                skipped[name] = (
+                    "ziptastic binary not found (set "
+                    f"${ziptastic_core.BINARY_ENV} or put it on PATH)"
+                )
             continue
         ok.append(name)
     unaccounted = set(requested) - set(ok) - set(skipped)

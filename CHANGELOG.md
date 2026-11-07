@@ -5,6 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
+### Added
+- 2026-11-07 — Session 72 (**the benchmark harness can now measure CHCE**):
+  - `chce-raw` and `lexora-chce` registered as harness systems, so the protocol-scope comparison ADR-0015 requires is one command: `--systems lexora,lexora19,zstd19,xz9-lzma,lexora-chce`. `chce-raw` is the backend alone (comparable to `zstd19`); `lexora-chce` is canon + `.lxz` with CHCE (comparable to `lexora19`), so the difference between those two rows is the backend and not the pipeline.
+  - Availability is an explicit skip naming `$LEXORA_ZIPTASTIC`, never a stub — a CHCE number produced without the binary would poison the register.
+  - Verified end-to-end on 5 files / 5.8 MiB: `lexora-chce` **0.2227** vs `lexora19` 0.2838 (**−21.55 %**) vs `zstd19` 0.2856, with `chce-raw` 0.2225.
+  - 5 new harness tests, including a totality invariant over the whole registry (every requested system lands in exactly one of run/skipped). The first edit of `_available_systems` had reintroduced the Session-62 silent-drop bug via a stray `continue`; it was caught before commit and is now structurally untestable-for.
+
 ### Changed
 - 2026-11-07 — Session 72 (**owner decisions recorded: codec policy, and R4/R5 published**):
   - **[ADR-0015](docs/ADR/ADR-0015-codec-policy.md) — codec policy, accepted by explicit owner decision; OQ-16 closed.** `zstd` stays `DEFAULT_CODEC`; CHCE is the documented **max-ratio preset** (`--codec ziptastic`). The ADR records why the better-ratio codec is *not* the default: a base install must not require a platform-specific external binary, a default that silently costs 30× the encode time is a bad first impression, and the evidence is smoke scope. Changing the default later should fail that ADR's review, not just a test.
