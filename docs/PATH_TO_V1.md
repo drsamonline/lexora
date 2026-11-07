@@ -42,7 +42,8 @@ multi-user concurrency, cloud anything.
 | Protocol-scope benchmark (G2) | **Shape done, scale not** | R6: 3 splits, 3 reps, 6 systems, leak audit clean, at 5.9 MB |
 | PDF / OCR ingestion | **Not started** | M3 / P3 |
 | Multilingual (hi, gu) | **Not started** | deferred by owner; English-only build scope |
-| GUI | **Partly** — M1–M3 panels exist, no query panel | ADR-0011 implementation open |
+| GUI query view | **Done** | `gui/query.py`; 14 offscreen tests; parity with the CLI asserted |
+| GUI on subprocess (ADR-0011) | **Partly** — the query view is a CLI client; `service.py` is still in-process | PATH_TO_V1 P2.3 |
 | Release | **Not started** | M7 / P7 |
 
 ## 3. Remaining work, in dependency order
@@ -85,9 +86,9 @@ Per ADR-0011 the GUI is a **client of the CLI**, so the contract is fixed: searc
 
 | # | Item | Done when |
 |---|---|---|
-| P2.1 | Query panel (search + metadata filters + result list) | Offscreen test: a query returns rows |
-| P2.2 | Preview pane decoding only the selected document | Test asserts one decode per selection |
-| P2.3 | Ingest/compact actions with progress and refusal surfacing | Parity test: GUI bytes == CLI bytes |
+| ~~P2.1~~ | ~~Query panel (search + metadata filters + result list)~~ | **DONE 2026-11-07** — `gui/query.py`, reachable from the ribbon; 14 offscreen tests |
+| ~~P2.2~~ | ~~Preview pane decoding only the selected document~~ | **DONE 2026-11-07** — test asserts the other match's text is absent from the preview |
+| P2.3 | Ingest/compact actions from the GUI, and moving `gui/service.py` onto subprocess calls (the open half of ADR-0011) | Parity test: GUI bytes == CLI bytes |
 | P2.4 | Notices for the `[gui]` extra if it ships (R3 obligation) | NOTICE + LGPL/GPL texts + About-view notice |
 
 Needs a **Qt-capable machine** (PySide6 + `libegl1`); nothing here can be honestly claimed
