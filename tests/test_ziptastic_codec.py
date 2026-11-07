@@ -125,6 +125,7 @@ def test_overlong_registry_id_is_a_construction_error() -> None:
         codec_registry.CodecSpec(
             name="x", registry_id="a" * 17, magic=None,
             compress=lambda b, **k: b, decompress=lambda b, **k: b,
+            validate_level=lambda level: None,
         )
 
 

@@ -27,6 +27,20 @@ class CodecError(Exception):
     """Codec-level failure (bad parameters or corrupt input)."""
 
 
+def validate_level(level: int) -> str | None:
+    """Return an error message when `level` is not a legal zstd level, else None.
+
+    Lives in the codec because the codec is what defines the range; the CLI calls
+    it at the boundary so an out-of-range flag is a *usage* error (exit 2) rather
+    than a codec failure (exit 5) — see ADR-0018.
+    """
+    if isinstance(level, bool) or not isinstance(level, int):
+        return f"level must be an integer, got {type(level).__name__}"
+    if not (1 <= level <= 22):
+        return f"level {level} is outside the zstd range 1..22"
+    return None
+
+
 def _profile_id(level: int) -> str:
     return f"{CODEC_ID_ZSTD}" if level == DEFAULT_LEVEL else f"zstd-raw-l{level}"
 

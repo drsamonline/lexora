@@ -115,6 +115,22 @@ def _write(path: str, data: bytes) -> None:
         raise SystemExit(EXIT_FILE)
 
 
+
+def _level_usage_error(level: int, codec: str) -> str | None:
+    """Return a usage message when `--level` is illegal for the chosen codec.
+
+    An out-of-range flag value is a **usage** error (exit 2), not a codec failure:
+    the codec never ran, and the same command already treats an out-of-range
+    `--block-size` as exit 2. Exit 5 says "the codec failed", which would
+    misattribute a typo to zstd. See ADR-0018.
+    """
+    try:
+        spec = codecs.by_name(codec)
+    except codecs.UnknownCodec as exc:  # pragma: no cover - argparse constrains choices
+        return str(exc)
+    return spec.validate_level(level)
+
+
 def cmd_canon(args: argparse.Namespace) -> int:
     """Canonicalize. Streaming by default (Session 45): the working set is one
     decoded chunk plus a one-character carry, so it no longer tracks document
@@ -196,6 +212,10 @@ def cmd_canon(args: argparse.Namespace) -> int:
 
 
 def cmd_zround(args: argparse.Namespace) -> int:
+    level_problem = _level_usage_error(args.level, codecs.DEFAULT_CODEC)
+    if level_problem:
+        print(f"usage error: --level {args.level}: {level_problem}", file=sys.stderr)
+        return 2
     payload = _read(args.infile)
     try:
         blob = compress(payload, level=args.level)
@@ -229,6 +249,10 @@ def cmd_pipe(args: argparse.Namespace) -> int:
     only if the byte-exact round-trip check passes (SPEC §8.1 spirit applied
     at the flow level).
     """
+    level_problem = _level_usage_error(args.level, codecs.DEFAULT_CODEC)
+    if level_problem:
+        print(f"usage error: --level {args.level}: {level_problem}", file=sys.stderr)
+        return 2
     raw = _read(args.infile)
     try:
         canon = canonicalize(raw, declared_encoding=args.encoding)
@@ -388,6 +412,10 @@ def cmd_pack(args) -> int:
             f"{MAX_BLOCK_SIZE} bytes (8 MiB); readers enforce this cap",
             file=sys.stderr,
         )
+        return 2
+    level_problem = _level_usage_error(args.level, args.codec)
+    if level_problem:
+        print(f"usage error: --level {args.level}: {level_problem}", file=sys.stderr)
         return 2
     # Default path is STREAMING: one block resident at a time, so peak RSS is
     # flat in input size (PERFORMANCE_BUDGET "Encode block" row). --no-stream
@@ -702,6 +730,10 @@ def cmd_batch(args) -> int:
         return 2
     if args.block_size < 1 or args.block_size > MAX_BLOCK_SIZE:
         print(f"usage error: --block-size must be 1..{MAX_BLOCK_SIZE}", file=sys.stderr)
+        return 2
+    level_problem = _level_usage_error(args.level, args.codec)
+    if level_problem:
+        print(f"usage error: --level {args.level}: {level_problem}", file=sys.stderr)
         return 2
 
     root = Path(args.infile)

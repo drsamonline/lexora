@@ -58,6 +58,20 @@ LEVEL_TO_ARGS = {9: ("-9",), 19: ("-9", "--max-ratio")}
 DEFAULT_LEVEL = 9
 
 
+def validate_level(level: int) -> str | None:
+    """Return an error message when `level` is not a legal CHCE preset, else None.
+
+    ziptastic has two presets rather than a numeric scale, so an arbitrary level is
+    a usage error, not a codec failure — see ADR-0018.
+    """
+    if isinstance(level, bool) or not isinstance(level, int):
+        return f"level must be an integer, got {type(level).__name__}"
+    if level not in LEVEL_TO_ARGS:
+        return (f"ziptastic has two presets, not a numeric scale: use 9 (-9) or "
+                f"19 (-9 --max-ratio), got {level}")
+    return None
+
+
 def find_binary() -> str | None:
     """Path to the ziptastic binary, or None. $LEXORA_ZIPTASTIC wins over PATH."""
     override = os.environ.get(BINARY_ENV)
