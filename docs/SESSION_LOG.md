@@ -2021,3 +2021,41 @@ and the real-text test **failed**; restoring it, **passed**. A test whose failur
 never seen is a test you are trusting, not testing.
 
 **Gate:** **710 passed, 0 skipped**; linkcheck clean.
+
+---
+
+## Session 90 — 2026-11-08 (batch 2: the language seam, with English as its first plugin)
+
+**The seam exists and English is behind it.** `lexora.langapi` holds the contract, the registry
+and discovery; `lexora.languages.english` is the reference implementation; `doctor` reports what
+is installed and whether it passes.
+
+**A contract that has only seen valid plugins is a description of English.** So the test suite is
+25 tests, **twelve of which are deliberately broken plugins** — bad id, id too long, version zero,
+blank name, unknown tokenizer, no `canonicalize`, `ocr_languages` as a list, provenance label too
+long or with spaces, a plugin returning `str`, one that raises, and **one that is
+non-deterministic**. Each must fail for its *own* reason, and a separate test asserts all problems
+are reported in one pass rather than one per run.
+
+**Two decisions made while building, both to avoid churn rather than because they are elegant.**
+
+*English keeps the label `lexcan-0.1`* instead of deriving `en-1`, through an explicit
+`provenance_label` override. ADR-0020 changed that header field **yesterday**; changing it again a
+day later would rewrite every archive twice in a week for no reader benefit. New languages start
+at `hi-1`/`zh-1`; English's label changes once, with the format, at v1.
+
+*English delegates to `canonicalize()` instead of copying the rules into the plugin*, and a test
+asserts the identity (`PLUGIN.canonicalize is canonicalize`). Copying is the obvious way to write
+it and would have created a second source of truth drifting from the tests that pin the first.
+
+**A self-inflicted wound, caught immediately.** My first attempt to declare the entry-point group
+inserted it *inside* `[project.scripts]`, so the TOML briefly claimed the CLI was a language
+plugin. The `tomllib` round-trip caught it before any commit — the same "print success without
+asserting" habit that cost two attempts in Session 89, this time caught by verifying the parse
+instead of the edit.
+
+**Deliberately not done.** The catalog does not record its tokenizer, so a mismatch cannot yet be
+detected — that only matters once a second tokenizer exists (CJK/trigram). It stays in the plan
+rather than being pre-built for a case that does not exist.
+
+**Gate:** **735 passed, 0 skipped**; linkcheck clean.

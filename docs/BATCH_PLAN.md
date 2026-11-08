@@ -60,11 +60,11 @@ first means rewriting it later.
 
 | # | Item | Done when |
 |---|---|---|
-| 1 | **Contract + entry point** (`lexora.languages`): cleaning rules, tokenizer choice, optional dictionary/OCR hints | A plugin can be installed and discovered |
-| 2 | **English extracted into the first plugin** behind that contract | All existing canonicalisation tests pass through the plugin path |
-| 3 | **Contract test suite** any plugin must pass; English is the reference | A deliberately broken plugin fails it |
-| 4 | **Provenance**: `canonicalizer_version` becomes `en-1`; the catalog records its tokenizer and refuses a mismatch with a reindex instruction | An archive says which rules made it; `db` refuses a tokenizer mismatch |
-| 5 | **`doctor` reports installed plugins** and whether each passes the contract | Visible in `lexora doctor` |
+| ~~1~~ | ~~**Contract + entry point** (`lexora.languages`)~~ | **DONE 2026-11-08** — `langapi.py`: `LanguagePlugin`, `contract_violations()`, discovery via entry point, registry |
+| ~~2~~ | ~~**English extracted into the first plugin**~~ | **DONE 2026-11-08** — `languages/english.py` delegates to `canonicalize()`; a test asserts the identity so the rules cannot be copied and drift |
+| ~~3~~ | ~~**Contract test suite**~~ | **DONE 2026-11-08** — 25 tests, **12 of them deliberately broken plugins** that must each fail for their own reason |
+| 4 | **Provenance**: English keeps `lexcan-0.1` (see ADR-0022 note); **catalog tokenizer recording still open** — only matters once a second tokenizer exists | `db` refuses a tokenizer mismatch |
+| ~~5~~ | ~~**`doctor` reports installed plugins**~~ | **DONE 2026-11-08** — `languages  --  en (lexcan-0.1, unicode61)`; invalid plugins reported as warnings, never crash the report |
 
 **The rule for this batch:** no second language until 1–5 are done. Building Hindi first would
 produce two special cases instead of one interface.
