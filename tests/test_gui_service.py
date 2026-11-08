@@ -98,7 +98,9 @@ def test_level_bounds_refused_before_io(svc, bad_level):
 def test_block_size_bounds_refused(svc, bad_bs):
     res = svc.run_pack(b"data", block_size=bad_bs)
     assert not res.ok and res.exit_code == 2
-    assert "block size" in res.error
+    # The wording now comes from the CLI (ADR-0011: one implementation), which
+    # names the flag as --block-size. Asserting the flag, not a phrasing.
+    assert "block-size" in res.error
 
 
 def test_bool_is_not_an_int_for_bounds(svc):

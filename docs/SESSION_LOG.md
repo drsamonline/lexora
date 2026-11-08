@@ -1720,3 +1720,48 @@ hardcoded "19 bytes" for a 16-byte payload — replaced with a derived value rat
 corrected constant, because the constant was the bug.
 
 **Gate:** **663 passed, 0 skipped**; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+---
+
+## Session 81 — 2026-11-08 (P2.3 lands: the GUI is a CLI client, end to end)
+
+**ADR-0011 was accepted on 2026-10-29 and implemented today.** The GUI's `AppService` no
+longer calls the library; every byte-level operation shells out to `lexora <verb>` with the
+payload on stdin and the result on stdout. That is the difference between one implementation
+and two, and it is what makes ADR-0018's exit-code decision load-bearing rather than
+cosmetic: `--level 99` returns 2 in the GUI because it returns 2 in the CLI.
+
+**Two CLI gaps had to close first, and both were real defects rather than plumbing.**
+
+`_read("-")` opened a file literally named `-`, so no verb could read stdin — the whole
+byte-level surface was missing. Fixed, and the streaming paths got `_open_input()`, which
+returns a seekable handle (stdin is buffered into memory for those, and the docs say so).
+
+`zdecode` did not exist at all: `unpack` handles containers, not bare frames, so
+"decompress this frame" had no verb. Added, with `--expect-size` so a frame without an
+embedded content size still refuses rather than allocating blindly.
+
+**And one bug the new surface exposed immediately:** `zround --out -` wrote **nothing**. The
+flag was accepted and silently ignored, so a user asking for a frame on stdout got silence.
+Nobody had noticed because nothing had ever asked `zround` for stdout before.
+
+**One method stayed in-process, on purpose.** `run_canon_meta` returns canonical bytes *and*
+a metadata dict; `canon --meta --out -` writes the metadata to stdout and drops the payload,
+so serving both over the CLI needs a JSON envelope. Canonicalisation is a pure
+`bytes -> bytes + dict` function with no file handle, no container and no external tool —
+nothing a process boundary protects us from. Inventing an envelope to satisfy a rule, rather
+than a risk, is the wrong trade, so the exception is documented in ADR-0011 *and asserted by
+a test*, because "one method bypasses the rule" is how it becomes five.
+
+**The tests are split by what they can prove.** `test_gui_service.py` proves behaviour (57
+tests: bytes match, exit codes map, jobs propagate). `test_service_is_a_cli_client.py` proves
+the *mechanism* (10 tests: argv construction, payload on stdin, `zround` not `compress`,
+CLI messages reaching the user) — because behaviour alone cannot tell "shells out" from
+"calls the library", and both produce identical bytes. If someone reintroduces an in-process
+call, the first file stays green and the second goes red.
+
+**Two regressions I caused and fixed within the session.** `run_canon_meta` returning raw
+bytes broke three renderer tests; and `_cli` referenced `EXIT_FILE`, which exists in the CLI
+module and not in `service.py`. Both were caught by running the suite, not by reading it.
+
+**Gate:** **672 passed, 0 skipped**; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.

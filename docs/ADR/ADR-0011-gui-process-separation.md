@@ -33,6 +33,30 @@ ADR-0009 relicensed the project to PolyForm Noncommercial 1.0.0 and flagged one 
 4. `LICENSE` (PolyForm, with its `Required Notice:` line) still ships with every artifact — RELEASE_PROCESS R3 is unchanged. The LGPL notices from the review's §4 checklist become **optional rather than mandatory** for the GUI artifact, since the LGPL libraries are no longer part of the distributed program; shipping them anyway is harmless and recommended.
 5. The About view keeps naming the toolchain (PySide6, ADR-0008), so a user can see what the GUI is built on.
 
+## Implementation note (2026-11-08)
+
+**Landed.** `AppService`'s byte-level operations are now subprocess calls to `lexora
+<verb>` with the payload on stdin and the result on stdout: `run_canon` → `canon`,
+`run_compress` → `zround`, `run_decompress` → `zdecode`, `run_pack` → `pack`,
+`run_unpack` → `unpack`. Exit codes come from the CLI, which is what made ADR-0018's
+decision load-bearing: `--level 99` is 2 here because it is 2 there.
+
+Two CLI gaps had to close first (they were P2.3b in PATH_TO_V1): `_read("-")` now means
+stdin, and a raw-frame `zdecode` verb exists. `zround --out -` also silently wrote
+*nothing* — an accepted flag that did nothing — which the new byte-level surface exposed.
+
+**One documented exception.** `run_canon_meta` stays in-process. Canonicalisation is a
+pure `bytes -> bytes + dict` function: no file handle, no container, no external tool —
+nothing a separate process protects us from. Serving it over the CLI would need a JSON
+envelope to carry payload and metadata together, and `canon --meta --out -` cannot do
+both (it writes metadata to stdout and drops the payload). Inventing that envelope to
+satisfy an architectural rule, rather than a risk, is the wrong trade. The exception is
+asserted by a test so it cannot quietly become five.
+
+`tests/test_service_is_a_cli_client.py` asserts the *mechanism* (argv construction,
+payload on stdin, exit-code mapping) because behaviour alone cannot distinguish "shells
+out" from "calls the library" — both return identical bytes.
+
 ## Consequences & trade-offs
 
 **Positive.** The LGPL question is answered structurally rather than by paperwork, and stays answered if the GUI's dependencies change again. The GUI gets crash isolation and the core gets a single, documented interface. The boundary is testable without Qt: the "does the GUI drive the CLI correctly" half can be tested against the real CLI, which is what this environment can run.

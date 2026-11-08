@@ -84,6 +84,31 @@ Behavior notes:
 - Frame written only on byte-exact round-trip success.
 - Cost line on stderr: `pipe: raw=N canonical=M compressed=K ratio_vs_raw=… ratio_vs_canonical=… roundtrip_exact=…`.
 
+### `lexora zdecode` — decompress a raw zstd frame
+
+The mirror of `zround`: frames in, bytes out. Added 2026-11-07 because "decompress this
+frame" had no verb at all — `unpack` handles containers, not bare frames — and the GUI
+needed a byte-level surface it could shell out to (ADR-0011).
+
+```text
+lexora zdecode --in FRAME [--out BYTES] [--expect-size N]
+```
+
+| Flag | Required | Default | Meaning |
+|---|---|---|---|
+| `--in PATH` | yes | — | zstd frame; `-` reads **stdin** |
+| `--out PATH` | no | `-` | decoded bytes; `-` writes **stdout** |
+| `--expect-size N` | no | — | refuse unless the frame decodes to exactly N bytes |
+
+Exit codes: 0 ok, 3 unreadable input, 5 corrupt or truncated frame. A frame with no
+embedded content size needs `--expect-size`, because unbounded allocation is refused
+(REQ-SEC-001).
+
+**Piping.** `--in -` / `--out -` exist so every byte-level verb can be composed:
+`cat raw | lexora canon --in - --out - | lexora pack --in - --out - > a.lxz`. Piping an
+archive through `unpack` buffers stdin into memory first, because the container readers
+seek — so the bounded-memory guarantee applies to files, not to pipes.
+
 ### `lexora pack` — wrap canonical bytes into a `.lxz` v0 archive
 
 Implements the ADR-0007 frozen layout (LXZ-0.1): 128-byte header (full SHA-256 over bytes [0,96)), blocks each exactly one complete zstd frame, 56-byte index entries `{u64 offset; u64 compressed; u64 uncompressed; sha256[32]}`, 40-byte trailer `{u64 index_offset; u64 index_bytes; sha256-prefix[24]}`. Every block is decode-verified before the archive is written (SPEC §8.1); the write itself is atomic (temp + fsync + rename).
@@ -104,6 +129,12 @@ lexora pack --in CANONICAL --out ARCHIVE.lxz [--level N] [--block-size B] [--cod
 Behavior notes: empty input packs as one zero-length block (exit 0); summary line on stderr.
 
 **Memory behaviour (Session 39).** `pack` streams by default: `container.pack_stream()` holds one block plus its compressed frame, so peak RSS is flat in document size (measured plateau ≈126 MiB at zstd-19/8 MiB blocks, from one full block upward — `benchmarks/results-rss-core.json`). The pre-Session-39 buffered path grew ~4.8 MiB of peak RSS per MiB of input, which put the 512 MiB encode budget (PERFORMANCE_BUDGET.md) at risk on a ~95 MiB document. `--out -` (stdout) still takes the buffered path, because streaming needs a seekable destination for the header backfill.
+
+**Byte-level piping.** `--in -` reads **stdin** and `--out -` writes **stdout** on
+every byte-level verb, so the pipeline composes: `cat raw | lexora canon --in - --out - |
+lexora pack --in - --out - > a.lxz`. One caveat, stated rather than discovered: piping an
+archive *into* `unpack` buffers stdin into memory, because the container readers seek — the
+bounded-memory guarantee applies to files, not to pipes.
 
 ### `lexora unpack` — decode a `.lxz` archive, refusing unverified output
 
