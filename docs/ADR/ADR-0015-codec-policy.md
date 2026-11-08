@@ -90,3 +90,19 @@ hold it: `test_default_codec_is_zstd` (the constant), `test_default_pack_is_stil
 (no byte drift in default output), and the CLI help/`doctor` surfaces that make the preset
 discoverable. **The next change to `DEFAULT_CODEC` should fail this ADR's review, not just
 a test.**
+
+## Post-decision note (2026-11-08)
+
+This ADR chose CHCE as the max-ratio preset on the evidence available: **−19.75 % vs `xz -9`**,
+measured on the project's own corpus class. A later measurement added a baseline that was not in
+the table — **PPMd** via `py7zr`/`pyppmd`, which the charter named (ADR-0003) and nobody had
+measured:
+
+| codec | ratio | throughput | external binary |
+|---|---|---|---|
+| PPMd (7z) | 0.2466 | 2.43 MiB/s | none (`pip install`) |
+| CHCE `-9` | 0.2425 | 0.50 MiB/s | yes |
+
+CHCE is **1.7 % smaller for 5× the encode time** and a build dependency. That does not make this
+ADR wrong — the decision was sound for its evidence — but it does mean the preset question is
+open again as **OQ-18**, and `ppmd-7z` is now a harness system so the protocol run settles it.

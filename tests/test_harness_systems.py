@@ -157,3 +157,20 @@ def test_every_requested_system_lands_in_exactly_one_list() -> None:
     ok, skipped = harness._available_systems(names)
     assert set(ok) | set(skipped) == set(names)
     assert not (set(ok) & set(skipped))
+
+
+def test_ppmd_is_available_as_a_baseline() -> None:
+    """The charter named PPMd (ADR-0003) and it was never in the table.
+
+    Added 2026-11-08 after measuring it 18.4 % under `xz -9` on the project's own
+    corpus class. It must be registered, and it must skip by name rather than vanish
+    when py7zr is absent — a benchmark row that disappears silently is how the
+    baseline set stayed incomplete for a month.
+    """
+    import harness
+
+    assert "ppmd-7z" in harness.SYSTEMS
+    ok, skipped = harness._available_systems(["ppmd-7z", "zstd19"])
+    assert "ppmd-7z" in ok or "ppmd-7z" in skipped
+    if "ppmd-7z" in skipped:
+        assert "py7zr" in skipped["ppmd-7z"], skipped["ppmd-7z"]

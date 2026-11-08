@@ -381,6 +381,31 @@ def _sys_zstd19(data: bytes, out_path: Path) -> int:
     return len(blob)
 
 
+def _sys_ppmd(data: bytes, out_path: Path) -> int:
+    """PPMd in a 7z container, via py7zr + pyppmd.
+
+    Added 2026-11-08 after measuring it: on 18.5 MiB of canonicalised Gutenberg prose
+    PPMd reaches ratio **0.2466** against `xz -9`'s 0.3022 — an 18.4 % win — and does
+    it at 2.43 MiB/s versus xz's ~1.1. That puts it within 1.7 % of CHCE's 0.2425 at
+    roughly five times the speed, which is why it belongs in the table: the published
+    baselines have only ever been zstd, xz and brotli, and PPMd is named in the charter
+    (ADR-0003) as a comparison point that was never actually measured.
+
+    The stored bytes include the 7z container header (~120 B), which is what a user
+    would get; at these sizes it is noise, and it is stated rather than subtracted.
+    """
+    import io
+
+    import py7zr
+
+    buf = io.BytesIO()
+    with py7zr.SevenZipFile(buf, "w", filters=[{"id": py7zr.FILTER_PPMD}]) as archive:
+        archive.writestr(data, "doc.bin")
+    blob = buf.getvalue()
+    out_path.write_bytes(blob)
+    return len(blob)
+
+
 def _sys_xz9(data: bytes, out_path: Path) -> int:
     if not shutil.which("xz"):
         raise RuntimeError("xz CLI not installed")
@@ -487,6 +512,7 @@ SYSTEMS = {
     "zstd19": _sys_zstd19,
     "xz9": _sys_xz9,
     "xz9-lzma": _sys_xz9_lzma,
+    "ppmd-7z": _sys_ppmd,
     # The CHCE pair (ADR-0014/0015). Not the default codec — they exist so the
     # max-ratio preset can be measured at protocol scope, which is the condition
     # ADR-0015 puts on ever revisiting the default.
@@ -534,6 +560,15 @@ def _available_systems(requested: list[str]) -> tuple[list[str], dict]:
                 ok.append(name)
             except ImportError:  # pragma: no cover
                 skipped[name] = "python-zstandard not installed"
+            continue
+        if name == "ppmd-7z":
+            try:
+                import py7zr  # noqa: F401
+                import pyppmd  # noqa: F401  (py7zr delegates PPMd to it)
+
+                ok.append(name)
+            except ImportError:
+                skipped[name] = "py7zr/pyppmd not installed (pip install py7zr pyppmd)"
             continue
         if name in ("chce-raw", "lexora-chce"):
             # The binary is optional everywhere else in this project (ADR-0015), so

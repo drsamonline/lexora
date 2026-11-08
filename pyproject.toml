@@ -23,6 +23,10 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8",
+    # Benchmark-only: PPMd as a comparison baseline (docs/ECOSYSTEM_REVIEW_2026-11-08.md).
+    # Not a runtime dependency — the harness imports it, the product never does.
+    "py7zr>=1.0,<2",
+    "pyppmd>=1.1,<2",
 ]
 # ADR-0008 decision 1: GUI is an opt-in extra; core install stays Qt-free.
 gui = [

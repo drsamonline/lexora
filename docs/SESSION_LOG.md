@@ -1846,3 +1846,55 @@ though every codec were always runnable, which is exactly the assumption ADR-001
 deny.
 
 **Gate:** **678 passed, 0 skipped**; linkcheck clean.
+
+---
+
+## Session 85 — 2026-11-08 (eight repos, and PPMd turns out to have been missing)
+
+**The owner sent eight links and no instruction, so they were read as the ziptastic question:
+what are these, and what can Lexora take?** Every verdict in
+[ECOSYSTEM_REVIEW_2026-11-08.md](ECOSYSTEM_REVIEW_2026-11-08.md) is grounded in the repo's own
+metadata, README or licence file, or in a measurement run here.
+
+**The finding that matters was not in any of the eight descriptions.** `py7zr` exposes **PPMd**
+through `pyppmd` as a plain `pip install`. Measured on the same 19-file, 18.5 MiB canonical
+Gutenberg sample used for the CHCE work:
+
+| codec | ratio | throughput |
+|---|---|---|
+| `xz -9` | 0.3022 | 1.1 MiB/s |
+| **PPMd (7z)** | **0.2466** | **2.43 MiB/s** |
+| CHCE `-9` | 0.2425 | 0.50 MiB/s |
+
+PPMd is **18.4 % under `xz -9`** — larger than the gap the project has spent weeks arguing
+about — and the charter named PPMd in ADR-0003 as a comparison point that was never measured.
+The published baseline set was simply incomplete.
+
+**And it puts a decision in question, which is worth saying plainly.** ADR-0015 chose CHCE as the
+max-ratio preset on a −19.75 % result against `xz`. Against PPMd, CHCE is **1.7 % smaller for 5×
+the encode time and a build dependency**. The ADR was right for the evidence it had; the evidence
+has changed. OQ-18 now asks whether PPMd replaces CHCE as the preset or sits beside it as the
+"no external binary" option. A post-decision note was appended to ADR-0015 rather than editing
+its reasoning — the reasoning was sound, the inputs were not complete.
+
+**What was taken from the rest.** `borg` is the worked example of the segment/compaction model
+`.lxdb` is heading for (partial commits, interrupted compaction, index/payload divergence) and
+should be read before ADR-0013's crash-injection tests are written. `sqlite-zstd` is a genuine
+architectural alternative — compressed columns *inside* SQLite with dictionary training, which
+is also what the M4 dictionary phase wants — at the cost of LGPL-3.0 loaded in-process.
+`zpaq` is the ratio ceiling and the journaling reference. `meta/zstd` is where `--train` and the
+pinned version come from.
+
+**And the three LLM compressors are out of scope, deliberately.** `C3`, `eschluntz/compress` and
+`headroom` compress by understanding and regenerating: lossy by construction, so they cannot
+satisfy `decode(encode(C)) == C`. `headroom`'s 79k stars is a market signal worth naming rather
+than ignoring — the demand is for compressing what an LLM reads, not for storing documents
+smaller — and it is a different product. Blurring the two would cost Lexora the one promise that
+makes it trustworthy.
+
+**Actions:** `ppmd-7z` registered as a harness system with a named skip when py7zr is absent
+(measured in-harness at 0.2291 vs `lexora19` 0.2857 on a 4-file subset), `py7zr`/`pyppmd` added
+to the `dev` extra as benchmark-only, a test pinning that the row cannot vanish silently, and
+**P0.3a** added so the protocol run includes it.
+
+**Gate:** **679 passed, 0 skipped**; linkcheck clean.

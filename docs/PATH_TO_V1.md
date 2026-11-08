@@ -63,6 +63,7 @@ R6 already showed the result reproduces across splits and reps.
 | P0.1 | Run on the **1.054 GiB** snapshot, not 5.9 MB | Artifacts for all three splits at full size |
 | P0.2 | **Second machine class** (REF-4G) for the reference profile | A second environment in the artifact |
 | P0.3 | **`xz` via the CLI**, not `xz9-lzma` | `xz9` row present and timed comparably |
+| P0.3a | **Include `ppmd-7z`** — the charter named PPMd (ADR-0003) and it was never measured; it came out 18.4 % under `xz -9` ([ECOSYSTEM_REVIEW](ECOSYSTEM_REVIEW_2026-11-08.md)) and decides OQ-18 | A `ppmd-7z` row in every split |
 | P0.4 | **Owner sign-off**, then publish as a revision | A row in BENCHMARK_RESULTS.md, not a draft |
 
 Budget **hours**: CHCE runs at 0.39–0.45 MiB/s and the harness compresses every file twice
