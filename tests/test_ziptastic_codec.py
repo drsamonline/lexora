@@ -328,3 +328,24 @@ def test_only_block_failure_reports_the_absolute_index() -> None:
         container.unpack(bytes(archive), only_block=target)
     assert f"block {target}" in excinfo.value.message
     assert "block 0" not in excinfo.value.message
+
+
+# --------------------------------------------------------------------------- #
+# PPMd was tried, shipped for an hour, and withdrawn (ADR-0021)
+# --------------------------------------------------------------------------- #
+
+def test_ppmd_is_not_a_registered_codec() -> None:
+    """PPMd is not shippable on pyppmd, and this test is what says so.
+
+    ADR-0021 was accepted and withdrawn the same day (2026-11-08): `pyppmd`/`py7zr`
+    PPMd corrupts 3-8 % of real documents depending on parameters, verified with no
+    frame of ours in the path. It survives only as a *ratio baseline* in the harness,
+    which now round-trip-verifies every file.
+
+    If someone wants to add it back, they have to delete this test — which means
+    reading the ADR's withdrawal section first. That is the point.
+    """
+    from lexora import codec_registry
+
+    assert "ppmd" not in codec_registry.names()
+    assert all(spec.registry_id != "ppmd-1" for spec in codec_registry.SPECS)

@@ -1939,3 +1939,54 @@ demoted, not deleted — removing a working codec to tidy a table is not a trade
 makes.
 
 **Gate:** **701 passed, 0 skipped**; linkcheck clean.
+
+---
+
+## Session 87 — 2026-11-08 (PPMd withdrawn, hours after shipping it)
+
+**The owner asked a one-line question — "lexora was primarily for text, was it not" — and checking
+it properly is what found the bug.** The charter does say text: *"a text cleaning +
+exact-compression system"*, non-goals include *"beating baselines on non-text data"*, and line 80
+names `ppmd` as a baseline. So the hedge in Session 86's closing line ("whether ppmd should become
+the default for text archives specifically") was meaningless — **every** archive is text.
+
+Pricing the real trade meant packing the whole 78 MB library rather than a sample. That is when
+`pack --codec ppmd` failed, on three of 88 books, at the container's own round-trip gate.
+
+**It is not a parameter choice and not my frame.** Raw `pyppmd.compress` → `pyppmd.decompress`
+with identical parameters corrupts or raises on those inputs, with no lexera code in the path:
+
+| order (mem fixed) | files failing of 88 |
+|---|---|
+| 6 | **7** |
+| 9 | **3** |
+| 16 | **7** |
+
+`py7zr`'s PPMd path — a different wrapper over the same library — round-tripped 6 of 7 known-bad
+files and still failed one. There is no reliable PPMd in Python today.
+
+**The mistake was mine, and it is specific.** I measured compressed *sizes* and never
+round-tripped the codec across varied real input. The one fixture in the test file was the same
+sentence repeated 400 times — the input least likely to expose a model-state bug. The
+verify-before-use gate caught it on the first realistic library anyone packed, which is the gate
+doing exactly what it exists for; but a test suite that never varied its input is why it reached
+`main` at all.
+
+**Withdrawn, not quietly patched.** `ppmd` is out of the registry, the `lexora[ppmd]` extra is
+gone, ADR-0021 is marked **WITHDRAWN** with the evidence table, ADR-0015 is un-superseded (CHCE
+stays the max-ratio preset), OQ-18 is **open and blocked on a correct implementation**, and a test
+asserts `ppmd` is not registered — so re-adding it means deleting that test, which means reading
+the withdrawal section first.
+
+**What survives, and it is worth keeping.** PPMd as a *ratio baseline*: the finding that it is
+18.4 % under `xz -9` and ~7× faster than CHCE at the same ratio is untouched, because compressed
+size is size. The harness now **round-trip-verifies** every PPMd row, so a ratio from a codec that
+cannot decode its own output is never recorded again. Candidate paths for a real implementation:
+the `7z` binary as an external plugin (the ziptastic pattern), or PPMd inside ziptastic.
+
+**One more thing worth knowing.** The harness measures **raw** bytes while lexora packs
+**canonicalised** bytes, so the same file that corrupts the codec passed the baseline row —
+canonicalisation changes the exact input. That is correct by design, but it means a green harness
+row is not proof the codec path is sound.
+
+**Gate:** **680 passed, 0 skipped**; linkcheck clean.

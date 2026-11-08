@@ -17,9 +17,6 @@ CODEC_ID_ZSTD_LEGACY_L19 = "zstd-raw-l19"  # read-only; never written again
 # the reader dispatches on this string, so an archive packed with CHCE must say
 # so, and an older reader must refuse it rather than attempt a zstd decode.
 CODEC_ID_ZIPTASTIC = "ziptastic-1"
-# PPMd (ADR-0021): the max-ratio preset. Order is carried inside the frame, so the
-# id does not encode it — the same lesson ADR-0020 taught about the zstd id.
-CODEC_ID_PPMD = "ppmd-1"
 
 # Default zstd level for every surface (library, CLI, GUI settings).
 #
