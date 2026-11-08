@@ -2059,3 +2059,35 @@ detected — that only matters once a second tokenizer exists (CJK/trigram). It 
 rather than being pre-built for a case that does not exist.
 
 **Gate:** **735 passed, 0 skipped**; linkcheck clean.
+
+---
+
+## Session 91 — 2026-11-09 (v0.1.0-alpha.1: the first installable build)
+
+**The release preconditions table said "no code, no CI" and had been wrong for three weeks.**
+Re-measured against `main`: R1 code+tests ✅ (736, 0 skipped), R2 Python range ✅, R3 licence ✅,
+R4 format frozen ✅, R6 versioning ✅ in practice, R7 CI ✅. **Only R5 is unmet** — the
+protocol-scope benchmark.
+
+That single unmet row is what makes this an **alpha** rather than a release, and the release
+process already allows one: *"pre-release identifiers allowed only for builds distributed to
+testers with an explicit 'not for production data' notice"*. So the alpha is honest rather than
+premature — every other precondition is met, and R5 is stated as unmet in the release notes
+instead of being quietly skipped.
+
+**What was built and checked.** `0.1.0a1` in `pyproject.toml` and `lexora.__version__`, with a new
+test pinning the two strings together (two versions in one release is a release nobody can trace).
+sdist + wheel built; the wheel **installed into a scratch target and exercised** — version reads
+back as `0.1.0a1`, both codecs and the English plugin load, `languages/english.py` is really in
+the artifact, and both console scripts (`lexora`, `lexora-gui`) are present. Checksums recorded.
+
+**Two build failures before it worked,** both environmental rather than code: the isolated build
+could not reach PyPI for its requirements, and `--no-isolation` then failed because `setuptools`
+was not installed in this container. Worth recording because "the build is broken" and "the build
+environment is empty" look identical from the error.
+
+**The release notes lead with what is not proven** — the compression claim is smoke-scope, OCR
+accuracy is unverified against a human transcript, `.lxdb` does not exist, one language exists,
+no encryption — because an alpha that oversells is worse than no alpha.
+
+**Gate:** **736 passed, 0 skipped**; linkcheck clean.

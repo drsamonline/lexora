@@ -167,3 +167,18 @@ def test_index_rss_probe_runs_a_real_query_not_an_import_error(tmp_path) -> None
     # are the deterministic proof that the child really ran; the ordering is reported
     # in the artifact and left to a human.
     assert row["get_wall_s"] > 0 and row["search_wall_s"] > 0
+
+
+def test_the_two_version_strings_agree() -> None:
+    """pyproject and `lexora.__version__` drift silently — a release with two versions
+    is a release nobody can trace. This has bitten projects far larger than this one."""
+    import re
+
+    from lexora import __version__
+
+    pyproject = (REPO / "pyproject.toml").read_text()
+    declared = re.search(r'^version = "([^"]+)"', pyproject, re.MULTILINE)
+    assert declared, "no version in pyproject.toml"
+    assert declared.group(1) == __version__, (
+        f"pyproject says {declared.group(1)!r}, package says {__version__!r}"
+    )

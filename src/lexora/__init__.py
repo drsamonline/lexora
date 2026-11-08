@@ -4,7 +4,7 @@ Nothing here is a stable API. Version identifiers below are serialized into
 archives and checked at verify time (REQ-CAN-004, REQ-CMP-002).
 """
 
-__version__ = "0.0.1.dev1"
+__version__ = "0.1.0a1"   # keep in sync with pyproject.toml (tests assert it)
 
 CANONICALIZER_VERSION = "lexcan-0.1"
 # Level-neutral since ADR-0020 (2026-11-08). The old value named a level the archive
