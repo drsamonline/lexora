@@ -47,6 +47,10 @@ multi-user concurrency, cloud anything.
 | GUI on subprocess (ADR-0011) | **Done** | `service.py` is a CLI client; 10 argv-level tests |
 | Release | **Not started** | M7 / P7 |
 
+> **Execution order lives elsewhere.** [BATCH_PLAN.md](BATCH_PLAN.md) groups the same work
+> into cost-based batches — quick wins first, small items combined, the hardware-bound ones
+> last. This file stays the scope of record; that one is the order of work.
+
 ## 3. Remaining work, in dependency order
 
 ### P0 — Close gate G2 (blocks `.lxdb`, unblocks the headline claim)
