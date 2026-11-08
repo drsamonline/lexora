@@ -1990,3 +1990,34 @@ canonicalisation changes the exact input. That is correct by design, but it mean
 row is not proof the codec path is sound.
 
 **Gate:** **680 passed, 0 skipped**; linkcheck clean.
+
+---
+
+## Session 89 — 2026-11-08 (batch 1: the real-text codec test, and it has teeth)
+
+**The fix for the PPMd mistake, built before anything else** — as recommended and agreed.
+
+**What it is.** `tests/test_codec_real_text.py` — 30 tests. Every shipped codec packs and unpacks
+720,983 bytes assembled from **88 different Gutenberg books** (8 KiB from the middle of each,
+canonicalised), at two block sizes, plus ten adversarial inputs (empty, one byte, all 256 byte
+values, NUL-heavy, a 200 KB single line, CRLF, Devanagari, CJK, mixed script, high-entropy). Each
+codec must also refuse a single flipped bit rather than decoding it into plausible text.
+
+**Why the fixture looks like that.** The test that let PPMd through packed *one sentence repeated
+400 times* — the input least likely to expose a model-state bug. The fixture is the correction, and
+it is checked: `test_the_fixture_is_actually_varied` asserts >15,000 distinct words and >5,000
+non-ASCII bytes, so nobody can quietly replace it with something convenient.
+
+**What it is honest about.** A 2 MiB version (87 books, 24 KiB each) did **not** reproduce the
+pyppmd corruption — that bug needs whole documents, not slices. So this file is a *realistic input*
+test for the codecs that ship; the ADR-0021 withdrawal record is what guards against PPMd
+returning. Both facts are in the fixture's README rather than implied.
+
+**And it was verified the way the discipline requires, after two false starts.** My first attempt
+to prove the test has teeth patched a line that did not exist and printed success anyway — the
+test passed because *nothing had been broken*. Second attempt: same mistake, different anchor.
+Third attempt asserted the anchor before editing, truncated one byte from every block over 500 KB,
+and the real-text test **failed**; restoring it, **passed**. A test whose failure mode you have
+never seen is a test you are trusting, not testing.
+
+**Gate:** **710 passed, 0 skipped**; linkcheck clean.
