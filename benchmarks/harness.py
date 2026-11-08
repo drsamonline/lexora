@@ -395,6 +395,8 @@ def _sys_ppmd(data: bytes, out_path: Path) -> int:
     would get; at these sizes it is noise, and it is stated rather than subtracted.
     """
     import io
+    import tempfile
+    import pathlib as _pathlib
 
     import py7zr
 
@@ -402,6 +404,24 @@ def _sys_ppmd(data: bytes, out_path: Path) -> int:
     with py7zr.SevenZipFile(buf, "w", filters=[{"id": py7zr.FILTER_PPMD}]) as archive:
         archive.writestr(data, "doc.bin")
     blob = buf.getvalue()
+
+    # **Verify the round trip.** pyppmd/py7zr PPMd corrupts 1-8 % of real documents
+    # depending on parameters (ADR-0021 was withdrawn over this, 2026-11-08). A ratio
+    # measured from a codec that cannot decode its own output is not a measurement, so
+    # a file that fails verification raises and the harness records the system as
+    # failed for that file rather than reporting a number.
+    tmp = _pathlib.Path(tempfile.mkdtemp())
+    try:
+        (tmp / "a.7z").write_bytes(blob)
+        with py7zr.SevenZipFile(tmp / "a.7z", "r") as archive:
+            archive.extractall(path=tmp / "out")
+        if (tmp / "out" / "doc.bin").read_bytes() != data:
+            raise RuntimeError("PPMd round-trip mismatch — refusing to report a ratio")
+    finally:
+        import shutil
+
+        shutil.rmtree(tmp, ignore_errors=True)
+
     out_path.write_bytes(blob)
     return len(blob)
 

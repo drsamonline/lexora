@@ -96,6 +96,7 @@ belongs beside the archive, labelled lossy, never inside it.
 - `ppmd-7z` registered as a harness system, with an availability gate (no `py7zr` → a named skip,
   never a silent drop). Measured in the harness: 0.2291 vs `lexora19` 0.2857 on a 4-file subset.
 - `py7zr` + `pyppmd` added to the `dev` extra — a benchmark dependency, not a runtime one.
-- **OQ-18 opened — and answered the same day** in [ADR-0021](ADR/ADR-0021-codec-policy-v2.md): PPMd
-  **is** the max-ratio preset (`--codec ppmd`, id `ppmd-1`), CHCE demoted to the extreme option. ADR-0015's reasoning was sound for the evidence it had;
+- **OQ-18 opened, briefly answered, and re-opened.** [ADR-0021](ADR/ADR-0021-codec-policy-v2.md) made PPMd
+  the max-ratio preset and was **withdrawn the same day**: `pyppmd`/`py7zr` corrupt 3–8 % of real
+  documents. PPMd survives as a *baseline* only — and the ratio finding stands. ADR-0015's reasoning was sound for the evidence it had;
   this evidence is new.

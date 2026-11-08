@@ -1,6 +1,6 @@
 # ADR-0015: Codec policy — zstd stays the default, CHCE is the max-ratio preset
 
-> **Status:** **Accepted 2026-11-07 — PRESET CHOICE SUPERSEDED by [ADR-0021](ADR-0021-codec-policy-v2.md) (2026-11-08).** The principle stands: zstd is the default. What changed is *which* codec carries the max-ratio preset, after PPMd was measured. — explicit owner decision ("zstd default and chce max ratio"), not a delegation. Closes **OQ-16**.
+> **Status:** **Accepted 2026-11-07 — STILL IN FORCE.** An attempt to move the preset to PPMd ([ADR-0021](ADR-0021-codec-policy-v2.md)) was **withdrawn the same day**: the ratio case held, but the PPMd library corrupts 3–8 % of real documents. CHCE remains the max-ratio preset. — explicit owner decision ("zstd default and chce max ratio"), not a delegation. Closes **OQ-16**.
 > **Date:** 2026-11-07
 > **Deciders:** Owner Dr Sohil Momin
 > **Related:** [ADR-0014](ADR-0014-ziptastic-codec.md) (the seam this policy steers) · [ADR-0012](ADR-0012-default-encode-level.md) (the same shape of decision, for level) · [CHCE_SMOKE_2026-11-07.md](../CHCE_SMOKE_2026-11-07.md) (the measurement) · [BENCHMARK_RESULTS.md](../BENCHMARK_RESULTS.md) (R4/R5, the position CHCE changes)

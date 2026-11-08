@@ -1,9 +1,10 @@
 # ADR-0021: Codec policy v2 — PPMd is the max-ratio preset, CHCE becomes the extreme option
 
-> **Status:** **ACCEPTED 2026-11-08** — supersedes [ADR-0015](ADR-0015-codec-policy.md)'s choice of
-> preset (not its principle: zstd stays the default). Resolves **OQ-18**. Taken under the owner's
-> standing delegation after they asked for the measurement ("go"); the reasoning is below and the
-> owner can veto it in one line.
+> **Status:** **WITHDRAWN 2026-11-08, hours after being accepted.** The measurement stands; the
+> **codec does not**. `pyppmd`/`py7zr` PPMd **corrupts 3–8 % of real documents** depending on
+> parameters, so `ppmd` was removed from the registry and **CHCE remains the max-ratio preset** per
+> [ADR-0015](ADR-0015-codec-policy.md), which is un-superseded. The withdrawal evidence is at the
+> end of this record — read it before proposing PPMd again.
 > **Date:** 2026-11-08
 > **Related:** [ADR-0015](ADR-0015-codec-policy.md) (the policy this amends) · [ADR-0014](ADR-0014-ziptastic-codec.md) (the registry) · [ADR-0020](ADR-0020-codec-id-naming.md) (why ids do not encode parameters) · [ECOSYSTEM_REVIEW_2026-11-08.md](../ECOSYSTEM_REVIEW_2026-11-08.md) (where PPMd came from)
 
@@ -102,3 +103,50 @@ always named.
 that matter: that a wrong order silently returns wrong bytes (asserted against `pyppmd`, so the
 design constraint is re-checked rather than remembered), and that a **tampered order byte is
 refused** rather than decoded into plausible garbage.
+
+---
+
+## WITHDRAWAL (2026-11-08, same day)
+
+The codec was implemented, merged, and **withdrawn within the hour**, because testing it on a real
+88-file library — not on a fixture — showed the library underneath it is broken.
+
+**What failed.** Packing 88 canonicalised Gutenberg books, the container's own round-trip gate
+refused the archive on **3 files**. Isolating the cause showed it is not my frame and not a
+parameter choice — it is `pyppmd` itself:
+
+| order (mem fixed 16 MiB) | files failing round-trip (of 88) |
+|---|---|
+| 6 | **7** |
+| 9 | **3** |
+| 16 | **7** |
+
+Raw `pyppmd.compress` → `pyppmd.decompress` with identical parameters returns **corrupt data or
+raises** on those inputs, with no frame of mine in the path. `py7zr`'s PPMd path — a different
+wrapper around the same library — round-tripped 6 of 7 known-bad files and still failed one, so
+routing through it is not a fix.
+
+**The mistake, stated plainly.** The ratio measurements (0.2283–0.2423) are real — compressed
+*size* is size — but I verified only sizes and never round-tripped the codec across varied real
+input. The one fixture in the test file was 400 repetitions of the same sentence, which is
+precisely the input least likely to expose a model-state bug. The container's verify-before-use
+gate is what caught it, on the first realistic library anyone packed.
+
+**What survives, and what does not.**
+
+- **Survives:** PPMd as a *ratio baseline* — `ppmd-7z` in the harness, now with a **round-trip
+  verification** so a ratio from a codec that cannot decode its own output is never recorded. The
+  finding that PPMd is 18.4 % under `xz -9` and ~7× faster than CHCE at the same ratio is
+  unaffected, and it is why OQ-18 is still worth someone's attention.
+- **Does not survive:** PPMd as a shipped codec. `ppmd` is removed from the registry, the
+  `lexora[ppmd]` extra is gone, and a test asserts it is not registered so it cannot come back
+  without this record being read.
+- **OQ-18 returns to "open, blocked"**: PPMd would be the better max-ratio preset *if a correct
+  implementation existed*. Candidates for that: `7z` itself (the C++ binary, via subprocess — the
+  same pattern as ziptastic), or PPMd in ziptastic. Both are real options; `pyppmd` is not.
+
+**A second lesson, about the harness.** Its baselines measure **raw** file bytes while lexora
+packs **canonicalised** bytes, so the corruption did not reproduce in the harness row for the
+same file — canonicalisation changes the exact input. That is correct by design (baselines see
+raw input) but it means a baseline can pass verification while the codec path fails. Worth
+knowing before anyone reads a green harness row as proof the codec is sound.
