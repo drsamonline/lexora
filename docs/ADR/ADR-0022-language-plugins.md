@@ -1,8 +1,9 @@
 # ADR-0022: Language support arrives as plugins, and English becomes the first one
 
-> **Status:** **PROPOSED** — owner direction (2026-11-08): *"i want lexora to be able to support
-> other languages through plugins and we can build them later and add them so lexora becomes a
-> practical tool"*. This record defines the seam; it deliberately ships no second language.
+> **Status:** **ACCEPTED 2026-11-08** — owner direction: *"i want lexora to be able to support other
+> languages through plugins and we can build them later and add them so lexora becomes a practical
+> tool"*. **The seam is implemented** (`langapi.py`, `languages/english.py`, contract tests,
+> `doctor` reporting); no second language ships, by design.
 > **Date:** 2026-11-08
 > **Related:** [PROJECT_CHARTER](../PROJECT_CHARTER.md) (multilingual design targets) · [ADR-0004](ADR-0004-cleaning-error-metric.md) (how a cleaning rule is judged) · [ADR-0016](ADR-0016-queryable-archive.md) (the index) · [ADR-0019](ADR-0019-ocr-plugin.md) (the plugin pattern this copies)
 
@@ -91,3 +92,25 @@ Not implemented. Order matters: **(a)** extract the English rules into a plugin 
 contract, **(b)** ship the contract test suite, **(c)** record provenance and the tokenizer,
 **(d)** only then build a second language — because the second language is the actual test of the
 seam, and building it first would produce two special cases instead of one interface.
+
+## Implementation note (2026-11-08)
+
+Landed: `lexora.langapi` (the contract, the registry, discovery via the `lexora.languages`
+entry point), `lexora.languages.english` as the reference plugin, `doctor` reporting, and 25
+contract tests — of which **twelve deliberately broken plugins** must each fail for their own
+reason. A contract that has only ever seen a valid implementation is a description of English,
+not a contract.
+
+**Two decisions made while implementing, both to avoid churn:**
+
+1. **English keeps the provenance label `lexcan-0.1`,** via an explicit `provenance_label`
+   override, rather than deriving `en-1`. ADR-0020 changed that header field *yesterday*; doing
+   it again a day later would rewrite every archive twice for no reader benefit. New languages
+   start at `hi-1`, `zh-1`; English's label can change once, with the format, at v1.
+2. **English delegates to `canonicalize()` rather than copying the rules** into the plugin, and a
+   test asserts the identity (`PLUGIN.canonicalize is canonicalize`). Copying would create a
+   second source of truth that drifts from the tests pinning the first.
+
+**Deliberately not done yet:** the catalog does not record its tokenizer, so a tokenizer mismatch
+cannot yet be detected. That only matters once a second tokenizer exists (CJK/trigram), and it is
+carried in the plan rather than pre-built.

@@ -113,6 +113,24 @@ def run_checks(repo_root: Path | None = None) -> dict:
         checks.append(_check("ziptastic codec", INFO,
                              "binary not on PATH (optional: --codec ziptastic); set "
                              f"${ziptastic_core.BINARY_ENV} to point at it"))
+    # Language plugins (ADR-0022). Reported, not assumed: a plugin that fails its
+    # contract is invisible to every other surface until someone tries to use it.
+    try:
+        from lexora import langapi
+
+        rows = langapi.report()
+        valid = [r for r in rows if r["status"] == "ok"]
+        invalid = [r for r in rows if r["status"] != "ok"]
+        checks.append(_check(
+            "languages", INFO if not invalid else WARN,
+            ", ".join(f"{r['id']} ({r['provenance']}, {r['tokenizer']})" for r in valid)
+            or "none installed",
+        ))
+        for row in invalid:
+            checks.append(_check(f"language {row['id']}", WARN, row["status"]))
+    except Exception as exc:  # noqa: BLE001 - doctor must never crash the report
+        checks.append(_check("languages", WARN, f"could not enumerate plugins: {exc}"))
+
     checks.append(_check("platform", INFO,
                          f"{platform.system()} {platform.release()} {platform.machine()}"))
 

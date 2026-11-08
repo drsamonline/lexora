@@ -57,6 +57,12 @@ lexora = "lexora.cli:main"
 # Requires the [gui] extra; without it `lexora-gui` exits 2 with guidance.
 lexora-gui = "lexora.gui.app:main"
 
+# ADR-0022: third-party language plugins register here. A package that declares this
+# group is discovered and validated against the contract before use. Nothing else can
+# load code — archives and metadata never do.
+[project.entry-points."lexora.languages"]
+# (none shipped yet; `en` is built in and does not need an entry point)
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
