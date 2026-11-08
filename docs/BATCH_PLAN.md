@@ -52,6 +52,23 @@ Nothing in batches 1–2 depends on these; batches 3–4 do.
 | ~~**F1 — `codec_id` naming**~~ | **Answered 2026-11-08: rename now.** Shipped in [ADR-0020](ADR/ADR-0020-codec-id-naming.md) | — |
 | **A 4 GiB box** (optional) | Any machine with 4 GiB RAM | P4.3, the only resource claim not yet tested on target hardware |
 
+## 2a. Batch 1b — the language seam (new, 2026-11-08)
+
+Owner direction: languages arrive as **plugins** ([ADR-0022](ADR/ADR-0022-language-plugins.md)). This
+sits *before* Batch 2 because it changes the shape of the canonicaliser, and doing anything else
+first means rewriting it later.
+
+| # | Item | Done when |
+|---|---|---|
+| 1 | **Contract + entry point** (`lexora.languages`): cleaning rules, tokenizer choice, optional dictionary/OCR hints | A plugin can be installed and discovered |
+| 2 | **English extracted into the first plugin** behind that contract | All existing canonicalisation tests pass through the plugin path |
+| 3 | **Contract test suite** any plugin must pass; English is the reference | A deliberately broken plugin fails it |
+| 4 | **Provenance**: `canonicalizer_version` becomes `en-1`; the catalog records its tokenizer and refuses a mismatch with a reindex instruction | An archive says which rules made it; `db` refuses a tokenizer mismatch |
+| 5 | **`doctor` reports installed plugins** and whether each passes the contract | Visible in `lexora doctor` |
+
+**The rule for this batch:** no second language until 1–5 are done. Building Hindi first would
+produce two special cases instead of one interface.
+
 ## 3. Batch 1 — quick wins, one PR, no decisions (~1–2 hours)
 
 Cheap, certain, and mostly **user-visible**, which is why it goes first: the repository's front

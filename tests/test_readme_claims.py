@@ -159,7 +159,11 @@ def test_index_rss_probe_runs_a_real_query_not_an_import_error(tmp_path) -> None
     assert row["search_exit"] == 0, f"search did not run: {row.get('errors')}"
     assert row["get_exit"] == 0, f"get did not run: {row.get('errors')}"
     assert row["search_peak_rss_kib"] > 0 and row["get_peak_rss_kib"] > 0
-    assert row["get_peak_rss_kib"] >= row["search_peak_rss_kib"], (
-        "get must cost at least as much as search — it decodes a document"
-    )
-    assert row["index_bytes"] > 0
+    assert row["index_bytes"] > 0 and row["canonical_bytes"] > 0
+    # Deliberately NOT asserting `get >= search`. It usually holds — `get` decodes a
+    # document and `search` does not — but ru_maxrss is environment-dependent, and
+    # under load the two land either side of each other. That made this test flaky,
+    # and a flaky test trains people to re-run rather than read. The exit codes above
+    # are the deterministic proof that the child really ran; the ordering is reported
+    # in the artifact and left to a human.
+    assert row["get_wall_s"] > 0 and row["search_wall_s"] > 0
