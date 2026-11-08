@@ -7,6 +7,23 @@
 > **Last verified:** 2026-11-07 (Session 76, PDF ingestion landed — P3.1/P3.2/P3.4 done. Session 75, against `main` at `bc6e58b`, gate 567 passed / 1 skipped)
 > **Related:** [ROADMAP.md](ROADMAP.md) (milestones) · [PHASES.md](PHASES.md) (phases) · [DECISIONS.md](DECISIONS.md) (ADRs + open questions) · [STATUS.md](STATUS.md) (verified state) · [NEXT_SESSION.md](NEXT_SESSION.md) (resume card)
 
+### Scope change (2026-11-08): languages arrive as plugins
+
+The owner's direction — *support other languages through plugins, built later and added later, so
+Lexora becomes a practical tool* — moves multilingual support from "a branch of the canonicaliser
+per language" to **an interface with implementations behind it** ([ADR-0022](ADR/ADR-0022-language-plugins.md)).
+What that changes here:
+
+- **English is no longer the only language *or* a special case.** It becomes the first plugin,
+  shipped with the seam so the interface is exercised from day one.
+- **Hindi, Gujarati and Chinese become packages**, not core work. The charter's multilingual goal
+  stops depending on this repository's release cycle.
+- **v1.0's language condition changes** from "English, Hindi and Gujarati supported" to "**the
+  plugin seam is proven by at least two languages**" — which is a weaker promise on paper and a
+  much more honest one, because the second language is what proves the interface.
+- **A new condition appears:** an archive written with a plugin must be **readable without it**.
+  That is the property that keeps the format safe as the plugin ecosystem grows.
+
 ## 1. The final product — v1.0, defined
 
 Lexora v1.0 is **an offline, low-resource text archive you can query**, whose compression
