@@ -96,6 +96,6 @@ belongs beside the archive, labelled lossy, never inside it.
 - `ppmd-7z` registered as a harness system, with an availability gate (no `py7zr` → a named skip,
   never a silent drop). Measured in the harness: 0.2291 vs `lexora19` 0.2857 on a 4-file subset.
 - `py7zr` + `pyppmd` added to the `dev` extra — a benchmark dependency, not a runtime one.
-- **OQ-18 opened:** should PPMd replace CHCE as the documented max-ratio preset, or sit beside
-  it as the "no external binary" option? ADR-0015's reasoning was sound for the evidence it had;
+- **OQ-18 opened — and answered the same day** in [ADR-0021](ADR/ADR-0021-codec-policy-v2.md): PPMd
+  **is** the max-ratio preset (`--codec ppmd`, id `ppmd-1`), CHCE demoted to the extreme option. ADR-0015's reasoning was sound for the evidence it had;
   this evidence is new.

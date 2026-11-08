@@ -21,8 +21,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from lexora import CODEC_ID_ZIPTASTIC, CODEC_ID_ZSTD, CODEC_ID_ZSTD_LEGACY_L19
-from lexora import ziptastic_core, zstd_core
+from lexora import (CODEC_ID_PPMD, CODEC_ID_ZIPTASTIC, CODEC_ID_ZSTD,
+                    CODEC_ID_ZSTD_LEGACY_L19)
+from lexora import ppmd_core, ziptastic_core, zstd_core
 
 # Zstd frame magic, little-endian 0xFD2FB528.
 ZSTD_MAGIC = b"\x28\xb5\x2f\xfd"
@@ -81,6 +82,14 @@ SPECS: tuple[CodecSpec, ...] = (
         compress=ziptastic_core.compress,
         decompress=ziptastic_core.decompress,
         validate_level=ziptastic_core.validate_level,
+    ),
+    CodecSpec(
+        name="ppmd",
+        registry_id=CODEC_ID_PPMD,
+        magic=ppmd_core.MAGIC,
+        compress=ppmd_core.compress,
+        decompress=ppmd_core.decompress,
+        validate_level=ppmd_core.validate_level,
     ),
 )
 

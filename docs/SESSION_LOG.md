@@ -1898,3 +1898,44 @@ to the `dev` extra as benchmark-only, a test pinning that the row cannot vanish 
 **P0.3a** added so the protocol run includes it.
 
 **Gate:** **679 passed, 0 skipped**; linkcheck clean.
+
+---
+
+## Session 86 — 2026-11-08 (OQ-18 answered: PPMd becomes the max-ratio preset)
+
+**The owner said "go" to the measurement, and the measurement settled it.** ADR-0015 made CHCE
+the max-ratio preset on a −19.75 % result against `xz`. Adding PPMd to the table — which the
+charter named in ADR-0003 and nobody had measured — changed the comparison:
+
+| codec | ratio | throughput | binary |
+|---|---|---|---|
+| zstd-9 (default) | 0.3352 | 15.9 MiB/s | no |
+| **PPMd order 6** | **0.2283–0.2423** | **3.15–3.34 MiB/s** | **no** |
+| CHCE `-9` | 0.2286–0.2425 | 0.48–0.50 MiB/s | yes |
+| CHCE `--max-ratio` | 0.2192 | **0.05 MiB/s** | yes |
+
+**PPMd ties CHCE's default at ~7× the speed, with no external binary.** The 0.0003 difference
+between them is noise around a tie; the 7× is not. CHCE's only remaining edge is
+`--max-ratio`: 4 % smaller, at 0.05 MiB/s — 80 seconds for a 4 MB document. That is an archival
+mode, not a preset.
+
+**A methodology trap worth recording.** My first sweep concatenated all 19 books and reported
+PPMd at 0.2343 — better than the recorded 0.2425 — which would have been a *false* win, because
+concatenation lets one model span every document and flatters every codec. Re-measured per file
+to match the recorded numbers, PPMd is 0.2423. Both are in the ADR; the per-file figure is the
+one that compares.
+
+**And a design trap the tests now guard.** PPMd is not self-describing: decoding an order-16
+stream with order 6 **returns wrong bytes without raising**. A codec that guessed its parameters
+would corrupt archives and report success. So the frame carries its order byte, `mem_size` is
+fixed at 16 MiB for id `ppmd-1`, and a tampered order byte is **refused** rather than decoded
+into plausible garbage. A test asserts the underlying pyppmd behaviour too, so if a future
+release starts raising, the constraint gets re-examined instead of remembered.
+
+**What shipped.** `ppmd_core.py` (22 tests), codec `ppmd` / id `ppmd-1` in the registry,
+`--codec ppmd` on `pack` and `batch`, `lexora[ppmd]` as an optional extra, and ADR-0021
+recording the three-point ladder: **zstd default · PPMd max-ratio · CHCE extreme**. CHCE is
+demoted, not deleted — removing a working codec to tidy a table is not a trade this project
+makes.
+
+**Gate:** **701 passed, 0 skipped**; linkcheck clean.

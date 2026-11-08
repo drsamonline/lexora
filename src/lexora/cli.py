@@ -1067,10 +1067,12 @@ def build_parser() -> argparse.ArgumentParser:
     pk.add_argument("--out", dest="outfile", required=True, help="'-' for stdout")
     pk.add_argument("--level", type=int, default=DEFAULT_LEVEL)
     pk.add_argument("--codec", choices=codecs.names(), default=codecs.DEFAULT_CODEC,
-                    help="block codec: zstd (default) or ziptastic (CHCE, ~11-25%% "
-                         "smaller, 0.3-0.6 MB/s, needs the ziptastic binary on PATH). "
-                         "The choice is written into the header, so unpack/verify need "
-                         "no flag")
+                    help="block codec (ADR-0021): zstd (default, fast), ppmd (max "
+                         "ratio: ~25%% smaller than zstd, ~3 MiB/s, pure pip install), "
+                         "ziptastic (CHCE; use --level 19 for its --max-ratio mode, "
+                         "~4%% smaller again at 0.05 MiB/s, needs the binary). The "
+                         "choice is written into the header, so unpack/verify need no "
+                         "flag")
     pk.add_argument("--no-stream", action="store_true",
                     help="buffer the whole input in memory instead of streaming "
                          "block-by-block (same output bytes, much higher peak RSS)")
