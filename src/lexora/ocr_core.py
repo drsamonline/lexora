@@ -27,6 +27,7 @@ caller can refuse instead of OCR-ing a blank image and calling it success.
 
 from __future__ import annotations
 
+import importlib.util
 import io
 import os
 import shutil
@@ -175,12 +176,12 @@ def scan_pages(path: str, *, max_pages: int | None = None) -> tuple[list[bytes],
         from pypdf import PdfReader
     except ImportError as exc:  # pragma: no cover - dependency is declared
         raise OcrError("PDF handling needs pypdf (pip install 'lexora[pdf]')") from exc
-    try:
-        from PIL import Image
-    except ImportError as exc:  # pragma: no cover
+    # Availability probe, not an import we use: pypdf does the decoding, and
+    # importing Image here read as a real dependency (ruff F401).
+    if importlib.util.find_spec("PIL") is None:  # pragma: no cover
         raise OcrError(
             "extracting scan images needs Pillow (pip install 'lexora[ocr]')"
-        ) from exc
+        )
 
     try:
         reader = PdfReader(path)

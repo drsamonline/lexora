@@ -104,7 +104,7 @@ pip install -e ".[dev]"     # + pytest for the test suite
 pip install -e ".[gui]"     # + PySide6 for the experimental GUI (opt-in extra, ADR-0008)
 ```
 
-Then try the CLI — `lexora --help` for the nine subcommands, all documented in [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md):
+Then try the CLI — `lexora --help` for the eleven subcommands, all documented in [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md):
 
 ```bash
 lexora doctor                                    # install health, incl. a live round-trip self-test
@@ -115,7 +115,28 @@ lexora verify  --in a.lxz                        # audit: structure + every bloc
 lexora inspect --in a.lxz --verify               # readable summary + accounting identity
 lexora unpack  --in a.lxz --out back.txt
 lexora batch   --in DIR --out-dir OUT --op canon  # a whole tree, per-file JSON report
+lexora zdecode --in frame.bin --out back.txt     # raw zstd frame, the mirror of zround
 ```
+
+### Query it like a database
+
+The archive is also a **searchable, compressed store** — SQLite holds the index, lexora holds
+the compressed text, and only the documents you ask for get decoded:
+
+```bash
+lexora db init  --root myarchive
+lexora db add   --root myarchive --in book.txt --path "books/book.txt" --meta lang=en
+lexora db add   --root myarchive --in paper.pdf --path "papers/paper.pdf"   # PDF text layer
+lexora db add   --root myarchive --in scan.pdf  --path "scans/scan.pdf" --ocr  # scanned
+lexora db search --root myarchive --query whale --filter lang=en
+lexora db get   --root myarchive "books/book.txt" --out back.txt
+```
+
+Measured on 19 Gutenberg books (19.4 MB): payload **6.5 MB** (ratio 0.335), index **7.6 %** of
+the text, query **0.34 s**, single-document retrieval **0.47 s**. Design and trade-offs:
+[ADR-0016](docs/ADR/ADR-0016-queryable-archive.md) · usage: [docs/QUERY_ARCHIVE.md](docs/QUERY_ARCHIVE.md).
+
+There is a GUI for it: `lexora-gui`, then **Query archive…** in the ribbon.
 
 The GUI launcher `lexora-gui` requires the `[gui]` extra and exits 2 with guidance without it.
 

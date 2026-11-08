@@ -2,7 +2,7 @@
 
 > **Status:** Implemented-scope reference — documents ONLY the subcommands that exist and are tested. No placeholders for planned commands (master-prompt rule: no misleading docs).
 > **Owner:** Unassigned
-> **Last verified:** 2026-10-29 (Session 67 reconciliation: nine subcommands, `--jobs`, exit-1 partial batch, streaming memory behaviour)
+> **Last verified:** 2026-11-08 (eleven subcommands — `db` and `zdecode` added since the Session-67 reconciliation; stdin/stdout piping on every byte-level verb; an out-of-range `--level` is exit 2 per ADR-0018)
 > **Related:** [CANONICALIZATION.md](CANONICALIZATION.md) · [SPECIFICATION.md §8](SPECIFICATION.md) · [FORMAT_LXZ.md](FORMAT_LXZ.md) (layout now normative per accepted [ADR-0007](ADR/ADR-0007-container-v0-freeze.md)) · [STATUS.md](STATUS.md)
 
 ## Installation & invocation

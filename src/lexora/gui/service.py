@@ -34,10 +34,10 @@ from pathlib import Path
 from typing import Any, Callable
 
 from lexora import DEFAULT_LEVEL, __version__
-from lexora.canonicalize import CanonicalizationError, canonicalize, canonicalize_with_meta
+from lexora.canonicalize import CanonicalizationError, canonicalize_with_meta
 from lexora.container import ContainerError
-from lexora.container import read_index, unpack, verify_archive
-from lexora.zstd_core import CodecError, compress, decompress
+from lexora.container import read_index, verify_archive
+from lexora.zstd_core import CodecError
 
 # Bounds mirror src/lexora/cli.py (MAX_BLOCK_SIZE = LIM-01 ceiling) and
 # zstd level limits enforced by the codec library. Single source of the

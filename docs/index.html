@@ -201,8 +201,8 @@
     </div>
 
     <div class="facts">
-      <div><b>502</b><span>tests, incl. fuzzing</span></div>
-      <div><b>9</b><span>CLI subcommands</span></div>
+      <div><b>672</b><span>tests, incl. fuzzing</span></div>
+      <div><b>11</b><span>CLI subcommands</span></div>
       <div><b>~4 GiB</b><span>RAM budget</span></div>
       <div><b>.lxz v0</b><span>frozen container</span></div>
     </div>
@@ -237,9 +237,16 @@
       </div>
       <div>
         <h3>A real CLI</h3>
-        <p>Nine tested subcommands with a stable exit-code contract (0–7), exercised by 502 tests
+        <p>Eleven tested subcommands with a stable exit-code contract (0–7), exercised by 672 tests
         including reader/writer fuzzing and real-signal interruption tests.</p>
-        <span class="tag">canon · zround · pipe · pack · unpack · verify · inspect · batch · doctor</span>
+        <span class="tag">canon · zround · zdecode · pipe · pack · unpack · verify · inspect · batch · doctor · db</span>
+      </div>
+      <div>
+        <h3>Query it like a database</h3>
+        <p>A compressed archive you can search: SQLite holds the index, lexora holds the compressed
+        text, and only the documents you ask for are decoded. Metadata filters plus full-text, with
+        append, versioning, delete and compaction.</p>
+        <span class="tag">lexora db · 0.34 s query · index 7.6 % of text</span>
       </div>
       <div>
         <h3>Built for low resources</h3>

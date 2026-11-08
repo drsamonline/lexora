@@ -85,3 +85,42 @@ def test_readme_carries_no_static_test_count() -> None:
         f"{static}. Use the CI badge for the live number and record the local count, "
         "with its date, in docs/STATUS.md."
     )
+
+
+# --------------------------------------------------------------------------- #
+# the verb count, which is prose and therefore needs a machine to hold it
+# --------------------------------------------------------------------------- #
+
+def test_documented_subcommand_count_matches_the_cli() -> None:
+    """A count written in prose is a claim, and this one drifted silently.
+
+    README and the landing page both said "nine subcommands" while the CLI had
+    eleven (`db` and `zdecode` were added and nobody re-read the sentence). The
+    same class of drift has now hit this repo three times — test counts, the
+    default level, and this — so the number is pinned to the parser instead of
+    being trusted.
+    """
+    import re
+
+    from lexora.cli import build_parser
+
+    parser = build_parser()
+    verbs = sorted(parser._subparsers._group_actions[0].choices)
+    assert len(verbs) == 11, f"verb count changed to {len(verbs)}: {verbs}"
+
+    words = {9: "nine", 10: "ten", 11: "eleven", 12: "twelve"}
+    expected = words[len(verbs)]
+
+    readme = (REPO / "README.md").read_text()
+    assert f"the {expected} subcommands" in readme, (
+        f"README should say '{expected} subcommands' for {len(verbs)} verbs"
+    )
+    landing = (REPO / "docs" / "index.html").read_text()
+    assert f"<b>{len(verbs)}</b><span>CLI subcommands" in landing, (
+        f"landing page should show {len(verbs)} CLI subcommands"
+    )
+    # and every verb must appear in the landing page's tag line
+    tag = re.search(r'<span class="tag">(canon · [^<]+)</span>', landing)
+    assert tag, "landing page verb tag line not found"
+    listed = {v.strip() for v in tag.group(1).split("·")}
+    assert listed == set(verbs), f"landing page lists {sorted(listed)}, CLI has {verbs}"

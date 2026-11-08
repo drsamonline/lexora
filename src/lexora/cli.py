@@ -108,7 +108,7 @@ def _read(path: str) -> bytes:
             return fh.read()
     except OSError as exc:
         print(f"error: cannot read {path}: {exc}", file=sys.stderr)
-        raise SystemExit(EXIT_FILE)
+        raise SystemExit(EXIT_FILE) from None  # message already printed above
 
 
 def _open_input(path: str):
@@ -129,7 +129,7 @@ def _write(path: str, data: bytes) -> None:
             fh.write(data)
     except OSError as exc:
         print(f"error: cannot write {path}: {exc}", file=sys.stderr)
-        raise SystemExit(EXIT_FILE)
+        raise SystemExit(EXIT_FILE) from None  # message already printed above
 
 
 
@@ -191,7 +191,7 @@ def cmd_canon(args: argparse.Namespace) -> int:
         # tests (and the documented exit-code table) hold the streaming path to
         # the same contract rather than returning a code.
         print(f"error: cannot read {args.infile}: {exc}", file=sys.stderr)
-        raise SystemExit(EXIT_FILE)
+        raise SystemExit(EXIT_FILE) from None  # message already printed above
     with src:
         captured: dict = {}
 
@@ -332,26 +332,6 @@ def cmd_pipe(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
-def cmd_zdecode(args: argparse.Namespace) -> int:
-    """Decompress one raw zstd frame back to bytes (the mirror of `zround`).
-
-    Exists because the GUI needs a byte-level surface it can shell out to
-    (ADR-0011), and because "decompress this frame" had no verb at all — `unpack`
-    handles containers, not bare frames.
-    """
-    frame = _read(args.infile)
-    try:
-        payload = decompress(frame, expected_original_size=args.expect_size)
-    except CodecError as exc:
-        print(f"codec error: {exc}", file=sys.stderr)
-        return EXIT_CODEC
-    if args.outfile == "-":
-        sys.stdout.buffer.write(payload)
-    else:
-        _write(args.outfile, payload)
-    return EXIT_OK
-
-
 def _write_atomic(path: str, data: bytes) -> None:
     """temp file + fsync + rename (ERROR_HANDLING recovery semantics): a crash
     leaves either the previous artifact or the new one, never a hybrid."""
@@ -375,7 +355,7 @@ def _write_atomic(path: str, data: bytes) -> None:
             except OSError:
                 pass
         print(f"error: cannot write {path}: {exc}", file=sys.stderr)
-        raise SystemExit(EXIT_FILE)
+        raise SystemExit(EXIT_FILE) from None  # message already printed above
 
 
 def _write_atomic_stream(path: str, writer) -> None:
@@ -409,7 +389,7 @@ def _write_atomic_stream(path: str, writer) -> None:
     except OSError as exc:
         _discard()
         print(f"error: cannot write {path}: {exc}", file=sys.stderr)
-        raise SystemExit(EXIT_FILE)
+        raise SystemExit(EXIT_FILE) from None  # message already printed above
     except BaseException:
         _discard()  # never leave a half-written .lxz-tmp-* behind
         raise
@@ -665,7 +645,7 @@ def cmd_inspect(args) -> int:
         src = open(args.infile, "rb")
     except OSError as exc:
         print(f"error: cannot read {args.infile}: {exc}", file=sys.stderr)
-        raise SystemExit(EXIT_FILE)
+        raise SystemExit(EXIT_FILE) from None  # message already printed above
     with src:
         try:
             summary = summarize(src, verify=args.verify)
@@ -692,7 +672,7 @@ def cmd_verify(args) -> int:
         src = open(args.infile, "rb")
     except OSError as exc:
         print(f"error: cannot read {args.infile}: {exc}", file=sys.stderr)
-        raise SystemExit(EXIT_FILE)
+        raise SystemExit(EXIT_FILE) from None  # message already printed above
     with src:
         archive_bytes = os.fstat(src.fileno()).st_size
         result = verify_stream(src, only_block=args.block)

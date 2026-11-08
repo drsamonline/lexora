@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import faulthandler
 import json
-import os
 import sys
 import time
 import traceback

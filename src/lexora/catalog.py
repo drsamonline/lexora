@@ -440,7 +440,10 @@ class Catalog:
         where = ["d.deleted = 0", "d.superseded = 0"]
         params: list = []
         for key, value in (filters or {}).items():
-            if not key.replace("_", "").isalnum():
+            # ASCII word chars only. `isalnum()` alone accepts Unicode letters,
+            # which would put arbitrary codepoints inside a JSON path expression —
+            # not exploitable today, but the guard should be as narrow as the job.
+            if not re.fullmatch(r"[A-Za-z0-9_]+", key):
                 raise CatalogError(f"unsafe filter key: {key!r}")
             where.append(f"json_extract(d.metadata, '$.{key}') = ?")
             params.append(value)
