@@ -38,7 +38,6 @@ import hashlib
 import struct
 from dataclasses import dataclass
 
-import zstandard as zstd
 
 from lexora import CANONICALIZER_VERSION, DEFAULT_LEVEL, __version__
 from lexora import codec_registry as codecs

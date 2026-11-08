@@ -22,7 +22,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - typing only, never executed at runtime
-    from PySide6.QtWidgets import QMainWindow
+    pass
 
 APP_TITLE = "LEXORA"
 VIEWS: tuple[str, ...] = ("pack", "unpack", "inspect", "preview", "about")
