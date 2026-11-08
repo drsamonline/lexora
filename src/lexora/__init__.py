@@ -7,7 +7,12 @@ archives and checked at verify time (REQ-CAN-004, REQ-CMP-002).
 __version__ = "0.0.1.dev1"
 
 CANONICALIZER_VERSION = "lexcan-0.1"
-CODEC_ID_ZSTD = "zstd-raw-l19"  # registry-style ID; retired IDs are never reused
+# Level-neutral since ADR-0020 (2026-11-08). The old value named a level the archive
+# was not necessarily compressed at (ADR-0012 moved the default to 9), so every
+# archive carried a false statement. New archives write this id; `zstd-raw-l19`
+# remains a READ-ONLY alias so archives written before the change still decode.
+CODEC_ID_ZSTD = "zstd-raw"
+CODEC_ID_ZSTD_LEGACY_L19 = "zstd-raw-l19"  # read-only; never written again
 # ziptastic's CHCE stream (ADR-0014). A new id, never a reuse of the zstd one:
 # the reader dispatches on this string, so an archive packed with CHCE must say
 # so, and an older reader must refuse it rather than attempt a zstd decode.

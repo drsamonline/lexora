@@ -19,6 +19,7 @@ import pytest
 
 from lexora import CANONICALIZER_VERSION, CODEC_ID_ZSTD
 from lexora.container import (
+    verify_archive,
     HEADER_SIZE,
     INDEX_ENTRY_SIZE,
     MAGIC,
@@ -83,7 +84,12 @@ class TestGoldenVectors:
 
 
 # Pinned at Session 24 acceptance; regenerated ONLY with a deliberate ADR.
-GOLDEN_ARCHIVE_SHA256 = "27877df54dcb024bb9cdc338f37539930c6dde534e7406219c402fb8c4b705e9"
+# Regenerated 2026-11-08 under ADR-0020: `codec_id` went from `zstd-raw-l19` to the
+# level-neutral `zstd-raw`, which changes 16 bytes of header and the 32-byte header
+# checksum that covers them. The layout did not change. The previous bytes are kept as
+# `golden_1byte_legacy_l19.lxz` and still verify — see TestLegacyCodecId below.
+GOLDEN_ARCHIVE_SHA256 = "08288a397f920a12d23ab8269fd1f70b84edbbc234cf4554067847410ea69351"
+GOLDEN_ARCHIVE_SHA256_LEGACY = "27877df54dcb024bb9cdc338f37539930c6dde534e7406219c402fb8c4b705e9"
 
 
 # ------------------------------------------------------------------ V2 roundtrip
@@ -246,3 +252,48 @@ class TestVerifyArchive:
         assert res.blocks[0][1] is True
         assert res.blocks[1][1] is False
         assert res.blocks[1][2] in ("E-CMP-004", "E-INTEGRITY-001")
+
+
+class TestLegacyCodecId:
+    """ADR-0020: new archives write a level-neutral id; old ones still read.
+
+    The legacy vector is a real archive written by the previous code, kept as a
+    fixture precisely so backward compatibility is tested rather than asserted. If
+    the alias in `codec_registry` is ever removed, these fail.
+    """
+
+    def _legacy(self) -> bytes:
+        path = pathlib.Path(__file__).parent / "vectors" / "lxz_format" / "golden_1byte_legacy_l19.lxz"
+        assert path.exists(), f"legacy vector missing: {path}"
+        return path.read_bytes()
+
+    def test_legacy_archive_still_verifies_and_decodes(self) -> None:
+        arc = self._legacy()
+        assert hashlib.sha256(arc).hexdigest() == GOLDEN_ARCHIVE_SHA256_LEGACY
+        assert unpack(arc) == GOLDEN_INPUT
+        assert verify_archive(arc).ok is True
+
+    def test_legacy_archive_reports_its_own_id(self) -> None:
+        """A reader must not rewrite history: the old file says what it says."""
+        info, _, _ = read_index(self._legacy())
+        assert info.codec_id == "zstd-raw-l19"
+
+    def test_new_archives_use_the_level_neutral_id(self) -> None:
+        arc = pack(GOLDEN_INPUT, level=19, generator_version="lexora-golden")
+        info, _, _ = read_index(arc)
+        assert info.codec_id == "zstd-raw"
+        assert info.codec_id != "zstd-raw-l19"
+
+    def test_the_writer_never_emits_a_legacy_id(self) -> None:
+        """Legacy ids are read-only. Every registered writer id must be current."""
+        from lexora import codec_registry, ziptastic_core
+
+        for spec in codec_registry.SPECS:
+            assert spec.registry_id not in spec.legacy_ids
+            # A codec whose external binary is absent cannot be exercised here; the
+            # registry invariant above still applies to it.
+            if spec.name == "ziptastic" and not ziptastic_core.available():
+                continue
+            written = pack(b"payload", codec=spec.name)
+            info, _, _ = read_index(written)
+            assert info.codec_id == spec.registry_id

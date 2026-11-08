@@ -1,7 +1,7 @@
 # ADR-0020: The `codec_id` names a level it does not use — fix at v0→v1
 
-> **Status:** **PROPOSED.** Awaiting one decision from the owner: rename now, or at the v0→v1
-> boundary. Everything else in this record is measured and ready.
+> **Status:** **ACCEPTED 2026-11-08** — owner decision: "oq17 rename", i.e. **Option A, now**.
+> Implemented and merged the same day; see the implementation note at the end.
 > **Date:** 2026-11-08
 > **Deciders:** Owner Dr Sohil Momin
 > **Related:** [ADR-0007](ADR-0007-container-v0-freeze.md) (the frozen field) · [ADR-0012](ADR-0012-default-encode-level.md) (which moved the default to 9) · [ADR-0014](ADR-0014-ziptastic-codec.md) (the registry that made this visible) · [AUDIT_2026-11-07.md](../AUDIT_2026-11-07.md) finding F1
@@ -96,3 +96,24 @@ Not implemented — this record exists so the decision is one word away. When ac
 alias + writer change + `_build_header` uses `spec.registry_id` (already true), vectors
 regenerated, the byte-identity test rewritten to assert *which* bytes changed, and a test that an
 archive written before the change still verifies.
+
+## Implementation note (2026-11-08)
+
+Landed as decided, with the compatibility branch the ADR called for:
+
+- `CODEC_ID_ZSTD` is now **`zstd-raw`**; `CODEC_ID_ZSTD_LEGACY_L19` keeps the old string as a
+  **read-only alias**. `CodecSpec.legacy_ids` carries it, and `by_registry_id` maps legacy ids
+  to the same spec, so an archive written before the change still decodes and still **reports
+  its own id** — a reader must not rewrite history.
+- New archives write `zstd-raw`. Verified: `pack(b"x")` → header id `zstd-raw`.
+- **Golden vectors regenerated, and the old one kept as a fixture.**
+  `golden_1byte.lxz` is the new archive (`08288a39…`); `golden_1byte_legacy_l19.lxz` is the
+  pre-ADR-0020 bytes (`27877df5…`), still verifying. Both digests sit side by side in the
+  vectors README with the diff described: 16 header bytes plus the 32-byte header checksum.
+  Deleting the legacy file would have left backward compatibility *asserted* rather than
+  *tested*.
+- `TestLegacyCodecId` (4 tests) pins it: the legacy archive verifies and decodes, it reports
+  its own id, new archives use the neutral id, and **the writer never emits a legacy id** for
+  any registered codec.
+- The byte-identity test that guards "default pack is unchanged" was updated to say *which*
+  bytes changed and why, rather than being deleted.

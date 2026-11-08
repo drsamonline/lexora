@@ -64,7 +64,7 @@ def test_verify_roundtrip_stats():
     stats = zc.verify_roundtrip(data)
     assert stats["roundtrip_exact"] is True
     assert stats["input_bytes"] == len(data)
-    assert stats["codec_profile"] == "zstd-raw-l19"
+    assert stats["codec_profile"] == "zstd-raw"  # level-neutral since ADR-0020
     assert stats["ratio"] < 0.1  # highly repetitive input
     assert stats["payload_sha256"] != stats["stored_sha256"]
 

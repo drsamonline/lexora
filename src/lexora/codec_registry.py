@@ -21,7 +21,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from lexora import CODEC_ID_ZIPTASTIC, CODEC_ID_ZSTD
+from lexora import CODEC_ID_ZIPTASTIC, CODEC_ID_ZSTD, CODEC_ID_ZSTD_LEGACY_L19
 from lexora import ziptastic_core, zstd_core
 
 # Zstd frame magic, little-endian 0xFD2FB528.
@@ -50,6 +50,9 @@ class CodecSpec:
     #: Returns an error message when a level is illegal for this codec, else None.
     #: Defined by the codec module, called by the CLI at the boundary (ADR-0018).
     validate_level: Callable[[int], str | None]
+    #: Registry ids this codec used to write. Read-only: `by_registry_id` maps them to
+    #: this spec so old archives decode, but nothing ever writes them again (ADR-0020).
+    legacy_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         # The header field is 16 bytes NUL-padded; a longer id would be silently
@@ -69,6 +72,7 @@ SPECS: tuple[CodecSpec, ...] = (
         compress=zstd_core.compress,
         decompress=zstd_core.decompress,
         validate_level=zstd_core.validate_level,
+        legacy_ids=(CODEC_ID_ZSTD_LEGACY_L19,),
     ),
     CodecSpec(
         name="ziptastic",
@@ -82,6 +86,9 @@ SPECS: tuple[CodecSpec, ...] = (
 
 _BY_NAME = {spec.name: spec for spec in SPECS}
 _BY_ID = {spec.registry_id: spec for spec in SPECS}
+# Legacy ids resolve to the same spec, so an archive written before ADR-0020 still
+# decodes and still reports its own id on read.
+_BY_ID.update({legacy: spec for spec in SPECS for legacy in spec.legacy_ids})
 
 
 DEFAULT_CODEC_ID = _BY_NAME[DEFAULT_CODEC].registry_id

@@ -1804,3 +1804,45 @@ like it might be a dropped limit — it is not, it is simply unused. `ruff --sel
 clean across `src/` and `benchmarks/`.
 
 **Gate:** **674 passed, 0 skipped**; linkcheck clean; ruff clean on F/E9/B.
+
+---
+
+## Session 84 — 2026-11-08 (ADR-0020 accepted: the codec id stops naming a level)
+
+**Owner said "oq17 rename", so the format-metadata change landed the same day it was
+proposed.** The field is frozen by ADR-0007, which is why this needed a record rather than an
+edit — and why the change had to carry a compatibility story rather than a find-and-replace.
+
+**What changed.** `codec_id` went from `zstd-raw-l19` to the level-neutral **`zstd-raw`**. The
+old value named a level the archive was not necessarily compressed at — ADR-0012 moved the
+default to 9 — so every archive written since then carried a false statement in its header, and
+a level-9 and a level-19 archive were indistinguishable.
+
+**What did not change.** The byte layout. Same 128-byte header, same 56-byte index entries,
+same trailer. The diff between an old and a new archive is **16 header bytes plus the 32-byte
+header checksum** that covers them, and the vectors README now says so explicitly rather than
+leaving someone to diff two binaries.
+
+**The compatibility branch, which is the actual work.** `CodecSpec.legacy_ids` carries the old
+string, and `by_registry_id` maps it to the same spec — so an archive written yesterday still
+decodes, still verifies, and still **reports its own id**. A reader that silently relabelled an
+old archive with the new id would be rewriting history; a test asserts it does not.
+
+**The vectors were regenerated, and the old one kept.** `golden_1byte.lxz` is the new archive
+(`08288a39…`); `golden_1byte_legacy_l19.lxz` is the pre-ADR-0020 bytes (`27877df5…`), still
+verifying. Deleting the old file would have left backward compatibility *asserted* instead of
+*tested* — and it is the only artifact in the repo written by the previous code. Both digests sit
+side by side in the vectors README.
+
+**Four tests now pin the behaviour** (`TestLegacyCodecId`): the legacy archive verifies and
+decodes; it reports `zstd-raw-l19`, not the new id; new archives use `zstd-raw`; and **the
+writer never emits a legacy id** for any registered codec. That last one is the invariant that
+keeps the alias read-only.
+
+**Two mistakes, both mine, both caught by running the tests.** `verify_archive` was not imported
+in the test module, and the writer-invariant test looped over every codec including ziptastic —
+which needs its external binary. The second is the more interesting one: the test was written as
+though every codec were always runnable, which is exactly the assumption ADR-0015 exists to
+deny.
+
+**Gate:** **678 passed, 0 skipped**; linkcheck clean.
