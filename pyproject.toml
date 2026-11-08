@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lexora"
-version = "0.0.1.dev1"
+version = "0.1.0a1"
 description = "LEXORA prototype: canonicalization + Zstd core baseline (Phase 1). No stable API."
 readme = "README.md"
 # PolyForm Noncommercial 1.0.0 per ADR-0009 (2026-10-29, owner decision),

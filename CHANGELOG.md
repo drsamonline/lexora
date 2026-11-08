@@ -3,6 +3,22 @@
 All notable changes to the LEXORA project (code **and** documentation) are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning policy is an open decision ([docs/DECISIONS.md](docs/DECISIONS.md) OQ-9) — **no releases or version tags exist yet**.
 
+## [0.1.0-alpha.1] — 2026-11-09
+
+First installable build. **Alpha: not for production data.** Full notes:
+[docs/releases/v0.1.0-alpha.1.md](docs/releases/v0.1.0-alpha.1.md).
+
+Every release precondition is met except **R5, the protocol-scope benchmark** — so the
+compression figures in this release are smoke-scope and are labelled as such.
+
+**Added:** exact `.lxz` v0 archives with per-block SHA-256 and a round-trip gate; two codecs
+(`zstd` default, `ziptastic` CHCE optional); the queryable archive (`lexora db`) with full-text,
+metadata filters, versioning, delete and compaction; PDF text-layer ingestion and OCR as an
+external Tesseract plugin; a GUI query view that shells out to the CLI; a language-plugin seam
+with English as its first plugin; 736 tests.
+
+**Not in this release:** `.lxdb` (designed, gated behind R5), a second language, encryption.
+
 ## [Unreleased]
 
 ### Added

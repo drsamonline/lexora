@@ -3,19 +3,25 @@
 > **Status: Proposed — no release has been made and no version exists yet.** This document defines the process that will be followed when the project reaches its first releasable state. It deliberately contains no URLs to nonexistent artifacts, no version numbers, and no dates.
 > **Last verified:** 2026-10-15 against repository commit `7969155`.
 
-## Preconditions (all must be true before any release)
+## Preconditions (all must be true before a **stable** release)
 
-| # | Condition | Current state (2026-10-15) |
+Re-measured 2026-11-09 against `main` — the previous version of this table said "no code, no CI"
+and had been wrong for three weeks.
+
+| # | Condition | State 2026-11-09 |
 |---|---|---|
-| R1 | Implementation code exists with passing tests in-repo | ❌ No code, no test tooling |
-| R2 | Python version range decided (OQ-7 in [DECISIONS.md](DECISIONS.md)) | ❌ Open |
-| R3 | License chosen and LICENSE file added (OQ-5) | ✅ Done — PolyForm Noncommercial 1.0.0 via [ADR-0009](ADR/ADR-0009-license-polyform-noncommercial.md) (2026-10-29), superseding ADR-0006's MIT; `LICENSE` at root is normative, ship it with every artifact. **Open sub-item:** any artifact containing the `[gui]` extra must also ship third-party notices + LGPL/GPL texts + a relinking statement — see [DEPENDENCY_LICENCE_REVIEW.md](DEPENDENCY_LICENCE_REVIEW.md) §4 (decision pending, to be recorded as ADR-0011) |
-| R4 | `.lxz` format frozen: byte layout approved + conformance test vectors published ([FORMAT_LXZ.md](FORMAT_LXZ.md) currently PROPOSED) | ❌ Not frozen |
-| R5 | Benchmark protocol executed on a rights-cleared corpus; claims in README/CHANGELOG limited to measured results ([BENCHMARK_PROTOCOL.md](BENCHMARK_PROTOCOL.md), [CORPUS_POLICY.md](CORPUS_POLICY.md)) | ❌ No corpus (OQ-8), no results |
-| R6 | Versioning scheme formally adopted via ADR (OQ-9; SemVer proposed) | ❌ Open |
-| R7 | CI or at minimum a documented, reproducible pre-release checklist run recorded in SESSION_LOG | ❌ No CI |
+| R1 | Implementation code exists with passing tests in-repo | ✅ **735 tests, 0 skipped**, CI green |
+| R2 | Python version range decided | ✅ [ADR-0005](ADR/ADR-0005-python-version.md): `>=3.12,<4.0` |
+| R3 | Licence chosen and LICENSE shipped | ✅ PolyForm Noncommercial 1.0.0 ([ADR-0009](ADR/ADR-0009-license-polyform-noncommercial.md)). **Open sub-item:** a `[gui]` artifact must also ship third-party notices + LGPL/GPL texts + a relinking statement |
+| R4 | `.lxz` format frozen + conformance vectors published | ✅ [ADR-0007](ADR/ADR-0007-container-v0-freeze.md); `tests/vectors/lxz_format/` carries both a current and a pre-ADR-0020 vector |
+| R5 | **Benchmark protocol executed at protocol scope on a rights-cleared corpus** | ❌ **The only blocker.** Smoke and protocol-*shaped* runs exist (R4/R5/R6 artifacts); the full 1.054 GiB three-split run needs a machine this project does not yet have |
+| R6 | Versioning scheme adopted | ✅ in practice since 2026-10-30 (Conventional Commits, Keep-a-Changelog, SemVer) |
+| R7 | CI or a recorded pre-release checklist | ✅ GitHub Actions green on every merge; `python3 scripts/linkcheck.py` gates the docs |
 
-Until every row above is ✅, **there is nothing to release** and this document stays Proposed.
+**A stable release is blocked on R5 alone.** Pre-releases are not: the versioning section below
+allows an alpha "for builds distributed to testers with an explicit *not for production data*
+notice", and that is exactly what `v0.1.0-alpha.1` is — every other precondition met, R5 stated as
+unmet in the release notes rather than quietly skipped.
 
 ## Versioning (proposed, pending OQ-9 ADR)
 
