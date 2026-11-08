@@ -76,6 +76,7 @@ door currently undersells what exists.
 
 | # | Item | Verification |
 |---|---|---|
+| ~~0~~ | ~~**Real-text codec test** — every shipped codec over 720 KB of 88 real books + adversarial inputs~~ | **DONE 2026-11-08** — `tests/test_codec_real_text.py`, 30 tests; fixture `tests/vectors/real_text/` with provenance; **verified by breaking a codec and watching the test fail** |
 | 1 | Delete the duplicate `cmd_zdecode` (F2) | `grep -c "def cmd_zdecode"` → 1 |
 | 2 | `ruff --fix` the unused imports (F3); replace the `PIL.Image` probe with `importlib.util.find_spec` (F4) | `ruff check src/ --select F401` → clean |
 | 3 | **Front page: nine → eleven verbs, and a `lexora db` example** (F1) | `grep -c "lexora db" README.md` → > 0 |
