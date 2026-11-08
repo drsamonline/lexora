@@ -44,7 +44,7 @@ multi-user concurrency, cloud anything.
 | OCR (external Tesseract plugin) | **Done** | ADR-0019; `ocr_core.py`; 15 tests; real 99-page scan |
 | Multilingual (hi, gu) | **Not started** | deferred by owner; English-only build scope |
 | GUI query view | **Done** | `gui/query.py`; 14 offscreen tests; parity with the CLI asserted |
-| GUI on subprocess (ADR-0011) | **Partly** — the query view is a CLI client; `service.py` is still in-process | PATH_TO_V1 P2.3 |
+| GUI on subprocess (ADR-0011) | **Done** | `service.py` is a CLI client; 10 argv-level tests |
 | Release | **Not started** | M7 / P7 |
 
 ## 3. Remaining work, in dependency order
@@ -89,9 +89,9 @@ Per ADR-0011 the GUI is a **client of the CLI**, so the contract is fixed: searc
 |---|---|---|
 | ~~P2.1~~ | ~~Query panel (search + metadata filters + result list)~~ | **DONE 2026-11-07** — `gui/query.py`, reachable from the ribbon; 14 offscreen tests |
 | ~~P2.2~~ | ~~Preview pane decoding only the selected document~~ | **DONE 2026-11-07** — test asserts the other match's text is absent from the preview |
-| P2.3 | Ingest/compact actions from the GUI, and moving `gui/service.py` onto subprocess calls (the open half of ADR-0011) | Parity test: GUI bytes == CLI bytes |
+| ~~P2.3~~ | ~~Moving `gui/service.py` onto subprocess calls (the open half of ADR-0011)~~ | **DONE 2026-11-08** — every byte-level operation is a CLI call; `tests/test_service_is_a_cli_client.py` asserts argv, stdin payload and exit-code mapping. `run_canon_meta` stays in-process, documented and asserted as the one exception |
 | ~~P2.3a~~ | ~~Decide the exit code for an out-of-range `--level`~~ | **DECIDED 2026-11-07 by [ADR-0018](ADR/ADR-0018-level-usage-error.md): exit 2 on every surface.** The CLI moved to where the GUI already was, so no GUI code changed. 23 tests, including a CLI↔GUI parity assertion |
-| P2.3b | **Still open.** The CLI cannot read stdin (`_read("-")` opens a file named `-`), so a byte-level subprocess service layer needs that first; a raw-frame `zdecode` verb is also missing | `pack --in -` works; both surfaces share one implementation |
+| ~~P2.3b~~ | ~~CLI cannot read stdin; no `zdecode` verb~~ | **DONE 2026-11-08** — `_read("-")` is stdin, `_open_input()` gives streaming paths a seekable handle, and `zdecode` exists. Found on the way: `zround --out -` wrote nothing at all |
 | P2.4 | Notices for the `[gui]` extra if it ships (R3 obligation) | NOTICE + LGPL/GPL texts + About-view notice |
 
 Needs a **Qt-capable machine** (PySide6 + `libegl1`); nothing here can be honestly claimed

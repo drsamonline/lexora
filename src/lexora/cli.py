@@ -33,6 +33,7 @@ Exit codes (tested in tests/test_cli.py):
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import os
 import shutil
@@ -98,12 +99,28 @@ def _install_termination_handler() -> None:
 
 
 def _read(path: str) -> bytes:
+    # "-" means stdin: without this, `--in -` opened a file literally named "-",
+    # which is what blocked the GUI's move onto the CLI (PATH_TO_V1 P2.3b).
+    if path == "-":
+        return sys.stdin.buffer.read()
     try:
         with open(path, "rb") as fh:
             return fh.read()
     except OSError as exc:
         print(f"error: cannot read {path}: {exc}", file=sys.stderr)
         raise SystemExit(EXIT_FILE)
+
+
+def _open_input(path: str):
+    """A seekable binary handle for `path`, with "-" meaning stdin.
+
+    stdin is not seekable, and the container readers need to seek (index, then
+    blocks), so stdin is buffered into memory first. That is the documented
+    trade-off of piping an archive: bounded memory stops applying.
+    """
+    if path == "-":
+        return io.BytesIO(sys.stdin.buffer.read())
+    return open(path, "rb")
 
 
 def _write(path: str, data: bytes) -> None:
@@ -168,7 +185,7 @@ def cmd_canon(args: argparse.Namespace) -> int:
         return EXIT_OK
 
     try:
-        src = open(args.infile, "rb")
+        src = _open_input(args.infile)
     except OSError as exc:
         # _read() raises SystemExit(EXIT_FILE) for an unreadable input, and the
         # tests (and the documented exit-code table) hold the streaming path to
@@ -236,8 +253,33 @@ def cmd_zround(args: argparse.Namespace) -> int:
     )
     if not exact:
         return EXIT_ROUNDTRIP  # REQ-CMP-001 violation: blocker severity
-    if args.outfile != "-":
+    if args.outfile == "-":
+        # This used to write nothing at all: the flag was accepted and ignored,
+        # so `zround --out -` produced silence instead of a frame (found 2026-11-07
+        # while giving the GUI a byte-level CLI surface).
+        sys.stdout.buffer.write(blob)
+    else:
         _write(args.outfile, blob)
+    return EXIT_OK
+
+
+def cmd_zdecode(args: argparse.Namespace) -> int:
+    """Decompress one raw zstd frame back to bytes (the mirror of `zround`).
+
+    Exists because the GUI needs a byte-level surface it can shell out to
+    (ADR-0011), and because "decompress this frame" had no verb at all — `unpack`
+    handles containers, not bare frames.
+    """
+    frame = _read(args.infile)
+    try:
+        payload = decompress(frame, expected_original_size=args.expect_size)
+    except CodecError as exc:
+        print(f"codec error: {exc}", file=sys.stderr)
+        return EXIT_CODEC
+    if args.outfile == "-":
+        sys.stdout.buffer.write(payload)
+    else:
+        _write(args.outfile, payload)
     return EXIT_OK
 
 
@@ -280,8 +322,33 @@ def cmd_pipe(args: argparse.Namespace) -> int:
     )
     if not exact:
         return EXIT_ROUNDTRIP  # REQ-CMP-001 violation: blocker severity
-    if args.outfile != "-":
+    if args.outfile == "-":
+        # This used to write nothing at all: the flag was accepted and ignored,
+        # so `zround --out -` produced silence instead of a frame (found 2026-11-07
+        # while giving the GUI a byte-level CLI surface).
+        sys.stdout.buffer.write(blob)
+    else:
         _write(args.outfile, blob)
+    return EXIT_OK
+
+
+def cmd_zdecode(args: argparse.Namespace) -> int:
+    """Decompress one raw zstd frame back to bytes (the mirror of `zround`).
+
+    Exists because the GUI needs a byte-level surface it can shell out to
+    (ADR-0011), and because "decompress this frame" had no verb at all — `unpack`
+    handles containers, not bare frames.
+    """
+    frame = _read(args.infile)
+    try:
+        payload = decompress(frame, expected_original_size=args.expect_size)
+    except CodecError as exc:
+        print(f"codec error: {exc}", file=sys.stderr)
+        return EXIT_CODEC
+    if args.outfile == "-":
+        sys.stdout.buffer.write(payload)
+    else:
+        _write(args.outfile, payload)
     return EXIT_OK
 
 
@@ -443,7 +510,7 @@ def cmd_pack(args) -> int:
         in_bytes, archive_bytes = len(payload), len(archive)
     else:
         try:
-            src = open(args.infile, "rb")
+            src = _open_input(args.infile)
         except OSError as exc:
             print(f"error: cannot read {args.infile}: {exc}", file=sys.stderr)
             return EXIT_FILE
@@ -500,12 +567,20 @@ def cmd_unpack(args) -> int:
         blocks = 1 if args.block is not None else len(info.blocks)
     else:
         try:
-            src = open(args.infile, "rb")
+            src = _open_input(args.infile)
         except OSError as exc:
             print(f"error: cannot read {args.infile}: {exc}", file=sys.stderr)
             return EXIT_FILE
         with src:
-            archive_bytes = os.fstat(src.fileno()).st_size
+            # stdin arrives as a BytesIO (no fileno), so size it by seeking rather
+            # than by stat — same answer for a real file, works for both.
+            try:
+                archive_bytes = os.fstat(src.fileno()).st_size
+            except (OSError, io.UnsupportedOperation):
+                here = src.tell()
+                src.seek(0, os.SEEK_END)
+                archive_bytes = src.tell()
+                src.seek(here)
             try:
                 info, _, _ = read_index_stream(src)
             except ContainerError as exc:
@@ -983,6 +1058,13 @@ def build_parser() -> argparse.ArgumentParser:
                    help="buffer the whole document in memory instead of canonicalizing "
                         "chunk-by-chunk (same output bytes, higher peak RSS)")
     c.set_defaults(func=cmd_canon)
+
+    zd = sub.add_parser("zdecode", help="decompress a raw zstd frame (mirror of zround)")
+    zd.add_argument("--in", dest="infile", required=True, help="'-' for stdin")
+    zd.add_argument("--out", dest="outfile", default="-", help="'-' for stdout")
+    zd.add_argument("--expect-size", type=int, default=None,
+                    help="refuse unless the frame decodes to exactly this many bytes")
+    zd.set_defaults(func=cmd_zdecode)
 
     z = sub.add_parser("zround", help="zstd compress + verify byte-exact roundtrip")
     z.add_argument("--in", dest="infile", required=True)

@@ -26,6 +26,8 @@ from __future__ import annotations
 import contextlib
 import dataclasses
 import os
+import subprocess
+import sys
 import tempfile
 import threading
 from pathlib import Path
@@ -34,7 +36,6 @@ from typing import Any, Callable
 from lexora import DEFAULT_LEVEL, __version__
 from lexora.canonicalize import CanonicalizationError, canonicalize, canonicalize_with_meta
 from lexora.container import ContainerError
-from lexora.container import pack as lxz_pack
 from lexora.container import read_index, unpack, verify_archive
 from lexora.zstd_core import CodecError, compress, decompress
 
@@ -42,6 +43,14 @@ from lexora.zstd_core import CodecError, compress, decompress
 # zstd level limits enforced by the codec library. Single source of the
 # *numbers* stays in the library; these constants encode the CLI contract
 # that the GUI must reproduce (usage-error class, exit 2 semantics).
+# A single CLI call (one pack/unpack of an in-memory payload). Generous: a
+# ziptastic archive at 0.5 MB/s over a 16 MiB payload is ~32 s.
+_CLI_TIMEOUT = 900
+
+# Mirrors lexora.cli.EXIT_FILE. Used only when the CLI cannot be started at all
+# (missing interpreter, timeout) — every other code comes *from* the CLI.
+EXIT_FILE = 3
+
 MIN_LEVEL = 1
 MAX_LEVEL = 22
 MIN_BLOCK_SIZE = 1
@@ -382,58 +391,93 @@ def unpack_file_job(
 
 
 class AppService:
-    """Thin stateless facade over the shipped library (DESIGN_GUI §2).
+    """A **client of the CLI**, not an in-process library consumer (ADR-0011).
 
-    Every method returns a `JobResult`; it never raises for expected user
-    errors (parity: those become the matching exit code), but unexpected
-    internal errors propagate for the crash handler (GUI-M2).
+    Every byte-level operation here shells out to `lexora <verb>` with the payload
+    on stdin and the result on stdout. That is the whole point of ADR-0011: one
+    implementation, so the GUI cannot drift from the CLI — a parity test compares
+    the two and they agree by construction rather than by maintenance.
+
+    Consequences, stated rather than discovered later:
+      * a crash in a worker cannot take the window down with it;
+      * each call costs a process start (~50 ms), which is invisible next to the
+        compression it wraps and is why this is not a hot path;
+      * exit codes come from the CLI, so `--level 99` is 2 here because it is 2
+        there (ADR-0018) — not because this class re-implements the check.
+
+    Every method returns a `JobResult`; it never raises for expected user errors,
+    but unexpected internal errors propagate for the crash handler (GUI-M2).
     """
 
     version = __version__
 
+    @staticmethod
+    def _cli(argv: list[str], payload: bytes | None = None) -> JobResult:
+        """Run one CLI verb with `payload` on stdin. Returns bytes on stdout."""
+        cmd = [sys.executable, "-m", "lexora.cli", *argv]
+        try:
+            proc = subprocess.run(cmd, input=payload, capture_output=True,
+                                  timeout=_CLI_TIMEOUT)
+        except FileNotFoundError as exc:  # pragma: no cover - interpreter missing
+            return JobResult(False, error=f"cannot run the CLI: {exc}", exit_code=EXIT_FILE)
+        except subprocess.TimeoutExpired:
+            return JobResult(False, error=f"the CLI did not finish in {_CLI_TIMEOUT}s",
+                             exit_code=EXIT_FILE)
+        if proc.returncode != 0:
+            lines = (proc.stderr or b"").decode("utf-8", "replace").strip().splitlines()
+            return JobResult(False, error=lines[-1] if lines else f"exit {proc.returncode}",
+                             exit_code=proc.returncode)
+        return JobResult(True, proc.stdout)
+
     # ---- G2 pipeline pieces -------------------------------------------
     def run_canon(self, raw: bytes, *, declared_encoding: str | None = None) -> JobResult:
-        try:
-            return JobResult(True, canonicalize(raw, declared_encoding=declared_encoding))
-        except CanonicalizationError as exc:
-            return JobResult(False, error=str(exc), exit_code=exit_code_for(exc))
+        argv = ["canon", "--in", "-", "--out", "-"]
+        if declared_encoding:
+            argv += ["--encoding", declared_encoding]
+        return self._cli(argv, raw)
 
     def run_canon_meta(self, raw: bytes, *, declared_encoding: str | None = None) -> JobResult:
+        """Canonical bytes **and** the rule metadata, as one dict.
+
+        Deliberately the one in-process call left in this class. Canonicalisation is a
+        pure `bytes -> bytes + dict` function: no file handle, no container, no
+        external tool, nothing a separate process protects us from. Routing it through
+        the CLI would need a JSON envelope to carry the payload alongside the
+        metadata, and `canon --meta --out -` cannot serve both (it writes the
+        metadata to stdout and drops the payload). Inventing that envelope to satisfy
+        an architectural rule, rather than a risk, is the wrong trade — so the rule is
+        stated here instead of quietly bent.
+        """
         try:
-            return JobResult(True, canonicalize_with_meta(raw, declared_encoding=declared_encoding))
+            return JobResult(True, canonicalize_with_meta(raw,
+                                                          declared_encoding=declared_encoding))
         except CanonicalizationError as exc:
             return JobResult(False, error=str(exc), exit_code=exit_code_for(exc))
 
     def run_compress(self, canonical: bytes, *, level: int = DEFAULT_LEVEL) -> JobResult:
-        try:
-            _check_level(level)
-            return JobResult(True, compress(canonical, level=level))
-        except (UsageError, CodecError) as exc:
-            return JobResult(False, error=str(exc), exit_code=exit_code_for(exc))
+        # `zround` compresses *and* verifies the round trip, which is strictly more
+        # than this used to do — a frame that cannot decode now fails here.
+        return self._cli(["zround", "--in", "-", "--out", "-", "--level", str(level)],
+                         canonical)
 
     def run_decompress(self, frame: bytes) -> JobResult:
-        try:
-            return JobResult(True, decompress(frame))
-        except CodecError as exc:
-            return JobResult(False, error=str(exc), exit_code=exit_code_for(exc))
+        return self._cli(["zdecode", "--in", "-", "--out", "-"], frame)
 
     # ---- G3 container pieces ------------------------------------------
     def run_pack(self, canonical: bytes, *, level: int = DEFAULT_LEVEL,
                  block_size: int = MAX_BLOCK_SIZE) -> JobResult:
-        try:
-            _check_level(level)
-            _check_block_size(block_size)
-            blob = lxz_pack(canonical, level=level, block_size=block_size)
-            return JobResult(True, {"archive": blob, "bytes_in": len(canonical),
-                                    "bytes_out": len(blob)})
-        except (UsageError, CodecError, ContainerError) as exc:
-            return JobResult(False, error=str(exc), exit_code=exit_code_for(exc))
+        res = self._cli(["pack", "--in", "-", "--out", "-", "--level", str(level),
+                         "--block-size", str(block_size)], canonical)
+        if not res.ok:
+            return res
+        return JobResult(True, {"archive": res.value, "bytes_in": len(canonical),
+                                "bytes_out": len(res.value)})
 
     def run_unpack(self, archive: bytes, *, only_block: int | None = None) -> JobResult:
-        try:
-            return JobResult(True, unpack(archive, only_block=only_block))
-        except ContainerError as exc:
-            return JobResult(False, error=str(exc), exit_code=exit_code_for(exc))
+        argv = ["unpack", "--in", "-", "--out", "-"]
+        if only_block is not None:
+            argv += ["--block", str(only_block)]
+        return self._cli(argv, archive)
 
     # ---- file-level operations (views own dialogs; service owns I/O) ---
     # Parity note: these mirror the CLI's file handling — read errors map
