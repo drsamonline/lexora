@@ -49,6 +49,12 @@ ocr = [
     "pypdf>=5,<7",
     "pillow>=10,<14",
 ]
+# ADR-0021: the max-ratio codec. Pure pip install — no external binary, unlike
+# ziptastic. Measured at 0.2283 vs CHCE's 0.2286 on the project's corpus class, at
+# ~7x the speed.
+ppmd = [
+    "pyppmd>=1.1,<2",
+]
 
 [project.scripts]
 lexora = "lexora.cli:main"
