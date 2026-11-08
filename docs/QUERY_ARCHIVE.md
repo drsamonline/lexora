@@ -52,7 +52,18 @@ records `mode: "ocr"`, the engine and its version, the languages, `pages_ocrd` a
 `pages_failed`, so OCR'd text is never mistaken for a real text layer.
 
 `--lang` takes Tesseract's own codes and accepts combinations: `--lang eng+chi_sim` for a
-mixed-script document. A language whose `traineddata` is not installed will fail loudly. A mixed PDF keeps the pages that had text and reports the rest in
+mixed-script document. A language whose `traineddata` is not installed will fail loudly — run
+`tesseract --list-langs` to see what is actually available before choosing.
+
+**Mixed-script documents need every script named.** A page of English with a table whose column
+headers are Chinese will produce noise in those cells under `--lang eng` alone; there is no
+auto-detection. Recorded because a real 99-page scan needed exactly that, and the failure is
+silent — the OCR succeeds and the table is garbage.
+
+**What OCR will get wrong, in order of how often it bites:** tables (linearised, columns
+interleaved), anything handwritten or underlined (stray marks become characters), and repeated
+boilerplate (a release stamp on every page becomes 99 copies of the same line — that is a
+canonicalisation problem, not an OCR one). A mixed PDF keeps the pages that had text and reports the rest in
 `pages_without_text`. Use `--no-canon` for text files to store bytes as given (a PDF
 always contributes its text layer).
 

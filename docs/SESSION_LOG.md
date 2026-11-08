@@ -1765,3 +1765,42 @@ bytes broke three renderer tests; and `_cli` referenced `EXIT_FILE`, which exist
 module and not in `service.py`. Both were caught by running the suite, not by reading it.
 
 **Gate:** **672 passed, 0 skipped**; `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK.
+
+---
+
+## Session 83 — 2026-11-08 (batch 2: the query path's memory is now measured)
+
+**Batch 2 had two items that needed no decision, so those are what shipped.** The first —
+renaming `codec_id` — needs one word from the owner, so instead of guessing it is now
+**ADR-0020 (Proposed)** with the mechanism decided, the options priced, and OQ-17 opened for the
+*when*. The decision is a single word away rather than a design exercise.
+
+**The gap that mattered: nobody had measured the query path's memory.** ADR-0016 states the
+index costs ~7 % of text — a *size* claim that was being read as a *memory* claim. `rss_probe.py`
+measures `.lxz` encode and decode and knows nothing about the index. So
+`benchmarks/index_rss_probe.py` now measures `db search` (index resident) and `db get` (index
+plus one document decoded), with `--cap-mib` as a pass/fail gate so the 4 GiB machine run
+becomes a parameter rather than a hope.
+
+| catalog | index | `db search` | `db get` |
+|---|---|---|---|
+| 4 MiB text | 0.5 MiB (12.8 %) | 27.2 MiB | 30.2 MiB |
+| 16 MiB text | 0.9 MiB (5.4 %) | 27.9 MiB | 40.8 MiB |
+
+Search is **flat in archive size**; `get` tracks the decoded document at ~3× its size. Nothing
+threatens the 4 GiB budget.
+
+**That probe was wrong twice before it measured anything, and both failures were silent.** The
+first version reported every row "ok" while the CLI was failing to import — a relative
+`PYTHONPATH` broken by the child's `chdir`. The second reported the probe's *own fixture* as the
+CLI's memory, because a forked child inherits the parent's footprint before `exec`; the fix was
+to build the catalog in a child process. A third, smaller error: `--out /dev/null` cannot work
+for `db get`, because the CLI writes atomically through a temp file *beside* the target. All
+three are recorded in PERFORMANCE_BUDGET, and the first two are now pinned by a test that
+asserts the child processes actually exited 0 and that `get` costs at least as much as `search`.
+
+**Also fixed in passing:** the harness had three dead variables, one of which (`budget`) looked
+like it might be a dropped limit — it is not, it is simply unused. `ruff --select F,E9,B` is now
+clean across `src/` and `benchmarks/`.
+
+**Gate:** **674 passed, 0 skipped**; linkcheck clean; ruff clean on F/E9/B.

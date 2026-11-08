@@ -248,7 +248,7 @@ def cmd_corpus_commit(args: argparse.Namespace) -> int:
     if not copied:
         print(f"warning: no sidecars found next to {root} — nothing committed", file=sys.stderr)
         return 1
-    for base, dest in sorted(copied.items()):
+    for _base, dest in sorted(copied.items()):
         print(f"committed: {dest}")
     return 0
 
@@ -272,7 +272,7 @@ def cmd_manifest(args: argparse.Namespace) -> int:
     provenance = json.loads(provenance_path.read_text()) if provenance_path.is_file() else None
     files = sorted(p for p in root.rglob("*") if p.is_file())
     entries = []
-    for i, p in enumerate(files):
+    for _i, p in enumerate(files):
         rel = str(p.relative_to(root))
         lineage = lineage_map.get(rel) or p.stem  # fallback: filename stem
         # Deterministic split assignment BY LINEAGE (§2): hash lineage id,
@@ -580,7 +580,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     # the artifact records is the parent hash plus exactly how the subset was cut.
     subset = None
     if args.split or args.max_bytes:
-        selected, budget, seen = [], args.max_bytes or 0, 0
+        selected, seen = [], 0
         for e in m["files"]:
             if args.split and e.get("split") != args.split:
                 continue

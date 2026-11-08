@@ -49,7 +49,7 @@ Nothing in batches 1–2 depends on these; batches 3–4 do.
 |---|---|---|
 | **P0 — the protocol benchmark** | A machine with ~2 GB disk + `xz`, then the corpus fetch and three split runs (~6–8 h). Commands in [PATH_TO_V1 §P0](PATH_TO_V1.md). | The "20 % smaller than `xz`" claim stays *smoke* until this runs, and `.lxdb` is gated behind it by your own decision |
 | **OCR language scope** | Decide: English only, English + Chinese (your scan needs `chi_sim`), or add Hindi/Gujarati per the charter | Sets the default `--lang` and the fixtures |
-| **F1 — `codec_id` naming** | One line: rename now, or at v0→v1? Recommendation: **now** — every default archive currently claims `zstd-raw-l19` while compressed at level 9 | Blocks Batch 2's first item |
+| **F1 — `codec_id` naming** | One line: rename now, or at v0→v1? [ADR-0020](ADR/ADR-0020-codec-id-naming.md) is written and the mechanism decided; only the *when* is open (OQ-17). Recommendation: **now** | Blocks Batch 2's first item |
 | **A 4 GiB box** (optional) | Any machine with 4 GiB RAM | P4.3, the only resource claim not yet tested on target hardware |
 
 ## 3. Batch 1 — quick wins, one PR, no decisions (~1–2 hours)
@@ -82,7 +82,7 @@ things we already claim true.*
 | # | Item | Depends on |
 |---|---|---|
 | 1 | **F1 implementation** — reader accepts both `zstd-raw-l19` and the new level-neutral id; writer emits the new one; migration note; golden vectors regenerated | Batch 0's F1 decision |
-| 2 | Resource-limit test harness (P4.3 prep) — measure peak RSS under a configurable cap so it can run on any box, and the 4 GiB run becomes a parameter | — |
+| ~~2~~ | ~~Resource-limit harness (P4.3 prep)~~ | **DONE 2026-11-08** — `benchmarks/index_rss_probe.py` measures the query path (index resident + one document) with `--cap-mib` as a pass/fail gate; first numbers in `results-rss-index.json`. Still open: the run on a real 4 GiB box at scale |
 | 3 | `lexora db` quickstart in the README's "try this" block, and the GUI's first-run guidance pointing at `db init` | Batch 1 item 3 |
 | 4 | OCR: document `--lang` combinations and the mixed-script caveat in `QUERY_ARCHIVE.md` (the ADR says it; the guide should too) | — |
 

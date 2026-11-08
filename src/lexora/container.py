@@ -616,7 +616,7 @@ def unpack_blocks(archive: bytes) -> tuple[bytes, list[str]]:
     info, _, _ = read_index(archive)
     ok = bytearray()
     failures: list[str] = []
-    for i, e in enumerate(info.blocks):
+    for i, _entry in enumerate(info.blocks):
         try:
             ok += unpack(archive, only_block=i)
         except ContainerError as exc:
