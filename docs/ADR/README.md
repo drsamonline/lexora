@@ -35,6 +35,7 @@ Use [ADR-0001-template.md](ADR-0001-template.md) as the starting point (it doubl
 | [ADR-0017](ADR-0017-pdf-engine.md) | PDF ingestion engine — pypdf (BSD-3) over PyMuPDF (AGPL); closes ADR-0009's open PyMuPDF item | **Accepted** (owner delegation) | 2026-11-07 |
 | [ADR-0018](ADR-0018-level-usage-error.md) | An out-of-range `--level` is a usage error (exit 2) on every surface — makes the GUI↔CLI parity claim true | **Accepted** (owner delegation) | 2026-11-07 |
 | [ADR-0019](ADR-0019-ocr-plugin.md) | OCR as an external plugin — Tesseract as a binary, no PDF renderer (embedded page images via pypdf + Pillow) | **Accepted** (owner delegation) | 2026-11-07 |
+| [ADR-0020](ADR-0020-codec-id-naming.md) | `codec_id` names a level it does not use — rename to a level-neutral id at v0→v1, old id read as an alias | **Proposed** (awaiting owner decision) | 2026-11-08 |
 | [ADR-0013](ADR-0013-lxdb-layout.md) | `.lxdb` single-file shape + mutation model (append payload, rewrite index, commit by superblock flip) — **no byte layout** | **Proposed** (blocked on G2) | 2026-11-07 |
 
 Template location note: the canonical template now lives at [../templates/ADR_TEMPLATE.md](../templates/ADR_TEMPLATE.md); `ADR-0001-template.md` remains for historical continuity only.

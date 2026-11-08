@@ -124,3 +124,42 @@ def test_documented_subcommand_count_matches_the_cli() -> None:
     assert tag, "landing page verb tag line not found"
     listed = {v.strip() for v in tag.group(1).split("·")}
     assert listed == set(verbs), f"landing page lists {sorted(listed)}, CLI has {verbs}"
+
+
+# --------------------------------------------------------------------------- #
+# the query-path probe must stay honest
+# --------------------------------------------------------------------------- #
+
+def test_index_rss_probe_runs_a_real_query_not_an_import_error(tmp_path) -> None:
+    """The probe's own history is the reason for this test.
+
+    Its first version reported every row "ok" while the CLI was failing to import — a
+    relative PYTHONPATH broken by chdir — and its second reported the probe's own
+    fixture as the CLI's memory, because a forked child inherits the parent's
+    footprint before exec. Both failures were *silent*: the table looked plausible.
+
+    So: run the probe small, and assert the child processes actually succeeded and
+    that `get` costs more than `search` (the shape that proves the document decode is
+    happening rather than being measured as a no-op).
+    """
+    import json
+    import subprocess
+    import sys
+
+    out = tmp_path / "rss.json"
+    proc = subprocess.run(
+        [sys.executable, "benchmarks/index_rss_probe.py",
+         "--sizes", "1", "--reps", "1", "--cap-mib", "512", "--out", str(out)],
+        cwd=REPO, capture_output=True, text=True,
+        env={**__import__("os").environ, "PYTHONPATH": str(REPO / "src")},
+    )
+    assert proc.returncode == 0, proc.stderr[-500:]
+    doc = json.loads(out.read_text())
+    row = doc["rows"][0]
+    assert row["search_exit"] == 0, f"search did not run: {row.get('errors')}"
+    assert row["get_exit"] == 0, f"get did not run: {row.get('errors')}"
+    assert row["search_peak_rss_kib"] > 0 and row["get_peak_rss_kib"] > 0
+    assert row["get_peak_rss_kib"] >= row["search_peak_rss_kib"], (
+        "get must cost at least as much as search — it decodes a document"
+    )
+    assert row["index_bytes"] > 0

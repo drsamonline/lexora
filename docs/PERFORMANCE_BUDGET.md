@@ -4,6 +4,32 @@
 > **Owner:** Documentation architect (delegated)
 > **Related:** [RESOURCE_LIMITS.md](RESOURCE_LIMITS.md) · [BENCHMARK_PROTOCOL.md](BENCHMARK_PROTOCOL.md) · [PHASES.md](PHASES.md)
 
+
+## Query path (index resident) — measured 2026-11-08
+
+The budget table above covers `.lxz` encode and decode. It says nothing about the shape
+ADR-0016 introduced: a SQLite index that stays in memory while a query runs. Measured with
+`benchmarks/index_rss_probe.py` (artifact: `benchmarks/results-rss-index.json`):
+
+| catalog | index on disk | `db search` peak RSS | `db get` peak RSS |
+|---|---|---|---|
+| 4 MiB text | 0.5 MiB (12.8 %) | **27.2 MiB** | 30.2 MiB |
+| 16 MiB text | 0.9 MiB (5.4 %) | **27.9 MiB** | 40.8 MiB |
+
+Two shapes worth knowing: **search is flat in archive size** (the index is the cost, and it is
+small), while **`get` tracks the decoded document** at roughly 3× its size. The interpreter
+alone is ~16 MiB, so the query path's own cost is ~12 MiB plus one document.
+
+Nothing here threatens the 4 GiB budget. What is **not** measured is a catalog large enough to
+test ADR-0016's claim that the index scales at ~7 % of text — that needs tens of GiB of input,
+which is what the 4 GiB machine run is for. `--cap-mib` turns that run into a pass/fail gate.
+
+**A caveat about this probe.** Its first version reported every row as "ok" while the CLI was
+failing to import (a relative `PYTHONPATH` broken by `chdir`), and its second reported the
+probe's own fixture as the CLI's memory (a forked child inherits the parent's footprint before
+`exec`). Both are fixed; both are recorded here because a measurement tool that fails *silently*
+is worse than no tool.
+
 ## Purpose & scope
 
 Numeric performance/memory envelopes each phase must fit into, the reference machine definition, and how compliance is proven. Budgets bind implementation choices before code is written (design-time constraint), and are re-checked at every phase exit.

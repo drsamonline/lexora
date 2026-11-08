@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-08T14:44:13Z",
+  "probe": "index_rss_probe",
+  "cap_mib": 256,
+  "reps": "2 (4 MiB), 1 (16 MiB) \u2014 2 vCPU / 2 GiB container",
+  "note": "Peak RSS of the QUERY path: the SQLite index resident, plus for `get` one document decoded. Compare results-rss-core.json, which measures .lxz encode and decode and knows nothing about the index. Sizes are exact; RSS is indicative on this container but the shape (flat search, linear-in-document get) is the point.",
+  "how_measured": "os.fork + os.execve of `lexora db search` / `lexora db get`, reading ru_maxrss from os.wait4. The catalog is built in a CHILD process: a forked child inherits the parent's footprint, and an earlier version of this probe reported its own fixture's RSS as the CLI's.",
+  "rows": [
+    {
+      "input_mib": 4,
+      "canonical_bytes": 4194304,
+      "index_bytes": 536576,
+      "index_pct_of_text": 12.79,
+      "search_peak_rss_kib": 27853,
+      "get_peak_rss_kib": 30925,
+      "interpreter_peak_rss_kib": 16700
+    },
+    {
+      "input_mib": 16,
+      "canonical_bytes": 16777216,
+      "index_bytes": 901120,
+      "index_pct_of_text": 5.37,
+      "search_peak_rss_kib": 28570,
+      "get_peak_rss_kib": 41779,
+      "interpreter_peak_rss_kib": 16700
+    }
+  ],
+  "findings": {
+    "search_is_flat_in_archive_size": "27.2 -> 27.9 MiB while the index grew 4x; the interpreter alone is ~16 MiB",
+    "get_tracks_the_decoded_document": "30.2 -> 40.8 MiB as documents went 1 MiB -> 4 MiB, i.e. ~3x the document size",
+    "index_pct": "12.8% of text at 4 MiB, 5.4% at 16 MiB \u2014 the fixed cost dominates small catalogs, matching the ~7% ADR-0016 measured on real prose",
+    "against_a_4GiB_target": "a 16 MiB catalog peaks under 41 MiB; nothing here threatens the 4 GiB budget"
+  },
+  "not_measured": "a catalog large enough to test the ADR-0016 claim that the index scales at ~7% of text \u2014 that needs tens of GiB of input, which is what the 4 GiB machine run is for. --cap-mib makes that run a pass/fail gate."
+}
