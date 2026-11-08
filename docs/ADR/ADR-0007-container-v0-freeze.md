@@ -29,7 +29,7 @@ On acceptance, the following becomes the normative `.lxz` v0 layout. Version ide
 | 4 | 2 | format_major | `0` |
 | 6 | 2 | format_minor | `1` (v0 = minor-stream within major 0) |
 | 8 | 8 | flags | bit0 = must-understand mask start; bits 0–7 must-understand, bits 8–63 may-ignore. v0 writer emits `0`; reader refuses any nonzero **must-understand** bit (REQ-FMT-003) |
-| 16 | 16 | codec_id | NUL-padded ASCII, v0 fixed `"zstd-raw-l19"` (registry ID from `lexora.CODEC_ID_ZSTD`; unknown ⇒ hard refusal, REQ-CMP-006) |
+| 16 | 16 | codec_id | NUL-padded ASCII; **value amended by [ADR-0020](ADR-0020-codec-id-naming.md) (2026-11-08) to `"zstd-raw"`**, with `"zstd-raw-l19"` still accepted on read. Field width and position unchanged (registry ID from `lexora.CODEC_ID_ZSTD`; unknown ⇒ hard refusal, REQ-CMP-006) |
 | 32 | 16 | canonicalizer_version | NUL-padded ASCII, e.g. `"lexcan-0.1"` (REQ-CAN-004) |
 | 48 | 8 | max_block_uncompressed | LIM-01 declaration; reader enforces before allocation (REQ-SEC-001). v0 default `8388608` (8 MiB) |
 | 56 | 8 | max_block_compressed | LIM-02; v0 default `16777216` (16 MiB) |
@@ -103,7 +103,7 @@ Three pre-implementation corrections were applied while accepting:
 | 4 | 2 | format_major | `0` |
 | 6 | 2 | format_minor | `1` |
 | 8 | 8 | flags | bits 0–7 must-understand, 8–63 may-ignore; v0 writer emits `0`; reader refuses any nonzero must-understand bit (REQ-FMT-003) |
-| 16 | 16 | codec_id | NUL-padded ASCII, v0 fixed `"zstd-raw-l19"`; unknown ⇒ hard refusal (REQ-CMP-006) |
+| 16 | 16 | codec_id | NUL-padded ASCII; value amended by ADR-0020 to `"zstd-raw"` (legacy `"zstd-raw-l19"` accepted on read); unknown ⇒ hard refusal (REQ-CMP-006) |
 | 32 | 16 | canonicalizer_version | NUL-padded ASCII, e.g. `"lexcan-0.1"` (REQ-CAN-004) |
 | 48 | 8 | max_block_uncompressed | LIM-01 declaration; v0 default `8388608` (8 MiB); enforced before allocation (REQ-SEC-001) |
 | 56 | 8 | max_block_compressed | LIM-02; v0 default `16777216` (16 MiB) |

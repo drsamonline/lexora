@@ -115,7 +115,7 @@ without offscreen tests.
 
 | # | Item | Why it matters |
 |---|---|---|
-| P4.1 | **F1: `codec_id` says `zstd-raw-l19` on level-9 archives** | Every default archive names a level it did not use; level 9 vs 19 indistinguishable. Frozen format field → needs an ADR and a rename window at v0→v1 |
+| ~~P4.1~~ | ~~F1: `codec_id` names a level it does not use~~ | **DONE 2026-11-08** — [ADR-0020](ADR/ADR-0020-codec-id-naming.md) accepted (owner: rename now). Id is `zstd-raw`; the old id is a read-only alias; legacy vector kept as a fixture; 4 compatibility tests |
 | ~~P4.2~~ | ~~`--jobs` measured *slower*~~ | **Measured twice, now at scale** (88 files / 79 MB: canon 1.53→2.27 s, pack 6.14→8.45 s for jobs 1→4). Kept and documented as a loss on small-core hosts — removing a flag is a behaviour change with no upside |
 | P4.3 | Second machine class / resource limits at 4 GiB with the index in RAM | ADR-0013 puts the index in memory (~7 % of text); must be tested against the target machine |
 | P4.4 | **`pyside6<6.12` is a workaround, not a preference** | 6.12 aborts with a Bus error *after* the GUI suite passes, at Qt teardown on a headless runner. The tests are green; the exit code is not. Revisit when a later release fixes it, or when the GUI suite stops leaking widgets at exit |

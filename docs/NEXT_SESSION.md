@@ -76,7 +76,7 @@ the plan is the map.
    that is what an ADR-0001 verdict needs. A default-codec flip waits on it; the
    recommendation on the table is to keep zstd default and CHCE as the max-ratio
    preset.
-2. **Decide finding F1 — the `codec_id` string.** `CODEC_ID_ZSTD` is `zstd-raw-l19`
+2. ~~**Decide finding F1 — the `codec_id` string**~~ **DONE 2026-11-08 (ADR-0020, owner: rename now).** Original note: `CODEC_ID_ZSTD` is `zstd-raw-l19`
    while `DEFAULT_LEVEL` is 9, so every default archive names a level it did not
    use and a level-9 archive is indistinguishable from a level-19 one. It is a
    frozen format field (ADR-0007), so this needs an ADR, not an edit. Cheapest at
