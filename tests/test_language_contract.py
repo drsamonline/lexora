@@ -132,8 +132,12 @@ def test_all_problems_are_reported_at_once() -> None:
 # --------------------------------------------------------------------------- #
 
 def test_unknown_language_lists_what_is_available() -> None:
+    # `zz` and not `hi`: Hindi is a real plugin package now (packages/lexora-lang-hi),
+    # so asserting that `hi` is absent made this test fail on exactly the machines
+    # that had done the thing the seam exists for. An id no plugin would claim is
+    # what "unknown" means.
     with pytest.raises(langapi.LanguageError) as excinfo:
-        langapi.get("hi")
+        langapi.get("zz")
     message = str(excinfo.value)
     assert "no language plugin" in message and "en" in message
 

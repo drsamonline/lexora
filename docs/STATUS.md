@@ -1,7 +1,9 @@
 # LEXORA Project Status
 
 > **Status:** Active — update at every session end
-> **Last verified:** 2026-11-07 (Session 75: **the remaining work now lives in one place — [PATH_TO_V1.md](PATH_TO_V1.md)** — v1.0 defined as six testable conditions, the work ordered P0–P6 by dependency, and a do-not-forget register for decisions that would otherwise be lost. PRs #18 (queryable archive) and #19 (R6 + ADR-0013) merged. Prior: Session 74 (ADR-0013 proposed; R6 protocol-shaped run); Session 71 (CHCE measured).)
+> **Last verified:** 2026-11-09 (Forge cycle: the second language — Hindi as a separate
+> distribution behind the ADR-0022 seam, provenance `hi-1` now recorded in the archive header,
+> [ADR-0023](ADR/ADR-0023-plugin-provenance.md). Gate 697 passed / 3 skipped.) Prior: 2026-11-07 (Session 75: **the remaining work now lives in one place — [PATH_TO_V1.md](PATH_TO_V1.md)** — v1.0 defined as six testable conditions, the work ordered P0–P6 by dependency, and a do-not-forget register for decisions that would otherwise be lost. PRs #18 (queryable archive) and #19 (R6 + ADR-0013) merged. Prior: Session 74 (ADR-0013 proposed; R6 protocol-shaped run); Session 71 (CHCE measured).)
 
 ## Current phase
 
@@ -45,7 +47,7 @@
 
 ## Health indicators *(verified, not asserted)*
 
-- Tests: **540 passed, 2 skipped** — `python3 -m pytest -q` (re-verified live 2026-11-07 after the ADR-0014 codec work; 27 new tests (26 passing + the real-binary skip). Previous: 514 passed, 1 skipped on 2026-11-03 on the current working branch after restoring the committed golden vector `tests/vectors/lxz_format/golden_1byte.lxz`, whose SHA-256 matches the pinned digest `27877df5…`; GUI offscreen tests additionally need `QT_QPA_PLATFORM=offscreen` with PySide6 + `libegl1` installed. Progression: 35 → 40 (S20 `pipe`) → 60 (S21–22 vectors) → 68 (S23 invariants) → 96 (S24 container suite) → 101 (S25) → 108 (S26) → 132 (S27 gui-service) → 148 (S28 file-ops/offscreen/launcher) → 157 (S29 job runner) → 162 (S30 G5/G6 panels) → 171 (S31 G7 settings) → 182 (S32 crash/path tests; committed red, fixed S33) → 186 (S33 picker seams + icon) → 192 (S34 About + crash-viewer tests). Note: the stale `libtmux` plugin crash is neutralized repo-wide via `addopts = "-p no:libtmux"` in pyproject.toml.)
+- Tests: **697 passed, 3 skipped** — `python3 -m pytest -q` (re-verified live 2026-11-09 with the Hindi plugin installed; the three skips are the ziptastic real-binary round trip, PySide6 not installed, and — only when it is absent — the installed-plugin discovery test. Previously **540 passed, 2 skipped** (2026-11-07 after the ADR-0014 codec work); 27 new tests (26 passing + the real-binary skip). Previous: 514 passed, 1 skipped on 2026-11-03 on the current working branch after restoring the committed golden vector `tests/vectors/lxz_format/golden_1byte.lxz`, whose SHA-256 matches the pinned digest `27877df5…`; GUI offscreen tests additionally need `QT_QPA_PLATFORM=offscreen` with PySide6 + `libegl1` installed. Progression: 35 → 40 (S20 `pipe`) → 60 (S21–22 vectors) → 68 (S23 invariants) → 96 (S24 container suite) → 101 (S25) → 108 (S26) → 132 (S27 gui-service) → 148 (S28 file-ops/offscreen/launcher) → 157 (S29 job runner) → 162 (S30 G5/G6 panels) → 171 (S31 G7 settings) → 182 (S32 crash/path tests; committed red, fixed S33) → 186 (S33 picker seams + icon) → 192 (S34 About + crash-viewer tests). Note: the stale `libtmux` plugin crash is neutralized repo-wide via `addopts = "-p no:libtmux"` in pyproject.toml.)
 - Link gate: `python3 scripts/linkcheck.py` → ALL INTERNAL LINKS OK (re-verified live 2026-10-17 after this documentation reconciliation).
 - Build: `pip install -e .` **verified working** in this container 2026-10-17 (was previously untested).
 - Coverage/badges/releases: none; none claimed anywhere in docs (README badges are flagged historical/local-snapshot only).

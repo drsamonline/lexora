@@ -22,6 +22,15 @@ with English as its first plugin; 736 tests.
 ## [Unreleased]
 
 ### Added
+- 2026-11-09 (**the second language, and a provenance field that no longer lies**, [ADR-0023](docs/ADR/ADR-0023-plugin-provenance.md)):
+  - **`packages/lexora-lang-hi`** — Hindi (Devanagari) as a *separate distribution*, registered through the `lexora.languages` entry point. It is deliberately not in `lexora/languages/`: the proof that the seam is a seam is that the core did not change to admit it. `doctor` now reports `hi (hi-1, unicode61)`.
+  - **Rule HI-R01 = NFC.** Devanagari nukta letters (क़ ख़ ग़ ज़ ड़ ढ़ फ़ य़, U+0958–U+095F) are Unicode *composition exclusions*, so one word has two byte spellings in the wild; NFC settles both and puts combining marks in canonical order. ZWJ/ZWNJ are untouched (REQ-CAN-005), and digits/spellings are not transliterated.
+  - **`container.pack()`/`pack_stream()` take `canonicalizer_version`**, so a plugin's provenance actually reaches the 16-byte header field ADR-0022 said it would. The default is the old label, and a test asserts the default output is byte-identical — no existing archive is rewritten. A non-ASCII or over-long label is refused with `ContainerError`.
+  - **Readability without the plugin is tested, not claimed**: an `hi-1` archive is decoded in a subprocess where `lexora_lang_hi` cannot be imported and `langapi` reports no `hi`.
+  - 17 new tests (`tests/test_language_hindi_plugin.py`); one existing test corrected — it asserted `hi` was *absent*, which fails on exactly the machines that installed the plugin.
+  - **Still missing:** the CLI has no `--language` flag (P3.6), and the catalog still hardcodes `unicode61`.
+
+### Earlier
 - 2026-11-07 — Session 76 (**PDF ingestion — and the AGPL question removed rather than answered**, [ADR-0017](docs/ADR/ADR-0017-pdf-engine.md)):
   - `src/lexora/ingest.py`: `.txt`/`.md`/`.csv` contribute their bytes, **`.pdf` contributes its text layer**, and `lexora db add` consumes both — so a PDF lands in the queryable archive with full-text search and metadata filters.
   - **pypdf (BSD-3-Clause) rather than PyMuPDF (AGPL-3.0)**, as the optional `lexora[pdf]` extra. ADR-0009 had flagged PyMuPDF as needing its own ADR before it could become a dependency; choosing a permissive engine removes that question instead of accepting a copyleft obligation. The cost is recorded: slower, weaker on hard layouts, no OCR.
