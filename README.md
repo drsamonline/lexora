@@ -202,6 +202,21 @@ Start at **[docs/index.md](docs/index.md)**. Key entry points:
 
 Details in `docs/ROADMAP.md` (Batch C).
 
+<!-- support:sweep -->
+## Support
+
+One person's work: no company, no ads, no tracking, no paid tier. If it saved you an
+afternoon, a contribution keeps the next one coming — any amount, or none.
+
+| | |
+|---|---|
+| **UPI** | `drsohilboi@ybl` |
+| **Ko-fi** | [ko-fi.com/matneo](https://ko-fi.com/matneo) |
+| **PayPal** | [paypal.me/drsohilmomin](https://paypal.me/drsohilmomin?locale.x=en_GB&country.x=IN) |
+| **Books** | [the author's other work](https://www.amazon.com/stores/author/B08ZT331LY/allbooks) |
+| **Elsewhere** | [all projects](https://drsamonline.github.io/) |
+| **Email** | [sohilmomin2000@gmail.com](mailto:sohilmomin2000@gmail.com) — bugs, corrections, requests |
+
 ## License
 
 **PolyForm Noncommercial 1.0.0** © 2026 Dr. Sohil Momin — see [LICENSE](LICENSE), which is normative and includes the `Required Notice:` line that must travel with every copy.
