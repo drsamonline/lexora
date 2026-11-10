@@ -41,25 +41,47 @@ def validate_level(level: int) -> str | None:
     return None
 
 
-def _profile_id(level: int) -> str:
+def _profile_id(level: int, dict_data: bytes | None = None) -> str:
+    # A frame built against a dictionary is a different profile from one that is
+    # not: it cannot be decoded without that dictionary, so it must not report
+    # the plain profile.
+    if dict_data is not None:
+        return f"zstd-dict-l{level}"
     return f"{CODEC_ID_ZSTD}" if level == DEFAULT_LEVEL else f"zstd-raw-l{level}"
 
 
-def compress(canonical: bytes, *, level: int = DEFAULT_LEVEL) -> bytes:
+def compress(
+    canonical: bytes, *, level: int = DEFAULT_LEVEL, dict_data: bytes | None = None
+) -> bytes:
     """Compress canonical bytes C into a single zstd frame.
 
-    Deterministic given (bytes, level, library version) — REQ-CMP-003 at the
-    codec level (selection policy is a later phase).
+    Deterministic given (bytes, level, dictionary, library version) — REQ-CMP-003
+    at the codec level (selection policy is a later phase).
+
+    `dict_data` is a zstd dictionary (see `train_dictionary`). It is supplied by
+    the caller and travels with the frame: nothing about the frame format changes,
+    and a frame built with a dictionary cannot be decoded without it.
     """
     if not isinstance(canonical, bytes):
         raise CodecError("input must be bytes (canonical form), not str")
     if not (1 <= level <= 22):
         raise CodecError(f"level {level} outside zstd range 1..22")
     params = zstd.ZstdCompressionParameters.from_level(level)
+    if dict_data is not None:
+        try:
+            zd = zstd.ZstdCompressionDict(dict_data)
+        except zstd.ZstdError as exc:
+            raise CodecError(f"not a usable zstd dictionary: {exc}") from exc
+        return zstd.ZstdCompressor(compression_params=params, dict_data=zd).compress(canonical)
     return zstd.ZstdCompressor(compression_params=params).compress(canonical)
 
 
-def decompress(frame: bytes, *, expected_original_size: int | None = None) -> bytes:
+def decompress(
+    frame: bytes,
+    *,
+    expected_original_size: int | None = None,
+    dict_data: bytes | None = None,
+) -> bytes:
     """Decompress one zstd frame back to canonical bytes.
 
     If expected_original_size is given, uses it to pre-size output (bounded
@@ -73,7 +95,13 @@ def decompress(frame: bytes, *, expected_original_size: int | None = None) -> by
     0.25.0), so we detect truncation by re-checking against the hint and raise
     CodecError instead of returning the prefix.
     """
-    dctx = zstd.ZstdDecompressor()
+    zd = None
+    if dict_data is not None:
+        try:
+            zd = zstd.ZstdCompressionDict(dict_data)
+        except zstd.ZstdError as exc:
+            raise CodecError(f"not a usable zstd dictionary: {exc}") from exc
+    dctx = zstd.ZstdDecompressor(dict_data=zd) if zd is not None else zstd.ZstdDecompressor()
     try:
         if expected_original_size is not None:
             # Refuse a frame whose own header disagrees with the caller's hint
@@ -119,13 +147,34 @@ def decompress(frame: bytes, *, expected_original_size: int | None = None) -> by
         ) from exc
 
 
-def verify_roundtrip(canonical: bytes, *, level: int = DEFAULT_LEVEL) -> dict:
+def train_dictionary(samples: list[bytes], *, size: int = 8192) -> bytes:
+    """Train a zstd dictionary from representative samples.
+
+    Small inputs are where a dictionary earns its place: a few hundred bytes of
+    text carry no repetition for the window to find, and the dictionary supplies
+    the shared context instead. The dictionary is opaque bytes to be stored beside
+    the data it serves — this function makes no claim about where.
+    """
+    usable = [s for s in samples if isinstance(s, bytes) and s]
+    if len(usable) < 8:
+        raise CodecError("a dictionary needs at least 8 non-empty samples to train on")
+    try:
+        return zstd.train_dictionary(size, usable).as_bytes()
+    except zstd.ZstdError as exc:
+        raise CodecError(f"dictionary training failed: {exc}") from exc
+
+
+def verify_roundtrip(
+    canonical: bytes, *, level: int = DEFAULT_LEVEL, dict_data: bytes | None = None
+) -> dict:
     """Encode->decode and assert byte equality; returns measured stats."""
-    blob = compress(canonical, level=level)
-    back = decompress(blob, expected_original_size=len(canonical))
+    blob = compress(canonical, level=level, dict_data=dict_data)
+    back = decompress(
+        blob, expected_original_size=len(canonical), dict_data=dict_data
+    )
     ok = back == canonical
     return {
-        "codec_profile": _profile_id(level),
+        "codec_profile": _profile_id(level, dict_data),
         "library_version": zstd.__version__,
         "input_bytes": len(canonical),
         "stored_bytes": len(blob),  # total serialized bytes (REQ-CMP-004 spirit)

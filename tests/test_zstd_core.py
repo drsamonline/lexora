@@ -75,3 +75,49 @@ def test_bounded_decode_hint_respected():
     # Hint smaller than actual -> decompress must refuse rather than overflow silently.
     with pytest.raises(Exception):
         zc.decompress(blob, expected_original_size=5)
+
+
+# ---------------------------------------------------------------------------
+# Dictionary mode (added 2026-11-10). Small inputs are where a dictionary earns
+# its place: a few hundred bytes of text carry no repetition for the window to
+# find, so the shared context has to come from outside the input.
+# ---------------------------------------------------------------------------
+
+def _samples(n: int = 64) -> list[bytes]:
+    return [
+        f"note {i}: patient reports itching worse at night, better from warmth".encode()
+        for i in range(n)
+    ]
+
+
+def test_dictionary_roundtrip_is_byte_exact():
+    d = zc.train_dictionary(_samples(), size=4096)
+    payload = b"note: patient reports itching worse at night"
+    blob = zc.compress(payload, dict_data=d)
+    assert zc.decompress(blob, expected_original_size=len(payload), dict_data=d) == payload
+
+
+def test_dictionary_shrinks_a_small_input():
+    d = zc.train_dictionary(_samples(), size=4096)
+    payload = b"note: patient reports itching worse at night"
+    assert len(zc.compress(payload, dict_data=d)) < len(zc.compress(payload))
+
+
+def test_a_frame_built_with_a_dictionary_is_refused_without_it():
+    # The important property: a frame that needs a dictionary must fail loudly,
+    # never decode to something else.
+    d = zc.train_dictionary(_samples(), size=4096)
+    payload = b"note: patient reports itching worse at night"
+    blob = zc.compress(payload, dict_data=d)
+    with pytest.raises(zc.CodecError):
+        zc.decompress(blob, expected_original_size=len(payload))
+
+
+def test_training_refuses_too_few_samples():
+    with pytest.raises(zc.CodecError):
+        zc.train_dictionary([b"one", b"two"], size=4096)
+
+
+def test_profile_id_names_the_dictionary():
+    d = zc.train_dictionary(_samples(), size=4096)
+    assert zc.verify_roundtrip(b"abc", dict_data=d)["codec_profile"] == f"zstd-dict-l{zc.DEFAULT_LEVEL}"
