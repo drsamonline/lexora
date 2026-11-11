@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.0a2
+
+- Release cut so the tag describes the code it ships: this is the first release since 0.1.0a1.
+
 All notable changes to the LEXORA project (code **and** documentation) are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning policy is an open decision ([docs/DECISIONS.md](docs/DECISIONS.md) OQ-9) — **no releases or version tags exist yet**.
 
