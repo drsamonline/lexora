@@ -1,3 +1,5 @@
+![Screenshot](docs/shot.png)
+
 <div align="center">
 
 <h1>LEXORA</h1>
