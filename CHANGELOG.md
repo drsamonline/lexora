@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+**Fixed:** the version a user reads is the version that shipped. The `release: 0.1.0a2`
+cut bumped `pyproject.toml` and this file and left `src/lexora/__init__.py` at `0.1.0a1`,
+so `lexora --version` answered `0.1.0a1` — a bug report would have quoted a release that
+does not exist. The README badge and `docs/CLI_REFERENCE.md` were further behind, both
+still at `0.0.1.dev1`. All four now say `0.1.0a2`, and
+`tests/test_readme_claims.py::test_the_version_a_user_reads_is_the_version_that_shipped`
+reads the badge and the CLI reference so prose cannot drift unnoticed again.
+
 ## 0.1.0a2
 
 - Release cut so the tag describes the code it ships: this is the first release since 0.1.0a1.

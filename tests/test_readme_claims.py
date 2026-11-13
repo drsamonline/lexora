@@ -172,8 +172,6 @@ def test_index_rss_probe_runs_a_real_query_not_an_import_error(tmp_path) -> None
 def test_the_two_version_strings_agree() -> None:
     """pyproject and `lexora.__version__` drift silently — a release with two versions
     is a release nobody can trace. This has bitten projects far larger than this one."""
-    import re
-
     from lexora import __version__
 
     pyproject = (REPO / "pyproject.toml").read_text()
@@ -181,4 +179,34 @@ def test_the_two_version_strings_agree() -> None:
     assert declared, "no version in pyproject.toml"
     assert declared.group(1) == __version__, (
         f"pyproject says {declared.group(1)!r}, package says {__version__!r}"
+    )
+
+
+def test_the_version_a_user_reads_is_the_version_that_shipped() -> None:
+    """The release cut bumped `pyproject.toml` and `CHANGELOG.md` and left `__version__`
+    behind, so `lexora --version` answered `0.1.0a1` for the 0.1.0a2 release — a bug
+    report would have quoted a version that never shipped. The same cut left the README
+    badge and `docs/CLI_REFERENCE.md` at `0.0.1.dev1`, three releases stale.
+
+    The test above only compares two *files*. This one compares the surfaces a user
+    actually reads, because those are the ones that drift unnoticed: the badge on the
+    README and the sample output in the CLI reference are prose, so nothing
+    recomputes them.
+    """
+    from lexora import __version__
+
+    readme = (REPO / "README.md").read_text()
+    badge = re.search(r"badge/version-([0-9][^-]*)-orange", readme)
+    assert badge, "the README version badge is gone or changed shape"
+    assert badge.group(1) == __version__, (
+        f"README badge says {badge.group(1)!r}, the package says {__version__!r}"
+    )
+
+    reference = (REPO / "docs" / "CLI_REFERENCE.md").read_text()
+    shown = re.search(r"`lexora --version`\s*→\s*`lexora ([^`]+)`", reference)
+    assert shown, "the CLI reference no longer shows what `--version` prints"
+    assert shown.group(1) == __version__, (
+        f"CLI_REFERENCE.md shows `lexora {shown.group(1)}`, the package says "
+        f"{__version__!r} — a user pasting that output into a bug report would "
+        "describe a release that does not exist"
     )
