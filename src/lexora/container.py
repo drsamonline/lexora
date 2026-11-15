@@ -119,9 +119,16 @@ def pack(data: bytes, *, level: int = DEFAULT_LEVEL,
          max_block_compressed: int = DEFAULT_MAX_BLOCK_COMPRESSED,
          max_total_uncompressed: int = DEFAULT_MAX_TOTAL_UNCOMPRESSED,
          generator_version: str | None = None,
-         codec: str = codecs.DEFAULT_CODEC) -> bytes:
+         codec: str = codecs.DEFAULT_CODEC,
+         canonicalizer_version: str | None = None) -> bytes:
     """Serialize `data` into a `.lxz` v0 archive. Raises ContainerError on any
-    limit violation; never returns a partially verified archive (SPEC §8.1)."""
+    limit violation; never returns a partially verified archive (SPEC §8.1).
+
+    `canonicalizer_version` records WHICH cleaning rules produced the payload —
+    a language plugin's provenance (`hi-1`) instead of the built-in label. It
+    defaults to the built-in label, so an archive written without it is
+    byte-identical to before (ADR-0023).
+    """
     if not isinstance(data, bytes):
         raise ContainerError("E-USAGE-001", "pack() expects bytes")
     try:
@@ -176,6 +183,7 @@ def pack(data: bytes, *, level: int = DEFAULT_LEVEL,
         block_count=len(entries),
         gen=gen,
         codec_id=spec.registry_id,
+        canonicalizer_version=canonicalizer_version or CANONICALIZER_VERSION,
     )
 
     trailer = struct.pack("<QQ", index_offset, len(index))
@@ -191,14 +199,23 @@ def pack(data: bytes, *, level: int = DEFAULT_LEVEL,
 
 def _build_header(*, block_size: int, max_block_compressed: int,
                   max_total_uncompressed: int, block_count: int, gen: str,
-                  codec_id: str = codecs.DEFAULT_CODEC_ID) -> bytes:
+                  codec_id: str = codecs.DEFAULT_CODEC_ID,
+                  canonicalizer_version: str = CANONICALIZER_VERSION) -> bytes:
     """Serialize the fixed 128-byte header (ADR-0007 layout, flags = 0)."""
     header = bytearray(BLOCK_START)
     header[0:4] = MAGIC
     struct.pack_into("<HH", header, 4, FORMAT_MAJOR, FORMAT_MINOR)
     struct.pack_into("<Q", header, 8, 0)  # flags: v0 writer emits 0
     header[16:32] = _pad(codec_id, 16)
-    header[32:48] = _pad(CANONICALIZER_VERSION, 16)
+    try:
+        header[32:48] = _pad(canonicalizer_version, 16)
+    except UnicodeEncodeError:
+        # _pad() encodes ASCII; a non-ASCII provenance would raise a bare
+        # UnicodeEncodeError out of pack(), which the CLI does not catch.
+        raise ContainerError(
+            "E-USAGE-005",
+            f"canonicalizer_version {canonicalizer_version!r} must be ASCII",
+        ) from None
     struct.pack_into("<Q", header, 48, block_size)
     struct.pack_into("<Q", header, 56, max_block_compressed)
     struct.pack_into("<Q", header, 64, max_total_uncompressed)
@@ -213,7 +230,8 @@ def pack_stream(src, dst, *, level: int = DEFAULT_LEVEL,
                 max_block_compressed: int = DEFAULT_MAX_BLOCK_COMPRESSED,
                 max_total_uncompressed: int = DEFAULT_MAX_TOTAL_UNCOMPRESSED,
                 generator_version: str | None = None,
-                codec: str = codecs.DEFAULT_CODEC) -> ArchiveInfo:
+                codec: str = codecs.DEFAULT_CODEC,
+                canonicalizer_version: str | None = None) -> ArchiveInfo:
     """Serialize `src` (binary readable) into `dst` (binary, seekable) with
     memory bounded by ONE block instead of the whole input.
 
@@ -310,6 +328,7 @@ def pack_stream(src, dst, *, level: int = DEFAULT_LEVEL,
         block_count=len(entries),
         gen=gen,
         codec_id=spec.registry_id,
+        canonicalizer_version=canonicalizer_version or CANONICALIZER_VERSION,
     )
     dst.seek(0)
     dst.write(header)
@@ -336,7 +355,7 @@ def pack_stream(src, dst, *, level: int = DEFAULT_LEVEL,
         format_minor=FORMAT_MINOR,
         flags=0,
         codec_id=spec.registry_id,
-        canonicalizer_version=CANONICALIZER_VERSION,
+        canonicalizer_version=canonicalizer_version or CANONICALIZER_VERSION,
         max_block_uncompressed=block_size,
         max_block_compressed=max_block_compressed,
         max_total_uncompressed=max_total_uncompressed,

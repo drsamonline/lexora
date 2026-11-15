@@ -38,6 +38,7 @@ Use [ADR-0001-template.md](ADR-0001-template.md) as the starting point (it doubl
 | [ADR-0020](ADR-0020-codec-id-naming.md) | `codec_id` names a level it does not use — rename to a level-neutral id at v0→v1, old id read as an alias | **Proposed** (awaiting owner decision) | 2026-11-08 |
 | [ADR-0021](ADR-0021-codec-policy-v2.md) | Codec policy v2 — **PPMd is the max-ratio preset** (ties CHCE at 7× the speed, no external binary); CHCE demoted to the extreme option; zstd stays default | **Withdrawn** same day — PPMd corrupts 3–8 % of real files; CHCE stays the preset | 2026-11-08 |
 | [ADR-0022](ADR-0022-language-plugins.md) | **Language support arrives as plugins** (cleaning rules + tokenizer + optional dictionary/OCR hints); English becomes the first plugin; decoding never needs one | **Accepted** (owner direction) | 2026-11-08 |
+| [ADR-0023](ADR-0023-plugin-provenance.md) | **A plugin's provenance is recorded in the header** (`pack(canonicalizer_version=...)`, default unchanged byte for byte); **Hindi ships as a separate distribution** (`packages/lexora-lang-hi`, HI-R01 = NFC); readable without the plugin | **Accepted** | 2026-11-09 |
 | [ADR-0013](ADR-0013-lxdb-layout.md) | `.lxdb` single-file shape + mutation model (append payload, rewrite index, commit by superblock flip) — **no byte layout** | **Proposed** (blocked on G2) | 2026-11-07 |
 
 Template location note: the canonical template now lives at [../templates/ADR_TEMPLATE.md](../templates/ADR_TEMPLATE.md); `ADR-0001-template.md` remains for historical continuity only.

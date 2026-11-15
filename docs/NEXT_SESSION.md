@@ -18,15 +18,18 @@ for the scope.** This card is only the state; those two are the plan.
 | Query | `lexora db` — SQLite index over `.lxz` payloads; 0.34 s query, index 7.6 % of text |
 | Ingest | TXT/PDF text layer; OCR via external Tesseract (ADR-0019) |
 | GUI | `lexora-gui` → Query archive…; shells out to the CLI (ADR-0011) |
-| Languages | plugin seam live (ADR-0022); **English only** |
+| Languages | plugin seam live (ADR-0022); **two languages: en + hi** (`packages/lexora-lang-hi`, provenance `hi-1`); no CLI `--language` yet (P3.6) |
 
 ## What is NOT done, in the order it matters
 
 1. **The protocol-scope benchmark (R5).** Blocks the compression claim *and* `.lxdb`. Needs a
    machine with ~2 GB disk, `xz`, and ~6–8 hours. Commands: PATH_TO_V1 §P0. `ppmd-7z` is now in
    the table, so this run also settles OQ-18.
-2. **A second language.** The seam is built and tested; no second implementation exists. Chinese
-   would prove it against the owner's own scanned document; Hindi/Gujarati are the charter's list.
+2. ~~**A second language.**~~ **DONE 2026-11-09** — Hindi ships as `packages/lexora-lang-hi`
+   (ADR-0023), and an `hi-1` archive is proven readable where the plugin cannot be imported.
+   **What is still missing:** the CLI has no `--language` flag (P3.6), so a plugin is library-only,
+   and the catalog still hardcodes `unicode61`. A third language (Gujarati, or Chinese which forces
+   the `trigram` tokenizer) is P3.7.
 3. **`.lxdb`** (ADR-0013, Proposed) — gated on (1) by owner decision.
 4. **OCR accuracy** — plumbing verified on a real 99-page scan, accuracy never checked against a
    human transcript.
