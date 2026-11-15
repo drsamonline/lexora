@@ -59,3 +59,10 @@ jobs:
 
       - name: Internal link check
         run: python scripts/linkcheck.py
+
+      - name: Benchmark claims must not contradict each other
+        # Advisory: README and ADR-0015 say the shipped default is 0.3352, the
+        # results register says 0.3367. Each may be right for its own run, so this
+        # reports rather than blocks until someone labels or corrects them. Add
+        # --strict the day they agree, and it becomes a gate.
+        run: python scripts/check-benchmark-claims.py
