@@ -1,0 +1,79 @@
+# NOTICE
+
+## What this repository authors
+
+LEXORA is © 2026 Dr. Sohil Momin and licensed under **PolyForm Noncommercial
+1.0.0** (`LICENSE` at the repository root is normative). The decision and its
+reasoning are in [ADR-0009](docs/ADR/ADR-0009-license-polyform-noncommercial.md),
+which supersedes [ADR-0006](docs/ADR/ADR-0006-license-mit.md)'s earlier MIT
+position.
+
+Two consequences a distributor must not miss:
+
+- **The `Required Notice:` line travels.** `LICENSE` opens with
+  `Required Notice: Copyright 2026 Dr Sohil Momin`, and PolyForm Noncommercial
+  1.0.0 requires that line to accompany every copy or distribution of the
+  software. A wheel, a container image or a bundled binary without it is out of
+  terms.
+- **This is not an open-source licence.** It is source-available and
+  noncommercial: reading, running, changing and sharing are permitted for
+  noncommercial purposes; commercial use needs a separate licence from the owner.
+  `pyproject.toml` declares the SPDX identifier `PolyForm-Noncommercial-1.0.0`,
+  and the licence is not OSI-approved.
+
+## What LEXORA depends on
+
+Read from package metadata on 15 November 2026, not from project pages.
+
+| Package | Role | Licence |
+|---|---|---|
+| `zstandard` | the only runtime dependency — the core baseline codec | BSD-3-Clause |
+| `PySide6` | the optional `[gui]` extra | `LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0` |
+| `py7zr` | benchmark harness only — PPMd baseline | licence field empty in the PyPI metadata read; the wheel's own `LICENSE` is the authority |
+| `pyppmd` | benchmark harness only — PPMd baseline | LGPL-2.1-or-later |
+
+The core install is Qt-free (ADR-0008), so `PySide6` is present only when someone
+installs the `[gui]` extra or ships a GUI build.
+
+### The GUI carries LGPL obligations
+
+LEXORA takes PySide6 under **LGPL-3.0-only**. Distributing a GUI build therefore
+requires, at minimum:
+
+- the LGPL-3.0 text travelling with the distribution;
+- the ability to relink against a modified Qt — satisfied here by using the
+  PySide6 wheel as a shared library rather than a static build, and by not
+  prohibiting replacement of those files;
+- a pointer to where the corresponding Qt/PySide6 source can be obtained.
+
+LEXORA's own source stays under PolyForm Noncommercial: the LGPL governs Qt, not
+this project's code, and an application may be under any licence while linking
+LGPL components dynamically. That is the same boundary the rest of the estate
+draws — a component's licence governs the component.
+
+### The benchmark baselines do not ship
+
+`py7zr` and `pyppmd` are in the `dev` extra and are imported by the harness, never
+by the product. Nothing in `src/lexora/` imports them. If that ever changes, this
+file changes in the same commit.
+
+## Where the numbers come from
+
+`docs/BENCHMARK_RESULTS.md` is the register of measured results, and
+`docs/BENCHMARK_PROTOCOL.md` defines how a run qualifies to be added to it. A
+figure quoted anywhere else should be traceable to a revision in that register,
+and the register labels each revision with its scope — R4 and R5, for instance,
+are smoke-scope runs on different corpora and are explicitly not an ADR-0001
+verdict.
+
+That traceability is not yet complete, and this file would be misleading if it
+claimed otherwise: `README.md` quotes the shipped default as **0.3352**, while
+the register's R4/R5 write-up gives **0.3367** for the same default on its own
+corpus. Both may be right for their own file set, but a reader cannot currently
+tell which revision a README number belongs to. Until the two are reconciled,
+treat the register as the authority and the README as a summary that has not been
+re-derived from it.
+
+*Not legal advice. The licence texts are the authority, not this summary; whether
+a particular distribution satisfies PolyForm's `Required Notice` or the LGPL's
+relinking requirement is a question for a lawyer.*
