@@ -1,8 +1,9 @@
-# Real CI workflow — README badge references this file (flagged as historical there).
-# PAUSED by owner decision 2026-10-17 (OQ-15): GitHub Actions free-tier minutes are
-# exhausted; do not push/PR expecting runs until the whole app is complete or the owner
-# re-enables Actions. Until then the verification gate is LOCAL: `pytest -q` + linkcheck
-# before every commit. The workflow itself stays unchanged so it resumes working as-is.
+# Real CI workflow — README badge references this file.
+# Resumed: this was paused by owner decision 2026-10-17 (OQ-15) when free-tier minutes
+# were exhausted, and the header said so long after runs came back. It is running —
+# green on main on 2026-11-13 and 2026-11-15, and on PR branches — so treat a red run
+# as a real failure, not as an inert file. The local gate (`pytest -q` + linkcheck
+# before every commit) remains the faster loop; this is the backstop.
 name: CI
 
 on:
