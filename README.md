@@ -37,7 +37,7 @@ Canonicalize text conservatively, then compress it with guaranteed byte-exact re
 > CLI app, experimental PySide6 GUI milestones M1–M3).
 > Nothing here is a shipped or released feature. See [docs/STATUS.md](docs/STATUS.md) for the verified state.
 > **Badge honesty note:** the CI badge reflects the real workflow in `.github/workflows/ci.yml`, but
-> **GitHub Actions runs are paused by owner decision 2026-10-17** (free-tier minutes exhausted; OQ-15) —
+> **GitHub Actions runs have resumed** — they were paused by owner decision 2026-10-17 (OQ-15, free-tier minutes) and this note outlived the pause: `ci.yml` ran green on `main` on 2026-11-13 and 2026-11-15. Historical note follows —
 > the badge shows the last historical run, not current state; verification gate is local (`pytest -q` + linkcheck
 > before every commit). The *Tests* badge is a
 > static snapshot of the locally verified suite (101 passed, re-verified 2026-10-17), not a live measurement.
