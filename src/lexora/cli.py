@@ -44,6 +44,7 @@ from pathlib import Path
 
 from lexora import DEFAULT_LEVEL, __version__
 from lexora import codec_registry as codecs
+from lexora import langapi
 from lexora.canonicalize import CanonicalizationError, canonicalize, canonicalize_stream
 from lexora.catalog import Catalog, CatalogError
 from lexora.ingest import IngestError, describe as describe_ingest, extract as extract_text
@@ -148,10 +149,92 @@ def _level_usage_error(level: int, codec: str) -> str | None:
     return spec.validate_level(level)
 
 
+def _language_usage_error(language_id: str) -> str | None:
+    """The message for an unresolvable `--language`, or None when it resolves.
+
+    A mistyped language id is a **usage** error (exit 2), not a canonicalization
+    failure (exit 4): nothing was canonicalized, no codec ran, and the same command
+    already treats a mistyped `--level` this way (ADR-0018). The message names the
+    plugins that ARE installed, because "unknown language" with no list is the kind
+    of error a user can only respond to by guessing again.
+    """
+    try:
+        langapi.get(language_id)
+    except langapi.LanguageError as exc:
+        return str(exc)
+    return None
+
+
+def _language(language_id: str) -> langapi.LanguagePlugin:
+    """Resolve `--language` through the seam (ADR-0022) — never a list in the CLI."""
+    return langapi.get(language_id)
+
+
+def _canon_with_plugin(plugin, args: argparse.Namespace) -> int:
+    """`canon` through a language plugin (PATH_TO_V1 P3.6).
+
+    Buffered, not streaming: a plugin declares `canonicalize(raw) -> bytes`, which is
+    a whole-document contract, and the streaming path belongs to the built-in rules.
+    Say so rather than pretend: `--language` on a large document costs the memory the
+    built-in path does not (documented in docs/CLI_REFERENCE.md).
+    """
+    raw = _read(args.infile)
+    try:
+        if plugin.canonicalize_with_meta is not None:
+            meta = plugin.canonicalize_with_meta(raw, declared_encoding=args.encoding)
+            out = meta.pop("canonical")
+            rules = meta.get("applied_rules") or []
+        else:
+            out = plugin.canonicalize(raw, declared_encoding=args.encoding)
+            rules = []
+    except CanonicalizationError as exc:
+        print(f"canonicalization error: {exc}", file=sys.stderr)
+        return EXIT_CANON
+    except (TypeError, ValueError) as exc:
+        # A plugin that cannot honour `declared_encoding` is a plugin defect, not a
+        # bad document; refuse loudly instead of silently cleaning with the wrong rule.
+        print(f"language plugin {plugin.id!r} refused the input: {type(exc).__name__}: {exc}",
+              file=sys.stderr)
+        return EXIT_CANON
+
+    rule_text = ",".join(rules) if rules else "plugin rules"
+    if args.meta:
+        print(json.dumps(meta, indent=2, sort_keys=True))
+        print(
+            f"canon: {meta['input_bytes']} -> {meta['output_bytes']} bytes "
+            f"(rules {rule_text}; {plugin.provenance}; --meta audit)",
+            file=sys.stderr,
+        )
+        return EXIT_OK
+    if args.outfile == "-":
+        sys.stdout.buffer.write(out)
+    else:
+        _write(args.outfile, out)
+    print(
+        f"canon: {len(raw)} -> {len(out)} bytes (rules {rule_text}; {plugin.provenance})",
+        file=sys.stderr,
+    )
+    return EXIT_OK
+
+
 def cmd_canon(args: argparse.Namespace) -> int:
     """Canonicalize. Streaming by default (Session 45): the working set is one
     decoded chunk plus a one-character carry, so it no longer tracks document
-    size. --no-stream keeps the buffered path for A/B evidence runs."""
+    size. --no-stream keeps the buffered path for A/B evidence runs.
+
+    `--language` selects a plugin (ADR-0022). The built-in English path is used
+    whenever the selected plugin's rule IS the built-in rule, so its output and its
+    messages stay byte-identical to before; every other language goes through
+    `_canon_with_plugin`.
+    """
+    language_problem = _language_usage_error(args.language)
+    if language_problem:
+        print(f"usage error: --language {args.language}: {language_problem}", file=sys.stderr)
+        return 2
+    plugin = _language(args.language)
+    if plugin.canonicalize is not canonicalize:
+        return _canon_with_plugin(plugin, args)
+
     if args.no_stream:
         raw = _read(args.infile)
         try:
@@ -444,6 +527,15 @@ def _archive_meta(info) -> dict:
 
 
 def cmd_pack(args) -> int:
+    # Which cleaning rules produced this payload (ADR-0023). `pack` does not
+    # canonicalize — it records provenance for what `canon` already did, so the
+    # default (English, `lexcan-0.1`) keeps every archive byte-identical.
+    language_problem = _language_usage_error(args.language)
+    if language_problem:
+        print(f"usage error: --language {args.language}: {language_problem}", file=sys.stderr)
+        return 2
+    provenance = _language(args.language).provenance
+
     # --block-size bounds messaging (Session 26 polish sweep): the library
     # silently clamps block_size to LIM-01 (8 MiB); the CLI refuses up front
     # instead of hiding that clamp behind a successful-looking exit.
@@ -475,7 +567,7 @@ def cmd_pack(args) -> int:
         payload = _read(args.infile)
         try:
             archive = lxz_pack(payload, level=args.level, block_size=args.block_size,
-                               codec=args.codec)
+                               codec=args.codec, canonicalizer_version=provenance)
         except ContainerError as exc:
             print(f"container refusal on pack: {exc}", file=sys.stderr)
             return EXIT_CONTAINER
@@ -501,7 +593,7 @@ def cmd_pack(args) -> int:
             def _writer(fh) -> None:
                 captured["info"] = lxz_pack_stream(
                     src, fh, level=args.level, block_size=args.block_size,
-                    codec=args.codec,
+                    codec=args.codec, canonicalizer_version=provenance,
                 )
 
             try:
@@ -1037,6 +1129,11 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--no-stream", action="store_true",
                    help="buffer the whole document in memory instead of canonicalizing "
                         "chunk-by-chunk (same output bytes, higher peak RSS)")
+    c.add_argument("--language", default="en", metavar="ID",
+                   help="language plugin whose cleaning rules apply (ADR-0022): 'en' "
+                        "(default, the built-in streaming rules) or an installed "
+                        "plugin such as 'hi'. An unknown id is a usage error listing "
+                        "what is installed. A plugin path is buffered, not streamed")
     c.set_defaults(func=cmd_canon)
 
     zd = sub.add_parser("zdecode", help="decompress a raw zstd frame (mirror of zround)")
@@ -1076,6 +1173,11 @@ def build_parser() -> argparse.ArgumentParser:
     pk.add_argument("--no-stream", action="store_true",
                     help="buffer the whole input in memory instead of streaming "
                          "block-by-block (same output bytes, much higher peak RSS)")
+    pk.add_argument("--language", default="en", metavar="ID",
+                    help="record which language plugin's rules produced the payload "
+                         "(its provenance label lands in the header, ADR-0023). pack "
+                         "does not canonicalize: pass the same --language you gave "
+                         "canon")
     pk.add_argument("--block-size", type=int, default=8 * 1024 * 1024,
                     help="max uncompressed bytes per block, 1..8388608 "
                          "(LIM-01 ceiling; out-of-range -> exit 2)")

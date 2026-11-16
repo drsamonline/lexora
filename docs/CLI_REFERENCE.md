@@ -30,7 +30,7 @@ Nine subcommands exist: the three Phase-1 baseline flows (canonicalize + plain z
 Applies the v0 rule set CAN-R01 (encoding normalization), CAN-R02 (CRLF/CR → LF), CAN-R05 (soft-hyphen removal); version `lexcan-0.1`. All other byte classes pass through unchanged (whitelist contract, REQ-CAN-003).
 
 ```text
-lexora canon --in RAW --out CANONICAL [--encoding DECLARED] [--meta]
+lexora canon --in RAW --out CANONICAL [--encoding DECLARED] [--language ID] [--meta]
 ```
 
 | Flag | Required | Default | Meaning |
@@ -38,11 +38,14 @@ lexora canon --in RAW --out CANONICAL [--encoding DECLARED] [--meta]
 | `--in PATH` | yes | — | raw extracted-bytes file (`-` is not supported for input) |
 | `--out PATH` | yes | — | output file; `-` writes to stdout (binary) |
 | `--encoding NAME` | no | auto-detect | declared source codec; without it detection is BOM-sniff then strict UTF-8 — lossy guessing is refused (REQ-CAN-003) |
+| `--language ID` | no | `en` | which language plugin's cleaning rules apply ([ADR-0022](ADR/ADR-0022-language-plugins.md)). `en` is the built-in streaming rule set (`lexcan-0.1`); an installed plugin is selected by its id, e.g. `hi` for the Devanagari rules (`hi-1`, HI-R01 NFC over the canonical text). An **unknown id is a usage error (exit 2)** whose message lists the plugins that are installed. A plugin path is **buffered**, not streamed — see the note below |
 | `--meta` | no | off | print audit JSON (canonicalizer version, applied rules, input/output sizes, SHA-256 of both) to **stdout instead of payload bytes**; payload goes only to `--out` (with `--meta`, `--out -` suppresses payload entirely so stdout stays pure JSON) — added Session 25 |
 
 Behavior notes:
 - Output is always UTF-8 without BOM, LF newlines (REQ-CAN-002).
-- A summary line (`canon: N -> M bytes (rules ...; lexcan-0.1)`) goes to **stderr**; data goes to the file/stdout only.
+- A summary line (`canon: N -> M bytes (rules ...; lexcan-0.1)`) goes to **stderr**; data goes to the file/stdout only. With `--language hi` the line names the plugin's rules and provenance (`rules CAN-R01,CAN-R02,CAN-R05,HI-R01; hi-1`).
+- **Memory with `--language`.** The streaming guarantee above is the built-in path's. A plugin declares `canonicalize(raw) -> bytes`, a whole-document contract, so `--language hi` buffers the input (peak RSS tracks document size). Pick `--language` deliberately on a large document; the output is identical either way.
+- **Provenance, not a dependency.** Text cleaned by `--language hi` is stored as ordinary canonical bytes: an archive built from it reads back on a machine with no plugin installed ([ADR-0023](ADR/ADR-0023-plugin-provenance.md)). The plugin affects ingestion only.
 
 ### `lexora zround` — zstd compress + verify byte-exact round-trip
 
@@ -114,7 +117,7 @@ seek — so the bounded-memory guarantee applies to files, not to pipes.
 Implements the ADR-0007 frozen layout (LXZ-0.1): 128-byte header (full SHA-256 over bytes [0,96)), blocks each exactly one complete zstd frame, 56-byte index entries `{u64 offset; u64 compressed; u64 uncompressed; sha256[32]}`, 40-byte trailer `{u64 index_offset; u64 index_bytes; sha256-prefix[24]}`. Every block is decode-verified before the archive is written (SPEC §8.1); the write itself is atomic (temp + fsync + rename).
 
 ```text
-lexora pack --in CANONICAL --out ARCHIVE.lxz [--level N] [--block-size B] [--codec C]
+lexora pack --in CANONICAL --out ARCHIVE.lxz [--level N] [--block-size B] [--codec C] [--language ID]
 ```
 
 | Flag | Required | Default | Meaning |
@@ -125,6 +128,7 @@ lexora pack --in CANONICAL --out ARCHIVE.lxz [--level N] [--block-size B] [--cod
 | `--codec C` | no | `zstd` | **`zstd`** — fast, no extras (0.335 @ 15.9 MiB/s). **`ziptastic`** — CHCE, the max-ratio option (0.219 with `--level 19` = `--max-ratio`, at 0.05 MiB/s; `--level 9` gives 0.228 at 0.48 MiB/s), needs the binary on `PATH` or `$LEXORA_ZIPTASTIC`; without it the command fails rather than falling back. Written into the header, so `unpack`/`verify`/`inspect` need **no flag**. `--level` means the preset for `ziptastic` (9 or 19); out-of-range is a usage error (ADR-0018). *A `ppmd` codec was added and withdrawn the same day — see [ADR-0021](ADR/ADR-0021-codec-policy-v2.md)* |
 | `--block-size B` | no | 8388608 | max uncompressed bytes per block, legal range 1..8388608 (LIM-01); out-of-range → exit 2 before any read/write (Session 26 bounds messaging); declared in header and enforced by readers |
 | `--no-stream` | no | off (streaming) | buffer the whole input in memory instead of streaming block-by-block. Same output bytes, far higher peak RSS (measured 196.9 MiB vs 126.1 MiB at a 32 MiB input, Session 39) — kept for A/B evidence runs only |
+| `--language ID` | no | `en` | which language plugin's rules produced the payload; its **provenance label** is written into the 16-byte `canonicalizer_version` header field ([ADR-0023](ADR/ADR-0023-plugin-provenance.md)). `en` writes `lexcan-0.1`, so an archive packed without the flag is byte-identical to before. `pack` does not canonicalize: pass the same `--language` you gave `canon`. Unknown id → usage error (exit 2) listing the installed plugins |
 
 Behavior notes: empty input packs as one zero-length block (exit 0); summary line on stderr.
 

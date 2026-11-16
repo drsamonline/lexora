@@ -4,7 +4,7 @@
 > session note or a chat summary, this file wins on *sequencing*; accepted ADRs still win on
 > *decisions*. Update it whenever something lands — an item that is done and still listed
 > here is worse than no list.
-> **Last verified:** 2026-11-09 (Forge cycle: **the second language landed** — Hindi as a separate
+> **Last verified:** 2026-11-16 (Forge cycle: **P3.6 landed — the plugin seam is now reachable from the CLI**: `canon --language hi` / `pack --language hi`, with the default path byte-identical and an unknown id a usage error. Gate 712 passed / 3 skipped. Prior: 2026-11-09 — the second language landed — Hindi as a separate
 > distribution behind the ADR-0022 seam, and `pack()` now records a plugin's provenance in the
 > header ([ADR-0023](ADR/ADR-0023-plugin-provenance.md)). Gate 697 passed / 3 skipped. Prior:
 > 2026-11-07, Session 76, PDF ingestion — P3.1/P3.2/P3.4)
@@ -63,7 +63,7 @@ multi-user concurrency, cloud anything.
 | PDF ingestion (text layer) | **Done** | ADR-0017; `ingest.py`; 15 tests |
 | OCR (external Tesseract plugin) | **Done** | ADR-0019; `ocr_core.py`; 15 tests; real 99-page scan |
 | Multilingual — plugin seam | **Done: proven by two languages** | [ADR-0022](ADR/ADR-0022-language-plugins.md) + [ADR-0023](ADR/ADR-0023-plugin-provenance.md); Hindi ships as `packages/lexora-lang-hi`, readable without it |
-| Multilingual — selectable from the CLI | **Not started** | P3.6: no `--language` flag yet, so a plugin is library-only |
+| Multilingual — selectable from the CLI | **Done** | P3.6 landed 2026-11-16: `canon --language hi` / `pack --language hi`; 9 tests, defaults byte-identical |
 | GUI query view | **Done** | `gui/query.py`; 14 offscreen tests; parity with the CLI asserted |
 | GUI on subprocess (ADR-0011) | **Done** | `service.py` is a CLI client; 10 argv-level tests |
 | Release | **Not started** | M7 / P7 |
@@ -132,7 +132,7 @@ without offscreen tests.
 | ~~P3.3~~ | ~~Optional OCR with graceful skip (REQ-ING-003)~~ | **DONE 2026-11-07** — [ADR-0019](ADR/ADR-0019-ocr-plugin.md): Tesseract as an external binary, `--ocr --lang`, no PDF renderer needed; 15 tests; verified on a real 99-page scan. **Language scope still open** (that scan needs `eng+chi_sim`) |
 | ~~P3.4~~ | ~~PyMuPDF needs its own ADR first (AGPL)~~ | **RESOLVED 2026-11-07 by [ADR-0017](ADR/ADR-0017-pdf-engine.md):** pypdf (BSD-3) chosen instead — the copyleft question is removed, not answered |
 | P3.5 | Cleaning-error rate ≤1 % operationalised (REQ-CAN-007, ADR-0004) | Sample-review report |
-| P3.6 | **`--language` on the CLI** ([ADR-0023](ADR/ADR-0023-plugin-provenance.md) §Consequences) | `lexora canon --language hi` cleans with the plugin and `pack` writes `hi-1` into the header; an unknown id is a usage error naming the available plugins |
+| ~~P3.6~~ | ~~**`--language` on the CLI** ([ADR-0023](ADR/ADR-0023-plugin-provenance.md) §Consequences)~~ | **DONE 2026-11-16** — `canon --language hi` cleans with the plugin, `pack --language hi` writes `hi-1` into the header, an unknown id is exit 2 naming the installed plugins, and `en`/no-flag output is byte-identical to before. 9 tests (`tests/test_cli_language.py`); gate 712 passed / 3 skipped. The plugin path buffers (a plugin declares a whole-document `canonicalize`), documented in CLI_REFERENCE |
 | P3.7 | A third language proves the seam is not Hindi-shaped | Gujarati (`gu-1`) or Chinese (`zh-1`, `trigram` tokenizer — which also forces P3.6's tokenizer recording) ships as its own package, with no core change |
 
 ### P4 — Correctness and consistency debt

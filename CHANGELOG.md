@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+**Added:** `--language` on `canon` and `pack` (PATH_TO_V1 P3.6). The plugin seam
+(ADR-0022) was proven by two languages but reachable only from Python: a plugin could be
+imported and called, and nothing a user types could select it. `lexora canon --language hi`
+now cleans with the Devanagari rules and `lexora pack --language hi` writes `hi-1` into the
+`canonicalizer_version` header field. Two properties are pinned by
+`tests/test_cli_language.py`: the default path is **byte-identical** to before (`en` and no
+flag produce the same archive bytes, so no existing archive moves), and an unknown id is a
+**usage error (exit 2) naming the installed plugins** rather than a traceback. Stated
+rather than hidden: a plugin declares a whole-document `canonicalize`, so a plugin path
+buffers instead of streaming — documented in `docs/CLI_REFERENCE.md`.
+
 **Fixed:** the version a user reads is the version that shipped. The `release: 0.1.0a2`
 cut bumped `pyproject.toml` and this file and left `src/lexora/__init__.py` at `0.1.0a1`,
 so `lexora --version` answered `0.1.0a1` — a bug report would have quoted a release that
