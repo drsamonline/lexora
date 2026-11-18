@@ -160,9 +160,11 @@ service spawns a subprocess, and a subprocess does not inherit `sys.path`. Witho
 `$LEXORA_ZIPTASTIC` the adapter tests skip. Both were missing from this list until 2026-11-18,
 which is why the count here said 492 when the suite had grown to 716.
 
-The 13 skips are environmental and each says why: 10 need `lexora-lang-hi`
-(`pip install -e packages/lexora-lang-hi`), 1 needs PySide6, 1 needs the `[gui]` extra, 1 is the
-real-binary throughput check (ADR-0014).
+The count depends on what is installed, and both numbers are real: **716 passed, 13 skipped** on a
+bare checkout with the two prerequisites above, and **743 passed, 11 skipped** in CI, which also
+installs PySide6 and `lexora-lang-hi`. Each skip says which extra it wants: 10 need
+`lexora-lang-hi` (`pip install -e packages/lexora-lang-hi`), 1 PySide6, 1 the `[gui]` extra, and 1
+is the real-binary throughput check (ADR-0014).
 
 ## Benchmarks
 
