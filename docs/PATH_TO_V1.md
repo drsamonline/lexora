@@ -62,7 +62,7 @@ multi-user concurrency, cloud anything.
 | Protocol-scope benchmark (G2) | **Shape done, scale not** | R6: 3 splits, 3 reps, 6 systems, leak audit clean, at 5.9 MB |
 | PDF ingestion (text layer) | **Done** | ADR-0017; `ingest.py`; 15 tests |
 | OCR (external Tesseract plugin) | **Done** | ADR-0019; `ocr_core.py`; 15 tests; real 99-page scan |
-| Multilingual — plugin seam | **Done: proven by two languages** | [ADR-0022](ADR/ADR-0022-language-plugins.md) + [ADR-0023](ADR/ADR-0023-plugin-provenance.md); Hindi ships as `packages/lexora-lang-hi`, readable without it |
+| Multilingual — plugin seam | **Done: proven by three languages, and by a tokenizer that is not `unicode61`** | [ADR-0022](ADR/ADR-0022-language-plugins.md) + [ADR-0023](ADR/ADR-0023-plugin-provenance.md) + [ADR-0024](ADR/ADR-0024-tokenizer-recording.md); Hindi ships as `packages/lexora-lang-hi` and Chinese as `packages/lexora-lang-zh`, both readable without them |
 | Multilingual — selectable from the CLI | **Done** | P3.6 landed 2026-11-16: `canon --language hi` / `pack --language hi`; 9 tests, defaults byte-identical |
 | GUI query view | **Done** | `gui/query.py`; 14 offscreen tests; parity with the CLI asserted |
 | GUI on subprocess (ADR-0011) | **Done** | `service.py` is a CLI client; 10 argv-level tests |
@@ -133,7 +133,7 @@ without offscreen tests.
 | ~~P3.4~~ | ~~PyMuPDF needs its own ADR first (AGPL)~~ | **RESOLVED 2026-11-07 by [ADR-0017](ADR/ADR-0017-pdf-engine.md):** pypdf (BSD-3) chosen instead — the copyleft question is removed, not answered |
 | P3.5 | Cleaning-error rate ≤1 % operationalised (REQ-CAN-007, ADR-0004) | Sample-review report |
 | ~~P3.6~~ | ~~**`--language` on the CLI** ([ADR-0023](ADR/ADR-0023-plugin-provenance.md) §Consequences)~~ | **DONE 2026-11-16** — `canon --language hi` cleans with the plugin, `pack --language hi` writes `hi-1` into the header, an unknown id is exit 2 naming the installed plugins, and `en`/no-flag output is byte-identical to before. 9 tests (`tests/test_cli_language.py`); gate 712 passed / 3 skipped. The plugin path buffers (a plugin declares a whole-document `canonicalize`), documented in CLI_REFERENCE |
-| P3.7 | A third language proves the seam is not Hindi-shaped | Gujarati (`gu-1`) or Chinese (`zh-1`, `trigram` tokenizer — which also forces P3.6's tokenizer recording) ships as its own package, with no core change |
+| ~~P3.7~~ | ~~A third language proves the seam is not Hindi-shaped~~ | **DONE 2026-11-18** — Chinese ships as `packages/lexora-lang-zh` (`zh-1`, **`trigram`**), discovered through the entry point with no change to the canonicaliser or to the built-in list. The tokenizer recording it forced is [ADR-0024](ADR/ADR-0024-tokenizer-recording.md): `documents.tokenizer`, a second FTS table at `detail=full`, schema v2 migrated in place. **Open, stated not hidden:** a query shorter than three characters cannot match under trigram. 30 tests; gate 732 passed / 14 skipped |
 
 ### P4 — Correctness and consistency debt
 

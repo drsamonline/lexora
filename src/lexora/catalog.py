@@ -57,7 +57,7 @@ from lexora.container import (
     unpack as lxz_unpack,
 )
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 # Contentless (`content=''`): FTS5 stores the inverted index only, never a second
 # uncompressed copy of the text. Measured on 18.2 MiB of Gutenberg prose this costs
@@ -69,6 +69,32 @@ FTS_SCHEMA = (
     "CREATE VIRTUAL TABLE documents_fts USING fts5("
     "path, title, body, content='', detail=column, tokenize='unicode61')"
 )
+
+# The CJK index (ADR-0024). Same shape, two deliberate differences:
+#
+# * `trigram`, because Chinese and Japanese have no spaces and `unicode61` indexes a
+#   whole sentence as one token — measured: `中文分词 测试` matched nothing for `中文`.
+# * `detail=full`, because under `detail=column` every query longer than three
+#   characters is a phrase query and FTS5 REFUSES those outright ("phrase queries are
+#   not supported (detail!=full)"). `detail=none` behaves the same way. So the CJK
+#   index cannot share the prose index's detail level; it is not a tuning choice.
+#
+# The cost is real and stated: positions are the other 32 % of the index, and a trigram
+# index is larger again. It is paid only by documents whose plugin declares `trigram`.
+FTS_TRIGRAM_SCHEMA = (
+    "CREATE VIRTUAL TABLE documents_fts_trigram USING fts5("
+    "path, title, body, content='', detail=full, tokenize='trigram')"
+)
+
+#: Which table a document is indexed into, by the tokenizer its plugin declares. A
+#: tokenizer with no table is refused rather than quietly indexed as `unicode61`: a
+#: wrong index is a silent zero-result search, which is worse than an error.
+TOKENIZER_TABLES: dict[str, str] = {
+    "unicode61": "documents_fts",
+    "trigram": "documents_fts_trigram",
+}
+FTS_TABLES: tuple[str, ...] = tuple(TOKENIZER_TABLES.values())
+DEFAULT_TOKENIZER = "unicode61"
 INDEX_NAME = "catalog.sqlite"
 BLOB_DIR = "blobs"
 
@@ -135,6 +161,11 @@ class Catalog:
         self._conn.execute("PRAGMA foreign_keys=ON")
         if create:
             self._create_schema()
+        else:
+            # An existing catalog is brought forward on OPEN, not only on create: the
+            # verbs that matter (`add`, `search`) never call `_create_schema()`, so a
+            # migration that lived there would only ever run on a brand-new directory.
+            self._migrate()
 
     # -- lifecycle ---------------------------------------------------------
 
@@ -174,6 +205,8 @@ class Catalog:
                     title       TEXT,
                     metadata    TEXT NOT NULL DEFAULT '{}',
                     added_at    TEXT NOT NULL,
+                    tokenizer   TEXT NOT NULL DEFAULT 'unicode61',
+                    canonicalizer_version TEXT,
                     UNIQUE(path, version)
                 );
                 CREATE INDEX IF NOT EXISTS documents_path ON documents(path);
@@ -182,8 +215,12 @@ class Catalog:
                 CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts
                     USING fts5(path, title, body, content='', detail=column,
                                tokenize='unicode61');
+                CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts_trigram
+                    USING fts5(path, title, body, content='', detail=full,
+                               tokenize='trigram');
                 """
             )
+            self._migrate()
             self._conn.execute(
                 "INSERT OR REPLACE INTO meta(key, value) VALUES ('schema_version', ?)",
                 (str(SCHEMA_VERSION),),
@@ -193,15 +230,71 @@ class Catalog:
                 (__version__,),
             )
 
+    def _migrate(self) -> None:
+        """Bring a schema-v1 catalog forward in place (ADR-0024).
+
+        `CREATE TABLE IF NOT EXISTS` above does nothing to a table that already exists,
+        so the two new columns arrive by `ALTER TABLE`. A migration that made a user
+        re-ingest their documents would not be a migration, and the tokenizer of an
+        existing document is not unknown: every one of them was indexed with
+        `unicode61`, which is exactly the column default.
+        """
+        columns = {
+            row["name"] for row in self._conn.execute("PRAGMA table_info(documents)")
+        }
+        if not columns:
+            return  # no catalog here yet; `_create_schema()` builds the v2 shape
+        tables = {
+            row["name"]
+            for row in self._conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            )
+        }
+        with self._conn:
+            if "tokenizer" not in columns:
+                self._conn.execute(
+                    "ALTER TABLE documents ADD COLUMN tokenizer TEXT NOT NULL"
+                    " DEFAULT 'unicode61'"
+                )
+            if "canonicalizer_version" not in columns:
+                self._conn.execute(
+                    "ALTER TABLE documents ADD COLUMN canonicalizer_version TEXT"
+                )
+            if "documents_fts_trigram" not in tables:
+                self._conn.execute(FTS_TRIGRAM_SCHEMA)
+            # The version is part of the migration, not a cosmetic stamp: a catalog
+            # that has the v2 shape and says v1 is a catalog nobody can reason about.
+            self._conn.execute(
+                "INSERT OR REPLACE INTO meta(key, value) VALUES ('schema_version', ?)",
+                (str(SCHEMA_VERSION),),
+            )
+
+    @staticmethod
+    def _table_for(tokenizer: str) -> str:
+        """The FTS table for `tokenizer`, or a refusal naming the ones there are."""
+        try:
+            return TOKENIZER_TABLES[tokenizer]
+        except KeyError:
+            raise CatalogError(
+                f"no index for tokenizer {tokenizer!r}; this catalog can index "
+                f"{', '.join(sorted(TOKENIZER_TABLES))} (ADR-0024). Indexing it as "
+                "`unicode61` would return nothing and say nothing."
+            ) from None
+
     # -- payload store -----------------------------------------------------
 
-    def _fts_insert(self, doc_id: int, path: str, title: str | None, body: str) -> None:
+    def _fts_insert(
+        self, doc_id: int, path: str, title: str | None, body: str,
+        tokenizer: str = DEFAULT_TOKENIZER,
+    ) -> None:
+        table = self._table_for(tokenizer)
         self._conn.execute(
-            "INSERT INTO documents_fts(rowid, path, title, body) VALUES (?,?,?,?)",
+            f"INSERT INTO {table}(rowid, path, title, body) VALUES (?,?,?,?)",
             (doc_id, path, title or "", body),
         )
 
-    def _fts_delete(self, doc_id: int, path: str, title: str | None, body: str) -> None:
+    def _fts_delete(self, doc_id: int, path: str, title: str | None, body: str,
+                    tokenizer: str = DEFAULT_TOKENIZER) -> None:
         """Remove one row from a contentless FTS table.
 
         Contentless tables cannot `DELETE`; FTS5 requires the original column values
@@ -210,16 +303,18 @@ class Catalog:
         `compact()` rebuilds the index outright), whereas failing an `add` because an
         old blob went missing would not be.
         """
+        table = self._table_for(tokenizer)
         self._conn.execute(
-            "INSERT INTO documents_fts(documents_fts, rowid, path, title, body)"
+            f"INSERT INTO {table}({table}, rowid, path, title, body)"
             " VALUES ('delete', ?, ?, ?, ?)",
             (doc_id, path, title or "", body),
         )
 
-    def _unindex(self, doc_id: int, path: str, title: str | None, sha: str, rel: str) -> None:
+    def _unindex(self, doc_id: int, path: str, title: str | None, sha: str, rel: str,
+                 tokenizer: str = DEFAULT_TOKENIZER) -> None:
         try:
             body = self._read_verified_blob(sha, rel).decode("utf-8", "replace")
-            self._fts_delete(doc_id, path, title, body)
+            self._fts_delete(doc_id, path, title, body, tokenizer)
         except (CatalogError, sqlite3.Error):
             # Leave the row; `compact()` rebuilds the index from live documents.
             pass
@@ -256,10 +351,21 @@ class Catalog:
         metadata: dict | None = None,
         codec: str = codec_registry.DEFAULT_CODEC,
         level: int = 9,
+        tokenizer: str = DEFAULT_TOKENIZER,
+        canonicalizer_version: str | None = None,
     ) -> Hit:
-        """Append a version of `path`. Previous versions are superseded, not removed."""
+        """Append a version of `path`. Previous versions are superseded, not removed.
+
+        `tokenizer` is the one the document's language plugin declares (ADR-0024); it
+        decides which FTS table the text is indexed into, and is recorded on the row so
+        a later rebuild knows without re-reading the plugin. `canonicalizer_version`
+        records which plugin's rules produced `canonical` — the row is the only place
+        that can hold it, because blobs are deduplicated by SHA-256 and two plugins can
+        legitimately produce the same bytes.
+        """
         if not isinstance(canonical, bytes):
             raise CatalogError("add() expects canonical bytes, not str")
+        self._table_for(tokenizer)  # refuse an unindexable tokenizer before writing
         meta = metadata or {}
         try:
             meta_json = json.dumps(meta, sort_keys=True)
@@ -286,7 +392,8 @@ class Catalog:
             # supersede every live version of this path, and drop its FTS rows so a
             # search can never return text that is no longer current
             old = list(self._conn.execute(
-                "SELECT d.doc_id, d.path, d.title, d.blob_sha256, b.archive_rel"
+                "SELECT d.doc_id, d.path, d.title, d.blob_sha256, d.tokenizer,"
+                " b.archive_rel"
                 " FROM documents d JOIN blobs b ON b.sha256 = d.blob_sha256"
                 " WHERE d.path = ? AND d.superseded = 0",
                 (path,),
@@ -296,15 +403,19 @@ class Catalog:
                     "UPDATE documents SET superseded = 1 WHERE doc_id = ?", (row["doc_id"],)
                 )
                 self._unindex(row["doc_id"], row["path"], row["title"],
-                              row["blob_sha256"], row["archive_rel"])
+                              row["blob_sha256"], row["archive_rel"],
+                              row["tokenizer"])
             cur = self._conn.execute(
                 "INSERT INTO documents"
-                "(path, version, blob_sha256, title, metadata, added_at)"
-                " VALUES (?,?,?,?,?,?)",
-                (path, version, sha, title, meta_json, _now()),
+                "(path, version, blob_sha256, title, metadata, added_at, tokenizer,"
+                " canonicalizer_version)"
+                " VALUES (?,?,?,?,?,?,?,?)",
+                (path, version, sha, title, meta_json, _now(), tokenizer,
+                 canonicalizer_version),
             )
             doc_id = int(cur.lastrowid)
-            self._fts_insert(doc_id, path, title, canonical.decode("utf-8", "replace"))
+            self._fts_insert(doc_id, path, title,
+                             canonical.decode("utf-8", "replace"), tokenizer)
 
         return Hit(
             doc_id=doc_id, path=path, version=version, title=title, metadata=meta,
@@ -316,7 +427,8 @@ class Catalog:
         """Tombstone every live version of `path`. Returns rows affected (0 = absent)."""
         with self._conn:
             rows = list(self._conn.execute(
-                "SELECT d.doc_id, d.path, d.title, d.blob_sha256, b.archive_rel"
+                "SELECT d.doc_id, d.path, d.title, d.blob_sha256, d.tokenizer,"
+                " b.archive_rel"
                 " FROM documents d JOIN blobs b ON b.sha256 = d.blob_sha256"
                 " WHERE d.path = ? AND d.deleted = 0",
                 (path,),
@@ -326,7 +438,8 @@ class Catalog:
                     "UPDATE documents SET deleted = 1 WHERE doc_id = ?", (row["doc_id"],)
                 )
                 self._unindex(row["doc_id"], row["path"], row["title"],
-                              row["blob_sha256"], row["archive_rel"])
+                              row["blob_sha256"], row["archive_rel"],
+                              row["tokenizer"])
         return len(rows)
 
     # -- query -------------------------------------------------------------
@@ -396,16 +509,24 @@ class Catalog:
         for candidate in (query, self._and_of_tokens(query), self._single_token(query)):
             if not candidate:
                 continue
-            try:
-                return [
-                    r["rowid"]
-                    for r in self._conn.execute(
-                        "SELECT rowid FROM documents_fts WHERE documents_fts MATCH ?",
-                        (candidate,),
+            found: set[int] = set()
+            raised = False
+            for table in FTS_TABLES:
+                try:
+                    found.update(
+                        r["rowid"]
+                        for r in self._conn.execute(
+                            f"SELECT rowid FROM {table} WHERE {table} MATCH ?",
+                            (candidate,),
+                        )
                     )
-                ]
-            except sqlite3.OperationalError:
-                continue
+                except sqlite3.OperationalError:
+                    # One index rejecting the query must not hide the other's answer:
+                    # `trigram` refuses anything shorter than three characters, and a
+                    # mixed catalog is the normal case now (ADR-0024).
+                    raised = True
+            if found or not raised:
+                return sorted(found)
         return []
 
     @staticmethod
@@ -514,7 +635,16 @@ class Catalog:
         if not dry_run:
             with self._conn:
                 for doc_id in dead:
-                    self._conn.execute("DELETE FROM documents_fts WHERE rowid = ?", (doc_id,))
+                    for table in FTS_TABLES:
+                        try:
+                            self._conn.execute(
+                                f"DELETE FROM {table} WHERE rowid = ?", (doc_id,)
+                            )
+                        except sqlite3.OperationalError:
+                            # Contentless FTS5 refuses DELETE; `_rebuild_index()` below
+                            # drops and recreates both tables anyway, so the row is
+                            # removed a moment later by the rebuild.
+                            pass
                     self._conn.execute("DELETE FROM documents WHERE doc_id = ?", (doc_id,))
                 for sha in orphans:
                     self._conn.execute("DELETE FROM blobs WHERE sha256 = ?", (sha,))
@@ -542,22 +672,25 @@ class Catalog:
         evidence it is not.
         """
         live = list(self._conn.execute(
-            "SELECT d.doc_id, d.path, d.title, d.blob_sha256, b.archive_rel"
+            "SELECT d.doc_id, d.path, d.title, d.blob_sha256, d.tokenizer,"
+            " b.archive_rel"
             " FROM documents d JOIN blobs b ON b.sha256 = d.blob_sha256"
             " WHERE d.deleted = 0 AND d.superseded = 0"
         ))
         bodies = [
-            (row["doc_id"], row["path"], row["title"],
+            (row["doc_id"], row["path"], row["title"], row["tokenizer"],
              self._read_verified_blob(row["blob_sha256"], row["archive_rel"])
              .decode("utf-8", "replace"))
             for row in live
         ]
         with self._conn:
             # Contentless FTS5 refuses DELETE, so a rebuild is a drop + recreate.
-            self._conn.execute("DROP TABLE IF EXISTS documents_fts")
+            for table in FTS_TABLES:
+                self._conn.execute(f"DROP TABLE IF EXISTS {table}")
             self._conn.execute(FTS_SCHEMA)
-            for doc_id, path, title, body in bodies:
-                self._fts_insert(doc_id, path, title, body)
+            self._conn.execute(FTS_TRIGRAM_SCHEMA)
+            for doc_id, path, title, tokenizer, body in bodies:
+                self._fts_insert(doc_id, path, title, body, tokenizer)
         return {"indexed": len(bodies)}
 
     def stats(self) -> dict:
@@ -577,6 +710,16 @@ class Catalog:
         blobs = self._conn.execute(
             "SELECT COUNT(*) AS n, COALESCE(SUM(stored_bytes),0) AS stored FROM blobs"
         ).fetchone()
+        # Which index each live document sits in (ADR-0024). Reported rather than
+        # inferred: a catalog that is mostly `trigram` pays for positions on every one
+        # of those documents, and the owner should be able to see that in one number.
+        by_tokenizer = {
+            r["tokenizer"]: r["n"]
+            for r in self._conn.execute(
+                "SELECT tokenizer, COUNT(*) AS n FROM documents"
+                " WHERE deleted = 0 AND superseded = 0 GROUP BY tokenizer"
+            )
+        }
         index_bytes = self.index_path.stat().st_size if self.index_path.exists() else 0
         canonical = live["canonical"] or 0
         stored = live["stored"] or 0
@@ -585,6 +728,7 @@ class Catalog:
             "deleted": row["deleted"] or 0,
             "superseded": row["superseded"] or 0,
             "live_documents": live["n"] or 0,
+            "by_tokenizer": by_tokenizer,
             "blobs": blobs["n"] or 0,
             "canonical_bytes": canonical,
             "stored_bytes": stored,

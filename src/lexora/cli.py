@@ -1018,6 +1018,12 @@ def cmd_db(args) -> int:
                 # Ingestion decides the bytes: a PDF contributes its text layer, a
                 # text file its own bytes. Provenance travels with the document so a
                 # reader can tell where the text came from and with what engine.
+                language_problem = _language_usage_error(args.language)
+                if language_problem:
+                    print(f"usage error: --language {args.language}: {language_problem}",
+                          file=sys.stderr)
+                    return 2
+                plugin = _language(args.language)
                 try:
                     ingested = extract_text(args.infile, declared_encoding=args.encoding,
                                             ocr=args.ocr, ocr_lang=args.lang)
@@ -1027,7 +1033,10 @@ def cmd_db(args) -> int:
                 if getattr(args, "no_canon", False) and ingested.provenance.get("mode") == "text":
                     payload = _read(args.infile)
                 else:
-                    payload = canonicalize(ingested.text.encode("utf-8"))
+                    # Through the plugin, not around it: for `en` this is the base
+                    # canonicaliser byte for byte (ADR-0022), and for any other
+                    # language it is that language's cleaning rules.
+                    payload = plugin.canonicalize(ingested.text.encode("utf-8"))
                 metadata = describe_ingest(ingested)
                 metadata.update(_parse_pairs(args.meta, "--meta"))  # explicit --meta wins
                 hit = cat.add(
@@ -1037,6 +1046,11 @@ def cmd_db(args) -> int:
                     metadata=metadata,
                     codec=args.codec,
                     level=args.level,
+                    # The index is part of the ingest: a CJK document that is not
+                    # indexed with the tokenizer its plugin declares is searchable
+                    # by nothing (ADR-0024).
+                    tokenizer=plugin.tokenizer,
+                    canonicalizer_version=plugin.provenance,
                 )
                 if args.json:
                     print(json.dumps(hit.as_dict(), indent=2))
@@ -1280,6 +1294,10 @@ def build_parser() -> argparse.ArgumentParser:
     d1.add_argument("--no-canon", action="store_true",
                     help="text files only: store the bytes as given instead of "
                          "canonicalising them (a PDF always contributes its text layer)")
+    d1.add_argument("--language", default="en", metavar="ID",
+                    help="language plugin whose cleaning rules apply (ADR-0022), and "
+                         "whose tokenizer decides which index the text lands in "
+                         "(ADR-0024): 'en'/'hi' -> unicode61, 'zh' -> trigram")
     d1.add_argument("--json", action="store_true")
 
     d2 = dbs.add_parser("search", help="full-text and/or metadata query")

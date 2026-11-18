@@ -185,7 +185,7 @@ search, and retrieval of only what you ask for. Design and trade-offs:
 ```text
 lexora db init    --root DIR
 lexora db add     --root DIR --in FILE [--path P] [--title T] [--meta K=V ...]
-                  [--codec C] [--level N] [--no-canon] [--json]
+                  [--codec C] [--level N] [--no-canon] [--language ID] [--json]
 lexora db search  --root DIR [--query Q] [--filter K=V ...] [--limit N] [--text] [--json]
 lexora db get     --root DIR [PATH] [--id N] [--out FILE] [--json]
 lexora db delete  --root DIR PATH
@@ -197,7 +197,8 @@ lexora db stats   --root DIR
 |---|---|
 | `init` | creates `catalog.sqlite` + `blobs/` under `--root` |
 | `add` | **ingests then canonicalises**: `.txt`/`.md`/`.csv` contribute their bytes, `.pdf` contributes its **text layer** (needs `lexora[pdf]`), and provenance is stored per document (`mode`, `engine`, `pages`, `text_sha256`). A scanned PDF is **refused** naming `--ocr`, never archived empty; with `--ocr` (needs the external `tesseract` binary, [ADR-0019](ADR/ADR-0019-ocr-plugin.md)) its pages are OCR'd and `mode` becomes `ocr`. `--lang` takes Tesseract codes (`eng`, `eng+chi_sim`). Same `--path` again = new version, previous superseded; identical content stored once |
-| `search` | `--query` is FTS5 syntax; **no phrase/NEAR** (`detail=column`), and an unparseable query returns no matches rather than an error. `--filter` matches metadata exactly; `--text` decodes each match's body |
+| `add` (`--language`) | which language plugin's cleaning rules apply, **and which index the text lands in** ([ADR-0024](ADR/ADR-0024-tokenizer-recording.md)): `en`/`hi` → `unicode61`, `zh` → `trigram`. The tokenizer and the plugin's provenance are recorded per document (`db stats` reports `by_tokenizer`). An unknown id is a usage error (exit 2) listing the installed plugins |
+| `search` | `--query` is FTS5 syntax; **no phrase/NEAR** on the prose index (`detail=column`), and an unparseable query returns no matches rather than an error. Documents indexed as `trigram` are searched too, at `detail=full` — so a CJK query **longer** than three characters works, and one **shorter** than three matches nothing (a floor of the tokenizer, [ADR-0024](ADR/ADR-0024-tokenizer-recording.md)). `--filter` matches metadata exactly; `--text` decodes each match's body |
 | `get` | decodes the `.lxz` and checks it against the blob SHA-256 before printing |
 | `delete` | tombstones; the document disappears from queries immediately, bytes remain until `compact` |
 | `compact` | removes superseded/deleted rows and orphaned blobs, then rebuilds the index (re-verifying every live document). `--dry-run` reports only |
