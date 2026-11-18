@@ -96,7 +96,30 @@ the first rule that would stop being *conservative* — it must be byte-exactly 
 and gated by the same golden vectors as the existing nine. It belongs in the rule table only after a
 measured win on the numeric corpus category, and that category does not exist yet.
 
-## 5. Not applicable here
+## 5. MinerU: rejected on licence, 2026-11-18
+
+MinerU (`opendatalab/MinerU`) was the other candidate for scanned, layout-heavy PDFs. Its licence is
+**Apache-2.0 plus additional terms**, read in full:
+
+- a separate commercial licence is required above **100 million MAU or USD 20 million monthly
+  revenue** — neither applies here, so **no fee is due**;
+- online services built on it must **attribute** it;
+- failing that attribution **terminates the licence automatically**.
+
+So the cost is not money, it is legal surface: a licence with thresholds and a tripwire, which
+`DEPENDENCY_LICENCE_REVIEW.md` has no category for and which buys nothing that docling — plain MIT —
+does not already do for text. Rejected.
+
+**docling's weight, since that was the other objection:** its core dependencies are pydantic,
+docling-core, pydantic-settings, filetype, requests, certifi, pluggy, tqdm and langcodes. **No
+torch, no model weights.** Layout analysis and OCR are optional extras, which is the same shape as
+this project's own GUI decision (ADR-0008 decision 1: *"core install stays Qt-free"*).
+
+**Proposed shape:** `lexora[pdf]` as an opt-in extra. The base install is `zstandard` alone and stays
+that way. Not added to `pyproject.toml` yet — under AC-G-1 a dependency should arrive with the code
+that uses it, not before.
+
+## 6. Not applicable here
 
 - **lzbench's speed tiers** — lexora compresses with zstd, which is already in the medium tier; the
   positioning question belongs to the engine, not this project.
