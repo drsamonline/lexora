@@ -147,10 +147,24 @@ The GUI launcher `lexora-gui` requires the `[gui]` extra and exits 2 with guidan
 Verified in-container (2026-10-29):
 
 ```bash
-python3 -m pytest -q                     # 492 passed, 1 skipped (~30 s; includes fuzz + interruption suites)
+pip install -e .                         # required: the GUI service spawns `python3 -m lexora.cli`
+export LEXORA_ZIPTASTIC=/path/to/ziptastic   # required for the codec adapter tests
+python3 -m pytest -q                     # 716 passed, 13 skipped (3m 38s; includes fuzz + interruption suites)
 QT_QPA_PLATFORM=offscreen python3 -m pytest -q   # same, incl. offscreen GUI widget tests (needs pyside6 + libegl1)
 python3 scripts/linkcheck.py             # docs integrity gate — ALL INTERNAL LINKS OK
 ```
+
+**The two prerequisites are not optional, and the numbers above only hold with them.** Without
+`pip install -e .` the GUI service tests fail 29 at a time with `No module named 'lexora'` — the
+service spawns a subprocess, and a subprocess does not inherit `sys.path`. Without
+`$LEXORA_ZIPTASTIC` the adapter tests skip. Both were missing from this list until 2026-11-18,
+which is why the count here said 492 when the suite had grown to 716.
+
+The count depends on what is installed, and both numbers are real: **716 passed, 13 skipped** on a
+bare checkout with the two prerequisites above, and **743 passed, 11 skipped** in CI, which also
+installs PySide6 and `lexora-lang-hi`. Each skip says which extra it wants: 10 need
+`lexora-lang-hi` (`pip install -e packages/lexora-lang-hi`), 1 PySide6, 1 the `[gui]` extra, and 1
+is the real-binary throughput check (ADR-0014).
 
 ## Benchmarks
 
