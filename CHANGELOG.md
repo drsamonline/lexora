@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.2.0a1 — 2026-11-18
+
+**Alpha: not for production data.** Full notes: [docs/releases/v0.2.0-alpha.1.md](docs/releases/v0.2.0-alpha.1.md). No benchmark numbers are claimed — precondition R5 is still unmet.
 
 **Added:** `--language` on `canon` and `pack` (PATH_TO_V1 P3.6). The plugin seam
 (ADR-0022) was proven by two languages but reachable only from Python: a plugin could be
@@ -26,7 +28,7 @@ reads the badge and the CLI reference so prose cannot drift unnoticed again.
 - Release cut so the tag describes the code it ships: this is the first release since 0.1.0a1.
 
 All notable changes to the LEXORA project (code **and** documentation) are documented here.
-Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning policy is an open decision ([docs/DECISIONS.md](docs/DECISIONS.md) OQ-9) — **no releases or version tags exist yet**.
+Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning policy is an open decision ([docs/DECISIONS.md](docs/DECISIONS.md) OQ-9). Releases are **alpha**: the canonicalisation rule table is not frozen, so a 0.x version can change what an archive contains.
 
 ## [0.1.0-alpha.1] — 2026-11-09
 

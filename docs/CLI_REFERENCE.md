@@ -15,7 +15,7 @@ lexora --help                  # console script
 python -m lexora.cli --help    # equivalent, no install required
 ```
 
-Version string: `lexora --version` → `lexora 0.1.0a2` (alpha; no stable API — see [RELEASE_PROCESS.md](RELEASE_PROCESS.md)).
+Version string: `lexora --version` → `lexora 0.2.0a1` (alpha; no stable API — see [RELEASE_PROCESS.md](RELEASE_PROCESS.md)).
 
 ## Scope honesty
 
