@@ -32,6 +32,13 @@ Splitting is by **source lineage** (documents from one book/report/PDF never str
 | Brotli | quality 11, window 24, default size hint | library version captured |
 | XZ/LZMA | preset 9 (`-9e` documented variant noted separately) | xz utils version captured |
 | PPMd | order used: documented default of pinned tool | 7-Zip/ppmd version captured |
+| **OpenZL** *(candidate, not yet measured)* | pre-built profile for the input's format, default settings | `facebook/openzl` release tag captured; BSD, measurement-only, not linked — see `EXTERNAL_REFERENCES_2026-11-18.md` §1 |
+
+**Why a format-aware baseline is in this table.** The four baselines above are all *generic* codecs,
+and LEXORA's claim is that canonicalisation plus compression beats a generic codec. OpenZL is
+format-aware *without* a canonicaliser, so it is the control that separates "our canonicaliser does
+work no structural compressor can do" from "our container and byte-exactness are the product". Its
+numbers are not measured and no verdict may cite it until they are.
 
 Baselines compress the **same canonical byte streams** as LEXORA (apples-to-apples post-canonicalization). Baseline outputs are single-file totals including their own container overhead.
 
@@ -42,6 +49,14 @@ Baselines compress the **same canonical byte streams** as LEXORA (apples-to-appl
 ## 5. Metrics
 
 Primary: total stored size (bytes) per document, per category, per corpus; ratio vs best baseline. Secondary: encode/decode wall time, peak RSS, decode-without-full-archive flag honored (REQ-CMP-005), cleaning-quality report linkage (ADR-0004 — measured separately, not conflated with compression).
+
+**Pareto frontier (normative in the report).** Every results artifact carries a table of
+`(total stored size, median encode time)` per system and the frontier drawn through them, in addition
+to the size table. A verdict that cites a size must cite the time at which it was obtained. The
+reason is a finding from the 2026 AIT Data Compression Challenge, which ranked 117 compressors on
+exactly this shape: *no single compressor dominates across all criteria*, and a size-only table
+cannot show that. The harness already records both numbers, so this changes what a result means
+rather than what it measures. See `EXTERNAL_REFERENCES_2026-11-18.md` §2.
 
 ## 6. Run procedure
 

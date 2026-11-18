@@ -15,6 +15,22 @@ Rules for selecting, classifying, splitting, storing, and using benchmark/corpus
 - Categories: prose/books, web/news, technical docs, numeric/record-like tables, OCR-derived text (from P3), plus any domain the project claims for `.lxdb`.
 - Sources must have documented distribution rights permitting private research use and derived-statistic publication.
 
+## External validation set (proposed, 2026-11-18)
+
+The corpus above is this project's own selection. A second question — does the canonicaliser
+generalise beyond the text we chose? — needs text nobody here selected.
+
+**`enwik8`** (first 10^8 bytes of the 2006 English Wikipedia dump, **CC-BY-SA**), as an **external
+validation set only**: never in the training split, recorded in the manifest with its lineage and
+rights note, and never used for dictionary training.
+
+It earns its 100 MB twice over: it is the dataset behind Matt Mahoney's Large Text Compression
+Benchmark, whose table lists enwik8 sizes for hundreds of compressors — so a LEXORA number on it has
+an external reference immediately, without running anyone else's tool — and it is text this project
+did not select, which is the property that catches a canonicaliser tuned to its own corpus.
+
+See `EXTERNAL_REFERENCES_2026-11-18.md` §3.
+
 ## Provenance & classification
 
 Every document gets: source ID, lineage ID (same work/publication ⇒ same lineage), license/rights note, privacy class:
