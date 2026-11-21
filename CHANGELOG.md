@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+**Fixed:** a one- or two-character Chinese query no longer returns a silent zero. The
+`trigram` index that Chinese needs (ADR-0024) cannot match a query shorter than three
+characters — `公园` is one of the most common query shapes in Chinese and it matched
+nothing. `Catalog.search` now falls back, for exactly those queries, to a literal
+case-folded scan of the live CJK documents (path, title and text). It is a scan, not an
+index, so it is **bounded** to `SHORT_QUERY_SCAN_LIMIT` (1000) documents, and a bounded
+answer must not look like a complete one: `Catalog.last_search_truncated` is True when
+the bound bit and `lexora db search` prints the partial-answer note on stderr. The match
+is literal — `%` and `_` are characters, not wildcards. A deleted or superseded document
+is still unfindable, and a blob that fails verification is skipped rather than turning
+every short query into an error. The tokenizer's floor is unchanged and still asserted by
+asking the index directly; the remaining open work is bigram pre-segmentation.
+`tests/test_catalog_tokenizer.py` gains 10 tests (24 in the file); the suite is
+**684 passed, 12 skipped**, with one pre-existing failure unrelated to this change
+(`test_level_usage.py::test_gui_and_cli_agree_on_the_exit_code_for_a_bad_level` needs the
+opt-in `gui` extra). Four mutations were run — dropping the fallback, dropping the case fold, removing the
+bound, and dropping the `tokenizer='trigram'` filter — and **all four were caught**.
+
 ## 0.2.0a1 — 2026-11-18
 
 **Alpha: not for production data.** Full notes: [docs/releases/v0.2.0-alpha.1.md](docs/releases/v0.2.0-alpha.1.md). No benchmark numbers are claimed — precondition R5 is still unmet.

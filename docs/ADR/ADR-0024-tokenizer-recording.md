@@ -62,11 +62,27 @@ So a trigram index is not a drop-in variant of the existing one: it needs a diff
   what the tokenizer *is*.
 - `db add --language zh` canonicalises through the plugin, records `zh-1` on the row,
   and indexes the text into the trigram table.
-- **Open work, stated rather than hidden:** a one- or two-character Chinese query
-  returns nothing. The options are a bigram pre-segmentation of the body (so
-  `unicode61` indexes characters), or a `LIKE '%…%'` fallback over live documents for
-  short queries. Neither is built. A test pins the current behaviour so the floor is a
-  decision rather than an accident.
+- **The short-query floor is answered, and one of its two options remains open.** A
+  one- or two-character Chinese query used to return nothing. Two ways off it were
+  named here: a bigram pre-segmentation of the body (so `unicode61` indexes
+  characters), or a short-query scan over live documents. **The scan is built**
+  (2026-11-21): `Catalog._short_query_scan` answers a query below `TRIGRAM_FLOOR` by
+  looking for it literally, case-folded, in the path, title and text of the live
+  documents the trigram index holds. It was chosen because it needs no re-ingestion of
+  anything already stored, so it works on catalogs built before it existed.
+  - It is **bounded** in documents (`SHORT_QUERY_SCAN_LIMIT`, 1000) and it says so:
+    `Catalog.last_search_truncated` is True when the bound bit, and `lexora db search`
+    prints the partial-answer note to stderr. A bounded scan that stayed quiet would be
+    the same silent partial answer as the zero it replaces.
+  - It is **literal**: `%` and `_` are characters, not wildcards, because the match is a
+    substring test rather than a `LIKE` pattern built out of user text.
+  - **Still open:** bigram pre-segmentation, which is the only one of the two that
+    answers short queries from an index instead of scanning. The scan's cost is linear
+    in the CJK corpus, and the bound is where that cost becomes visible.
+  - The floor itself is unchanged and still measured: `trigram` indexes
+    three-character sequences, so a direct `MATCH` for two characters still finds no
+    row. The catalog answers around the tokenizer; it does not change it. Both facts
+    are asserted in `tests/test_catalog_tokenizer.py`.
 - A tokenizer the catalog has no table for is **refused with an error naming the two it
   has**, not silently indexed as `unicode61`. A wrong index is a silent zero-result
   search, which is worse than a refusal.

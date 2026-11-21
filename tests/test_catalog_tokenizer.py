@@ -99,15 +99,114 @@ def test_a_query_longer_than_three_characters_works_under_trigram(store: Catalog
     assert [h.path for h in store.search("今天天气")] == ["han.txt"]
 
 
-def test_the_trigram_floor_is_pinned_not_hidden(store: Catalog) -> None:
-    """A two-character query matches nothing. It is a floor of the tokenizer.
+def test_the_trigram_index_still_cannot_answer_two_characters(store: Catalog) -> None:
+    """The floor is a property of the TOKENIZER, and it is still true.
 
-    ADR-0024 records it as open work (bigram pre-segmentation, or a short-query scan).
-    Pinning it here means the floor is a decision someone made, not an accident a user
-    discovers as a silent zero.
+    This asserts the measurement ADR-0024 recorded by asking the index itself, not the
+    catalog: `trigram` indexes three-character sequences, so a two-character MATCH has
+    no row to hit. The catalog's short-query scan (below) answers the user's question
+    anyway; it does not, and cannot, make the tokenizer answer it.
     """
     store.add("han.txt", HAN.encode(), tokenizer="trigram")
+    try:
+        rows = store._conn.execute(
+            "SELECT rowid FROM documents_fts_trigram WHERE documents_fts_trigram MATCH ?",
+            (HAN_SHORT,),
+        ).fetchall()
+    except sqlite3.OperationalError:
+        rows = []        # older SQLite versions refuse the query instead of ignoring it
+    assert rows == []
+
+
+# --------------------------------------------------------------------------- #
+# the short-query scan: what the floor is now answered with (ADR-0024 open work)
+# --------------------------------------------------------------------------- #
+
+def test_a_two_character_query_finds_the_document_through_the_scan(
+    store: Catalog,
+) -> None:
+    """`公园` is one of the most common query shapes in Chinese; it used to return []."""
+    store.add("han.txt", HAN.encode(), tokenizer="trigram")
+    assert [h.path for h in store.search(HAN_SHORT)] == ["han.txt"]
+    assert store.last_search_truncated is False
+
+
+def test_a_one_character_query_is_answered_too(store: Catalog) -> None:
+    store.add("han.txt", HAN.encode(), tokenizer="trigram")
+    assert [h.path for h in store.search("园")] == ["han.txt"]
+
+
+def test_the_scan_is_case_folded(store: Catalog) -> None:
+    """A trigram document may be Latin text; case must not decide the answer."""
+    store.add("latin.txt", b"THE QUICK BROWN FOX", tokenizer="trigram")
+    assert [h.path for h in store.search("ox")] == ["latin.txt"]
+    assert [h.path for h in store.search("QU")] == ["latin.txt"]
+
+
+def test_a_three_character_query_does_not_run_the_scan(store, monkeypatch) -> None:
+    """The scan is a fallback for what the index cannot do, never a path taken anyway."""
+    store.add("han.txt", HAN.encode(), tokenizer="trigram")
+
+    def boom(self, query):            # pragma: no cover - it must not be reached
+        raise AssertionError("the scan ran for a query the index can answer")
+
+    monkeypatch.setattr(Catalog, "_short_query_scan", boom)
+    assert [h.path for h in store.search(HAN_WORD)] == ["han.txt"]
+
+
+def test_the_scan_matches_literally_not_as_a_like_pattern(store: Catalog) -> None:
+    """`%` and `_` are characters. A wildcard-shaped query must not match everything."""
+    store.add("han.txt", "进度 100% 完成".encode(), tokenizer="trigram")
+    assert [h.path for h in store.search("0%")] == ["han.txt"]
+    assert store.search("%%") == []
+    assert store.search("__") == []
+
+
+def test_the_scan_does_not_find_a_deleted_document(store: Catalog) -> None:
+    store.add("han.txt", HAN.encode(), tokenizer="trigram")
+    store.delete("han.txt")
     assert store.search(HAN_SHORT) == []
+
+
+def test_the_scan_does_not_find_a_superseded_document(store: Catalog) -> None:
+    store.add("han.txt", HAN.encode(), tokenizer="trigram")
+    store.add("han.txt", "完全不同的一句话".encode(), tokenizer="trigram")
+    assert store.search(HAN_SHORT) == []
+
+
+def test_the_scan_only_covers_documents_the_trigram_index_holds(
+    store: Catalog,
+) -> None:
+    """A prose document is the prose index's job; the scan must not answer for it."""
+    store.add("prose.txt", b"abandoned at the gate", tokenizer="unicode61")
+    assert store.search("ab") == []          # unicode61 indexes words, not pairs
+    assert store.last_search_truncated is False
+
+
+def test_a_bounded_scan_says_it_was_bounded(store: Catalog, monkeypatch) -> None:
+    """A partial answer must not look like a complete one.
+
+    Three CJK documents, a bound of two, and the needle only in the third: the honest
+    outcome is an empty result AND `last_search_truncated is True`, never a quiet [].
+    """
+    monkeypatch.setattr(cat_mod, "SHORT_QUERY_SCAN_LIMIT", 2)
+    store.add("a.txt", "今天天气很好".encode(), tokenizer="trigram")
+    store.add("b.txt", "我们一起去".encode(), tokenizer="trigram")
+    store.add("c.txt", "公园散步".encode(), tokenizer="trigram")
+    assert store.search(HAN_SHORT) == []
+    assert store.last_search_truncated is True
+    # …and the flag is per search, not sticky.
+    assert [h.path for h in store.search("今天天气")] == ["a.txt"]
+    assert store.last_search_truncated is False
+
+
+def test_the_scan_answers_when_the_bound_is_not_hit(store: Catalog, monkeypatch) -> None:
+    monkeypatch.setattr(cat_mod, "SHORT_QUERY_SCAN_LIMIT", 3)
+    store.add("a.txt", "今天天气很好".encode(), tokenizer="trigram")
+    store.add("b.txt", "我们一起去".encode(), tokenizer="trigram")
+    store.add("c.txt", "公园散步".encode(), tokenizer="trigram")
+    assert [h.path for h in store.search(HAN_SHORT)] == ["c.txt"]
+    assert store.last_search_truncated is False
 
 
 def test_a_short_query_still_answers_from_the_prose_index(store: Catalog) -> None:
