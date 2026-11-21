@@ -40,6 +40,10 @@ refuses those outright. See
 [ADR-0024](../../docs/ADR/ADR-0024-tokenizer-recording.md).
 
 **A query shorter than three characters cannot match under trigram at all.** `公园`
-(two characters) returns nothing. That is a floor of the tokenizer, not a defect in this
-plugin; it is stated in the ADR as open work rather than left for a user to discover as
-a silent zero.
+(two characters) has no trigram to match. That is a floor of the tokenizer, not a defect
+in this plugin. The *catalog* answers such a query anyway: `Catalog.search` falls back to
+a literal, case-folded scan of the live CJK documents (bounded to 1000 documents, and it
+sets `last_search_truncated` when the bound bites, which `lexora db search` prints as a
+note on stderr). See [ADR-0024](../../docs/ADR/ADR-0024-tokenizer-recording.md). The
+remaining open work is bigram pre-segmentation — the option that would answer short
+queries from an index rather than by scanning.
