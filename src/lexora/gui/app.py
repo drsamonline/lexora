@@ -41,6 +41,7 @@ def format_about_text() -> str:
     """
     from lexora import __version__
     from lexora.gui.crash import crash_log_path
+    from lexora.gui.notices import QT_SOURCE_POINTER, notice_texts_location
     from lexora.gui.service import DEFAULT_SETTINGS, settings_path
 
     s = settings_path()
@@ -59,6 +60,17 @@ def format_about_text() -> str:
         f"Default block size: {DEFAULT_SETTINGS['block_size']} B",
         "",
         "Docs: docs/DESIGN_GUI.md · docs/FORMAT_LXZ.md · docs/CLI_REFERENCE.md",
+        "",
+        # P2.4 / R3: the LGPL obligations travel with the application, not only with the
+        # repository. Shown here because the About view is the one place a user looks for
+        # "what is this built on" without being told to open a source tree.
+        "Third-party notices (this extra carries LGPL obligations):",
+        "  PySide6 / Qt — LGPL-3.0-only. LEXORA itself is PolyForm Noncommercial.",
+        "  Required Notice: Copyright 2026 Dr Sohil Momin",
+        f"  licence texts: {notice_texts_location()}",
+        "  print them:    python -m lexora.gui.notices",
+        f"  Qt/PySide6 source: {QT_SOURCE_POINTER}",
+        "  Full statement: NOTICE at the repository root. Not legal advice.",
     ])
 
 

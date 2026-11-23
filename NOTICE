@@ -46,6 +46,15 @@ requires, at minimum:
   prohibiting replacement of those files;
 - a pointer to where the corresponding Qt/PySide6 source can be obtained.
 
+Those three obligations are now discharged by the package rather than described in this file
+(P2.4, 2026-11-23): the canonical **LGPL-3.0 and GPL-3.0 texts ship inside the wheel** as
+`lexora/gui/notice_texts/`, read back through `importlib.resources` so a zip or a wheel works
+the same as a checkout; the GUI's **About view** prints the notice, the `Required Notice:` line
+and the source pointer; and `python -m lexora.gui.notices` prints the notice and both full texts
+on any install, with or without Qt present. `tests/test_gui_notices.py` pins the SHA-256 of both
+texts — a licence text edited to say something slightly different is worse than a missing one,
+because it looks authoritative — and a wheel was built and inspected to confirm the texts travel.
+
 LEXORA's own source stays under PolyForm Noncommercial: the LGPL governs Qt, not
 this project's code, and an application may be under any licence while linking
 LGPL components dynamically. That is the same boundary the rest of the estate

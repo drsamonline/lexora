@@ -43,10 +43,10 @@ is only the state and the split of work. That file is the plan of record.
 |---|---|---|
 | A1 | **P3.5** — build the labelled sample and measure the cleaning-error rate | A report with the ADR-0004 metric, a point estimate and a bootstrap upper bound |
 | A2 | **P3.8** — packed-hash `doc_grams` | Grams cost ≤1× the stored payload at equal recall, differential test still green |
-| A3 | **P2.4** — GUI notices | NOTICE + LGPL/GPL texts in the About view, asserted by a test |
+| ~~A3~~ | ~~**P2.4** — GUI notices~~ | **DONE 2026-11-23** — the canonical LGPL-3.0/GPL-3.0 texts ship in the wheel, the About view carries the notice, `python -m lexora.gui.notices` prints them, and 10 tests pin it; verified by reading the texts back from an installed wheel |
 | A4 | **P4.4** — re-test `pyside6>=6.12` | The GUI suite exits 0, not just passes |
-| A5 | **P5.1 / P5.2** — the Session-69→70 hole; the contribution-licensing line in CONTRIBUTING | Both closed |
-| A6 | **A drift guard** — a test that reads the milestone table and fails when a row claims a capability whose test file is missing | The three drifts found on 2026-11-23 would each have failed it |
+| ~~A5~~ | ~~**P5.1 / P5.2**~~ | **DONE 2026-11-23** — the session gap is stated where it is rather than invented, and CONTRIBUTING already had its licensing section; both closed in `PATH_TO_V1` |
+| ~~A6~~ | ~~**A drift guard**~~ | **DONE 2026-11-23** — `tests/test_doc_claims_drift.py`: a cited code path must exist, and the state documents must agree on their last-verified date within 14 days. Both mutation-tested; the date guard caught two more stale headers on its first run |
 
 **Work only you can do** — [PATH_TO_V1](PATH_TO_V1.md) §3 P7, because it needs your hardware,
 your verdict or your name:
