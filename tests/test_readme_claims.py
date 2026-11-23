@@ -210,3 +210,29 @@ def test_the_version_a_user_reads_is_the_version_that_shipped() -> None:
         f"{__version__!r} — a user pasting that output into a bug report would "
         "describe a release that does not exist"
     )
+
+# --------------------------------------------------------------------------- #
+# the landing page, which is the first thing a stranger reads
+# --------------------------------------------------------------------------- #
+
+def test_the_landing_page_does_not_deny_the_releases_that_exist() -> None:
+    """The page said "no releases yet" for two releases.
+
+    Found on 2026-11-23 while checking a clean clone: `docs/index.html` carried
+    "Phase 1 complete, no releases yet" in its meta description *and* its footer, and
+    described Hindi and Gujarati as "design targets" after all four languages had
+    shipped. Nothing recomputed it — the same failure as the README's maturity table.
+
+    The guard derives the fact instead of hardcoding it: if CHANGELOG has a released
+    version heading, the page may not claim there are none.
+    """
+    changelog = (REPO / "CHANGELOG.md").read_text(encoding="utf-8")
+    released = re.findall(r"^## \[?(\d+\.\d+\.\d+[^\]\s]*)", changelog, re.MULTILINE)
+    if not released:
+        pytest.skip("no released version in CHANGELOG — the page's claim would be true")
+
+    landing = (REPO / "docs" / "index.html").read_text(encoding="utf-8")
+    assert "no releases yet" not in landing.lower(), (
+        f"CHANGELOG names released versions {sorted(set(released))} but the landing page still "
+        "says there are none"
+    )
