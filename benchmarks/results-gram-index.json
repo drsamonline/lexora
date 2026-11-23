@@ -1,0 +1,139 @@
+{
+  "probe": "gram_index_probe",
+  "question": "what would packing doc_grams buy, and what would it cost in exactness?",
+  "note": "Synthetic Zipfian Chinese, shapes chosen to separate row-count cost from gram-width cost. Not a measurement of the corpus.",
+  "shapes": {
+    "one-document-20k": {
+      "documents": 1,
+      "chars_per_document": 20000,
+      "canonical_bytes": 60000,
+      "stored_payload_bytes_zstd9": 24668,
+      "gram_doc_pairs": 5636,
+      "distinct_grams": 5636,
+      "distinct_crc32": 5636,
+      "hash_collisions": 0,
+      "layouts": {
+        "a_current": {
+          "rows": 5636,
+          "bytes": 77824,
+          "bytes_per_row": 13.81,
+          "vs_current": 1.0
+        },
+        "b_hash32": {
+          "rows": 5636,
+          "bytes": 73728,
+          "bytes_per_row": 13.08,
+          "vs_current": 1.06
+        },
+        "c_hash4": {
+          "rows": 5636,
+          "bytes": 65536,
+          "bytes_per_row": 11.63,
+          "vs_current": 1.19
+        },
+        "d_posting32": {
+          "rows": 5636,
+          "bytes": 102400,
+          "bytes_per_row": 18.17,
+          "vs_current": 0.76
+        },
+        "e_posting_text": {
+          "rows": 5636,
+          "bytes": 102400,
+          "bytes_per_row": 18.17,
+          "vs_current": 0.76
+        }
+      },
+      "current_vs_stored_payload": 3.15,
+      "best_packing_vs_stored_payload": 2.66
+    },
+    "small-corpus-50x4k": {
+      "documents": 50,
+      "chars_per_document": 4000,
+      "canonical_bytes": 600000,
+      "stored_payload_bytes_zstd9": 223804,
+      "gram_doc_pairs": 105626,
+      "distinct_grams": 15273,
+      "distinct_crc32": 15273,
+      "hash_collisions": 0,
+      "layouts": {
+        "a_current": {
+          "rows": 105626,
+          "bytes": 1478656,
+          "bytes_per_row": 14.0,
+          "vs_current": 1.0
+        },
+        "b_hash32": {
+          "rows": 105626,
+          "bytes": 1400832,
+          "bytes_per_row": 13.26,
+          "vs_current": 1.06
+        },
+        "c_hash4": {
+          "rows": 105626,
+          "bytes": 1273856,
+          "bytes_per_row": 12.06,
+          "vs_current": 1.16
+        },
+        "d_posting32": {
+          "rows": 15273,
+          "bytes": 659456,
+          "bytes_per_row": 43.18,
+          "vs_current": 2.24
+        },
+        "e_posting_text": {
+          "rows": 15273,
+          "bytes": 708608,
+          "bytes_per_row": 46.4,
+          "vs_current": 2.09
+        }
+      },
+      "current_vs_stored_payload": 6.61,
+      "best_packing_vs_stored_payload": 2.95
+    },
+    "recurring-bigrams-500x400": {
+      "documents": 500,
+      "chars_per_document": 400,
+      "canonical_bytes": 600000,
+      "stored_payload_bytes_zstd9": 223679,
+      "gram_doc_pairs": 205082,
+      "distinct_grams": 15197,
+      "distinct_crc32": 15197,
+      "hash_collisions": 0,
+      "layouts": {
+        "a_current": {
+          "rows": 205082,
+          "bytes": 2973696,
+          "bytes_per_row": 14.5,
+          "vs_current": 1.0
+        },
+        "b_hash32": {
+          "rows": 205082,
+          "bytes": 2883584,
+          "bytes_per_row": 14.06,
+          "vs_current": 1.03
+        },
+        "c_hash4": {
+          "rows": 205082,
+          "bytes": 2674688,
+          "bytes_per_row": 13.04,
+          "vs_current": 1.11
+        },
+        "d_posting32": {
+          "rows": 15197,
+          "bytes": 1675264,
+          "bytes_per_row": 110.24,
+          "vs_current": 1.78
+        },
+        "e_posting_text": {
+          "rows": 15197,
+          "bytes": 1695744,
+          "bytes_per_row": 111.58,
+          "vs_current": 1.75
+        }
+      },
+      "current_vs_stored_payload": 13.29,
+      "best_packing_vs_stored_payload": 7.49
+    }
+  }
+}

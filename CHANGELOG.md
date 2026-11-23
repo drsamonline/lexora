@@ -17,8 +17,11 @@ backfilled on open, not re-ingested, and `lexora db stats` reports `gram_index`
 **Measured, and the trade is stated:** on a 20,000-character synthetic Zipfian Chinese
 document (60,000 canonical bytes, 29,515 stored bytes) the index holds 10,389 grams in
 147,456 bytes — 5× the stored payload and 2.5× the canonical text. That is the price of
-answering without reading a blob; a packed-hash form of the same table is the next step
-if the ratio comes to matter more than the exactness.
+answering without reading a blob. **Corrected 2026-11-23:** that figure came from an
+uncommitted generator; re-measured with `benchmarks/gram_index_probe.py` the ratio runs
+3.15× → 6.61× → 13.29× depending on how much the corpus repeats itself, and packing the
+table buys 11–19 % — so it was measured instead of assumed, and the layout stayed
+([ADR-0025](docs/ADR/ADR-0025-gram-index-layout.md)).
 `tests/test_catalog_tokenizer.py` 24 → 36 tests; the suite was **754 passed, 14 skipped** on the branch and is **765 passed, 3 skipped** on `main` with both language plugins installed (re-measured 2026-11-23 after both PRs merged).
 Ten mutations were run — bigrams dropped, the case fold dropped, grams written for prose
 documents, grams not dropped on unindex, the index ignored, uncovered documents never
@@ -93,6 +96,25 @@ with English as its first plugin; 736 tests.
 **Not in this release:** `.lxdb` (designed, gated behind R5), a second language, encryption.
 
 ## [Unreleased]
+
+### Changed
+- 2026-11-23 (**the gram index keeps its layout, and the 5× figure becomes a curve**,
+  [ADR-0025](docs/ADR/ADR-0025-gram-index-layout.md), resolves P3.8): P3.8 asked for a packed-hash
+  form of `doc_grams`. It was measured instead of built, and the measurement said no.
+  `benchmarks/gram_index_probe.py` builds five layouts over identical data and reports real page
+  usage from `dbstat`: hashing the gram to 32 bits saves **3–6 %**, storing it as a 4-byte BLOB
+  saves **11–19 %**, and an inverted index saves **2.24× where documents share bigrams** while
+  **losing 24 % on a single document**. The cost is row count, not gram width — 14 bytes a row for
+  a 4-byte gram. So the layout stays, nothing migrates, and no stored byte changes.
+  **The number this replaces was the problem:** "5× the stored payload" came from a generator
+  nobody committed, and re-measuring showed it is one point on a curve — **3.15× for one document,
+  6.61× for 50, 13.29× where bigrams recur across 500**. A figure with no artifact behind it could
+  not be re-derived, checked or corrected; now it can, and
+  `benchmarks/results-gram-index.json` is the artifact.
+  Five tests, including one that fails if the ADR and the artifact ever disagree.
+  **Recorded, not rejected:** the inverted index is the only layout that reduces this materially
+  and it wins exactly when a real archive's shape applies — revisit it when P0 has a real corpus,
+  with this probe as the baseline.
 
 ### Added
 - 2026-11-23 (**the cleaning-error rate has an instrument**, P3.5 / REQ-CAN-007, [ADR-0004](docs/ADR/ADR-0004-cleaning-error-metric.md)):
