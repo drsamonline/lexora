@@ -70,6 +70,23 @@ def test_the_tests_badge_carries_no_static_count() -> None:
     )
 
 
+def test_the_meta_description_fits_a_search_result() -> None:
+    """181 characters, found by the fleet's verifier after I lengthened it earlier the same day.
+
+    The description I wrote said both true things and was still wrong: a search result truncates at
+    about 160, so the half that got cut was the half about not using it for production data. A
+    limit the fleet's own tool measures is a limit this repo should hold itself to.
+    """
+    text = LANDING.read_text(encoding="utf-8")
+    match = re.search(r'<meta name="description" content="([^"]*)"', text)
+    assert match, "the landing page has no meta description"
+    description = match.group(1)
+    assert len(description) <= 160, f"{len(description)} characters: {description!r}"
+    assert "not for production data" in description, (
+        "the warning is the part a search result would truncate first, so it must survive"
+    )
+
+
 def test_the_landing_page_marks_its_support_block() -> None:
     """`data-support` is what the fleet's audit looks for; without it the block is invisible."""
     assert "data-support" in LANDING.read_text(encoding="utf-8")
