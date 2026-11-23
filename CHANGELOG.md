@@ -97,6 +97,25 @@ with English as its first plugin; 736 tests.
 
 ## [Unreleased]
 
+### Added
+- 2026-11-23 (**two requirements closed, and one of them closed honestly**, REQ-EXP-002 + REQ-RES-003):
+  - **`benchmarks/lineage_audit.py`** — a learned structure may be induced from the training split
+    and nothing else. It refuses any build input the manifest does not place in `train` (a held-out
+    file, or a file the manifest cannot place, is a refusal rather than a pass) and records every
+    input's SHA-256 beside the dictionary's. A verbatim leak probe backs it up. **The limit is
+    measured and stated:** a dictionary trained on nine samples where one was held out came back
+    with **no** 24-byte run of that document in it — zstd's trainer keeps what it judges
+    representative — so the probe cannot be the control and the input record has to be. That
+    finding is a test, not a footnote.
+  - **`tests/test_offline.py`** — REQ-RES-003's network-disabled smoke test, which did not exist.
+    Every user-facing verb runs in a child process whose socket constructor is replaced *before*
+    `lexora` is imported: canon → pack → verify → unpack byte-identical, then db init/add/search/
+    stats and doctor. A control test proves the guard blocks `socket.socket()`,
+    `create_connection` and `urlopen` — a network guard that does not guard produces green ticks
+    and no evidence, so the guard is tested like anything else.
+  - 14 tests. `PRODUCT_REQUIREMENTS.md` and `REQUIREMENTS_TRACEABILITY.md` updated: the open list
+    drops from nine requirements to seven.
+
 ### Fixed
 - 2026-11-23 (**the requirements register claimed a project that no longer exists**):
   `docs/PRODUCT_REQUIREMENTS.md` said **"Not started" for all 35 requirements** and

@@ -41,7 +41,7 @@ and expose any missing link as a gap. Optional (S/N) requirements may use lighte
 | REQ-CMP-005 | SPEC §4.4 / RESOURCE_LIMITS | `src/lexora/container.py` (`read_index`) | `tests/test_container_lxz.py` | `benchmarks/results-rss-core.json`, `results-rss-index.json` | P1 exit | — |
 | REQ-CMP-006 | SPEC §4.5 | `src/lexora/container.py` | `tests/test_format_flags.py` (7 tests), `tests/test_container_lxz.py` | exit 7 for format refusals, documented in CLI_REFERENCE | P1 exit | — |
 | REQ-EXP-001 | SPEC §5.2 (ADR-0001) | `src/lexora/codec_registry.py`, `src/lexora/cli.py` | `tests/test_codec_real_text.py`, `tests/test_ziptastic_codec.py` | `benchmarks/results-r6-*.json`, `docs/ECOSYSTEM_REVIEW_2026-11-08.md` | P4 per-candidate | no candidate has passed ADR-0001 at protocol scope |
-| REQ-EXP-002 | CORPUS_POLICY §Splits | `src/lexora/zstd_core.py` (dictionary mode) | — | ADR-0015 | P2 exit | the lineage audit the requirement names does not exist |
+| REQ-EXP-002 | CORPUS_POLICY §Splits | `benchmarks/lineage_audit.py` | `tests/test_dictionary_lineage.py` (10 tests) | refuses a non-train input; leak probe is the backstop | P2 exit | probe cannot see a dictionary that was contaminated but kept no verbatim run — measured, so the input record is the control |
 | REQ-EXP-003 | BENCHMARK_PROTOCOL §Ablation | — | — | ADR-0001, `docs/ZIPTASTIC_NOTES.md` | each benchmark rev | re-ablation per benchmark revision not run |
 | REQ-FMT-001 | FORMAT_LXZ (PROPOSED) | `src/lexora/container.py` | `tests/test_container_lxz.py`, `tests/vectors/lxz_format/` | ADR-0007 (Accepted) | P1-T3 freeze | — |
 | REQ-FMT-002 | FORMAT_LXZ §Limits | `src/lexora/container.py` (`DEFAULT_MAX_BLOCK_*`) | `tests/test_container_lxz.py` (limit violations) | `docs/RESOURCE_LIMITS.md` | P1 exit | — |
@@ -53,7 +53,7 @@ and expose any missing link as a gap. Optional (S/N) requirements may use lighte
 | REQ-BMK-004 | BENCHMARK_PROTOCOL §Reporting | `benchmarks/harness.py` | `tests/test_harness_systems.py` | `benchmarks/results-r4-*.json`, `results-r6-*.json` | P2 exit | per-category table not published |
 | REQ-RES-001 | RESOURCE_LIMITS / PERFORMANCE_BUDGET | `src/lexora/canonicalize.py` (streaming), `src/lexora/container.py` | `tests/test_pack_stream.py`, `tests/test_unpack_stream.py` | `docs/P1_EVIDENCE_DRAFT.md`, `benchmarks/results-rss-*.json` | P1 exit + each phase | REF-4G never tested (PATH_TO_V1 P4.3) |
 | REQ-RES-002 | DECISIONS OQ-7 | `pyproject.toml` | CI workflow + `tests/test_readme_claims.py` (version guards) | ADR-0005 | before P1 code | — |
-| REQ-RES-003 | INSTALLATION / BUILD_GUIDE | — | — | `docs/INSTALLATION.md` | P7 release | the test the requirement names does not exist |
+| REQ-RES-003 | INSTALLATION / BUILD_GUIDE | every verb, offline | `tests/test_offline.py` (4 tests, incl. the guard control) | sockets removed before import; byte-identical round trip offline | P7 release | — |
 | REQ-SEC-001 | SPEC §4 / THREAT_MODEL (Batch D) | `src/lexora/container.py` | `tests/test_reader_fuzz.py`, `tests/test_writer_fuzz.py`, `tests/test_interruption.py` | `docs/THREAT_MODEL.md` | P6 exit | — |
 | REQ-SEC-002 | CORPUS_POLICY §Privacy | — | — | `docs/PRIVACY_AND_DATA_HANDLING.md`, `docs/CORPUS_POLICY.md` | P2 exit | revisit the day a dictionary ships; the audit the requirement names is moot until then |
 | REQ-SEC-003 | ENCRYPTION_PROFILE (Batch D) | — | — | `docs/ENCRYPTION_PROFILE.md` | P6 (if scoped) | scope confirmation is the owner's (ADR-0009) |
