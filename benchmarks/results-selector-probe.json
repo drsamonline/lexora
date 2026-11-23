@@ -2,28 +2,63 @@
   "input": "tests/vectors/real_text/gutenberg_slices.txt",
   "input_bytes": 720983,
   "reps": 3,
+  "bin_dir": "/scratch/work/fleet-bin",
   "rows": [
     {
-      "level": 9,
-      "stored_bytes": 271004,
-      "ratio": 0.3759,
-      "median_seconds": 0.0731,
-      "mib_per_second": 9.9
+      "candidate": "chce (ziptastic)",
+      "stored_bytes": 207338,
+      "ratio": 0.2876,
+      "median_seconds": 1.809028,
+      "mib_per_second": 0.4
     },
     {
-      "level": 19,
+      "candidate": "ppmd (7z -m0=PPMd)",
+      "stored_bytes": 208461,
+      "ratio": 0.2891,
+      "median_seconds": 0.254049,
+      "mib_per_second": 2.8
+    },
+    {
+      "candidate": "brotli -q 11",
+      "stored_bytes": 244286,
+      "ratio": 0.3388,
+      "median_seconds": 2.265687,
+      "mib_per_second": 0.3
+    },
+    {
+      "candidate": "xz -9 (CLI)",
+      "stored_bytes": 249208,
+      "ratio": 0.3457,
+      "median_seconds": 0.655741,
+      "mib_per_second": 1.1
+    },
+    {
+      "candidate": "zstd L19",
       "stored_bytes": 253155,
       "ratio": 0.3511,
-      "median_seconds": 0.4381,
-      "mib_per_second": 1.6
+      "median_seconds": 0.523541,
+      "mib_per_second": 1.4
+    },
+    {
+      "candidate": "zstd L9",
+      "stored_bytes": 271004,
+      "ratio": 0.3759,
+      "median_seconds": 0.058193,
+      "mib_per_second": 12.4
     }
   ],
-  "selector_would_pick": 19,
-  "bytes_saved_by_picking": 17849,
-  "percent_smaller": 6.59,
-  "time_multiplier": 6.0,
-  "not_measured": {
-    "ziptastic (CHCE)": "binary absent from this container \u2014 the candidate a selector would most want to compare, and the one number this probe cannot supply"
+  "selector_would_pick": "chce (ziptastic)",
+  "fastest": "zstd L9",
+  "bytes_saved_by_picking": 63666,
+  "percent_smaller": 23.49,
+  "time_multiplier": 31.1,
+  "not_measured": {},
+  "tool_versions": {
+    "ziptastic": "ziptastic 1.4.5 (CHCE format v8)",
+    "xz": "xz (XZ Utils) 5.8.4",
+    "brotli": "brotli 1.2.0",
+    "7z": "7-Zip (a) 26.05 (x64) : Copyright (c) 1999-2026 Igor Pavlov : 2026-10-21"
   },
+  "scope": "ONE FILE, smoke \u2014 not a protocol-scope run (P0_RUNBOOK.md)",
   "note": "Timings are from a shared container: sizes are exact, throughput is indicative (PERFORMANCE_BUDGET.md). The question this answers is the size/time trade, not a throughput claim."
 }

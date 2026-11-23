@@ -27,21 +27,34 @@ Two things changed on 2026-11-23 that make this decidable now rather than later:
 
 ## What the choice is worth, measured
 
-`benchmarks/selector_probe.py` on `tests/vectors/real_text/gutenberg_slices.txt` (720,983 B, 3
-reps): the only comparison v0 can make without an external binary is level against level.
+`benchmarks/selector_probe.py` on `tests/vectors/real_text/gutenberg_slices.txt` (720,983 B, 3 reps),
+with the binaries the fleet already ships — `drsamonline/heavenzip` → `bin/` — passed via
+`--bin-dir`. **Every candidate below was measured on the same bytes; none is estimated.**
 
-| Candidate | Stored | Ratio | Median encode | Throughput |
+| Candidate | Tool version | Stored | Ratio | Throughput |
 |---|---|---|---|---|
-| zstd level 9 (shipped default) | 271,004 B | 0.3759 | 73 ms | 9.9 MiB/s |
-| zstd level 19 | 253,155 B | 0.3511 | 438 ms | 1.6 MiB/s |
+| **chce (ziptastic)** | 1.4.5, CHCE format v8 | **207,338 B** | **0.2876** | 0.5 MiB/s |
+| ppmd (`7z -m0=PPMd`) | 7-Zip 26.05 | 208,461 B | 0.2891 | 2.9 MiB/s |
+| brotli `-q 11` | 1.2.0 | 244,286 B | 0.3388 | 0.3 MiB/s |
+| xz `-9` (CLI) | XZ Utils 5.8.4 | 249,208 B | 0.3457 | 1.2 MiB/s |
+| zstd L19 | zstandard 0.25.0 | 253,155 B | 0.3511 | 1.5 MiB/s |
+| zstd L9 (shipped default) | zstandard 0.25.0 | 271,004 B | 0.3759 | 13.1 MiB/s |
 
-**A selector would pick level 19: 6.59 % smaller for 6.0× the time.** That is the entire value
-available from cost-based selection on the shipped codec — not a rounding error, and not free.
+**A selector would pick CHCE: 23.49 % smaller than the shipped default, for ~24× its time.** It is
+also 16.80 % under `xz -9`, 15.13 % under brotli q11 and 18.10 % under zstd L19 — on one file, at
+smoke scope, which is the whole scope of this ADR's evidence.
 
-**The candidate it cannot compare is the one that matters most.** ziptastic (CHCE) is the max-ratio
-preset and was measured 18.5 % under `xz -9` at R6 scale, but the binary is absent from this
-container, so the probe records it as *not measured* rather than estimating. Any decision that
-assumes the CHCE comparison is available is assuming something this evidence does not support.
+This changes what the decision is *about*. The first version of this ADR could only compare level
+against level (6.59 % for 6×) and recorded CHCE as *not measured* because the binary was absent
+from the container. It was not absent from the estate: `heavenzip` ships `ziptastic`, `xz`, `7z`,
+`brotli` and `zstd` under `bin/`. With them measured, cost-based selection is worth **23.49 %**, not
+6.59 % — an order of magnitude more interesting, and still not free.
+
+**A second finding falls out of the same table, and it belongs to OQ-18.** PPMd through `7z` is
+**0.54 % larger** than the CHCE preset on these bytes (208,461 vs 207,338) and about **5.8× faster**.
+So "PPMd as the max-ratio preset" is not supported on size; it is supported on speed, and CHCE
+already holds the size crown. That measurement is recorded in
+[DECISIONS](../DECISIONS.md) OQ-18 as evidence — the decision is still the owner's (P7.3).
 
 ## Options
 

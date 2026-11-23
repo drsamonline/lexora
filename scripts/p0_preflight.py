@@ -88,8 +88,18 @@ def check_corpus(corpus: pathlib.Path, manifest_path: pathlib.Path) -> dict:
             "files": len(entries), "bytes": total, "splits": splits}
 
 
-def check_binary(name: str, *, version_args: tuple[str, ...] = ("--version",)) -> dict:
-    path = shutil.which(name)
+def check_binary(name: str, *, version_args: tuple[str, ...] = ("--version",),
+                 bin_dir: pathlib.Path | None = None) -> dict:
+    """Look in --bin-dir first, then PATH.
+
+    The fleet ships these binaries in `drsamonline/heavenzip` under `bin/`; a machine that has
+    checked that repo out should not need them installed system-wide to pass preflight.
+    """
+    path = None
+    if bin_dir:
+        candidate = bin_dir / name
+        path = str(candidate) if candidate.is_file() else None
+    path = path or shutil.which(name)
     if not path:
         return {"status": "NO-GO", "detail": f"{name} not on PATH", "path": None}
     version = _run([path, *version_args])
@@ -133,11 +143,12 @@ def same_class_as(previous: dict, current: dict) -> bool:
 
 
 def preflight(corpus: pathlib.Path, manifest: pathlib.Path, *, out_root: pathlib.Path,
-              allow_missing_7z: bool = False, previous_env: pathlib.Path | None = None) -> dict:
+              allow_missing_7z: bool = False, previous_env: pathlib.Path | None = None,
+              bin_dir: pathlib.Path | None = None) -> dict:
     checks: dict[str, dict] = {
         "corpus": check_corpus(corpus, manifest),
-        "xz_cli": check_binary("xz"),
-        "ppmd_7z": check_binary("7z"),
+        "xz_cli": check_binary("xz", bin_dir=bin_dir),
+        "ppmd_7z": check_binary("7z", bin_dir=bin_dir),
         "disk": check_disk(out_root),
     }
     if checks["xz_cli"]["status"] != "GO":
@@ -193,11 +204,14 @@ def main(argv: list[str] | None = None) -> int:
                     help="where artifacts will be written (disk is checked here)")
     ap.add_argument("--previous-env", type=pathlib.Path, default=REPO / "benchmarks" / "env.json")
     ap.add_argument("--allow-missing-7z", action="store_true")
+    ap.add_argument("--bin-dir", type=pathlib.Path, default=None,
+                    help="directory holding the fleet's binaries (drsamonline/heavenzip → bin/)")
     ap.add_argument("--out", type=pathlib.Path, default=None)
     args = ap.parse_args(argv)
 
     report = preflight(args.corpus, args.manifest, out_root=args.out_root,
-                       allow_missing_7z=args.allow_missing_7z, previous_env=args.previous_env)
+                       allow_missing_7z=args.allow_missing_7z, previous_env=args.previous_env,
+                       bin_dir=args.bin_dir)
 
     for name, check in report["checks"].items():
         print(f"  {check['status']:6s} {name:9s} {check['detail']}")
