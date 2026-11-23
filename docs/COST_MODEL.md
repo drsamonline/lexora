@@ -1,8 +1,8 @@
 # Cost Model
 
-> **Status:** Proposed (formula-level; constants unmeasured)
-> **Owner:** Unassigned
-> **Last verified:** 2026-10-15
+> **Status:** Active — the formula, plus a byte-exact auditor for `.lxz` v0 (REQ-CMP-004)
+> **Owner:** Documentation architect (delegated)
+> **Last verified:** 2026-11-23 against `main` @ `8d8835a`
 > **Related:** [SPECIFICATION.md §4.2–§4.3](SPECIFICATION.md) · [COMPRESSION_ARCHITECTURE.md](COMPRESSION_ARCHITECTURE.md) · REQ-CMP-003/004
 
 ## Purpose & Scope
@@ -38,6 +38,37 @@ Rules:
 | Re-Pair | Grammar table size | Grammar trained for large docs hurting short-doc blocks |
 | Token PPM | Model parameters serialized per block | Complexity without size win |
 | Record coding | Schema description | Misdetected records paying schema cost for nothing |
+
+## The auditor (`REQ-CMP-004`)
+
+`benchmarks/cost_audit.py` checks this formula against a real archive instead of restating it. It
+decomposes an `.lxz` into the model's terms and requires the sum to equal the file size **exactly** —
+no tolerance, because a tolerance is where an unaccounted field hides.
+
+| Cost-model term | `.lxz` v0 | Size |
+|---|---|---|
+| `payload(r, b)` | the compressed block bytes | Σ `compressed_size` |
+| `blockHeader(b)` + `blockMetadata` | the index entry: offset, sizes, per-block SHA-256 | 56 B × blocks |
+| `indexContribution(b)` | the same entry — charged **once** | 0 additional |
+| archive header | magic, version, flags, ids, limits, header hash | 128 B |
+| archive trailer | index offset, index length, index hash | 40 B |
+| `sideTables`, `dictionaryShare`, `residualBytes` | v0 carries no grammar, dictionary or literal tails | 0 |
+
+**Why the double-count matters, and it is not hypothetical bookkeeping.** Charging the index entry
+to `blockMetadata` *and* `indexContribution` makes the accounting 56 bytes per block **larger** than
+the archive — the codec looks better than it is. Forgetting the trailer makes it 40 bytes **smaller**
+— it looks like a saving. Both errors flatter the thing being measured, which is why they survive
+review. A test pins each term to its owner.
+
+Measured on a one-block archive of 8,800 canonical bytes: **287 B = 128 header + 63 payload + 56
+index + 40 trailer**, unaccounted **0**. A byte inserted between the index and the trailer is
+reported as unaccounted rather than absorbed.
+
+**What this does not do:** it audits the *counting*, not the *choosing*. Rule 2's argmin over
+enabled candidates is REQ-CMP-003 and is not implemented — v0 selects by pinned preset
+(ADR-0015). And because v0 has no side tables or dictionary, three terms in the table above are
+structurally zero; the audit proves nothing is unaccounted, not that every candidate's cost has
+been computed.
 
 ## Reproducibility requirements
 
