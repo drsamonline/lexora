@@ -87,11 +87,14 @@ So a trigram index is not a drop-in variant of the existing one: it needs a diff
     longer than two characters (`ß` → `ss`, `ﬃ` → `ffi`). A v2 catalog is backfilled on
     open, not re-ingested.
   - **The cost, measured:** on a 20,000-character synthetic Zipfian Chinese document
-    (60,000 canonical bytes, 29,515 stored) the index holds 10,389 grams in 147,456
-    bytes — 5× the stored payload. That is stated rather than hidden: the gram table is
-    the right trade for a corpus that is queried often and the wrong one for a
-    store-only corpus, and a packed-hash form of it is the next step if the ratio comes
-    to matter more than the exactness of the answer.
+    (60,000 canonical bytes, 29,515 stored) the index held 10,389 grams in 147,456
+    bytes — 5× the stored payload. **Corrected 2026-11-23:** that measurement came from a
+    generator nobody committed, and re-measuring with a committed probe
+    (`benchmarks/gram_index_probe.py`, artifact `benchmarks/results-gram-index.json`)
+    showed 5× is one point on a curve — **3.15× for one document, 6.61× for 50 documents,
+    13.29× where bigrams recur across 500** — and that a packed-hash form buys only
+    11–19 %, because the cost is rows, not gram width. [ADR-0025](ADR-0025-gram-index-layout.md)
+    records the measurement and keeps the layout.
   - The floor itself is unchanged and still measured: `trigram` indexes
     three-character sequences, so a direct `MATCH` for two characters still finds no
     row. The catalog answers around the tokenizer; it does not change it. Both facts

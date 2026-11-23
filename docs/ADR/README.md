@@ -42,4 +42,5 @@ Use [ADR-0001-template.md](ADR-0001-template.md) as the starting point (it doubl
 | [ADR-0013](ADR-0013-lxdb-layout.md) | `.lxdb` single-file shape + mutation model (append payload, rewrite index, commit by superblock flip) — **no byte layout** | **Proposed** (blocked on G2) | 2026-11-07 |
 
 Template location note: the canonical template now lives at [../templates/ADR_TEMPLATE.md](../templates/ADR_TEMPLATE.md); `ADR-0001-template.md` remains for historical continuity only.
+| [ADR-0025](ADR-0025-gram-index-layout.md) | **The gram index keeps its layout** — the cost is row count, not gram width: hashing buys 11–19 %, an inverted index 2.24× only where documents share bigrams and −24 % on one document, so nothing migrates and the "5×" becomes the measured 3.15×–13.29× | **Accepted** | 2026-11-23 |
 | [ADR-0024](ADR-0024-tokenizer-recording.md) | **The tokenizer is recorded per document, and CJK gets its own index** (`documents.tokenizer`, `documents_fts_trigram` at `detail=full`, schema v2 migrated in place); `zh-1` is the third language and the first to declare a tokenizer other than `unicode61` | **Accepted** | 2026-11-18 |
