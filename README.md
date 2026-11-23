@@ -65,21 +65,23 @@ Generic compressors (Zstandard, XZ, Brotli) treat text as opaque bytes. Document
 - Conservative, versioned canonicalization with golden test vectors.
 - Cost-driven codec/candidate selection: every candidate competes against pinned baselines, and **every serialized byte counts** in the cost model.
 - Operate within a ~4 GiB RAM budget with bounded, streaming/block-based processing.
-- Multilingual support: English, Hindi (Devanagari), Gujarati.
+- Multilingual support through plugins: **English, Hindi (Devanagari) and Chinese ship
+  today** as separate distributions behind one seam ([ADR-0022](docs/ADR/ADR-0022-language-plugins.md)).
+  Gujarati is designed for and not yet built.
 
 ## Non-goals (current scope)
 
 - Reconstructing original OCR output or source PDF layout bit-for-bit.
-- Claiming any performance advantage over Zstd/Brotli/XZ/PPMd before reproducible benchmark evidence exists (**no LEXORA-vs-baseline evidence exists**; the only published numbers, Revision R1, are baseline-vs-baseline on a Tier-1 smoke corpus — see [docs/BENCHMARK_RESULTS.md](docs/BENCHMARK_RESULTS.md)).
+- Claiming any performance advantage over Zstd/Brotli/XZ/PPMd before reproducible benchmark evidence exists **at protocol scope**. R6 is protocol-*shaped* — 3 splits, 3 reps, 6 systems, leak audit clean — but at 5.9 MB rather than the 1.054 GiB corpus, so its CHCE figure is labelled as such and gate **G2 is still open** ([docs/BENCHMARK_RESULTS.md](docs/BENCHMARK_RESULTS.md), [PATH_TO_V1](docs/PATH_TO_V1.md) P0). No ratio is published as a result.
 - Being a general-purpose archive format.
 
 ## Features by maturity
 
 | Status | Capability |
 |---|---|
-| **Implemented** | Conservative canonicalizer (`src/lexora/canonicalize.py`), Zstd core baseline (`src/lexora/zstd_core.py`), `.lxz` v0 container (`src/lexora/container.py`, ADR-0007), **nine CLI verbs** (`canon`/`zround`/`pipe`/`pack`/`unpack`/`verify`/`inspect`/`batch`/`doctor` — see [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)), benchmark harness (`benchmarks/harness.py` + `corpus.py`, reproducible per [benchmarks/README.md](benchmarks/README.md)), test suite (**492 passed, 1 skipped**, verified 2026-10-29). **Every core path streams** — encode, decode and canonicalization are flat in document size (measured: 126 MiB / 35 MiB / 35 MiB peak) |
-| **In progress** | GUI milestones M1–M3 landed & offscreen-tested but **not released**; ADR-0011 decided the GUI becomes a *client of the CLI* (process separation) and that implementation has not started — it needs a Qt-capable machine. Corpus **meets** the ≥1 GiB benchmark requirement (2395 files / 1.054 GiB, OQ-8); what is missing is a protocol-scope run and owner sign-off. GitHub Actions paused by owner (OQ-15) — local gate is `pytest -q` + linkcheck |
-| **Planned** | TXT/PDF ingestion; experimental candidates (dictionaries, Re-Pair, bounded token PPM, numeric/record coding, template+residual); `.lxdb` database mode; optional encryption profile; GUI stretch items (batch queue, drag-and-drop, shortcuts) |
+| **Implemented** | Conservative canonicalizer (`src/lexora/canonicalize.py`), Zstd core baseline (`src/lexora/zstd_core.py`), `.lxz` v0 container (`src/lexora/container.py`, ADR-0007), **TXT and PDF text-layer ingestion** with provenance per document (ADR-0017), **OCR as an external Tesseract plugin** (ADR-0019), the **queryable archive** (`lexora db` — a SQLite sidecar index over `.lxz` payloads, ADR-0016; schema v3 with the tokenizer recorded per ADR-0024 and a `doc_grams` index that answers 1–2 character CJK queries), **three language plugins** (English, Hindi `hi-1`, Chinese `zh-1`) selectable with `--language`, a **GUI query view that is a client of the CLI** (ADR-0011, offscreen-tested), the benchmark harness (`benchmarks/harness.py` + `corpus.py`, reproducible per [benchmarks/README.md](benchmarks/README.md)), and **eleven subcommands** (see [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)). **Every core path streams** — encode, decode and canonicalization are flat in document size (measured: 126 MiB / 35 MiB / 35 MiB peak). The live test count is the CI badge; the local count and the date it was measured are in [docs/STATUS.md](docs/STATUS.md) |
+| **In progress** | **Gate G2, the protocol-scope benchmark** — the one unmet release precondition. R6 already reproduces across splits and reps, but at 5.9 MB instead of the 1.054 GiB corpus, on one machine class, without the `xz` CLI and without the `ppmd-7z` row ([PATH_TO_V1](docs/PATH_TO_V1.md) P0). The corpus **meets** the ≥1 GiB requirement (2395 files / 1.054 GiB, OQ-8). The `doc_grams` table that answers short CJK queries costs ~5× the stored payload — stated, not hidden. GitHub Actions run on every push |
+| **Planned** | `.lxdb`, the single queryable file ([ADR-0013](docs/ADR/ADR-0013-lxdb-layout.md), Proposed, gated on G2); the optional encryption profile ([docs/ENCRYPTION_PROFILE.md](docs/ENCRYPTION_PROFILE.md), Proposed); the cleaning-error metric operationalised (REQ-CAN-007, ADR-0004); a packed-hash form of the `doc_grams` table; GUI stretch items (batch queue, drag-and-drop, shortcuts) |
 
 ## Architecture overview (proposed)
 
@@ -89,12 +91,12 @@ TXT/PDF ──▶ Extraction (optional OCR) ──▶ Canonicalization (versione
         ◀── decode ◀── verify: decode(encode(C)) == C enforced at build time
 ```
 
-A normative specification (`docs/SPECIFICATION.md`) and detailed architecture documents exist as drafts (Batch B). To contribute, see [CONTRIBUTING.md](CONTRIBUTING.md); the release process is documented in `docs/RELEASE_PROCESS.md` (no releases exist yet).
+A normative specification (`docs/SPECIFICATION.md`) and detailed architecture documents exist as drafts (Batch B). To contribute, see [CONTRIBUTING.md](CONTRIBUTING.md); the release process is documented in `docs/RELEASE_PROCESS.md` (two alpha releases are tagged — `v0.1.0-alpha.1` and `v0.2.0-alpha.1` — both **not for production data**).
 
 ## Supported inputs & current limitations
 
-- **Design targets:** `.txt` (UTF-8/other encodings), `.pdf` (text-layer first; OCR for scanned pages), scripts: Latin, Devanagari, Gujarati.
-- **Current reality:** byte-level canonicalization of raw text streams is implemented (rules CAN-R01/R02/R05 of the v0 rule set); TXT/PDF *file ingestion* is not implemented yet. Build scope is English-only per owner directive 2026-10-16 (Hindi/Gujarati deferred, not blocking).
+- **Design targets:** `.txt` (UTF-8/other encodings), `.pdf` (text-layer first; OCR for scanned pages), scripts: Latin, Devanagari, Han (Chinese); Gujarati designed for, not built.
+- **Current reality:** TXT and PDF text-layer ingestion are implemented (`src/lexora/ingest.py`, ADR-0017 — page order preserved, `mode`/`engine`/`pages`/`text_sha256` stored per REQ-ING-004); scanned pages can be OCR'd through an external Tesseract binary (ADR-0019); English, Hindi and Chinese are selectable on the CLI (`--language hi|zh`, P3.6). Three limits are stated rather than hidden: OCR accuracy has never been checked against a human transcript; a query shorter than three characters in Chinese is answered from a bigram index that costs ~5× the stored payload; and a plugin path buffers instead of streaming, because a plugin declares a whole-document `canonicalize`.
 
 ## Installation / Quick start
 

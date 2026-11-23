@@ -85,7 +85,7 @@ python3 scripts/linkcheck.py     # ALL INTERNAL LINKS OK expected
 git status --short && git log --oneline -3
 # Tests run with the broken system libtmux pytest plugin disabled (pytest 9.x
 # rejects its marks-on-fixtures usage; verified 2026-10-15):
-python3 -m pytest -q    # 502 passed, 1 skipped expected (libtmux neutralized repo-wide via pyproject addopts since S25)
+python3 -m pytest -q    # the whole suite must pass; libtmux is neutralized repo-wide via pyproject addopts since S25. The current count and the date it was measured live in STATUS.md — a number written here is a claim nothing recomputes
 python benchmarks/harness.py env --out /tmp/env.json   # smoke-check tool capture
 ```
 

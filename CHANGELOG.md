@@ -19,7 +19,7 @@ document (60,000 canonical bytes, 29,515 stored bytes) the index holds 10,389 gr
 147,456 bytes — 5× the stored payload and 2.5× the canonical text. That is the price of
 answering without reading a blob; a packed-hash form of the same table is the next step
 if the ratio comes to matter more than the exactness.
-`tests/test_catalog_tokenizer.py` 24 → 36 tests; the suite is **754 passed, 14 skipped**.
+`tests/test_catalog_tokenizer.py` 24 → 36 tests; the suite was **754 passed, 14 skipped** on the branch and is **765 passed, 3 skipped** on `main` with both language plugins installed (re-measured 2026-11-23 after both PRs merged).
 Ten mutations were run — bigrams dropped, the case fold dropped, grams written for prose
 documents, grams not dropped on unindex, the index ignored, uncovered documents never
 scanned, the backfill skipped, the title left out of the index, the truncation flag

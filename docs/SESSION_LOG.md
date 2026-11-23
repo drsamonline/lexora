@@ -2088,3 +2088,44 @@ accuracy is unverified against a human transcript, `.lxdb` does not exist, one l
 no encryption — because an alpha that oversells is worse than no alpha.
 
 **Gate:** **736 passed, 0 skipped**; linkcheck clean.
+
+---
+
+## Backfill — 2026-11-09 → 2026-11-23 (reconstructed, not recalled)
+
+Session 91 is the last entry written at the time. Everything below merged after it and left only
+a pull request behind, so it is listed from the **merge history** — dates and titles are the
+repository's own record, and no narrative has been invented for sessions nobody wrote down.
+Session numbering resumes with the next session that is actually written.
+
+| Merged | PR | What changed |
+|---|---|---|
+| 2026-11-09 | #38 | **Hindi as a second plugin** — `packages/lexora-lang-hi`, rule HI-R01 = NFC (the Devanagari nukta letters are composition exclusions, so one word has two byte spellings), provenance `hi-1` recorded in the archive header, [ADR-0023](ADR/ADR-0023-plugin-provenance.md) |
+| 2026-11-09 | #39 | **zstd dictionary mode** — a frame that needs a dictionary is refused without it |
+| 2026-11-15 | #40 | **`NOTICE`** — PolyForm's Required Notice, the LGPL the GUI carries, and where the numbers come from |
+| 2026-11-15 | #41 | **CI is running** — the "paused" note had outlived the pause |
+| 2026-11-15 | #42 | **A benchmark-claims checker** — figures that disagree with the artifacts now fail a gate |
+| 2026-11-15 | #43 | **Landing page** — a white ghost button, a stale test count, and no way back to the fleet |
+| 2026-11-18 | #44 | **Conflict markers in this file** resolved, and a gate added so they cannot return |
+| 2026-11-18 | #45 | **External references assessed** — the fleet's compression work, and three gaps it exposes |
+| 2026-11-18 | #46 | **README** stops quoting the CI count as if it were a target |
+| 2026-11-18 | #47 | **MinerU rejected on licence**; docling is not heavy and goes in an extra |
+| 2026-11-18 | #48 | **Release `v0.2.0-alpha.1`** — `--language` on `canon`/`pack` (P3.6), the version a user reads made true (`lexora --version` had answered `0.1.0a1` for the `0.1.0a2` release) |
+| 2026-11-18 | #49 | **Release hashes of the attached artifacts**, not of a rebuild |
+| 2026-11-23 | #50 | **A short CJK query answered** instead of returning a silent zero — a bounded literal scan, `SHORT_QUERY_SCAN_LIMIT`, `last_search_truncated` surfaced on stderr |
+| 2026-11-23 | #51 | **…then answered from an index** — `doc_grams` (schema **v3**), every unigram and bigram of the case-folded path/title/text, so a 1–2 character query costs the size of its answer and cannot truncate. Cost measured and stated: 5× the stored payload (P3.8). Its own sweep also found the gram rebuild in `compact()` dead, and deleted it |
+
+**What the gap cost, and what was done about it on 2026-11-23.** With no session record, three
+documents drifted in three different directions and each was wrong in a way nothing checked: the
+README said TXT/PDF ingestion "is not implemented yet" and the build scope was English-only;
+`ROADMAP.md` said M3 was "Not started" and had last been verified on 2026-10-15; `PROGRESS.md`
+still had P2 "Not started" and a 502-test gate from 2026-10-17. All three were reconciled against
+`main` @ `931aac4` in one pass, along with `STATUS.md`, `PATH_TO_V1.md` and the resume card, and
+the gate was re-run live rather than quoted: **765 passed, 3 skipped**, `scripts/linkcheck.py`
+ALL INTERNAL LINKS OK.
+
+**Lesson, and it is the same one three sessions in a row have taught:** a document that nothing
+recomputes decays silently. The guards in `tests/test_readme_claims.py` cover the verb list, the
+version a user reads and the absence of a static test count — they did not cover "is this
+capability actually built", because that sentence was prose. Two of the three drifts found here
+would have been caught by a milestone table that cites a test file instead of a claim.
