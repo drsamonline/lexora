@@ -66,7 +66,7 @@ multi-user concurrency, cloud anything.
 | Protocol-scope benchmark (G2) | **Shape done, scale not** | R6: 3 splits, 3 reps, 6 systems, leak audit clean, at 5.9 MB |
 | PDF ingestion (text layer) | **Done** | ADR-0017; `ingest.py`; 15 tests |
 | OCR (external Tesseract plugin) | **Done** | ADR-0019; `ocr_core.py`; 15 tests; real 99-page scan |
-| Multilingual — plugin seam | **Done: proven by three languages, and by a tokenizer that is not `unicode61`** | [ADR-0022](ADR/ADR-0022-language-plugins.md) + [ADR-0023](ADR/ADR-0023-plugin-provenance.md) + [ADR-0024](ADR/ADR-0024-tokenizer-recording.md); Hindi ships as `packages/lexora-lang-hi` and Chinese as `packages/lexora-lang-zh`, both readable without them |
+| Multilingual — plugin seam | **Done: proven by four languages, and by a tokenizer that is not `unicode61`** | [ADR-0022](ADR/ADR-0022-language-plugins.md) + [ADR-0023](ADR/ADR-0023-plugin-provenance.md) + [ADR-0024](ADR/ADR-0024-tokenizer-recording.md); Hindi ships as `packages/lexora-lang-hi`, Chinese as `packages/lexora-lang-zh` and Gujarati as `packages/lexora-lang-gu` (`gu-1`, 2026-11-23), all readable without them |
 | Multilingual — selectable from the CLI | **Done** | P3.6 landed 2026-11-16: `canon --language hi` / `pack --language hi`; 9 tests, defaults byte-identical |
 | Short CJK queries (the `trigram` floor) | **Done — answered from an index** | PRs #50/#51 merged 2026-11-23; [ADR-0024](ADR/ADR-0024-tokenizer-recording.md); schema v3 `doc_grams`; 36 tests in `tests/test_catalog_tokenizer.py` |
 | GUI query view | **Done** | `gui/query.py`; 14 offscreen tests; parity with the CLI asserted |
