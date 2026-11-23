@@ -52,7 +52,7 @@ read since the code landed.
 | ID | Requirement | Priority | Verification | Status |
 |---|---|---|---|---|
 | REQ-EXP-001 | Optional candidates (shared dictionaries, Re-Pair grammar, bounded token PPM, numeric/record coding, template+residual) enter only if they pass frozen-baseline gates under REQ-CMP-004 accounting | M | Benchmark protocol runs | **Partial** — registry and policy landed (ADR-0014/0015/0021); CHCE measured at R6 scale; PPMd withdrawn for corruption |
-| REQ-EXP-002 | Learned structures induced only from training split; never from validation/held-out documents | M | Lineage audit of dictionary build inputs | **Open** — zstd dictionary mode ships, but nothing audits that a dictionary was induced from the training split alone |
+| REQ-EXP-002 | Learned structures induced only from training split; never from validation/held-out documents | M | Lineage audit of dictionary build inputs | **Met, with a stated limit** — `benchmarks/lineage_audit.py` refuses any build input the manifest does not place in `train` (a held-out or unplaceable file is a refusal, not a pass) and records every input's SHA-256 beside the dictionary's; a verbatim leak probe is the backstop. **Measured limit:** a dictionary trained on contaminated samples carried **no** 24-byte run of the held-out document, so the input record is the control and the probe is not |
 | REQ-EXP-003 | Every candidate has a documented retirement threshold (re-ablation each benchmark revision) | S | Protocol checklist | **Partial** — the promotion and retirement rule is written and ziptastic's negative results are recorded; no per-revision re-ablation |
 
 ## 5. Formats & archives
@@ -79,7 +79,7 @@ read since the code landed.
 |---|---|---|---|---|
 | REQ-RES-001 | Full pipeline (ingest→canonicalize→compress→verify) completes on ~4 GiB-RAM machine for corpora far exceeding RAM via bounded blocks/streaming | M | Peak-RSS measurement on reference machine | **Partial** — core path measured at 84 MiB peak against a 512 MiB budget, streaming flat in document size; **the second machine class has never run** |
 | REQ-RES-002 | Python-first prototype; supported interpreter range pinned by ADR | M | CI matrix (once CI exists) | **Met** — Python ≥3.12,<4.0 pinned by ADR-0005; CI runs the suite on every push |
-| REQ-RES-003 | Offline operation after dependency installation | S | Network-disabled smoke test | **Open** — no network-disabled smoke test exists; nothing asserts offline operation after install |
+| REQ-RES-003 | Offline operation after dependency installation | S | Network-disabled smoke test | **Met** — `tests/test_offline.py` runs every user-facing verb in a child process whose socket constructor is replaced before `lexora` is imported: canon → pack → verify → unpack byte-identical, then db init/add/search/stats and doctor. A control test proves the guard blocks `socket.socket()`, `create_connection` and `urlopen`, so the suite cannot pass by accident |
 
 ## 8. Security & privacy
 
