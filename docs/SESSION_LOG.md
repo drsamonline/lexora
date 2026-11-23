@@ -1154,6 +1154,27 @@ fabrication.
 
 ---
 
+### Record gap — 2026-10-30 → 2026-11-06 (no session notes exist)
+
+Session 69 ends on 2026-10-29 and Session 70 begins on 2026-11-07. Work happened in between and
+left no entry here. It is not reconstructed from memory — only what other documents record is
+stated, and nothing is invented to fill the space:
+
+- **2026-10-30 — OQ-6 resolved by events** (`docs/DECISIONS.md`): the remote is
+  `https://github.com/drsamonline/lexora`, public, default branch `main`.
+- **2026-10-30 — OQ-9 resolved in practice**: Conventional Commits, Keep a Changelog and SemVer
+  in use since Session 42.
+- **2026-10-30 — OQ-15 resolved**: CI running again and green on `main` (runs `41045077241` and
+  the one after it, 503 passed) — the pause was over.
+- **2026-11-03 — a verification recorded in `docs/STATUS.md`**: 514 passed, 1 skipped, after
+  restoring the committed golden vector `tests/vectors/lxz_format/golden_1byte.lxz` to a SHA-256
+  matching its pinned digest.
+
+That is the whole of the surviving record. A session log that skips a week is not a reason to
+invent the week; it is a reason to say so. Closed as **P5.1** on 2026-11-23.
+
+---
+
 ## Session 70 — 2026-11-07 (audit against ziptastic; the second codec lands)
 
 **The task was an audit, so the first thing done was to run the gate rather than read

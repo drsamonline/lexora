@@ -155,8 +155,8 @@ without offscreen tests.
 
 | # | Item |
 |---|---|
-| P5.1 | **The Session-69→70 hole**: `SESSION_LOG.md` jumps from 2026-10-29 to Session 70, but `DECISIONS.md` records OQ-6/OQ-15 resolved 2026-10-30 and `STATUS.md` a 2026-11-03 verification. That work has no session record |
-| P5.2 | `CONTRIBUTING.md` has no contribution-licensing line — matters the moment an outside patch arrives |
+| ~~P5.1~~ | ~~**The Session-69→70 hole**: `SESSION_LOG.md` jumps from 2026-10-29 to Session 70, but `DECISIONS.md` records OQ-6/OQ-15 resolved 2026-10-30 and `STATUS.md` a 2026-11-03 verification. That work has no session record~~ | **DONE 2026-11-23** — a "Record gap" note sits where the hole is and states only what `DECISIONS.md` and `STATUS.md` actually record (OQ-6/OQ-9/OQ-15 on 2026-10-30; 514 passed / 1 skipped on 2026-11-03). Nothing invented to fill the week |
+| ~~P5.2~~ | ~~`CONTRIBUTING.md` has no contribution-licensing line — matters the moment an outside patch arrives~~ | **DONE** — it has one: §"Licensing of contributions", inbound = outbound under PolyForm Noncommercial, with the relicense question answered rather than left implicit. The stale "when Phase 1 code begins" paragraph beside it was replaced in the same pass |
 | ~~P5.3~~ | ~~`ROADMAP.md` milestone statuses lag reality (M2 in progress, M5 direction decided)~~ | **DONE 2026-11-23** — all seven milestones re-read against `main`; M3 is no longer "Not started", M4/M6/M7 say what actually landed and what the exit evidence still lacks |
 | ~~P5.4~~ | ~~`SESSION_LOG.md` stops at Session 91 (2026-11-09), so six days of merged work has no record~~ | **DONE 2026-11-23** — a backfill table appended, reconstructed from PR history and labelled as reconstructed rather than recalled |
 
