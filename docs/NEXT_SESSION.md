@@ -25,6 +25,8 @@ is only the state and the split of work. That file is the plan of record.
 1. **P0 — gate G2, the protocol-scope benchmark.** The only item that blocks the headline claim
    *and* `.lxdb`. Environmental, not analytical: the 1.054 GiB snapshot, a second machine class,
    the `xz` CLI row, the `ppmd-7z` row (settles OQ-18), then owner sign-off. ~2 GB disk, 6–8 h.
+   **[P0_RUNBOOK.md](P0_RUNBOOK.md) has the commands and `scripts/p0_preflight.py` checks the five
+   things that otherwise fail at hour five.**
 2. **P1 — `.lxdb`** (ADR-0013, Proposed) — gated on P0 by owner decision. Do not start it first.
 3. **P3.5** — the cleaning-error rate (REQ-CAN-007, ADR-0004) operationalised; header/footer dedup
    (CAN-R10) needs it before code.

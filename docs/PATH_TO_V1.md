@@ -82,7 +82,9 @@ multi-user concurrency, cloud anything.
 ### P0 — Close gate G2 (blocks `.lxdb`, unblocks the headline claim)
 
 The only thing between R6 and a publishable revision. **Environmental, not analytical** —
-R6 already showed the result reproduces across splits and reps.
+R6 already showed the result reproduces across splits and reps. **The commands live in
+[P0_RUNBOOK.md](P0_RUNBOOK.md)**: preflight (`scripts/p0_preflight.py`, which checks the corpus,
+`xz`, `7z`, disk and machine class), then one `harness.py run` per split, then the sign-off.
 
 | # | Item | Done when |
 |---|---|---|
@@ -93,7 +95,8 @@ R6 already showed the result reproduces across splits and reps.
 | P0.4 | **Owner sign-off**, then publish as a revision | A row in BENCHMARK_RESULTS.md, not a draft |
 
 Budget **hours**: CHCE runs at 0.39–0.45 MiB/s and the harness compresses every file twice
-per rep (measurement + forked RSS probe). See [R6_PROTOCOL_SHAPED_2026-11-07.md](R6_PROTOCOL_SHAPED_2026-11-07.md).
+per rep (measurement + forked RSS probe). See [R6_PROTOCOL_SHAPED_2026-11-07.md](R6_PROTOCOL_SHAPED_2026-11-07.md)
+and [P0_RUNBOOK.md](P0_RUNBOOK.md) for the run itself.
 
 ### P1 — `.lxdb`, the single queryable file (blocked on P0)
 
@@ -172,7 +175,7 @@ stalls with a green gate:
 
 | # | Item | Why it cannot be delegated |
 |---|---|---|
-| P7.1 | **Run P0** on a machine with ~2 GB free disk, `xz` on PATH and 6–8 hours | The 1.054 GiB corpus run is the one thing no working container here can host; the numbers have to come from a machine that has the corpus and the time |
+| P7.1 | **Run P0** on a machine with ~2 GB free disk, `xz` on PATH and 6–8 hours — commands and preflight in [P0_RUNBOOK.md](P0_RUNBOOK.md) | The 1.054 GiB corpus run is the one thing no working container here can host; the numbers have to come from a machine that has the corpus and the time |
 | P7.2 | **Sign off the R5/G2 revision** | RELEASE_PROCESS and ADR-0001 make the owner's verdict the gate. A number published without it is a claim, which is exactly what the project refuses to make |
 | P7.3 | **OQ-18: what replaces PPMd** — the `7z` binary as an external plugin, PPMd inside ziptastic, or drop the preset | A codec-policy decision ([ADR-0021](ADR/ADR-0021-codec-policy-v2.md) withdrew `pyppmd`); it changes what "max-ratio" means |
 | P7.4 | **OCR language scope** — English only, English + Chinese (`chi_sim`), or add Hindi/Gujarati | Product scope, and it decides what the OCR accuracy sample has to contain |

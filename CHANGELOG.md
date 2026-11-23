@@ -98,6 +98,21 @@ with English as its first plugin; 736 tests.
 ## [Unreleased]
 
 ### Documentation
+- 2026-11-23 (**P0 has commands now, and a preflight** — P7.1): `docs/P0_RUNBOOK.md` is the run in
+  order — preflight, corpus, environment, one `harness.py run` per split, artifact verification,
+  sign-off — with the failure table for the four ways it can go wrong. `scripts/p0_preflight.py`
+  checks the five things that otherwise fail *late*: the corpus is ≥ 1 GiB with every manifest file
+  present at the right size and all three splits; `xz` is on PATH (P0.3 wants the CLI row, not
+  `xz9-lzma`); `7z` is on PATH (P0.3a's `ppmd-7z` row, the measurement that settles OQ-18); ≥ 2 GiB
+  free; and **the machine class differs from `benchmarks/env.json`** — because P0.2 asks for a second
+  class, and the same box under a new hostname is a re-run, not a second class. Exit 2 on NO-GO, and
+  a JSON report so what the machine was is evidence rather than memory. `--allow-missing-7z` records a
+  deliberately smaller claim instead of hiding it. 11 tests, all on the refusals — there is no 1 GiB
+  corpus here, so the pass path is tested with a synthetic one and the binary checks stubbed.
+  Before this, P0 was a list of conditions with no commands: it could only be assembled by reading
+  three documents and guessing at seven harness subcommands.
+
+### Documentation (earlier)
 - 2026-11-23 (**the cost-based selector is designed, measured, and left to the owner** — REQ-CMP-003,
   [ADR-0026](docs/ADR/ADR-0026-cost-based-selection.md), **Proposed**): `COST_MODEL.md` rule 2 says
   *argmin of total serialized bytes per block*; `.lxz` v0 carries **one** `codec_id` (ADR-0007 frozen),
