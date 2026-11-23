@@ -95,6 +95,23 @@ with English as its first plugin; 736 tests.
 ## [Unreleased]
 
 ### Added
+- 2026-11-23 (**the cleaning-error rate has an instrument**, P3.5 / REQ-CAN-007, [ADR-0004](docs/ADR/ADR-0004-cleaning-error-metric.md)):
+  `benchmarks/cleaning_audit.py` implements the metric the ADR accepted a year of decisions ago and
+  nothing measured — a seeded stratified sample, a review worksheet a human fills in, and a score
+  with the point estimate *and* the 95 % cluster-bootstrap upper bound the requirement asks for.
+  It **refuses** rather than guesses: exit 2 on a language with fewer than 200 documents, on any
+  blank verdict, or on a sheet with no denominator. `selftest` proves the instrument on a synthetic
+  sample where the truth is known by construction — 400 documents, 9,740 changes, 0 incorrect,
+  **0.0 %, and labelled synthetic in the report itself** — and a test monkeypatches an over-eager
+  canonicaliser (strips ZWJ/ZWNJ, expands ligatures, trims trailing whitespace) to assert the
+  instrument reports **FAIL**. **No cleaning-error rate exists for the real corpus**; that needs
+  two human reviewers, and saying so is the point.
+  Recorded because it nearly became a false number: the first version diffed whole documents and
+  reported **20.4 % on a canonicaliser that had made no incorrect change** — repetitive text has
+  many valid alignments and SequenceMatcher chose one that swallowed a correct passage. Diffing
+  line by line fixed it; the bug and the fix are both pinned by tests.
+  `docs/CLEANING_AUDIT.md` is the protocol; `docs/templates/CLEANING_REVIEW_WORKSHEET.md` is what a
+  reviewer reads. 15 tests.
 - 2026-11-23 (**the GUI's notices now travel with the distribution**, P2.4 / R3 obligation):
   the `[gui]` extra takes PySide6 under LGPL-3.0-only, and until now the obligations were
   *described* in `NOTICE` while the texts themselves lived nowhere in the package. Now the
