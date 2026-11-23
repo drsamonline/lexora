@@ -55,8 +55,16 @@ def test_the_probe_still_measures_the_shipped_codec_and_reports_a_pick() -> None
     )
 
 
-def test_a_missing_binary_is_recorded_not_dropped(tmp_path) -> None:
-    """The mechanism, not the instance: an empty bin dir must yield `not_measured` with reasons."""
+def test_a_missing_binary_is_recorded_not_dropped(tmp_path, monkeypatch) -> None:
+    """The mechanism, not the instance: with nothing findable, every external candidate is recorded.
+
+    `shutil.which` is stubbed as well as the bin dir emptied, because the probe falls back to PATH
+    by design — and the CI runner *has* `xz`, which made the first version of this test pass here
+    and fail there. A test that depends on the machine's installed tools is not testing the probe.
+    """
+    import shutil
+
+    monkeypatch.setattr(shutil, "which", lambda name, *a, **k: None)
     result = selector_probe.measure(SAMPLE, reps=1, bin_dir=tmp_path)
     assert "chce (ziptastic)" in result["not_measured"]
     assert "xz -9 (CLI)" in result["not_measured"]

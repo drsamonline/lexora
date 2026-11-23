@@ -125,7 +125,10 @@ with English as its first plugin; 736 tests.
   reading `7z`'s locale-encoded banner crashed the probe *after* it had written nothing, leaving the
   previous artifact in place and looking current; and the version matcher picked "Unsupported
   command: --version" as a version, because the error text contains the word. Both fixed, both
-  guarded by tests that assert the mechanism rather than the instance.
+  guarded by tests that assert the mechanism rather than the instance — and the first version of
+  that guard failed **in CI only**, because the runner has `xz` on PATH while this container does
+  not. The test now stubs `shutil.which` as well as emptying the bin dir: a test that depends on
+  the machine's installed tools is not testing the probe.
 
 ### Documentation
 - 2026-11-23 (**P0 has commands now, and a preflight** — P7.1): `docs/P0_RUNBOOK.md` is the run in
