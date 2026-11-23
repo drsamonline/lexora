@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LEXORA — byte-exact compression for document collections</title>
-<meta name="description" content="Canonicalize conservatively, then compress with a guarantee that holds for every input: decode(encode(C)) == C. Phase 1 complete, no releases yet.">
+<meta name="description" content="Canonicalize conservatively, then compress with a guarantee that holds for every input: decode(encode(C)) == C. Phase 1 complete; two alpha releases tagged, not for production data.">
 <meta name="theme-color" content="#0a0a0b" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f7f6f2" media="(prefers-color-scheme: light)">
 <meta property="og:title" content="LEXORA — byte-exact compression for document collections">
@@ -258,7 +258,7 @@
       <div>
         <h3>Built for low resources</h3>
         <p>Designed to run inside a ~4 GiB RAM budget using bounded, block-based streaming.
-        English, Hindi and Gujarati are design targets.</p>
+        English, Hindi, Chinese and Gujarati ship as plugins behind one seam.</p>
         <span class="tag">bounded blocks</span>
       </div>
     </div>
@@ -311,7 +311,7 @@ lexora verify corpus.lxz        <span class="c"># decode(encode(C)) == C, or it 
 
   <footer>
     <div class="wrap">
-      <span>LEXORA · © 2026 Dr Sohil Momin · phase 1 complete · no releases yet</span>
+      <span>LEXORA · © 2026 Dr Sohil Momin · two alpha releases · not for production data</span>
       <a href="https://github.com/drsamonline/lexora">GitHub</a>
       <span class="stamp">design 2026-11-06</span>
     </div>
