@@ -98,6 +98,20 @@ with English as its first plugin; 736 tests.
 ## [Unreleased]
 
 ### Added
+- 2026-11-23 (**the cost model now closes against the file, exactly** — REQ-CMP-004):
+  `benchmarks/cost_audit.py` decomposes an `.lxz` into the model's terms and requires the sum to
+  equal the file size with **no tolerance**: 128 B header + Σ compressed payload + 56 B per-block
+  index entry + 40 B trailer, with side tables, dictionary and residual reported as zero because v0
+  carries none. Measured on a one-block archive: **287 B, unaccounted 0.**
+  The two mistakes it exists to catch are both flattering, which is why they survive review —
+  charging the index entry to `blockMetadata` *and* `indexContribution` makes the accounting 56
+  bytes per block **larger** than the archive (the codec looks better than it is), and forgetting
+  the 40-byte trailer makes it **smaller** (it looks like a saving). Both are pinned by tests, and
+  a byte inserted between the index and the trailer is reported as unaccounted rather than
+  absorbed. 11 tests. **Scope:** this audits the counting, not the choosing — the argmin over
+  candidates is REQ-CMP-003 and is still open.
+
+### Added (earlier)
 - 2026-11-23 (**two requirements closed, and one of them closed honestly**, REQ-EXP-002 + REQ-RES-003):
   - **`benchmarks/lineage_audit.py`** — a learned structure may be induced from the training split
     and nothing else. It refuses any build input the manifest does not place in `train` (a held-out
