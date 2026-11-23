@@ -69,7 +69,10 @@ Generic compressors (Zstandard, XZ, Brotli) treat text as opaque bytes. Document
 - Operate within a ~4 GiB RAM budget with bounded, streaming/block-based processing.
 - Multilingual support through plugins: **English, Hindi (Devanagari) and Chinese ship
   today** as separate distributions behind one seam ([ADR-0022](docs/ADR/ADR-0022-language-plugins.md)).
-  Gujarati is designed for and not yet built.
+  **Gujarati** ships too (`gu-1`) — the half of REQ-CAN-005 that had no implementation until
+  2026-11-23, and the first language whose script-specific rule is *ordering* rather than
+  composition: Gujarati has no precomposed nukta letters, so NFC sorts its marks instead of
+  merging letters.
 
 ## Non-goals (current scope)
 
@@ -81,7 +84,7 @@ Generic compressors (Zstandard, XZ, Brotli) treat text as opaque bytes. Document
 
 | Status | Capability |
 |---|---|
-| **Implemented** | Conservative canonicalizer (`src/lexora/canonicalize.py`), Zstd core baseline (`src/lexora/zstd_core.py`), `.lxz` v0 container (`src/lexora/container.py`, ADR-0007), **TXT and PDF text-layer ingestion** with provenance per document (ADR-0017), **OCR as an external Tesseract plugin** (ADR-0019), the **queryable archive** (`lexora db` — a SQLite sidecar index over `.lxz` payloads, ADR-0016; schema v3 with the tokenizer recorded per ADR-0024 and a `doc_grams` index that answers 1–2 character CJK queries), **three language plugins** (English, Hindi `hi-1`, Chinese `zh-1`) selectable with `--language`, a **GUI query view that is a client of the CLI** (ADR-0011, offscreen-tested), the benchmark harness (`benchmarks/harness.py` + `corpus.py`, reproducible per [benchmarks/README.md](benchmarks/README.md)), and **eleven subcommands** (see [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)). **Every core path streams** — encode, decode and canonicalization are flat in document size (measured: 126 MiB / 35 MiB / 35 MiB peak). The live test count is the CI badge; the local count and the date it was measured are in [docs/STATUS.md](docs/STATUS.md) |
+| **Implemented** | Conservative canonicalizer (`src/lexora/canonicalize.py`), Zstd core baseline (`src/lexora/zstd_core.py`), `.lxz` v0 container (`src/lexora/container.py`, ADR-0007), **TXT and PDF text-layer ingestion** with provenance per document (ADR-0017), **OCR as an external Tesseract plugin** (ADR-0019), the **queryable archive** (`lexora db` — a SQLite sidecar index over `.lxz` payloads, ADR-0016; schema v3 with the tokenizer recorded per ADR-0024 and a `doc_grams` index that answers 1–2 character CJK queries), **four language plugins** (English, Hindi `hi-1`, Chinese `zh-1`, Gujarati `gu-1`) selectable with `--language`, a **GUI query view that is a client of the CLI** (ADR-0011, offscreen-tested), the benchmark harness (`benchmarks/harness.py` + `corpus.py`, reproducible per [benchmarks/README.md](benchmarks/README.md)), and **eleven subcommands** (see [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)). **Every core path streams** — encode, decode and canonicalization are flat in document size (measured: 126 MiB / 35 MiB / 35 MiB peak). The live test count is the CI badge; the local count and the date it was measured are in [docs/STATUS.md](docs/STATUS.md) |
 | **In progress** | **Gate G2, the protocol-scope benchmark** — the one unmet release precondition. R6 already reproduces across splits and reps, but at 5.9 MB instead of the 1.054 GiB corpus, on one machine class, without the `xz` CLI and without the `ppmd-7z` row ([PATH_TO_V1](docs/PATH_TO_V1.md) P0). The corpus **meets** the ≥1 GiB requirement (2395 files / 1.054 GiB, OQ-8). The `doc_grams` table that answers short CJK queries costs **3.15×–13.29× the stored payload** depending on how much a corpus repeats itself, measured rather than assumed ([ADR-0025](docs/ADR/ADR-0025-gram-index-layout.md), `benchmarks/results-gram-index.json`). GitHub Actions run on every push |
 | **Planned** | `.lxdb`, the single queryable file ([ADR-0013](docs/ADR/ADR-0013-lxdb-layout.md), Proposed, gated on G2); the optional encryption profile ([docs/ENCRYPTION_PROFILE.md](docs/ENCRYPTION_PROFILE.md), Proposed); the cleaning-error metric operationalised (REQ-CAN-007, ADR-0004); a packed-hash form of the `doc_grams` table; GUI stretch items (batch queue, drag-and-drop, shortcuts) |
 
@@ -97,8 +100,8 @@ A normative specification (`docs/SPECIFICATION.md`) and detailed architecture do
 
 ## Supported inputs & current limitations
 
-- **Design targets:** `.txt` (UTF-8/other encodings), `.pdf` (text-layer first; OCR for scanned pages), scripts: Latin, Devanagari, Han (Chinese); Gujarati designed for, not built.
-- **Current reality:** TXT and PDF text-layer ingestion are implemented (`src/lexora/ingest.py`, ADR-0017 — page order preserved, `mode`/`engine`/`pages`/`text_sha256` stored per REQ-ING-004); scanned pages can be OCR'd through an external Tesseract binary (ADR-0019); English, Hindi and Chinese are selectable on the CLI (`--language hi|zh`, P3.6). Three limits are stated rather than hidden: OCR accuracy has never been checked against a human transcript; a query shorter than three characters in Chinese is answered from a bigram index that costs ~5× the stored payload; and a plugin path buffers instead of streaming, because a plugin declares a whole-document `canonicalize`.
+- **Design targets:** `.txt` (UTF-8/other encodings), `.pdf` (text-layer first; OCR for scanned pages), scripts: Latin, Devanagari, Han (Chinese), Gujarati.
+- **Current reality:** TXT and PDF text-layer ingestion are implemented (`src/lexora/ingest.py`, ADR-0017 — page order preserved, `mode`/`engine`/`pages`/`text_sha256` stored per REQ-ING-004); scanned pages can be OCR'd through an external Tesseract binary (ADR-0019); English, Hindi, Chinese and Gujarati are selectable on the CLI (`--language hi|zh|gu`, P3.6). Three limits are stated rather than hidden: OCR accuracy has never been checked against a human transcript; a query shorter than three characters in Chinese is answered from a bigram index that costs ~5× the stored payload; and a plugin path buffers instead of streaming, because a plugin declares a whole-document `canonicalize`.
 
 ## Installation / Quick start
 

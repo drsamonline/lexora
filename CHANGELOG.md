@@ -98,6 +98,24 @@ with English as its first plugin; 736 tests.
 ## [Unreleased]
 
 ### Added
+- 2026-11-23 (**Gujarati ships, and its rule is not a copy of Hindi's** — REQ-CAN-005):
+  `packages/lexora-lang-gu` is the fourth language plugin (`gu-1`, `unicode61`, OCR `guj`), so the
+  requirement that names *Devanagari and Gujarati* is finally met by two implementations rather
+  than by a sentence. Installs the same way the other two do and appears in `lexora doctor`:
+  `en (lexcan-0.1), zh (zh-1, trigram), hi (hi-1), gu (gu-1, unicode61)`.
+  **The finding is that the rule does something different here.** Devanagari's NFC earns its keep
+  by *composing*: its nukta letters (U+0958–U+095F) are composition exclusions, so two byte
+  spellings collapse to one. **Gujarati has no precomposed nukta letters at all** — Unicode 15.0
+  defines **zero** canonical decompositions anywhere in U+0A80–U+0AFF, and a test asserts that
+  rather than trusting the prose. Gujarati's NFC win is *canonical ordering*: nukta (ccc 7) sorts
+  before virama (ccc 9), so `ક` + virama + nukta and `ક` + nukta + virama converge. Same
+  consequence — one word, one archive, one search hit — reached by a different mechanism, and a
+  plugin that copied Hindi's rationale would be claiming a saving this script cannot make.
+  ZWJ/ZWNJ preserved, digits untouched, no legacy-font transcoding (stated as out of scope, since
+  Terafont/Shree Lipi text is not Unicode text). 15 tests, including the readability-without-the-
+  plugin subprocess check. `REQ-CAN-005` moves from **Partial** to **Met**.
+
+### Added (earlier)
 - 2026-11-23 (**the cost model now closes against the file, exactly** — REQ-CMP-004):
   `benchmarks/cost_audit.py` decomposes an `.lxz` into the model's terms and requires the sum to
   equal the file size with **no tolerance**: 128 B header + Σ compressed payload + 56 B per-block

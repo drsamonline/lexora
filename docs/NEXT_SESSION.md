@@ -18,7 +18,7 @@ is only the state and the split of work. That file is the plan of record.
 | Query | `lexora db` — SQLite sidecar over `.lxz` payloads; 0.34 s query, index ~7.6 % of text; schema **v3** with per-document tokenizer (ADR-0024) and `doc_grams` for 1–2 character CJK queries |
 | Ingest | TXT + PDF text layer (ADR-0017); OCR via external Tesseract (ADR-0019); OCR accuracy never checked against a human transcript |
 | GUI | Query view, a client of the CLI (ADR-0011), offscreen-tested |
-| Languages | en, hi (`hi-1`), zh (`zh-1`, `trigram`) — selectable with `--language`; Gujarati designed for, not built |
+| Languages | en, hi (`hi-1`), zh (`zh-1`, `trigram`), gu (`gu-1`) — all selectable with `--language`; REQ-CAN-005 closed by `packages/lexora-lang-gu` |
 
 ## What is left, in the order it matters
 

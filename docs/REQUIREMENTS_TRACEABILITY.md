@@ -31,7 +31,7 @@ and expose any missing link as a gap. Optional (S/N) requirements may use lighte
 | REQ-CAN-002 | CANONICALIZATION §Output form | `src/lexora/canonicalize.py` | `tests/test_canon_vectors.py` + `tests/vectors/` | 9 golden byte vectors, byte-exact | P0 exit (freeze) + P1 | — |
 | REQ-CAN-003 | CANONICALIZATION rule table | `src/lexora/canonicalize.py` (`APPLIED_RULES_V0`) | `tests/test_canonicalize_invariants.py` (whitelist invariants) | rule table in `docs/CANONICALIZATION.md` | P1 exit | the table is not frozen for 0.x (CHANGELOG versioning note) |
 | REQ-CAN-004 | SPEC §2.4 | `src/lexora/container.py` | `tests/test_container_lxz.py` | ADR-0023 made the field carry plugin provenance (`hi-1`, `zh-1`) | P1 exit | — |
-| REQ-CAN-005 | CANONICALIZATION §Scripts | `packages/lexora-lang-hi` (HI-R01 = NFC; ZWJ/ZWNJ untouched) | `tests/test_language_hindi_plugin.py`, `tests/test_canonicalize_invariants.py` | ADR-0022, ADR-0023 | P1 exit | Gujarati: no plugin, no script-specific golden vectors |
+| REQ-CAN-005 | CANONICALIZATION §Scripts | `packages/lexora-lang-hi`, `packages/lexora-lang-gu` | `tests/test_language_hindi_plugin.py`, `tests/test_language_gujarati_plugin.py` | script-specific vectors; ZWJ/ZWNJ preserved; NFC ordering asserted | P1 exit | — |
 | REQ-CAN-006 | CAN-R09 / OCR_PIPELINE | — | — | `docs/OCR_PIPELINE.md` §corrections | P3 exit | the requirement's premise (correction) does not exist yet |
 | REQ-CAN-007 | ADR-0004 (Accepted) | `benchmarks/cleaning_audit.py` | `tests/test_cleaning_audit.py` (15 tests) | ADR-0004 Option B | P3 exit | two human reviewers (PATH_TO_V1 P7.9) |
 | REQ-CMP-001 | SPEC §3.1 | `src/lexora/container.py`, `src/lexora/zstd_core.py` | `tests/test_container_lxz.py`, `tests/test_reader_fuzz.py`, `tests/test_writer_fuzz.py` | a mismatch exits 6 and writes nothing | **P1 hard gate** | — |
@@ -81,8 +81,7 @@ This section used to say every implementation link was a gap "because the reposi
 "
         "  requirement, not yet written.
 "
-        "- **REQ-CAN-005** — Devanagari is covered; **Gujarati has no plugin and no vectors**.
-"
+        ""
         "- **REQ-RES-001** — measured on one machine class; REF-4G has never run (P4.3).
 "
         "
