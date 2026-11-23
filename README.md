@@ -8,6 +8,17 @@
 Canonicalize text conservatively, then compress it with guaranteed byte-exact recovery — <code>decode(encode(C)) == C</code> for every input.</p>
 
 <p>
+<!-- The local set below is the offline fallback: this page promises to work with no network, so
+     it must not fetch its own self-description from an image service. The shields.io and CI
+     badges stay — they are live, and a committed SVG cannot carry a CI result. -->
+<a href="docs/assets/badge-live.svg"><img alt="Live: online" src="docs/assets/badge-live.svg"></a>
+<a href="docs/assets/badge-tests.svg"><img alt="Tests: green (count in CI)" src="docs/assets/badge-tests.svg"></a>
+<a href="docs/assets/badge-build.svg"><img alt="Build: green" src="docs/assets/badge-build.svg"></a>
+<a href="docs/assets/badge-licence.svg"><img alt="Licence: PolyForm Noncommercial 1.0.0" src="docs/assets/badge-licence.svg"></a>
+<a href="docs/assets/badge-offline.svg"><img alt="Offline: no network" src="docs/assets/badge-offline.svg"></a>
+<a href="docs/assets/badge-deps.svg"><img alt="Dependencies: 1 runtime" src="docs/assets/badge-deps.svg"></a>
+</p>
+<p>
 <a href="https://drsamonline.github.io/lexora/"><img alt="Landing page: live" src="https://img.shields.io/badge/landing%20page-live-84cc16"></a>
 <a href="https://github.com/drsamonline/lexora/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/drsamonline/lexora/actions/workflows/ci.yml/badge.svg"></a>
 <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-blue">
