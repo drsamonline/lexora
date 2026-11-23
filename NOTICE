@@ -75,13 +75,22 @@ and the register labels each revision with its scope — R4 and R5, for instance
 are smoke-scope runs on different corpora and are explicitly not an ADR-0001
 verdict.
 
-That traceability is not yet complete, and this file would be misleading if it
-claimed otherwise: `README.md` quotes the shipped default as **0.3352**, while
-the register's R4/R5 write-up gives **0.3367** for the same default on its own
-corpus. Both may be right for their own file set, but a reader cannot currently
-tell which revision a README number belongs to. Until the two are reconciled,
-treat the register as the authority and the README as a summary that has not been
-re-derived from it.
+That traceability gap was closed on 2026-11-23, and this paragraph is the record of what it
+was. `README.md` quoted the shipped default as **0.3352** while the register gave **0.3367** for
+"the same" default, and a reader could not tell which revision either belonged to. Recomputing
+from the committed artifacts settled it:
+
+- **0.3367** is revision **4**, heldout only, 17 files / 12.1 MiB, 2 reps
+  (`benchmarks/results-r4-smoke.json`);
+- **0.3360** is revision **5**, all three splits, 184 files / 80.4 MiB, 3 reps
+  (`benchmarks/results-r4-{train,validation,heldout}.json`, whose `benchmark_revision` field reads
+  5 although the file names say `r4`);
+- **0.3352 has no surviving artifact** — revision 5's run reused revision 4's file names and
+  overwrote it. It is withdrawn from the README rather than carried forward.
+
+`README.md` and `docs/BENCHMARK_RESULTS.md` now quote revision 5 with its artifacts named, and
+`tests/test_benchmark_claims.py` recomputes each published ratio from those artifacts so the two
+cannot drift apart again. The register remains the authority.
 
 *Not legal advice. The licence texts are the authority, not this summary; whether
 a particular distribution satisfies PolyForm's `Required Notice` or the LGPL's

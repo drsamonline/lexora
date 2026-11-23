@@ -113,3 +113,33 @@ done
 ```
 
 The `--split` / `--max-bytes` selectors verify the **full** manifest hash before subsetting, and record the selector in the artifact, so a subset run never weakens provenance — it states exactly how it was cut.
+
+---
+
+## Correction appended 2026-11-23 — three numbers, and which run each belongs to
+
+This write-up is kept as written; the register's discipline is that historical entries are never
+edited retroactively, only corrected by an appended note. Three of its figures were mislabelled,
+and the artifacts settle which is which:
+
+| Figure | What it actually is | Artifact |
+|---|---|---|
+| **0.3367** | revision **4**, heldout only, 17 files / 12.1 MiB, 2 reps — the *first cut* | `benchmarks/results-r4-smoke.json` (`benchmark_revision: 4`) |
+| **0.3360** | revision **5**, all three splits, 184 files / 80.4 MiB, 3 reps | `benchmarks/results-r4-{train,validation,heldout}.json` (`benchmark_revision: 5`) |
+| **0.3352** | attributed here to a revision-4 all-splits run, 172 files / 78.6 MiB — **no surviving artifact** | none |
+
+So the two tables above that read "R5 = 0.3360" and "R4 (all splits) = 0.3352" are inverted in
+revision number and partly unsupported: 0.3360 **is** revision 5, and the 0.3352 figure cannot be
+re-derived because revision 5's run reused the same file names and overwrote revision 4's
+all-splits artifacts.
+
+Two consequences, both now in force:
+
+- **Cite artifacts by `benchmark_revision`, never by file name.** The files called `results-r4-*`
+  hold revision 5. That is a naming mistake, recorded in `benchmarks/README.md` rather than papered
+  over by a rename that would break every existing link.
+- **A ratio with no artifact is withdrawn, not carried forward.** `README.md` now quotes 0.3360
+  with its three artifacts named, and says plainly that 0.3352 was withdrawn.
+
+`tests/test_benchmark_claims.py` recomputes every published ratio from the committed artifacts and
+fails if a document disagrees with them, so this cannot silently rot again.

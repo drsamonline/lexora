@@ -61,8 +61,10 @@ jobs:
         run: python scripts/linkcheck.py
 
       - name: Benchmark claims must not contradict each other
-        # Advisory: README and ADR-0015 say the shipped default is 0.3352, the
-        # results register says 0.3367. Each may be right for its own run, so this
-        # reports rather than blocks until someone labels or corrects them. Add
-        # --strict the day they agree, and it becomes a gate.
-        run: python scripts/check-benchmark-claims.py
+        # A gate since 2026-11-23, the day they agreed. The three figures that used
+        # to disagree were three different runs wearing one label (0.3367 = rev 4's
+        # first cut, 0.3360 = rev 5 all-splits, 0.3352 = no surviving artifact), so
+        # the script now keys on (system, revision) and only compares like with
+        # like. A red here means someone quoted a number at a revision where it does
+        # not belong — which is what this check exists to catch.
+        run: python scripts/check-benchmark-claims.py --strict
