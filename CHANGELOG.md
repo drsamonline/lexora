@@ -98,6 +98,24 @@ with English as its first plugin; 736 tests.
 ## [Unreleased]
 
 ### Fixed
+- 2026-11-23 (**the requirements register claimed a project that no longer exists**):
+  `docs/PRODUCT_REQUIREMENTS.md` said **"Not started" for all 35 requirements** and
+  `docs/REQUIREMENTS_TRACEABILITY.md` left every Implementation, Test and Evidence cell empty,
+  both on the premise that "no code exists yet" — six weeks after ingestion, canonicalization, the
+  `.lxz` container, the query archive, OCR, three language plugins and the GUI had shipped with
+  tests. All 70 cells reconciled against the module and the test that actually implement each
+  requirement. The statuses are deliberately conservative and each names its evidence: **Met**
+  where a named test or artifact exists, **Partial** where half the requirement holds and the
+  unmet half is stated in the same cell, **Open** where nothing verifies it. The honest picture
+  that fell out: the open items are **REQ-CMP-004** (cost accounting audited against a real
+  archive), **REQ-CMP-003** (selection by cost rather than preset), **REQ-BMK-003** (an ADR-0001
+  verdict — gate G2), **REQ-CAN-007** (the cleaning rate — instrument built, sample unreviewed),
+  **REQ-EXP-002** (dictionary lineage audit), **REQ-RES-003** (offline smoke test), **REQ-CAN-005**
+  (Gujarati has no plugin), **REQ-RES-001** (one machine class), and **REQ-CAN-006** (nothing is
+  corrected, so nothing is confidence-gated). Both registers are now in the drift guard, so a
+  status that cites a module or a test that does not exist fails the build.
+
+### Fixed (earlier)
 - 2026-11-23 (**the three ratios were three runs, and one of them had no artifact**): `README.md`
   quoted the shipped default as **0.3352** on "172 files / 78.6 MiB", the register gave **0.3367**
   for "the same" default on "746 MB, 172 files", and `ADR-0015` backed 0.3352 with a byte count —
