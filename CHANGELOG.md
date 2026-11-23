@@ -98,6 +98,18 @@ with English as its first plugin; 736 tests.
 ## [Unreleased]
 
 ### Fixed
+- 2026-11-23 (**the fleet's verifier, and the meta description I had just made too long**):
+  `tools/verify.py` from `drsamonline/audit` runs 44 checks over a repo; lexora now reports
+  **0 failed, 9 warnings**, and every remaining warning is either a surface this product does not
+  have (no web app, so no service worker or installable manifest) or the screenshot gap below.
+  It caught one thing worth recording because **it was mine, from earlier the same day**: the meta
+  description I lengthened to name the releases came to **181 characters**, and a search result
+  truncates at about 160 — cutting off exactly the half that says *not for production data*. Now
+  **156 characters**, with a test that fails if it grows past the limit or loses the warning.
+  Also checked against the fleet's licence gate (`tools/licence_check.py`): badge, `LICENSE` and the
+  `pyproject.toml` SPDX all agree on PolyForm Noncommercial 1.0.0 — **ok**, no contradiction.
+
+### Fixed (earlier)
 - 2026-11-23 (**the fleet's presentation standard, applied** — found by running `drsamonline/audit`'s
   `tools/presentation_audit.py` against this repo, which had never been done): three surfaces were
   short of the standard the rest of the estate is held to, and nothing here checked any of them.
