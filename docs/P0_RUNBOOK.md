@@ -16,13 +16,36 @@ is what REQ-BMK-003 asks for. Nothing else on the register needs a machine.
 **Budget:** 6–8 hours wall clock, ~2 GB free disk. CHCE runs at 0.39–0.45 MiB/s and the harness
 compresses every file twice per rep (measurement + forked RSS probe).
 
-## 0. Preflight — ten seconds, and it saves the other seven hours
+## 0. The binaries — the estate already has them
+
+`xz`, `7z`, `brotli` and `ziptastic` are **not** in this container, and for a while that was recorded
+as "absent from the environment". They are not absent from the estate:
+[`drsamonline/heavenzip`](https://github.com/drsamonline/heavenzip) ships them under `bin/` —
+`ziptastic-1.4.5-linux-x86_64`, `xz` 5.8.4, `7z` 26.05, `brotli` 1.2.0, `zstd` 1.5.4 — built by its
+own CI. Clone it once and point everything at the directory:
+
+```bash
+git clone --depth 1 https://github.com/drsamonline/heavenzip ~/heavenzip
+export LEXORA_ZIPTASTIC=~/heavenzip/bin/ziptastic-1.4.5-linux-x86_64
+```
+
+The preflight and the selector probe both take `--bin-dir ~/heavenzip/bin`. That is also how the
+ziptastic real-binary test stops skipping, and how `brotli q11` and `ppmd-7z` became measurable at
+all — the first numbers either has ever had in this project came from exactly this.
+
+**One caveat worth knowing:** ADR-0014 pins ziptastic **1.2.0**; the estate ships **1.4.5** (CHCE
+format v8). The adapter's 27 tests pass against 1.4.5, but a protocol-scope run should record which
+version produced it — `benchmarks/selector_probe.py` records the version string beside every number
+for that reason.
+
+## 0.5 Preflight — ten seconds, and it saves the other seven hours
 
 ```bash
 python scripts/p0_preflight.py \
     --corpus corpus/gutenberg-r0 \
     --manifest benchmarks/MANIFEST.json \
     --out-root benchmarks \
+    --bin-dir ~/heavenzip/bin \
     --out benchmarks/p0-preflight.json
 ```
 

@@ -290,13 +290,18 @@ def test_cli_pack_codec_flag_reaches_the_header(stub_binary: str, tmp_path: Path
 # the real binary, when it exists
 # --------------------------------------------------------------------------- #
 
-REAL = ziptastic_core.shutil.which("ziptastic")
+# `find_binary()` honours $LEXORA_ZIPTASTIC as well as PATH — which is the documented
+# way to point at the binary, and was not what this line used to do. `shutil.which` alone
+# meant the one test that exercises the real codec skipped on a machine that had the binary
+# configured exactly as README.md says to configure it (found 2026-11-23, running against
+# the fleet's ziptastic 1.4.5).
+REAL = ziptastic_core.find_binary()
 
 
 @pytest.mark.skipif(REAL is None,
-                    reason="the real ziptastic binary is not installed here; the "
-                           "adapter's contract is covered by the stub, but its ratio "
-                           "and throughput are not (see ADR-0014)")
+                    reason="no ziptastic binary here; the adapter's contract is covered by "
+                           "the stub, but its ratio and throughput are not (see ADR-0014). "
+                           "Set $LEXORA_ZIPTASTIC or put `ziptastic` on PATH")
 def test_real_binary_roundtrip(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv(ziptastic_core.BINARY_ENV, REAL)
     payload = ("The quick brown fox jumps over the lazy dog. " * 200).encode()

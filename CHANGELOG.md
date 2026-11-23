@@ -97,6 +97,36 @@ with English as its first plugin; 736 tests.
 
 ## [Unreleased]
 
+### Fixed
+- 2026-11-23 (**the estate had the binaries all along, and the numbers changed** — ADR-0026,
+  REQ-BMK-002, OQ-18): `xz`, `7z`, `brotli` and `ziptastic` were recorded as "absent from the
+  environment" for weeks. They are not absent from the estate:
+  `drsamonline/heavenzip` → `bin/` ships `ziptastic-1.4.5-linux-x86_64`, `xz` 5.8.4, `7z` 26.05,
+  `brotli` 1.2.0 and `zstd` 1.5.4, built by its own CI. Pointed at them, three things changed at
+  once:
+  - **the ziptastic real-binary test stopped skipping** — and finding out why turned up a bug in the
+    test, not the adapter: it looked the binary up with `shutil.which` only, so it skipped on a
+    machine configured exactly as README.md says to configure it (`$LEXORA_ZIPTASTIC`). It now uses
+    `ziptastic_core.find_binary()`, which honours both. **27 passed, 0 skipped.**
+  - **ADR-0026's "not measured" gap closed, and the decision got ten times more interesting.** Every
+    candidate was measured on the same 721 KB file, with tool versions recorded: CHCE **207,338 B**
+    (0.2876), PPMd via `7z` 208,461 B, brotli q11 244,286 B, `xz -9` CLI 249,208 B, zstd L19
+    253,155 B, zstd L9 271,004 B. A selector would pick CHCE — **23.49 % smaller than the shipped
+    default**, not the 6.59 % the level-only comparison suggested. Still Proposed, still the owner's.
+  - **OQ-18's premise weakened, with a number.** PPMd through `7z` is **0.54 % larger** than the CHCE
+    preset on these bytes (208,461 vs 207,338) and ~5.8× faster. "PPMd as the max-recall preset" is a
+    *speed* argument, not a size one. The question stays open — one file is not protocol scope — but
+    the reason it was open has changed.
+  Also: **REQ-BMK-002** now has its first-ever numbers for `brotli q11` and `ppmd-7z`, and
+  `scripts/p0_preflight.py` grew `--bin-dir` so a machine with the estate checked out passes the
+  `xz`/`7z` checks without system installs. `docs/P0_RUNBOOK.md` §0 says where the binaries come
+  from and notes that ADR-0014 pins ziptastic 1.2.0 while the estate ships 1.4.5.
+  **Two probe bugs found on the way, both of the "the check lied" kind:** a UnicodeDecodeError while
+  reading `7z`'s locale-encoded banner crashed the probe *after* it had written nothing, leaving the
+  previous artifact in place and looking current; and the version matcher picked "Unsupported
+  command: --version" as a version, because the error text contains the word. Both fixed, both
+  guarded by tests that assert the mechanism rather than the instance.
+
 ### Documentation
 - 2026-11-23 (**P0 has commands now, and a preflight** — P7.1): `docs/P0_RUNBOOK.md` is the run in
   order — preflight, corpus, environment, one `harness.py run` per split, artifact verification,
