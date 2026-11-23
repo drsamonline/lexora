@@ -4,7 +4,11 @@
 > session note or a chat summary, this file wins on *sequencing*; accepted ADRs still win on
 > *decisions*. Update it whenever something lands — an item that is done and still listed
 > here is worse than no list.
-> **Last verified:** 2026-11-16 (Forge cycle: **P3.6 landed — the plugin seam is now reachable from the CLI**: `canon --language hi` / `pack --language hi`, with the default path byte-identical and an unknown id a usage error. Gate 712 passed / 3 skipped. Prior: 2026-11-09 — the second language landed — Hindi as a separate
+> **Last verified:** 2026-11-23 (state reconciliation: PRs #50 and #51 merged — a short CJK query is
+> answered from a `doc_grams` index, schema v3, instead of a scan; the scan survives only for
+> documents the index does not cover. Gate **765 passed / 3 skipped**, linkcheck OK. P3.8 added
+> for the gram table's measured cost, P5.3 and P5.4 closed, and **P7 written down: the work only
+> the owner can do**.) Prior: 2026-11-16 (Forge cycle: **P3.6 landed — the plugin seam is now reachable from the CLI**: `canon --language hi` / `pack --language hi`, with the default path byte-identical and an unknown id a usage error. Gate 712 passed / 3 skipped. Prior: 2026-11-09 — the second language landed — Hindi as a separate
 > distribution behind the ADR-0022 seam, and `pack()` now records a plugin's provenance in the
 > header ([ADR-0023](ADR/ADR-0023-plugin-provenance.md)). Gate 697 passed / 3 skipped. Prior:
 > 2026-11-07, Session 76, PDF ingestion — P3.1/P3.2/P3.4)
@@ -64,6 +68,7 @@ multi-user concurrency, cloud anything.
 | OCR (external Tesseract plugin) | **Done** | ADR-0019; `ocr_core.py`; 15 tests; real 99-page scan |
 | Multilingual — plugin seam | **Done: proven by three languages, and by a tokenizer that is not `unicode61`** | [ADR-0022](ADR/ADR-0022-language-plugins.md) + [ADR-0023](ADR/ADR-0023-plugin-provenance.md) + [ADR-0024](ADR/ADR-0024-tokenizer-recording.md); Hindi ships as `packages/lexora-lang-hi` and Chinese as `packages/lexora-lang-zh`, both readable without them |
 | Multilingual — selectable from the CLI | **Done** | P3.6 landed 2026-11-16: `canon --language hi` / `pack --language hi`; 9 tests, defaults byte-identical |
+| Short CJK queries (the `trigram` floor) | **Done — answered from an index** | PRs #50/#51 merged 2026-11-23; [ADR-0024](ADR/ADR-0024-tokenizer-recording.md); schema v3 `doc_grams`; 36 tests in `tests/test_catalog_tokenizer.py` |
 | GUI query view | **Done** | `gui/query.py`; 14 offscreen tests; parity with the CLI asserted |
 | GUI on subprocess (ADR-0011) | **Done** | `service.py` is a CLI client; 10 argv-level tests |
 | Release | **Not started** | M7 / P7 |
@@ -133,7 +138,9 @@ without offscreen tests.
 | ~~P3.4~~ | ~~PyMuPDF needs its own ADR first (AGPL)~~ | **RESOLVED 2026-11-07 by [ADR-0017](ADR/ADR-0017-pdf-engine.md):** pypdf (BSD-3) chosen instead — the copyleft question is removed, not answered |
 | P3.5 | Cleaning-error rate ≤1 % operationalised (REQ-CAN-007, ADR-0004) | Sample-review report |
 | ~~P3.6~~ | ~~**`--language` on the CLI** ([ADR-0023](ADR/ADR-0023-plugin-provenance.md) §Consequences)~~ | **DONE 2026-11-16** — `canon --language hi` cleans with the plugin, `pack --language hi` writes `hi-1` into the header, an unknown id is exit 2 naming the installed plugins, and `en`/no-flag output is byte-identical to before. 9 tests (`tests/test_cli_language.py`); gate 712 passed / 3 skipped. The plugin path buffers (a plugin declares a whole-document `canonicalize`), documented in CLI_REFERENCE |
-| ~~P3.7~~ | ~~A third language proves the seam is not Hindi-shaped~~ | **DONE 2026-11-18** — Chinese ships as `packages/lexora-lang-zh` (`zh-1`, **`trigram`**), discovered through the entry point with no change to the canonicaliser or to the built-in list. The tokenizer recording it forced is [ADR-0024](ADR/ADR-0024-tokenizer-recording.md): `documents.tokenizer`, a second FTS table at `detail=full`, schema v2 migrated in place. **Closed 2026-11-23:** a query shorter than three characters cannot match under trigram, so since 2026-11-21 the catalog answered it with a bounded literal scan — and since 2026-11-23 from `doc_grams` (schema v3), the bigram pre-segmentation this row named as the open option: every unigram and bigram of the case-folded path, title and text, keyed gram-first, so the query's cost is the size of the answer, not the corpus, and it cannot be truncated. The scan survives only for a document the index does not hold yet and for a needle whose folded form is longer than two characters. The index is not free and the cost is measured: 10,389 grams in 147,456 bytes against 29,515 stored bytes on a 20,000-character Chinese document. 36 tests; gate 754 passed / 14 skipped |
+| ~~P3.7~~ | ~~A third language proves the seam is not Hindi-shaped~~ | **DONE 2026-11-18** — Chinese ships as `packages/lexora-lang-zh` (`zh-1`, **`trigram`**), discovered through the entry point with no change to the canonicaliser or to the built-in list. The tokenizer recording it forced is [ADR-0024](ADR/ADR-0024-tokenizer-recording.md): `documents.tokenizer`, a second FTS table at `detail=full`, schema v2 migrated in place. **Closed 2026-11-23:** a query shorter than three characters cannot match under trigram, so since 2026-11-21 the catalog answered it with a bounded literal scan — and since 2026-11-23 from `doc_grams` (schema v3), the bigram pre-segmentation this row named as the open option: every unigram and bigram of the case-folded path, title and text, keyed gram-first, so the query's cost is the size of the answer, not the corpus, and it cannot be truncated. The scan survives only for a document the index does not hold yet and for a needle whose folded form is longer than two characters. The index is not free and the cost is measured: 10,389 grams in 147,456 bytes against 29,515 stored bytes on a 20,000-character Chinese document. 36 tests; gate 754 passed / 14 skipped on the PR branch, and **765 passed / 3 skipped** on `main` with both language plugins installed (measured 2026-11-23) |
+
+| P3.8 | The `doc_grams` table costs ~5× the stored payload (10,389 grams in 147,456 bytes for 29,515 stored bytes) | A packed-hash form of the same table at equal recall, or the ratio carried into BENCHMARK_RESULTS as a stated cost of queryability — the same rule the index's ~7 % already follows |
 
 ### P4 — Correctness and consistency debt
 
@@ -150,12 +157,29 @@ without offscreen tests.
 |---|---|
 | P5.1 | **The Session-69→70 hole**: `SESSION_LOG.md` jumps from 2026-10-29 to Session 70, but `DECISIONS.md` records OQ-6/OQ-15 resolved 2026-10-30 and `STATUS.md` a 2026-11-03 verification. That work has no session record |
 | P5.2 | `CONTRIBUTING.md` has no contribution-licensing line — matters the moment an outside patch arrives |
-| P5.3 | `ROADMAP.md` milestone statuses lag reality (M2 in progress, M5 direction decided) |
+| ~~P5.3~~ | ~~`ROADMAP.md` milestone statuses lag reality (M2 in progress, M5 direction decided)~~ | **DONE 2026-11-23** — all seven milestones re-read against `main`; M3 is no longer "Not started", M4/M6/M7 say what actually landed and what the exit evidence still lacks |
+| ~~P5.4~~ | ~~`SESSION_LOG.md` stops at Session 91 (2026-11-09), so six days of merged work has no record~~ | **DONE 2026-11-23** — a backfill table appended, reconstructed from PR history and labelled as reconstructed rather than recalled |
 
 ### P6 — Release (M7 / P7)
 
 Versioned package, release-process dry run, CHANGELOG "Unreleased" emptied at cut, CI green,
 badges earned for real, migration guide activated.
+
+### P7 — Only the owner can do these
+
+Everything above can be built here. These cannot, and leaving them implicit is how a project
+stalls with a green gate:
+
+| # | Item | Why it cannot be delegated |
+|---|---|---|
+| P7.1 | **Run P0** on a machine with ~2 GB free disk, `xz` on PATH and 6–8 hours | The 1.054 GiB corpus run is the one thing no working container here can host; the numbers have to come from a machine that has the corpus and the time |
+| P7.2 | **Sign off the R5/G2 revision** | RELEASE_PROCESS and ADR-0001 make the owner's verdict the gate. A number published without it is a claim, which is exactly what the project refuses to make |
+| P7.3 | **OQ-18: what replaces PPMd** — the `7z` binary as an external plugin, PPMd inside ziptastic, or drop the preset | A codec-policy decision ([ADR-0021](ADR/ADR-0021-codec-policy-v2.md) withdrew `pyppmd`); it changes what "max-ratio" means |
+| P7.4 | **OCR language scope** — English only, English + Chinese (`chi_sim`), or add Hindi/Gujarati | Product scope, and it decides what the OCR accuracy sample has to contain |
+| P7.5 | **Commercial licensing** — PolyForm Noncommercial is source-available, not OSI-approved; is there a paid track? | A licence decision, [ADR-0009](ADR/ADR-0009-license-polyform-noncommercial.md) territory, and it is your name on the file |
+| P7.6 | **Publish to PyPI, or keep installs source-only** | A release action with your name on it; nothing is published today |
+| P7.7 | **Review documentation Batches D–E** (security/operations, GitHub polish) | Flagged "pending owner review" since Session 11 and never closed |
+| P7.8 | **Rotate the GitHub token shared in chat** in Sessions 36/37 | Credential hygiene. Only you can revoke it |
 
 ## 4. Do-not-forget register
 
