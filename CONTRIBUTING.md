@@ -1,7 +1,7 @@
 # Contributing to LEXORA
 
 > **Project status: design & documentation phase.** No implementation code exists yet. This guide reflects how the project is actually run today (documentation batches with strict honesty rules) and what will change when code lands.
-> **Last verified:** 2026-10-15 against repository commit `7969155`.
+> **Last verified:** 2026-11-23 against `main` @ `931aac4`.
 
 ## What this project is (and is not)
 
@@ -48,7 +48,16 @@ There is no test suite, linter, or CI configured yet. Do not add CI workflows or
 - Answers or delegations for open questions OQ-5…OQ-10 in [docs/DECISIONS.md](docs/DECISIONS.md).
 - Documentation errors: point out any statement that contradicts verified reality; corrections are appended to SESSION_LOG, never rewritten into history.
 
-When Phase 1 code begins (blocked on OQ-7 Python version), this file will gain environment setup, test commands (`pytest` etc.), and code-review requirements. Until then, any instructions implying those exist would be false, so they are absent by design.
+That paragraph used to say this file would gain environment setup and test commands "when Phase 1
+code begins". Phase 1 began, shipped two alphas, and the sentence stayed. So: the setup and the
+gate are real, and they live where they are maintained rather than copied here —
+[README.md](README.md) §Installation / Quick start for the editable install and the extras,
+[docs/DEVELOPMENT_SETUP.md](docs/DEVELOPMENT_SETUP.md) for a working environment,
+[docs/TEST_STRATEGY.md](docs/TEST_STRATEGY.md) for what the suites are for, and
+[docs/PATH_TO_V1.md](docs/PATH_TO_V1.md) §5 for the two gate commands
+(`python3 -m pytest -q` and `python3 scripts/linkcheck.py`). A number written into this file would
+be a claim nothing recomputes, which is the failure mode the project has already been bitten by
+four times.
 
 ## Code of conduct / scope reminders
 

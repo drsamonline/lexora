@@ -41,7 +41,9 @@ Canonicalize text conservatively, then compress it with guaranteed byte-exact re
 > the badge shows the last historical run, not current state; verification gate is local (`pytest -q` + linkcheck
 > before every commit). The *Tests* badge is a
 > static snapshot of the locally verified suite (101 passed, re-verified 2026-10-17), not a live measurement.
-> **Last verified:** 2026-10-17 against the current working branch (see git history).
+> **Last verified:** 2026-11-23 against `main` @ `931aac4` (gate 765 passed / 3 skipped).
+> The previous line said 2026-10-17, and by 2026-11-23 the maturity table under it had been
+> wrong for weeks — see the reconciliation note in `docs/SESSION_LOG.md`.
 
 ---
 
