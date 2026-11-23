@@ -1,6 +1,6 @@
 # LEXORA Requirements Traceability
 
-> **Status:** Draft (chain template populated; Implementation/Test/Evidence stages empty because no code exists — verified 2026-10-15)
+> **Status:** Active — Implementation, Test and Evidence populated 2026-11-23 against `main` @ `20daf22`
 > **Owner:** Documentation architect (delegated)
 > **Related:** [PRODUCT_REQUIREMENTS.md](PRODUCT_REQUIREMENTS.md) · [IMPLEMENTATION_MATRIX.md](IMPLEMENTATION_MATRIX.md) · [ACCEPTANCE_CRITERIA.md](ACCEPTANCE_CRITERIA.md) · [TEST_STRATEGY.md](TEST_STRATEGY.md)
 
@@ -14,8 +14,8 @@ and expose any missing link as a gap. Optional (S/N) requirements may use lighte
 
 - **Req** — ID from PRODUCT_REQUIREMENTS.md.
 - **Design** — normative section that defines behavior.
-- **Impl** — module/file with passing code (currently: none exist).
-- **Test** — automated test or review procedure (IDs reserved in IMPLEMENTATION_MATRIX.md).
+- **Impl** — module/file with passing code, or `—` where the requirement is genuinely unbuilt.
+- **Test** — the test file that exercises it, or the review procedure where the verification is human.
 - **Evidence** — committed artifact (log, report, fixture hash).
 - **Gate** — release/phase gate the requirement blocks.
 
@@ -23,45 +23,71 @@ and expose any missing link as a gap. Optional (S/N) requirements may use lighte
 
 | Req | Design | Impl | Test | Evidence | Gate | Gap |
 |---|---|---|---|---|---|---|
-| REQ-ING-001 | SPEC §1.1–1.2 | — | T-ING-101 | — | P1 exit | No code |
-| REQ-ING-002 | SPEC §1.3 | — | T-ING-102 | — | P3 exit | No code; PDF lib undecided |
-| REQ-ING-003 | OCR_PIPELINE | — | T-ING-103 | — | P3 exit | OQ-10 open |
-| REQ-ING-004 | SPEC §1.4 | — | T-ING-104 | — | P1 exit | Format unfrozen |
-| REQ-CAN-001 | CANONICALIZATION §Determinism | — | T-CAN-101 | — | P1 exit | Rule table unfrozen |
-| REQ-CAN-002 | CANONICALIZATION §Output form | — | T-CAN-102 | — | P0 exit (freeze) + P1 | BOM/newline policy pending |
-| REQ-CAN-003 | CANONICALIZATION rule table | — | T-CAN-103 | — | P1 exit | Rules Proposed |
-| REQ-CAN-004 | SPEC §2.4 | — | T-CAN-104 | — | P1 exit | Depends on format |
-| REQ-CAN-005 | CANONICALIZATION §Scripts | — | T-CAN-105 | — | P1 exit | hi/gu vectors not authored |
-| REQ-CAN-006 | CAN-R09 / OCR_PIPELINE | — | T-CAN-106 | — | P3 exit | Threshold unmeasured |
-| REQ-CAN-007 | ADR-0004 (Accepted) | — | T-CAN-107 | — | P3 exit | Metric defined; sample run missing |
-| REQ-CMP-001 | SPEC §3.1 | — | T-CMP-101 | — | **P1 hard gate** | Core invariant unproven |
-| REQ-CMP-002 | SPEC §4.1–4.6 | — | T-CMP-102 | — | P1 exit | Registry absent |
-| REQ-CMP-003 | COST_MODEL §Selection | — | T-CMP-103 | — | P4 exit | Only Zstd initially |
-| REQ-CMP-004 | COST_MODEL formula | — | T-CMP-104 | — | P2/P4 exit | Auditor absent |
-| REQ-CMP-005 | SPEC §4.4 / RESOURCE_LIMITS | — | T-CMP-105 | — | P1 exit | Numeric limits pending PERFORMANCE_BUDGET |
-| REQ-CMP-006 | SPEC §4.5 | — | T-CMP-106 | — | P1 exit | — |
-| REQ-EXP-001 | SPEC §5.2 (ADR-0001) | — | T-EXP-101 | — | P4 per-candidate | Harness absent |
-| REQ-EXP-002 | CORPUS_POLICY §Splits | — | T-EXP-102 | — | P2 exit | Corpus absent (OQ-8) |
-| REQ-EXP-003 | BENCHMARK_PROTOCOL §Ablation | — | T-EXP-103 | — | each benchmark rev | — |
-| REQ-FMT-001 | FORMAT_LXZ (PROPOSED) | — | T-FMT-101 | — | P1-T3 freeze | Layout intentionally not invented |
-| REQ-FMT-002 | FORMAT_LXZ §Limits | — | T-FMT-102 | — | P1 exit | Values pending |
-| REQ-FMT-003 | FORMAT_LXZ §Compat | — | T-FMT-103 | — | P1 exit | — |
-| REQ-FMT-004 | FORMAT_LXDB (proposal) | — | — | — | P5 entry | Deferred by design |
-| REQ-BMK-001 | CORPUS_POLICY | — | T-BMK-101 | — | P2 exit | OQ-8 |
-| REQ-BMK-002 | SPEC §4.6 (ADR-0002/0003) | — | T-BMK-102 | — | P2 exit | Baseline tooling install path undocumented yet |
-| REQ-BMK-003 | SPEC §5.2 | — | T-BMK-103 | — | M2 verdict | No results until real run |
-| REQ-BMK-004 | BENCHMARK_PROTOCOL §Reporting | — | T-BMK-104 | — | P2 exit | Report schema drafted this batch |
-| REQ-RES-001 | RESOURCE_LIMITS / PERFORMANCE_BUDGET | — | T-RES-101 | — | P1 exit + each phase | Reference machine undefined |
-| REQ-RES-002 | DECISIONS OQ-7 | — | CI matrix | — | before P1 code | **Blocked: OQ-7 unanswered** |
-| REQ-RES-003 | INSTALLATION / BUILD_GUIDE | — | T-RES-103 | — | P7 release | Vendoring plan missing |
-| REQ-SEC-001 | SPEC §4 / THREAT_MODEL (Batch D) | — | fuzz | — | P6 exit | Fuzz target needs code first |
-| REQ-SEC-002 | CORPUS_POLICY §Privacy | — | audit | — | P2 exit | Classification unknown (OQ-8) |
-| REQ-SEC-003 | ENCRYPTION_PROFILE (Batch D) | — | KAT | — | P6 (if scoped) | Scope confirmation pending |
-| REQ-SEC-004 | FORMAT_LXZ §Checksums | — | bit-flip | — | P1 exit | Hash algo pending format freeze |
+| REQ-ING-001 | SPEC §1.1–1.2 | `src/lexora/ingest.py` (`_read_text`) | `tests/test_ingest.py` | `ingest._read_text` refuses rather than mangles | P1 exit | — |
+| REQ-ING-002 | SPEC §1.3 | `src/lexora/ingest.py` (`_read_pdf`) | `tests/test_ingest.py` (page order asserted) | ADR-0017; 15 ingest tests | P3 exit | — |
+| REQ-ING-003 | OCR_PIPELINE | `src/lexora/ocr_core.py` | `tests/test_ocr.py` (15 tests, incl. the graceful skip) | verified on a real 99-page scan | P3 exit | OCR **language** scope is open (PATH_TO_V1 P7.4) |
+| REQ-ING-004 | SPEC §1.4 | `src/lexora/ingest.py`, `src/lexora/catalog.py` | `tests/test_ingest.py`, `tests/test_catalog.py` | fields filterable in `lexora db` | P1 exit | — |
+| REQ-CAN-001 | CANONICALIZATION §Determinism | `src/lexora/canonicalize.py` | `tests/test_canonicalize_invariants.py` | `canonicalize_with_meta` records the rule set | P1 exit | — |
+| REQ-CAN-002 | CANONICALIZATION §Output form | `src/lexora/canonicalize.py` | `tests/test_canon_vectors.py` + `tests/vectors/` | 9 golden byte vectors, byte-exact | P0 exit (freeze) + P1 | — |
+| REQ-CAN-003 | CANONICALIZATION rule table | `src/lexora/canonicalize.py` (`APPLIED_RULES_V0`) | `tests/test_canonicalize_invariants.py` (whitelist invariants) | rule table in `docs/CANONICALIZATION.md` | P1 exit | the table is not frozen for 0.x (CHANGELOG versioning note) |
+| REQ-CAN-004 | SPEC §2.4 | `src/lexora/container.py` | `tests/test_container_lxz.py` | ADR-0023 made the field carry plugin provenance (`hi-1`, `zh-1`) | P1 exit | — |
+| REQ-CAN-005 | CANONICALIZATION §Scripts | `packages/lexora-lang-hi` (HI-R01 = NFC; ZWJ/ZWNJ untouched) | `tests/test_language_hindi_plugin.py`, `tests/test_canonicalize_invariants.py` | ADR-0022, ADR-0023 | P1 exit | Gujarati: no plugin, no script-specific golden vectors |
+| REQ-CAN-006 | CAN-R09 / OCR_PIPELINE | — | — | `docs/OCR_PIPELINE.md` §corrections | P3 exit | the requirement's premise (correction) does not exist yet |
+| REQ-CAN-007 | ADR-0004 (Accepted) | `benchmarks/cleaning_audit.py` | `tests/test_cleaning_audit.py` (15 tests) | ADR-0004 Option B | P3 exit | two human reviewers (PATH_TO_V1 P7.9) |
+| REQ-CMP-001 | SPEC §3.1 | `src/lexora/container.py`, `src/lexora/zstd_core.py` | `tests/test_container_lxz.py`, `tests/test_reader_fuzz.py`, `tests/test_writer_fuzz.py` | a mismatch exits 6 and writes nothing | **P1 hard gate** | — |
+| REQ-CMP-002 | SPEC §4.1–4.6 | `src/lexora/zstd_core.py`, `src/lexora/codec_registry.py` | `tests/test_codec_real_text.py`, `tests/test_ziptastic_codec.py` | decoder refuses an unknown id | P1 exit | — |
+| REQ-CMP-003 | COST_MODEL §Selection | `src/lexora/cli.py` (level/preset mapping) | `tests/test_level_default.py`, `tests/test_container_lxz.py` | `docs/COST_MODEL.md` | P4 exit | no cost-driven selection to test yet |
+| REQ-CMP-004 | COST_MODEL formula | — | — | `docs/COST_MODEL.md` | P2/P4 exit | the auditor the requirement asks for does not exist |
+| REQ-CMP-005 | SPEC §4.4 / RESOURCE_LIMITS | `src/lexora/container.py` (`read_index`) | `tests/test_container_lxz.py` | `benchmarks/results-rss-core.json`, `results-rss-index.json` | P1 exit | — |
+| REQ-CMP-006 | SPEC §4.5 | `src/lexora/container.py` | `tests/test_format_flags.py` (7 tests), `tests/test_container_lxz.py` | exit 7 for format refusals, documented in CLI_REFERENCE | P1 exit | — |
+| REQ-EXP-001 | SPEC §5.2 (ADR-0001) | `src/lexora/codec_registry.py`, `src/lexora/cli.py` | `tests/test_codec_real_text.py`, `tests/test_ziptastic_codec.py` | `benchmarks/results-r6-*.json`, `docs/ECOSYSTEM_REVIEW_2026-11-08.md` | P4 per-candidate | no candidate has passed ADR-0001 at protocol scope |
+| REQ-EXP-002 | CORPUS_POLICY §Splits | `src/lexora/zstd_core.py` (dictionary mode) | — | ADR-0015 | P2 exit | the lineage audit the requirement names does not exist |
+| REQ-EXP-003 | BENCHMARK_PROTOCOL §Ablation | — | — | ADR-0001, `docs/ZIPTASTIC_NOTES.md` | each benchmark rev | re-ablation per benchmark revision not run |
+| REQ-FMT-001 | FORMAT_LXZ (PROPOSED) | `src/lexora/container.py` | `tests/test_container_lxz.py`, `tests/vectors/lxz_format/` | ADR-0007 (Accepted) | P1-T3 freeze | — |
+| REQ-FMT-002 | FORMAT_LXZ §Limits | `src/lexora/container.py` (`DEFAULT_MAX_BLOCK_*`) | `tests/test_container_lxz.py` (limit violations) | `docs/RESOURCE_LIMITS.md` | P1 exit | — |
+| REQ-FMT-003 | FORMAT_LXZ §Compat | `src/lexora/container.py` | `tests/test_format_flags.py` | `docs/FORMAT_LXZ.md` | P1 exit | — |
+| REQ-FMT-004 | FORMAT_LXDB (proposal) | — | — | ADR-0013 (Proposed) | P5 entry | gated on P0 by owner decision |
+| REQ-BMK-001 | CORPUS_POLICY | `benchmarks/corpus.py` | `tests/test_corpus_catalog.py`, `tests/test_corpus_reconcile.py` | `benchmarks/MANIFEST.json` (lineage splits) | P2 exit | no hi/gu coverage (owner directive 2026-10-16) |
+| REQ-BMK-002 | SPEC §4.6 (ADR-0002/0003) | `benchmarks/harness.py` | `tests/test_harness_systems.py` | `benchmarks/env.json`, `benchmarks/results-r*.json` | P2 exit | OQ-18 open (PATH_TO_V1 P7.3) |
+| REQ-BMK-003 | SPEC §5.2 | — | — | `docs/BENCHMARK_RESULTS.md` | M2 verdict | gate G2: full-corpus run, second machine class, sign-off (P0) |
+| REQ-BMK-004 | BENCHMARK_PROTOCOL §Reporting | `benchmarks/harness.py` | `tests/test_harness_systems.py` | `benchmarks/results-r4-*.json`, `results-r6-*.json` | P2 exit | per-category table not published |
+| REQ-RES-001 | RESOURCE_LIMITS / PERFORMANCE_BUDGET | `src/lexora/canonicalize.py` (streaming), `src/lexora/container.py` | `tests/test_pack_stream.py`, `tests/test_unpack_stream.py` | `docs/P1_EVIDENCE_DRAFT.md`, `benchmarks/results-rss-*.json` | P1 exit + each phase | REF-4G never tested (PATH_TO_V1 P4.3) |
+| REQ-RES-002 | DECISIONS OQ-7 | `pyproject.toml` | CI workflow + `tests/test_readme_claims.py` (version guards) | ADR-0005 | before P1 code | — |
+| REQ-RES-003 | INSTALLATION / BUILD_GUIDE | — | — | `docs/INSTALLATION.md` | P7 release | the test the requirement names does not exist |
+| REQ-SEC-001 | SPEC §4 / THREAT_MODEL (Batch D) | `src/lexora/container.py` | `tests/test_reader_fuzz.py`, `tests/test_writer_fuzz.py`, `tests/test_interruption.py` | `docs/THREAT_MODEL.md` | P6 exit | — |
+| REQ-SEC-002 | CORPUS_POLICY §Privacy | — | — | `docs/PRIVACY_AND_DATA_HANDLING.md`, `docs/CORPUS_POLICY.md` | P2 exit | revisit the day a dictionary ships; the audit the requirement names is moot until then |
+| REQ-SEC-003 | ENCRYPTION_PROFILE (Batch D) | — | — | `docs/ENCRYPTION_PROFILE.md` | P6 (if scoped) | scope confirmation is the owner's (ADR-0009) |
+| REQ-SEC-004 | FORMAT_LXZ §Checksums | `src/lexora/container.py` | `tests/test_container_lxz.py` (bit flips), `tests/test_reader_fuzz.py` | exit 7 refusal, documented | P1 exit | — |
 
 ## Gap summary (mandatory requirements without any verification means realized)
 
-All implementation-stage links are currently gaps because the repository contains no code — this is expected at Phase 0 and recorded honestly rather than hidden. The two decisions that *block* closing gaps earliest are **OQ-7** (Python version → enables P1) and **OQ-8** (corpus → enables P2).
+This section used to say every implementation link was a gap "because the repository contains no code".
+"
+        "That was true in Phase 0 and stopped being true months later. What is actually open now, in the
+"
+        "order it matters:
+"
+        "
+"
+        "- **REQ-CMP-004** (cost accounting audited against a real archive) and **REQ-CMP-003** (selection by
+"
+        "  cost rather than by pinned preset) — the cost model is a document, not a running check.
+"
+        "- **REQ-BMK-003** (an ADR-0001 verdict) — blocked on gate G2, i.e. the full-corpus protocol run (P0).
+"
+        "- **REQ-CAN-007** (the ≤1 % cleaning rate) — instrument built, sample unreviewed (P7.9).
+"
+        "- **REQ-EXP-002** (dictionary lineage audit) and **REQ-RES-003** (offline smoke test) — named by the
+"
+        "  requirement, not yet written.
+"
+        "- **REQ-CAN-005** — Devanagari is covered; **Gujarati has no plugin and no vectors**.
+"
+        "- **REQ-RES-001** — measured on one machine class; REF-4G has never run (P4.3).
+"
+        "
+"
+        "Everything else in the table has a module and a test named against it.
 
 ## Maintenance rule
 
