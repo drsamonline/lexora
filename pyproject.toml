@@ -67,7 +67,10 @@ lexora-gui = "lexora.gui.app:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"lexora.gui" = ["assets/*.svg"]
+# assets: the window icon. notice_texts: the LGPL-3.0/GPL-3.0 texts P2.4 requires to travel
+# with a GUI distribution — a wheel without them is a distribution out of terms, so a test
+# reads them back through importlib.resources and a build check asserts they are in the wheel.
+"lexora.gui" = ["assets/*.svg", "notice_texts/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -123,7 +123,7 @@ Per ADR-0011 the GUI is a **client of the CLI**, so the contract is fixed: searc
 | ~~P2.3~~ | ~~Moving `gui/service.py` onto subprocess calls (the open half of ADR-0011)~~ | **DONE 2026-11-08** — every byte-level operation is a CLI call; `tests/test_service_is_a_cli_client.py` asserts argv, stdin payload and exit-code mapping. `run_canon_meta` stays in-process, documented and asserted as the one exception |
 | ~~P2.3a~~ | ~~Decide the exit code for an out-of-range `--level`~~ | **DECIDED 2026-11-07 by [ADR-0018](ADR/ADR-0018-level-usage-error.md): exit 2 on every surface.** The CLI moved to where the GUI already was, so no GUI code changed. 23 tests, including a CLI↔GUI parity assertion |
 | ~~P2.3b~~ | ~~CLI cannot read stdin; no `zdecode` verb~~ | **DONE 2026-11-08** — `_read("-")` is stdin, `_open_input()` gives streaming paths a seekable handle, and `zdecode` exists. Found on the way: `zround --out -` wrote nothing at all |
-| P2.4 | Notices for the `[gui]` extra if it ships (R3 obligation) | NOTICE + LGPL/GPL texts + About-view notice |
+| ~~P2.4~~ | ~~Notices for the `[gui]` extra if it ships (R3 obligation)~~ | **DONE 2026-11-23** — the canonical LGPL-3.0 and GPL-3.0 texts ship inside the wheel (`lexora/gui/notice_texts/`, declared as package data and read through `importlib.resources`); the About view carries the notice, the `Required Notice:` line and the Qt source pointer; `python -m lexora.gui.notices` prints all of it without Qt installed; `tests/test_gui_notices.py` pins both texts' SHA-256 (10 tests). Verified by building a wheel and reading the texts back from an installed copy, not only from the checkout |
 
 Needs a **Qt-capable machine** (PySide6 + `libegl1`); nothing here can be honestly claimed
 without offscreen tests.

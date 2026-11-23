@@ -95,6 +95,20 @@ with English as its first plugin; 736 tests.
 ## [Unreleased]
 
 ### Added
+- 2026-11-23 (**the GUI's notices now travel with the distribution**, P2.4 / R3 obligation):
+  the `[gui]` extra takes PySide6 under LGPL-3.0-only, and until now the obligations were
+  *described* in `NOTICE` while the texts themselves lived nowhere in the package. Now the
+  canonical **LGPL-3.0 and GPL-3.0 texts ship inside the wheel** (`lexora/gui/notice_texts/`,
+  declared as package data, read through `importlib.resources` so a wheel, a zip and a checkout
+  behave alike); the Qt/PySide6 source pointer and the `Required Notice:` line appear in the
+  **About view**, which stays Qt-free; and `python -m lexora.gui.notices` prints the notice and
+  both texts on any install. The GPL text ships because LGPL-3.0 is written as additional
+  permissions on top of GPL-3.0 and incorporates it by reference — shipping the LGPL alone
+  points the reader at a licence they do not have. `tests/test_gui_notices.py` (10 tests) pins
+  the SHA-256 of both texts, because a licence text quietly edited is worse than a missing one.
+  The texts were taken from the SPDX licence list, not typed from memory. **Verified rather
+  than assumed:** a wheel was built, the texts were found in it, and they were read back from
+  an installed copy.
 - 2026-11-09 (**the second language, and a provenance field that no longer lies**, [ADR-0023](docs/ADR/ADR-0023-plugin-provenance.md)):
   - **`packages/lexora-lang-hi`** — Hindi (Devanagari) as a *separate distribution*, registered through the `lexora.languages` entry point. It is deliberately not in `lexora/languages/`: the proof that the seam is a seam is that the core did not change to admit it. `doctor` now reports `hi (hi-1, unicode61)`.
   - **Rule HI-R01 = NFC.** Devanagari nukta letters (क़ ख़ ग़ ज़ ड़ ढ़ फ़ य़, U+0958–U+095F) are Unicode *composition exclusions*, so one word has two byte spellings in the wild; NFC settles both and puts combining marks in canonical order. ZWJ/ZWNJ are untouched (REQ-CAN-005), and digits/spellings are not transliterated.
