@@ -97,6 +97,25 @@ with English as its first plugin; 736 tests.
 
 ## [Unreleased]
 
+### Fixed
+- 2026-11-23 (**the three ratios were three runs, and one of them had no artifact**): `README.md`
+  quoted the shipped default as **0.3352** on "172 files / 78.6 MiB", the register gave **0.3367**
+  for "the same" default on "746 MB, 172 files", and `ADR-0015` backed 0.3352 with a byte count —
+  three numbers, no way for a reader to tell which run any of them belonged to. Recomputing from
+  the committed artifacts settled all three: **0.3367 is revision 4's heldout-only first cut**
+  (17 files / 12.1 MiB, 2 reps, `results-r4-smoke.json`); **0.3360 is revision 5's all-splits run**
+  (184 files / 80.4 MiB, 3 reps, `results-r4-{train,validation,heldout}.json`, whose
+  `benchmark_revision` field reads **5** although the file names say `r4`); and **0.3352 has no
+  surviving artifact** — revision 5 reused revision 4's file names and overwrote it, so the figure
+  is **withdrawn from the README rather than carried forward**. "746 MB" was never that run's size.
+  The README now quotes revision 5 with its three artifacts named; the register prints each figure
+  with its own revision; `R4_SMOKE_DRAFT.md` gets an appended correction (historical entries are
+  never rewritten); `ADR-0015` says whose ratio its 0.3352 is (the zstd-9 *baseline* on the CHCE
+  smoke corpus, not LEXORA's default). `scripts/check-benchmark-claims.py` now keys on
+  `(system, revision)` — the ambiguity was never the number, it was the missing revision — and
+  **CI runs it with `--strict`**, so this cannot silently rot again.
+  `tests/test_benchmark_claims.py` recomputes every published ratio from the artifacts.
+
 ### Changed
 - 2026-11-23 (**the gram index keeps its layout, and the 5× figure becomes a curve**,
   [ADR-0025](docs/ADR/ADR-0025-gram-index-layout.md), resolves P3.8): P3.8 asked for a packed-hash

@@ -179,16 +179,33 @@ is the real-binary throughput check (ADR-0014).
 
 **LEXORA has now been measured against both frozen baselines — at smoke scope, not verdict scope.** The acceptance gates are defined in the blueprint (Pass ≥ 10%, Partial ≥ 3% smaller total stored size vs. the best frozen baseline) and formalized in `docs/BENCHMARK_PROTOCOL.md`.
 
-R4, three splits, 172 files / 78.6 MiB, 3 reps (draft, awaiting owner review):
+Revision **R5** — three splits, **184 files / 80.4 MiB**, 3 reps, on the 1.014 GiB corpus
+(manifest `56d9443d…`). Every figure below is computed from the committed artifacts
+`benchmarks/results-r4-{train,validation,heldout}.json`, whose own `benchmark_revision` field
+reads **5** — the file names say `r4` and are wrong; the field is what counts.
 
-| system | ratio |
-|---|---|
-| `lexora` (shipped default, level 9) | 0.3352 |
-| `lexora19` | **0.3090** |
-| `zstd19` (baseline) | 0.3109 |
-| `xz9` (baseline) | **0.3068** |
+| system | ratio | artifact |
+|---|---|---|
+| `lexora` (shipped default, level 9) | 0.3360 | the three files above |
+| `lexora19` | **0.3101** | the three files above |
+| `zstd19` (baseline) | 0.3120 | the three files above |
+| `xz9-lzma` (baseline) | **0.3077** | the three files above |
 
-So the pipeline sits **between** the two baselines: a small, consistent advantage over zstd-19 (167 of 172 files smaller) and a small, consistent deficit against xz-9 (xz wins every file). **Neither is a gate verdict**: the corpus now meets the ≥1 GiB requirement but no protocol-scope run has been done, and the honest reading is in [docs/R4_SMOKE_DRAFT.md](docs/R4_SMOKE_DRAFT.md). Reproduce it from [benchmarks/README.md](benchmarks/README.md).
+So the pipeline sits **between** the two baselines: a small, consistent advantage over zstd-19
+(178 of 184 files smaller, −0.60 %) and a small, consistent deficit against xz-9 (xz wins every
+file, +0.77 %). **Neither is a gate verdict**: the corpus meets the ≥1 GiB requirement but no
+protocol-scope run has been done, and the honest reading is in
+[docs/BENCHMARK_RESULTS.md](docs/BENCHMARK_RESULTS.md). Reproduce it from
+[benchmarks/README.md](benchmarks/README.md).
+
+**One figure was withdrawn here on 2026-11-23, not quietly replaced.** This table used to quote
+**0.3352** for the shipped default on "172 files / 78.6 MiB". That number has **no surviving
+artifact**: the all-splits run of revision 4 wrote to the same file names revision 5 later reused,
+so re-running overwrote it, and no committed file reports 0.3352 for `lexora`. The number is
+withdrawn rather than carried forward, and the run it came from cannot be re-derived — which is
+the same failure as the gram-index figure corrected in
+[ADR-0025](docs/ADR/ADR-0025-gram-index-layout.md). Result artifacts are now cited by the
+`benchmark_revision` field, never by the file name.
 
 ## Security & privacy notes
 

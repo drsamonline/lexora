@@ -16,7 +16,7 @@ on 19 Gutenberg texts, 19,432,350 canonical bytes, every codec on identical inpu
 
 | codec | total | ratio | measured throughput |
 |---|---|---|---|
-| zstd-9 (shipped default) | 6,514,541 | 0.3352 | 15.9 MiB/s |
+| zstd-9 (the shipped codec as a *baseline* on the CHCE smoke corpus — not LEXORA's default) | 6,514,541 | 0.3352 | 15.9 MiB/s |
 | zstd-19 | 5,944,104 | 0.3059 | — |
 | `xz -9` | 5,871,796 | 0.3022 | 1.08 MiB/s |
 | **CHCE `-9`** | **4,712,272** | **0.2425** | **0.50 MiB/s** |

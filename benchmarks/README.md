@@ -168,3 +168,20 @@ small consistent advantage over zstd and a small consistent deficit against xz. 
 **That is smoke scope, not a verdict.** Protocol scope requires a corpus ≥1 GiB, all
 three splits at full size, 3 reps, `xz9` via the CLI, a second machine class and owner
 sign-off before anything enters [docs/BENCHMARK_RESULTS.md](../docs/BENCHMARK_RESULTS.md).
+
+## Result artifacts: cite the revision field, not the file name
+
+The files called `results-r4-*.json` contain **revision 5**, not revision 4. Revision 5's run
+reused revision 4's file names, which means two things and both matter:
+
+- **cite artifacts by their `benchmark_revision` field.** `results-r4-train.json`,
+  `results-r4-validation.json` and `results-r4-heldout.json` all read `"benchmark_revision": 5`,
+  and they are the artifacts behind the R5 figures in [BENCHMARK_RESULTS](../docs/BENCHMARK_RESULTS.md);
+- **revision 4's all-splits artifacts no longer exist.** They were overwritten. The only surviving
+  revision-4 artifact is `results-r4-smoke.json` (heldout only, 17 files / 12.1 MiB, 2 reps), which
+  is why the 0.3352 figure once quoted for the 172-file run is withdrawn in
+  [README](../README.md) rather than carried forward.
+
+The names are left alone on purpose: renaming them would break every link that already cites
+them, and a rename is not a fix for a process that can overwrite a run. A new revision must get
+its own file names.
