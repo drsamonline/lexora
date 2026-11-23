@@ -98,6 +98,31 @@ with English as its first plugin; 736 tests.
 ## [Unreleased]
 
 ### Fixed
+- 2026-11-23 (**the fleet's presentation standard, applied** — found by running `drsamonline/audit`'s
+  `tools/presentation_audit.py` against this repo, which had never been done): three surfaces were
+  short of the standard the rest of the estate is held to, and nothing here checked any of them.
+  - **BADGES** — no local badge set. `scripts/badges.py` now draws the six the standard asks for
+    (`live`, `tests`, `build`, `licence`, `offline`, `deps`) into `docs/assets/`, in the page's own
+    palette, so a page that promises to work offline does not fetch its self-description from an
+    image service. The shields.io and CI badges stay: they are live, and a committed SVG cannot
+    carry a CI result. **The `tests` badge says `green — see CI`, not a count**, because a static
+    count is exactly what `tests/test_readme_claims.py` forbids — the two rules agreed once the
+    claim was stated as a condition rather than a number.
+  - **SUPPORT** — the landing page printed the UPI VPA but had no `upi://pay` intent link, so the
+    one handle a phone can act on was a string it could not use; and the block carried no
+    `data-support` marker, so the fleet's audit could not see it. Both fixed.
+  - **SHOTS** — **not fixed, and deliberately.** `docs/assets/app-desktop.png` needs the `[gui]`
+    extra and a Qt-capable machine (`scripts/gen_screenshots.py` skips without PySide6), and
+    `app-mobile.png` would be a *mobile* screenshot of a desktop application. Fabricating one to
+    satisfy a checklist is the failure this repository spent the day removing, so the gap stays
+    visible in the audit instead.
+  `tests/test_presentation.py` (11 tests) holds the parts this repo can check alone: the six badges
+  exist, parse, and are current with their generator; the tests badge carries no static count; the
+  support block keeps its marker and all six handles; and the UPI link is a link, with an open
+  amount and the right payee. Audit result after the fix: **BADGES ok, SUPPORT ok, SHOTS warn** —
+  down from three classes of work to one.
+
+### Fixed (earlier)
 - 2026-11-23 (**the estate had the binaries all along, and the numbers changed** — ADR-0026,
   REQ-BMK-002, OQ-18): `xz`, `7z`, `brotli` and `ziptastic` were recorded as "absent from the
   environment" for weeks. They are not absent from the estate:
