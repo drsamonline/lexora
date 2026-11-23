@@ -193,8 +193,11 @@ def measure(data: bytes, *, reps: int = 3, bin_dir: pathlib.Path | None = None) 
             "candidate": name,
             "stored_bytes": stored,
             "ratio": round(stored / len(data), 4),
-            "median_seconds": round(median, 4),
-            "mib_per_second": round(len(data) / median / 1e6, 1) if median else None,
+            # Six decimals, not four: on a small input a fast codec rounds to 0.0000 s, and a
+            # zero in the fastest row divided into the multiplier and raised ZeroDivisionError —
+            # in CI, where the runner is quicker than the container this was written in.
+            "median_seconds": round(median, 6),
+            "mib_per_second": round(len(data) / median / 1e6, 1) if median > 0 else None,
         })
 
     try:
@@ -216,7 +219,10 @@ def measure(data: bytes, *, reps: int = 3, bin_dir: pathlib.Path | None = None) 
         "percent_smaller": round(
             (cheapest_time["stored_bytes"] - best["stored_bytes"]) / cheapest_time["stored_bytes"] * 100, 2
         ),
-        "time_multiplier": round(best["median_seconds"] / cheapest_time["median_seconds"], 1),
+        "time_multiplier": (
+            round(best["median_seconds"] / cheapest_time["median_seconds"], 1)
+            if cheapest_time["median_seconds"] > 0 else None
+        ),
         "not_measured": missing,
         "tool_versions": versions,
         "scope": "ONE FILE, smoke — not a protocol-scope run (P0_RUNBOOK.md)",

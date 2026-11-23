@@ -55,6 +55,15 @@ def test_the_probe_still_measures_the_shipped_codec_and_reports_a_pick() -> None
     )
 
 
+def test_a_tiny_input_does_not_divide_by_zero() -> None:
+    """Found in CI, not here: a fast codec rounds to 0.0000 s on a small input, and the time
+    multiplier divided by it. Six decimals and a guard, because "it passed locally" is not a
+    measurement of the machine that matters."""
+    result = selector_probe.measure(b"tiny\n" * 4, reps=1, bin_dir=None)
+    assert result["rows"], "a tiny input still produces a row"
+    assert result["time_multiplier"] is None or result["time_multiplier"] >= 1
+
+
 def test_a_missing_binary_is_recorded_not_dropped(tmp_path, monkeypatch) -> None:
     """The mechanism, not the instance: with nothing findable, every external candidate is recorded.
 
