@@ -97,6 +97,21 @@ with English as its first plugin; 736 tests.
 
 ## [Unreleased]
 
+### Documentation
+- 2026-11-23 (**the cost-based selector is designed, measured, and left to the owner** — REQ-CMP-003,
+  [ADR-0026](docs/ADR/ADR-0026-cost-based-selection.md), **Proposed**): `COST_MODEL.md` rule 2 says
+  *argmin of total serialized bytes per block*; `.lxz` v0 carries **one** `codec_id` (ADR-0007 frozen),
+  so per-block selection is a v1 format and not a policy change. The ADR proposes a whole-archive trial
+  behind `--select`, costed by the REQ-CMP-004 auditor rather than by payload alone, ties broken by a
+  fixed priority, losers recorded, and the **default unchanged** — a default that silently costs 6× the
+  time would be a regression dressed as a feature.
+  **Measured before deciding** (`benchmarks/selector_probe.py` → `results-selector-probe.json`): on a
+  721 KB slice the only comparison v0 can make without an external binary is level against level, and a
+  selector would pick **level 19 — 6.59 % smaller for 6.0× the time**. The candidate it *cannot* compare
+  is the one that matters most: ziptastic's binary is absent here, and the probe records that as *not
+  measured* rather than estimating it. **Nothing is implemented** — by this project's own rule an
+  implementation does not start from a Proposed ADR, and REQ-CMP-003 stays open with this as its design.
+
 ### Added
 - 2026-11-23 (**Gujarati ships, and its rule is not a copy of Hindi's** — REQ-CAN-005):
   `packages/lexora-lang-gu` is the fourth language plugin (`gu-1`, `unicode61`, OCR `guj`), so the
