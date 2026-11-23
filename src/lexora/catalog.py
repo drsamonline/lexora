@@ -95,6 +95,18 @@ TOKENIZER_TABLES: dict[str, str] = {
 }
 FTS_TABLES: tuple[str, ...] = tuple(TOKENIZER_TABLES.values())
 DEFAULT_TOKENIZER = "unicode61"
+
+#: The trigram floor (ADR-0024): the tokenizer indexes three-character sequences, so a
+#: query of one or two characters cannot match ANY row of the trigram index. That is a
+#: property of the tokenizer and it is measured, not assumed — the test suite queries
+#: the FTS table directly to keep it true.
+TRIGRAM_FLOOR = 3
+
+#: What a short query is answered with instead of a silent zero: a substring scan over
+#: the live documents that the trigram index holds. It is a scan, not an index, so it is
+#: bounded in documents — and when the bound bites, `Catalog.last_search_truncated` says
+#: so rather than letting a partial answer look like a complete one.
+SHORT_QUERY_SCAN_LIMIT = 1000
 INDEX_NAME = "catalog.sqlite"
 BLOB_DIR = "blobs"
 
@@ -155,6 +167,9 @@ class Catalog:
             self.blob_root.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(str(self.index_path))
         self._conn.row_factory = sqlite3.Row
+        # Set by `_short_query_scan`: True when the last search could only look at part
+        # of the CJK documents. Reset at the start of every `search()`.
+        self.last_search_truncated = False
         # WAL: a reader can query while a writer appends, and a crash rolls back to
         # the last committed transaction instead of leaving a half-written index.
         self._conn.execute("PRAGMA journal_mode=WAL")
@@ -525,9 +540,70 @@ class Catalog:
                     # `trigram` refuses anything shorter than three characters, and a
                     # mixed catalog is the normal case now (ADR-0024).
                     raised = True
-            if found or not raised:
+            if found:
                 return sorted(found)
-        return []
+            if not raised:
+                # The index understood the query and had no match. That is an answer,
+                # so the next candidate (a looser reading of the same text) is not
+                # tried — exactly as before.
+                break
+        # Nothing matched, and the trigram index has now said why it could not help: a
+        # query shorter than three characters has no trigram to match. Answer it from
+        # the documents themselves instead of returning the silent zero this fallback
+        # exists to remove.
+        return self._short_query_scan(query)
+
+    def _short_query_scan(self, query: str) -> list[int]:
+        """Rowids of live CJK documents whose text contains `query` literally.
+
+        ADR-0024 recorded the trigram floor as open work and named two ways off it: a
+        bigram pre-segmentation of the body, or a short-query scan over live documents.
+        This is the scan — the one that needs no re-ingestion of anything already
+        stored, so it works on catalogs built before it existed.
+
+        What it is and is not:
+
+        * It answers only queries the index genuinely cannot: the needle is the whole
+          query, stripped, and nothing shorter than `TRIGRAM_FLOOR` is scanned.
+        * It is **literal**, not FTS syntax. `%` and `_` are characters, not wildcards,
+          because the match is a substring test in Python rather than a `LIKE` pattern
+          built out of user text — a query of `%` finds documents containing `%` and
+          nothing else.
+        * It is **bounded** in documents (`SHORT_QUERY_SCAN_LIMIT`), and it says when
+          the bound bit. A bounded scan that stayed quiet would be the same silent
+          partial answer as the zero it replaces.
+        * A blob that fails verification is skipped, not fatal: one damaged document
+          must not turn every short query into an error.
+        """
+        needle = query.strip()
+        if not needle or len(needle) >= TRIGRAM_FLOOR:
+            return []
+        folded = needle.casefold()
+        total = self._conn.execute(
+            "SELECT COUNT(*) AS n FROM documents"
+            " WHERE deleted = 0 AND superseded = 0 AND tokenizer = 'trigram'"
+        ).fetchone()["n"]
+        rows = self._conn.execute(
+            "SELECT d.doc_id, d.path, d.title, d.blob_sha256, b.archive_rel"
+            " FROM documents d JOIN blobs b ON b.sha256 = d.blob_sha256"
+            " WHERE d.deleted = 0 AND d.superseded = 0 AND d.tokenizer = 'trigram'"
+            " ORDER BY d.doc_id LIMIT ?",
+            (SHORT_QUERY_SCAN_LIMIT,),
+        ).fetchall()
+        self.last_search_truncated = total > len(rows)
+        found: list[int] = []
+        for row in rows:
+            haystacks = [row["path"] or "", row["title"] or ""]
+            try:
+                haystacks.append(
+                    self._read_verified_blob(row["blob_sha256"], row["archive_rel"])
+                    .decode("utf-8", "replace")
+                )
+            except CatalogError:
+                continue
+            if any(folded in h.casefold() for h in haystacks):
+                found.append(row["doc_id"])
+        return found
 
     @staticmethod
     def _and_of_tokens(query: str) -> str | None:
@@ -557,7 +633,13 @@ class Catalog:
         `query` uses FTS5 syntax. A query that FTS5 cannot parse is retried as a
         quoted phrase rather than raising — a user typing `C++` or an unbalanced
         quote should get no results, not a stack trace.
+
+        A query shorter than `TRIGRAM_FLOOR` that no index can answer is answered by a
+        bounded literal scan of the live CJK documents (ADR-0024's short-query scan).
+        Check `last_search_truncated` afterwards: True means the scan hit its document
+        bound and the answer is partial.
         """
+        self.last_search_truncated = False
         where = ["d.deleted = 0", "d.superseded = 0"]
         params: list = []
         for key, value in (filters or {}).items():

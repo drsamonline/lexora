@@ -46,7 +46,7 @@ from lexora import DEFAULT_LEVEL, __version__
 from lexora import codec_registry as codecs
 from lexora import langapi
 from lexora.canonicalize import CanonicalizationError, canonicalize, canonicalize_stream
-from lexora.catalog import Catalog, CatalogError
+from lexora.catalog import Catalog, CatalogError, SHORT_QUERY_SCAN_LIMIT
 from lexora.ingest import IngestError, describe as describe_ingest, extract as extract_text
 from lexora.container import ContainerError, read_index
 from lexora.container import (
@@ -1078,6 +1078,13 @@ def cmd_db(args) -> int:
                               f"{h.stored_bytes}B  {h.title or ''}")
                     if not hits:
                         print("(no matches)", file=sys.stderr)
+                if cat.last_search_truncated:
+                    print(
+                        "note: a query this short is answered by scanning documents, "
+                        f"and the scan covered only the first {SHORT_QUERY_SCAN_LIMIT} "
+                        "CJK documents — the answer may be partial",
+                        file=sys.stderr,
+                    )
                 return EXIT_OK
 
             if args.db_cmd == "get":
