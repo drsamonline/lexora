@@ -1080,9 +1080,10 @@ def cmd_db(args) -> int:
                         print("(no matches)", file=sys.stderr)
                 if cat.last_search_truncated:
                     print(
-                        "note: a query this short is answered by scanning documents, "
-                        f"and the scan covered only the first {SHORT_QUERY_SCAN_LIMIT} "
-                        "CJK documents — the answer may be partial",
+                        "note: a query this short is answered from the gram index; the "
+                        "documents it does not hold yet are scanned, and only the "
+                        f"first {SHORT_QUERY_SCAN_LIMIT} of those were — the answer "
+                        "may be partial",
                         file=sys.stderr,
                     )
                 return EXIT_OK

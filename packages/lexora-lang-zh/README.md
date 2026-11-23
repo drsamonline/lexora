@@ -44,6 +44,8 @@ refuses those outright. See
 in this plugin. The *catalog* answers such a query anyway: `Catalog.search` falls back to
 a literal, case-folded scan of the live CJK documents (bounded to 1000 documents, and it
 sets `last_search_truncated` when the bound bites, which `lexora db search` prints as a
-note on stderr). See [ADR-0024](../../docs/ADR/ADR-0024-tokenizer-recording.md). The
-remaining open work is bigram pre-segmentation — the option that would answer short
-queries from an index rather than by scanning.
+note on stderr). Since 2026-11-23 the catalog answers it from an index instead — `doc_grams`,
+the bigram pre-segmentation ADR-0024 left open, so a one- or two-character query is a key
+lookup rather than a scan of the corpus. The scan is kept only for a document the index
+does not hold yet. See [ADR-0024](../../docs/ADR/ADR-0024-tokenizer-recording.md), which
+also states the index's measured cost.
