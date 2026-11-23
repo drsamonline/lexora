@@ -41,7 +41,7 @@ is only the state and the split of work. That file is the plan of record.
 
 | # | Task | Done when |
 |---|---|---|
-| A1 | **P3.5** — build the labelled sample and measure the cleaning-error rate | A report with the ADR-0004 metric, a point estimate and a bootstrap upper bound |
+| A1 | **P3.5** — the instrument is built (2026-11-23): `benchmarks/cleaning_audit.py` samples, writes the worksheet, scores it and refuses an unacceptable one. What is left is the **reviewed sample**, which needs two humans — P7.9 | The rate is measured once the reviewers' sheet is adjudicated |
 | A2 | **P3.8** — packed-hash `doc_grams` | Grams cost ≤1× the stored payload at equal recall, differential test still green |
 | ~~A3~~ | ~~**P2.4** — GUI notices~~ | **DONE 2026-11-23** — the canonical LGPL-3.0/GPL-3.0 texts ship in the wheel, the About view carries the notice, `python -m lexora.gui.notices` prints them, and 10 tests pin it; verified by reading the texts back from an installed wheel |
 | A4 | **P4.4** — re-test `pyside6>=6.12` | The GUI suite exits 0, not just passes |

@@ -27,7 +27,7 @@
 | REQ-CAN-004 | Canonicalizer version identifier is recorded in every archive and checked at decode/verify time | M | Format field test | Not started |
 | REQ-CAN-005 | Correct handling of Devanagari and Gujarati text (no mangling of combining marks/ZWJ/ZWNJ) | M | Script-specific golden vectors | Not started |
 | REQ-CAN-006 | OCR-error correction applies only above configured confidence thresholds; corrections are logged | S | Log assertion tests | Not started |
-| REQ-CAN-007 | Cleaning quality ≤ 1% per [ADR-0004](ADR/ADR-0004-cleaning-error-metric.md) (Accepted 2026-10-15): rule-audit sample + invariant checks | M | Sample-review report + invariant test suite | Not started (metric defined; awaiting P3 run) |
+| REQ-CAN-007 | Cleaning quality ≤ 1% per [ADR-0004](ADR/ADR-0004-cleaning-error-metric.md) (Accepted 2026-10-15): rule-audit sample + invariant checks | M | Sample-review report + invariant test suite | **Instrument built 2026-11-23** (`benchmarks/cleaning_audit.py`, [CLEANING_AUDIT.md](CLEANING_AUDIT.md)): seeded stratified sampling, review worksheet, point estimate + cluster-bootstrap upper bound, refusals below the 200-per-language floor. Invariant suite green. **Not measured:** the rate needs the reviewed sample (PATH_TO_V1 P7.9) |
 
 ## 3. Compression core
 
