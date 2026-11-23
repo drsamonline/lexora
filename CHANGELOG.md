@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+**Added:** a short CJK query is answered from an **index**, not a scan — ADR-0024's
+bigram pre-segmentation, the one option the ADR left open. `doc_grams` (schema v3) holds
+every unigram and bigram of the case-folded path, title and text of each document the
+trigram index holds, keyed gram-first, so a one- or two-character query is a key lookup
+whose cost is the size of the ANSWER rather than the size of the corpus — and it cannot
+be truncated. The scan stays for exactly the two cases an index cannot answer: a
+document the index does not hold yet (an older catalog the backfill has not reached, or
+a blob that failed verification), and a needle whose folded form is longer than two
+characters (`ß` → `ss`, `ﬃ` → `ffi`). `last_search_truncated` now describes the scanned
+part only, so a complete index answer is never reported as partial. A v2 catalog is
+backfilled on open, not re-ingested, and `lexora db stats` reports `gram_index`
+(`documents`, `grams`, `uncovered`).
+**Measured, and the trade is stated:** on a 20,000-character synthetic Zipfian Chinese
+document (60,000 canonical bytes, 29,515 stored bytes) the index holds 10,389 grams in
+147,456 bytes — 5× the stored payload and 2.5× the canonical text. That is the price of
+answering without reading a blob; a packed-hash form of the same table is the next step
+if the ratio comes to matter more than the exactness.
+`tests/test_catalog_tokenizer.py` 24 → 36 tests; the suite is **754 passed, 14 skipped**.
+Ten mutations were run — bigrams dropped, the case fold dropped, grams written for prose
+documents, grams not dropped on unindex, the index ignored, uncovered documents never
+scanned, the backfill skipped, the title left out of the index, the truncation flag
+raised for a complete answer, and a folded needle no longer routed to the scan — and
+**all ten were caught**. The sweep also found the gram rebuild in `compact()` dead (gram
+deletion is exact, unlike contentless FTS, so the table cannot go stale), and it was
+deleted rather than covered by a test that could never fail.
+
 **Fixed:** a one- or two-character Chinese query no longer returns a silent zero. The
 `trigram` index that Chinese needs (ADR-0024) cannot match a query shorter than three
 characters — `公园` is one of the most common query shapes in Chinese and it matched

@@ -76,9 +76,22 @@ So a trigram index is not a drop-in variant of the existing one: it needs a diff
     the same silent partial answer as the zero it replaces.
   - It is **literal**: `%` and `_` are characters, not wildcards, because the match is a
     substring test rather than a `LIKE` pattern built out of user text.
-  - **Still open:** bigram pre-segmentation, which is the only one of the two that
-    answers short queries from an index instead of scanning. The scan's cost is linear
-    in the CJK corpus, and the bound is where that cost becomes visible.
+  - **Built, and it is now the path** (2026-11-23): the other option — a bigram
+    pre-segmentation of the body — is `doc_grams` (schema v3). Every unigram and bigram
+    of the case-folded path, title and text of each document the trigram index holds is
+    a row, keyed gram-first, so a one- or two-character query is a key lookup and its
+    cost is the size of the answer rather than the size of the corpus. It cannot be
+    truncated, so `last_search_truncated` now describes only the part that is still
+    scanned: a document the index does not hold yet (a v2 catalog the backfill has not
+    reached, or a blob that failed verification) and a needle whose folded form is
+    longer than two characters (`ß` → `ss`, `ﬃ` → `ffi`). A v2 catalog is backfilled on
+    open, not re-ingested.
+  - **The cost, measured:** on a 20,000-character synthetic Zipfian Chinese document
+    (60,000 canonical bytes, 29,515 stored) the index holds 10,389 grams in 147,456
+    bytes — 5× the stored payload. That is stated rather than hidden: the gram table is
+    the right trade for a corpus that is queried often and the wrong one for a
+    store-only corpus, and a packed-hash form of it is the next step if the ratio comes
+    to matter more than the exactness of the answer.
   - The floor itself is unchanged and still measured: `trigram` indexes
     three-character sequences, so a direct `MATCH` for two characters still finds no
     row. The catalog answers around the tokenizer; it does not change it. Both facts

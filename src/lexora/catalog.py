@@ -57,7 +57,7 @@ from lexora.container import (
     unpack as lxz_unpack,
 )
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 # Contentless (`content=''`): FTS5 stores the inverted index only, never a second
 # uncompressed copy of the text. Measured on 18.2 MiB of Gutenberg prose this costs
@@ -102,11 +102,30 @@ DEFAULT_TOKENIZER = "unicode61"
 #: the FTS table directly to keep it true.
 TRIGRAM_FLOOR = 3
 
-#: What a short query is answered with instead of a silent zero: a substring scan over
-#: the live documents that the trigram index holds. It is a scan, not an index, so it is
-#: bounded in documents — and when the bound bites, `Catalog.last_search_truncated` says
-#: so rather than letting a partial answer look like a complete one.
+#: The fallback of last resort for a short query: a substring scan over the live
+#: documents that the trigram index holds. It is a scan, not an index, so it is bounded
+#: in documents — and when the bound bites, `Catalog.last_search_truncated` says so
+#: rather than letting a partial answer look like a complete one. Since schema v3 the
+#: scan only covers documents the gram index below does not hold yet (a catalog built
+#: before v3 that has not been backfilled, or a blob that failed verification).
 SHORT_QUERY_SCAN_LIMIT = 1000
+
+#: The longest query the gram index can answer: the trigram floor minus one. A gram is
+#: one character (a unigram) or two (a bigram) of the case-folded path, title or text,
+#: so a query of length 1 or 2 matches a gram EXACTLY — the same answer a substring test
+#: would give, and the same answer the scan gave, without reading a single blob.
+SHORT_QUERY_GRAM_MAX = TRIGRAM_FLOOR - 1
+
+#: One row per (gram, document), for the documents the trigram index holds. Keyed
+#: gram-first because every query is "which documents hold this gram", and `WITHOUT
+#: ROWID` makes that key the storage instead of a second copy of it. Unigrams and
+#: bigrams share the table: a query says its own length, so the two cannot be confused.
+GRAM_SCHEMA = (
+    "CREATE TABLE IF NOT EXISTS doc_grams ("
+    " gram TEXT NOT NULL,"
+    " doc_id INTEGER NOT NULL,"
+    " PRIMARY KEY (gram, doc_id)) WITHOUT ROWID"
+)
 INDEX_NAME = "catalog.sqlite"
 BLOB_DIR = "blobs"
 
@@ -235,6 +254,7 @@ class Catalog:
                                tokenize='trigram');
                 """
             )
+            self._conn.execute(GRAM_SCHEMA)
             self._migrate()
             self._conn.execute(
                 "INSERT OR REPLACE INTO meta(key, value) VALUES ('schema_version', ?)",
@@ -277,6 +297,13 @@ class Catalog:
                 )
             if "documents_fts_trigram" not in tables:
                 self._conn.execute(FTS_TRIGRAM_SCHEMA)
+            if "doc_grams" not in tables:
+                # v3: the short-query gram index (ADR-0024's bigram pre-segmentation).
+                # A catalog that already holds CJK documents gets it BACKFILLED here,
+                # on open — the same rule the tokenizer column follows: a migration
+                # that made a user re-ingest their documents would not be a migration.
+                self._conn.execute(GRAM_SCHEMA)
+                self._backfill_grams()
             # The version is part of the migration, not a cosmetic stamp: a catalog
             # that has the v2 shape and says v1 is a catalog nobody can reason about.
             self._conn.execute(
@@ -325,8 +352,123 @@ class Catalog:
             (doc_id, path, title or "", body),
         )
 
+    # -- the short-query gram index (ADR-0024) ------------------------------
+
+    @staticmethod
+    def _grams(text: str) -> set[str]:
+        """Every one- and two-character sequence of `text`, case-folded.
+
+        Folding first is what makes an index lookup the same question the scan asked:
+        the scan compares `needle.casefold()` against `haystack.casefold()`, so a gram
+        is a slice of the FOLDED text, not of the text.
+        """
+        folded = text.casefold()
+        grams = set(folded)
+        grams.update(folded[i:i + 2] for i in range(len(folded) - 1))
+        return grams
+
+    def _grams_insert(self, doc_id: int, path: str, title: str | None, body: str,
+                      tokenizer: str = DEFAULT_TOKENIZER) -> None:
+        """Record a document's grams — only for documents the trigram index holds.
+
+        A `unicode61` document is the prose index's job: it indexes whole words, so a
+        one- or two-character query against it is a word query the index answers, and
+        giving it grams would answer for a document the short-query path never asked
+        about.
+        """
+        if tokenizer != "trigram":
+            return
+        grams = self._grams(path) | self._grams(title or "") | self._grams(body)
+        self._conn.executemany(
+            "INSERT OR IGNORE INTO doc_grams(gram, doc_id) VALUES (?, ?)",
+            ((gram, doc_id) for gram in grams),
+        )
+
+    def _grams_delete(self, doc_id: int) -> None:
+        self._conn.execute("DELETE FROM doc_grams WHERE doc_id = ?", (doc_id,))
+
+    def _gram_rowids(self, folded: str) -> set[int]:
+        """Documents holding `folded` as a gram. Exact for a needle of length 1 or 2."""
+        return {
+            row["doc_id"] for row in self._conn.execute(
+                "SELECT g.doc_id FROM doc_grams g"
+                " JOIN documents d ON d.doc_id = g.doc_id"
+                " WHERE g.gram = ? AND d.deleted = 0 AND d.superseded = 0",
+                (folded,),
+            )
+        }
+
+    #: The live trigram documents, and how many there are. Shared by the gram index's
+    #: backfill and the scan so the two can never disagree about which documents the
+    #: short-query path is responsible for.
+    _LIVE_TRIGRAM_WHERE = (
+        " FROM documents d JOIN blobs b ON b.sha256 = d.blob_sha256"
+        " WHERE d.deleted = 0 AND d.superseded = 0 AND d.tokenizer = 'trigram'"
+    )
+
+    def _live_trigram_rows(self, limit: int | None = None) -> tuple[list, int]:
+        total = self._conn.execute(
+            "SELECT COUNT(*)" + self._LIVE_TRIGRAM_WHERE
+        ).fetchone()[0]
+        sql = (
+            "SELECT d.doc_id, d.path, d.title, d.blob_sha256, b.archive_rel"
+            + self._LIVE_TRIGRAM_WHERE
+            + " ORDER BY d.doc_id"
+        )
+        if limit is None:
+            return list(self._conn.execute(sql)), total
+        return list(self._conn.execute(sql + " LIMIT ?", (limit,))), total
+
+    def _gram_uncovered(self) -> tuple[list, int]:
+        """Live trigram documents with no grams yet, and how many there are.
+
+        This is the honest definition of "what the index cannot answer": a document
+        with no rows in `doc_grams`. Every document has a path, so a gram-indexed
+        document always has at least one row — an empty set means "not indexed",
+        never "indexed and empty".
+        """
+        where = (
+            self._LIVE_TRIGRAM_WHERE
+            + " AND NOT EXISTS (SELECT 1 FROM doc_grams g WHERE g.doc_id = d.doc_id)"
+        )
+        total = self._conn.execute("SELECT COUNT(*)" + where).fetchone()[0]
+        rows = self._conn.execute(
+            "SELECT d.doc_id, d.path, d.title, d.blob_sha256, b.archive_rel" + where
+            + " ORDER BY d.doc_id LIMIT ?",
+            (SHORT_QUERY_SCAN_LIMIT,),
+        ).fetchall()
+        return list(rows), total
+
+    def _backfill_grams(self) -> None:
+        """Build the gram index for documents that predate it (schema v2 -> v3).
+
+        Called from `_migrate`, so it runs on OPEN of an older catalog: the same rule
+        the tokenizer column follows — a migration that made the owner re-ingest their
+        documents would not be a migration. One pass, unbounded, and a blob that fails
+        verification is left uncovered rather than failing the open: the scan still
+        answers for it.
+        """
+        rows, _ = self._live_trigram_rows()
+        missing = [r for r in rows if not self._conn.execute(
+            "SELECT 1 FROM doc_grams WHERE doc_id = ? LIMIT 1", (r["doc_id"],)
+        ).fetchone()]
+        with self._conn:
+            for row in missing:
+                try:
+                    body = self._read_verified_blob(
+                        row["blob_sha256"], row["archive_rel"]
+                    ).decode("utf-8", "replace")
+                except CatalogError:
+                    continue
+                self._grams_insert(row["doc_id"], row["path"], row["title"], body,
+                                   "trigram")
+
     def _unindex(self, doc_id: int, path: str, title: str | None, sha: str, rel: str,
                  tokenizer: str = DEFAULT_TOKENIZER) -> None:
+        # The grams need no blob and cannot fail, so they go first: a document that is
+        # no longer live must leave the short-query index even when its payload has
+        # already gone missing.
+        self._grams_delete(doc_id)
         try:
             body = self._read_verified_blob(sha, rel).decode("utf-8", "replace")
             self._fts_delete(doc_id, path, title, body, tokenizer)
@@ -431,6 +573,8 @@ class Catalog:
             doc_id = int(cur.lastrowid)
             self._fts_insert(doc_id, path, title,
                              canonical.decode("utf-8", "replace"), tokenizer)
+            self._grams_insert(doc_id, path, title,
+                               canonical.decode("utf-8", "replace"), tokenizer)
 
         return Hit(
             doc_id=doc_id, path=path, version=version, title=title, metadata=meta,
@@ -549,9 +693,66 @@ class Catalog:
                 break
         # Nothing matched, and the trigram index has now said why it could not help: a
         # query shorter than three characters has no trigram to match. Answer it from
-        # the documents themselves instead of returning the silent zero this fallback
-        # exists to remove.
-        return self._short_query_scan(query)
+        # the gram index instead of returning the silent zero this fallback exists to
+        # remove, and from the documents themselves only for what the index lacks.
+        return self._short_query(query)
+
+    def _short_query(self, query: str) -> list[int]:
+        """Rowids for a query below `TRIGRAM_FLOOR` — from the gram index, first.
+
+        ADR-0024 named two ways off the trigram floor. The scan was built first
+        (2026-11-21) because it needs no re-ingestion and so works on catalogs that
+        already exist; this is the second — the bigram pre-segmentation the ADR left
+        open — and it is now the path a short query takes. A one- or two-character
+        query is a gram lookup, so its cost is the size of the ANSWER rather than the
+        size of the corpus, and it cannot be truncated.
+
+        The scan is kept for the two cases an index genuinely cannot answer:
+
+        * a document the gram index does not hold yet — one written by a catalog that
+          was never backfilled, or a blob that failed verification;
+        * a needle whose *folded* form is longer than two characters (`ß` folds to
+          `ss`, `ﬃ` to `ffi`), which no unigram or bigram can represent.
+
+        `last_search_truncated` is about the part that was SCANNED, not about the
+        answer: an index hit is complete, so a bounded scan alongside it must not make
+        a complete result look partial — the failure this flag exists to prevent is the
+        opposite one.
+        """
+        needle = query.strip()
+        if not needle or len(needle) >= TRIGRAM_FLOOR:
+            return []
+        folded = needle.casefold()
+        if len(folded) > SHORT_QUERY_GRAM_MAX:
+            return self._short_query_scan(query)
+        found = self._gram_rowids(folded)
+        missing, total_missing = self._gram_uncovered()
+        if missing:
+            found |= set(self._scan_rows(missing, folded))
+            self.last_search_truncated = total_missing > len(missing)
+        return sorted(found)
+
+    def _scan_rows(self, rows: list, folded: str) -> list[int]:
+        """Rowids among `rows` whose path, title or text contains `folded`.
+
+        The match is **literal**, not FTS syntax: `%` and `_` are characters, not
+        wildcards, because this is a substring test in Python rather than a `LIKE`
+        pattern built out of user text. A blob that fails verification is skipped, not
+        fatal: one damaged document must not turn every short query into an error.
+        """
+        found: list[int] = []
+        for row in rows:
+            haystacks = [row["path"] or "", row["title"] or ""]
+            try:
+                haystacks.append(
+                    self._read_verified_blob(row["blob_sha256"], row["archive_rel"])
+                    .decode("utf-8", "replace")
+                )
+            except CatalogError:
+                continue
+            if any(folded in h.casefold() for h in haystacks):
+                found.append(row["doc_id"])
+        return found
 
     def _short_query_scan(self, query: str) -> list[int]:
         """Rowids of live CJK documents whose text contains `query` literally.
@@ -578,32 +779,9 @@ class Catalog:
         needle = query.strip()
         if not needle or len(needle) >= TRIGRAM_FLOOR:
             return []
-        folded = needle.casefold()
-        total = self._conn.execute(
-            "SELECT COUNT(*) AS n FROM documents"
-            " WHERE deleted = 0 AND superseded = 0 AND tokenizer = 'trigram'"
-        ).fetchone()["n"]
-        rows = self._conn.execute(
-            "SELECT d.doc_id, d.path, d.title, d.blob_sha256, b.archive_rel"
-            " FROM documents d JOIN blobs b ON b.sha256 = d.blob_sha256"
-            " WHERE d.deleted = 0 AND d.superseded = 0 AND d.tokenizer = 'trigram'"
-            " ORDER BY d.doc_id LIMIT ?",
-            (SHORT_QUERY_SCAN_LIMIT,),
-        ).fetchall()
+        rows, total = self._live_trigram_rows(SHORT_QUERY_SCAN_LIMIT)
         self.last_search_truncated = total > len(rows)
-        found: list[int] = []
-        for row in rows:
-            haystacks = [row["path"] or "", row["title"] or ""]
-            try:
-                haystacks.append(
-                    self._read_verified_blob(row["blob_sha256"], row["archive_rel"])
-                    .decode("utf-8", "replace")
-                )
-            except CatalogError:
-                continue
-            if any(folded in h.casefold() for h in haystacks):
-                found.append(row["doc_id"])
-        return found
+        return self._scan_rows(rows, needle.casefold())
 
     @staticmethod
     def _and_of_tokens(query: str) -> str | None:
@@ -634,8 +812,9 @@ class Catalog:
         quoted phrase rather than raising — a user typing `C++` or an unbalanced
         quote should get no results, not a stack trace.
 
-        A query shorter than `TRIGRAM_FLOOR` that no index can answer is answered by a
-        bounded literal scan of the live CJK documents (ADR-0024's short-query scan).
+        A query shorter than `TRIGRAM_FLOOR` that no index can answer is answered from
+        the per-document gram index (ADR-0024's bigram pre-segmentation), and only for
+        documents that index does not hold yet by a bounded literal scan of them.
         Check `last_search_truncated` afterwards: True means the scan hit its document
         bound and the answer is partial.
         """
@@ -771,6 +950,13 @@ class Catalog:
                 self._conn.execute(f"DROP TABLE IF EXISTS {table}")
             self._conn.execute(FTS_SCHEMA)
             self._conn.execute(FTS_TRIGRAM_SCHEMA)
+            # The gram index is deliberately NOT rebuilt here. It is dropped and
+            # recreated for the FTS tables only because a contentless FTS5 table cannot
+            # be DELETEd from, so its rows are best-effort and a rebuild is the repair.
+            # `doc_grams` has neither problem: `_unindex` deletes a document's grams
+            # exactly, before it touches the blob, so the table holds only live
+            # documents and a rebuild here would be code no input could tell from its
+            # own removal (a mutation sweep found exactly that).
             for doc_id, path, title, tokenizer, body in bodies:
                 self._fts_insert(doc_id, path, title, body, tokenizer)
         return {"indexed": len(bodies)}
@@ -802,6 +988,18 @@ class Catalog:
                 " WHERE deleted = 0 AND superseded = 0 GROUP BY tokenizer"
             )
         }
+        # The gram index is the other side of the same trade: it is what answers a
+        # short query without reading a blob, and it is stored per document, so the
+        # owner should be able to see how many documents carry one and how many are
+        # still waiting for the backfill.
+        gram_rows = self._conn.execute("SELECT COUNT(*) AS n FROM doc_grams").fetchone()["n"]
+        gram_docs = self._conn.execute(
+            "SELECT COUNT(DISTINCT doc_id) AS n FROM doc_grams"
+        ).fetchone()["n"]
+        gram_uncovered = self._conn.execute(
+            "SELECT COUNT(*)" + self._LIVE_TRIGRAM_WHERE
+            + " AND NOT EXISTS (SELECT 1 FROM doc_grams g WHERE g.doc_id = d.doc_id)"
+        ).fetchone()[0]
         index_bytes = self.index_path.stat().st_size if self.index_path.exists() else 0
         canonical = live["canonical"] or 0
         stored = live["stored"] or 0
@@ -811,6 +1009,11 @@ class Catalog:
             "superseded": row["superseded"] or 0,
             "live_documents": live["n"] or 0,
             "by_tokenizer": by_tokenizer,
+            "gram_index": {
+                "documents": gram_docs,
+                "grams": gram_rows,
+                "uncovered": gram_uncovered,
+            },
             "blobs": blobs["n"] or 0,
             "canonical_bytes": canonical,
             "stored_bytes": stored,
