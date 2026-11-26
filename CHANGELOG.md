@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+**Changed — the gram index is one posting list per gram, not one row per pair (schema v4,
+[ADR-0027](docs/ADR/ADR-0027-schema-v4-gram-postings.md)).** ADR-0025 kept
+`doc_grams(gram, doc_id)` because every layout it measured stored document ids at a fixed
+four bytes, and packing the *gram* buys 3–19 %. It did not measure the obvious encoding for
+a sorted set of ids — the deltas. `doc_grams` now holds one row per gram whose ids are
+delta-coded LEB128 varints, with a `doc_gram_docs` row per indexed document so "is this
+document indexed" stays a primary-key lookup. Re-running the committed probe with the
+shipped encoder as a sixth variant (`f_posting_varint`): **50 documents 6.66× → 1.46× the
+stored payload, 500 documents 13.4× → 2.11×**, and **5 % larger on a single document**
+(3.15× → 3.32×) — the degenerate case ADR-0025 weighted, now a rounding error instead of a
+24 % loss. It is also 2.2×–3.5× smaller than the fixed-width posting lists the earlier probe
+measured. **Exact by construction:** the key is the gram, so there is no hash, no collision
+and no verification pass. A v3 catalog is repacked on open from the grams it already holds —
+no blob read, nothing re-ingested — and a v3 catalog that was half backfilled stays half
+backfilled, so the scan still answers for the documents the index never covered. A posting
+naming a document that is no longer live is filtered at read time rather than trusted.
+`tests/test_gram_postings.py` (17 tests: the varint round-trip at every width boundary,
+every one- and two-character needle against a substring reference over a mixed
+Han/Latin/Hindi/emoji corpus, a non-BMP code point, a needle only in the title, stale
+postings, delete and supersede, both migrations, idempotent repacking, and the storage
+claim itself). Suite **879 passed, 15 skipped**.
+
 **Added:** a short CJK query is answered from an **index**, not a scan — ADR-0024's
 bigram pre-segmentation, the one option the ADR left open. `doc_grams` (schema v3) holds
 every unigram and bigram of the case-folded path, title and text of each document the
@@ -21,7 +43,8 @@ answering without reading a blob. **Corrected 2026-11-23:** that figure came fro
 uncommitted generator; re-measured with `benchmarks/gram_index_probe.py` the ratio runs
 3.15× → 6.61× → 13.29× depending on how much the corpus repeats itself, and packing the
 table buys 11–19 % — so it was measured instead of assumed, and the layout stayed
-([ADR-0025](docs/ADR/ADR-0025-gram-index-layout.md)).
+([ADR-0025](docs/ADR/ADR-0025-gram-index-layout.md)) — until the id encoding was measured
+too, which is the entry above ([ADR-0027](docs/ADR/ADR-0027-schema-v4-gram-postings.md)).
 `tests/test_catalog_tokenizer.py` 24 → 36 tests; the suite was **754 passed, 14 skipped** on the branch and is **765 passed, 3 skipped** on `main` with both language plugins installed (re-measured 2026-11-23 after both PRs merged).
 Ten mutations were run — bigrams dropped, the case fold dropped, grams written for prose
 documents, grams not dropped on unindex, the index ignored, uncovered documents never

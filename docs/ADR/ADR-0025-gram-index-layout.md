@@ -1,6 +1,10 @@
 # ADR-0025: The gram index keeps its layout — the cost is row count, and packing does not fix it
 
-- **Status:** Accepted 2026-11-23, under the owner's standing delegation recorded in
+- **Status:** Accepted 2026-11-23 — **its layout half is superseded 2026-11-26 by
+  [ADR-0027](ADR-0027-schema-v4-gram-postings.md)**: the same probe, with the ids stored as
+  delta-coded varints rather than at a fixed width, makes the posting list 4.55×–6.37× smaller
+  than v3 on multi-document corpora and only 5 % larger on a single document. The cost analysis
+  here (row count, not gram width) stands and is what the new layout attacks. Recorded, under the owner's standing delegation recorded in
   [ADR-0004](ADR-0004-cleaning-error-metric.md) ("decide ADRs yourself", revocable). It ratifies
   the status quo: **no stored byte changes.** If the owner disagrees, nothing has to be undone.
 - **Date:** 2026-11-23
@@ -28,17 +32,22 @@ the cost is not where the proposal thought it was.**
 reports page usage from `dbstat` — real pages, not arithmetic. Synthetic Zipfian Chinese, three
 shapes chosen to separate the two effects a single document cannot distinguish.
 
-| Shape | Stored payload (zstd-9) | `a_current` (ships) | `b_hash32` | `c_hash4` | `d_posting32` | `e_posting_text` |
-|---|---|---|---|---|---|---|
-| 1 doc × 20,000 chars | 24,668 B | 77,824 B — **3.15×** | 1.06× | 1.19× | **0.76×** | 0.76× |
-| 50 docs × 4,000 chars | 223,804 B | 1,478,656 B — **6.61×** | 1.06× | 1.16× | **2.24×** | 2.09× |
-| 500 docs × 400 chars | 223,679 B | 2,973,696 B — **13.29×** | 1.03× | 1.11× | **1.78×** | 1.75× |
+| Shape | Stored payload (zstd-9) | `a_current` (ships) | `b_hash32` | `c_hash4` | `d_posting32` | `e_posting_text` | `f_posting_varint` |
+|---|---|---|---|---|---|---|---|
+| 1 doc × 20,000 chars | 24,668 B | 77,824 B — **3.15×** | 1.12× | 1.12× | **0.76×** | 0.73× | 0.95× |
+| 50 docs × 4,000 chars | 223,804 B | 1,490,944 B — **6.66×** | 1.07× | 1.17× | **2.19×** | 2.13× | 4.55× |
+| 500 docs × 400 chars | 223,679 B | 2,998,272 B — **13.40×** | 1.04× | 1.14× | **1.82×** | 1.79× | 6.37× |
+
+*(Re-run 2026-11-26 with `f_posting_varint` added — the same probe, one more table, so the page
+usage of every layout moved by a page or two. The `f` column is what
+[ADR-0027](ADR-0027-schema-v4-gram-postings.md) then adopted: it is the same inverted layout
+with the ids stored as delta-coded varints, and it is 2.2×–3.5× smaller than `d_posting32`.)*
 
 `vs_current` is how much smaller the layout is; `d_posting32` and `e_posting_text` are inverted
 indexes (one row per gram, packed doc ids), the rest are one row per (gram, document).
 
-**And the best any of them does, measured against the payload it indexes:** 2.66× on the single
-document, 2.95× on the small corpus, 7.49× where bigrams recur most. There is no packing that
+**And the best any of them does, measured against the payload it indexes:** 2.82× on the single
+document, 1.46× on the small corpus, 2.11× where bigrams recur most. There is no packing that
 makes this index small — only packing that makes it smaller than it is.
 
 Three findings, in order of how much they change the plan:
@@ -49,12 +58,13 @@ Three findings, in order of how much they change the plan:
 migration and a verification path for a sixth of the cost.
 
 **2. The inverted index wins only where bigrams recur across documents — and loses where they do
-not.** 2.24× smaller on 50 documents that share a vocabulary; **0.76× on one document**, where
-every posting list holds a single id and the blob overhead is pure loss. Which regime a real
+not.** 2.19× smaller on 50 documents that share a vocabulary (4.55× once the ids are delta-coded,
+which this ADR did not measure — see ADR-0027); **0.76× on one document**, where every posting
+list holds a single id and the blob overhead is pure loss. Which regime a real
 catalog sits in is a fact about the corpus, and the corpus run is P0 — not yet done.
 
 **3. "5× the stored payload" is a point on a curve, not a constant.** The same table costs 3.15×,
-6.61× and 13.29× the payload depending only on how much the corpus repeats itself. The single
+6.66× and 13.40× the payload depending only on how much the corpus repeats itself. The single
 figure in the CHANGELOG is not wrong so much as under-determined, and it is now replaced by the
 measured range with its artifact.
 

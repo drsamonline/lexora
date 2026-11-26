@@ -3,7 +3,7 @@
 `benchmarks/results-gram-index.json` exists because the number it replaces did not: the "5× the
 stored payload" figure in the CHANGELOG came from a generator nobody committed, so it could not
 be re-derived, checked or corrected — and when it was finally measured properly it turned out to
-be one point on a curve that runs from 3.15× to 13.29× (ADR-0025).
+be one point on a curve that runs from 3.15× to 13.40× (ADR-0025).
 
 Two guards here. The probe still runs and still writes the shape the ADR reads; and the ADR's
 table still matches the committed artifact, so a re-run that moves a number cannot leave the
@@ -74,7 +74,7 @@ def test_the_adr_quotes_the_artifact_and_not_the_other_way_round(artifact) -> No
             f"ADR-0025 does not quote {best:.2f}× (the best packing for {label})"
         )
     # the three headline costs, spelled out rather than derived, because they are the finding
-    assert "3.15×" in text and "6.61×" in text and "13.29×" in text
+    assert "3.15×" in text and "6.66×" in text and "13.40×" in text
 
 
 def test_the_hashing_finding_is_still_true(artifact) -> None:

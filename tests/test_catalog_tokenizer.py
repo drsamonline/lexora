@@ -26,6 +26,30 @@ import pytest
 from lexora import catalog as cat_mod
 from lexora.catalog import Catalog, CatalogError
 
+# Schema v4 keeps the gram index in two tables: one posting list per gram, and one row
+# per document that carries grams. These helpers say what the v3-shaped assertions in
+# this file meant, in the v4 shape.
+def _drop_gram_index(store: Catalog) -> None:
+    """Make every document uncovered, as a catalog the backfill has not reached."""
+    store._conn.execute("DELETE FROM doc_grams")
+    store._conn.execute("DELETE FROM doc_gram_docs")
+    store._conn.commit()
+
+
+def _indexed(store: Catalog, doc_id: int) -> bool:
+    """Does the gram index claim this document?"""
+    return store._conn.execute(
+        "SELECT 1 FROM doc_gram_docs WHERE doc_id = ?", (doc_id,)
+    ).fetchone() is not None
+
+
+def _named_in_a_posting(store: Catalog, doc_id: int) -> bool:
+    """Is this document's id still inside any posting list?"""
+    return any(
+        doc_id in cat_mod._unpack_postings(row["postings"])
+        for row in store._conn.execute("SELECT postings FROM doc_grams")
+    )
+
 HAN = "今天天气很好，我们一起去公园散步。"       # 今天天气… a sentence with no spaces
 HAN_WORD = "天气很"                               # three characters, findable under trigram
 HAN_SHORT = "公园"                                # two characters — the trigram floor
@@ -200,7 +224,7 @@ def test_a_bounded_scan_says_it_was_bounded(store: Catalog, monkeypatch) -> None
     store.add("a.txt", "今天天气很好".encode(), tokenizer="trigram")
     store.add("b.txt", "我们一起去".encode(), tokenizer="trigram")
     store.add("c.txt", "公园散步".encode(), tokenizer="trigram")
-    store._conn.execute("DELETE FROM doc_grams")
+    _drop_gram_index(store)
     assert store.search(HAN_SHORT) == []
     assert store.last_search_truncated is True
     # …and the flag is per search, not sticky.
@@ -323,7 +347,7 @@ def test_a_prose_document_gets_no_grams(store: Catalog) -> None:
     han = store.add("han.txt", HAN.encode(), tokenizer="trigram")
     holders = {
         r["doc_id"]
-        for r in store._conn.execute("SELECT DISTINCT doc_id FROM doc_grams")
+        for r in store._conn.execute("SELECT doc_id FROM doc_gram_docs")
     }
     assert holders == {han.doc_id}
     assert prose.doc_id not in holders
@@ -332,18 +356,16 @@ def test_a_prose_document_gets_no_grams(store: Catalog) -> None:
 def test_a_deleted_document_leaves_the_gram_index(store: Catalog) -> None:
     hit = store.add("han.txt", HAN.encode(), tokenizer="trigram")
     store.delete("han.txt")
-    assert store._conn.execute(
-        "SELECT COUNT(*) FROM doc_grams WHERE doc_id = ?", (hit.doc_id,)
-    ).fetchone()[0] == 0
+    assert _indexed(store, hit.doc_id) is False
+    assert _named_in_a_posting(store, hit.doc_id) is False
     assert store.search(HAN_SHORT) == []
 
 
 def test_a_superseded_document_leaves_the_gram_index(store: Catalog) -> None:
     old = store.add("han.txt", HAN.encode(), tokenizer="trigram")
     store.add("han.txt", "完全不同的一句话".encode(), tokenizer="trigram")
-    assert store._conn.execute(
-        "SELECT COUNT(*) FROM doc_grams WHERE doc_id = ?", (old.doc_id,)
-    ).fetchone()[0] == 0
+    assert _indexed(store, old.doc_id) is False
+    assert _named_in_a_posting(store, old.doc_id) is False
     assert store.search(HAN_SHORT) == []
 
 
@@ -365,7 +387,7 @@ def test_compact_leaves_only_live_grams(store: Catalog) -> None:
     }
     holders = {
         r["doc_id"]
-        for r in store._conn.execute("SELECT DISTINCT doc_id FROM doc_grams")
+        for r in store._conn.execute("SELECT doc_id FROM doc_gram_docs")
     }
     assert holders == live
     assert sorted(h.path for h in store.search(HAN_SHORT)) == ["han.txt", "other.txt"]
@@ -382,7 +404,7 @@ def test_a_scan_under_the_bound_is_not_reported_as_partial(
     """
     monkeypatch.setattr(cat_mod, "SHORT_QUERY_SCAN_LIMIT", 10)
     store.add("han.txt", HAN.encode(), tokenizer="trigram")
-    store._conn.execute("DELETE FROM doc_grams")
+    _drop_gram_index(store)
     assert [h.path for h in store.search(HAN_SHORT)] == ["han.txt"]
     assert store.last_search_truncated is False
 
@@ -483,7 +505,7 @@ def test_a_v1_catalog_is_migrated_in_place(tmp_path: Path) -> None:
         assert "documents_fts_trigram" in tables
         assert "doc_grams" in tables
         assert cat._conn.execute(
-            "SELECT value FROM meta WHERE key = 'schema_version'").fetchone()["value"] == "3"
+            "SELECT value FROM meta WHERE key = 'schema_version'").fetchone()["value"] == "4"
 
 
 def test_a_document_written_after_migration_defaults_to_unicode61(tmp_path: Path) -> None:

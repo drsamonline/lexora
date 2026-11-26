@@ -16,6 +16,7 @@ It measures five layouts over identical data, in one SQLite file, and reports by
 `c_hash4`               the same hash stored as a 4-byte BLOB (integer-sorted, compact)
 `d_posting32`           `crc32(gram) -> packed doc ids` — an inverted index, one row per gram
 `e_posting_text`        `gram TEXT -> packed doc ids` — inverted, exact, no hashing
+`f_posting_varint`      the same, with the SHIPPED delta-coded encoder (`_pack_postings`)
 ======================  ==========================================================================
 
 Two numbers decide the question and neither is size alone:
@@ -62,7 +63,8 @@ SHAPES = (
     ("recurring-bigrams-500x400", 500, 400),
 )
 
-VARIANTS = ("a_current", "b_hash32", "c_hash4", "d_posting32", "e_posting_text")
+VARIANTS = ("a_current", "b_hash32", "c_hash4", "d_posting32", "e_posting_text",
+            "f_posting_varint")
 
 
 def zipf_text(chars: int, seed: int) -> str:
@@ -91,6 +93,7 @@ def _table_bytes(conn: sqlite3.Connection, table: str) -> int:
 
 def measure_shape(docs: int, chars: int, seed: int = 7) -> dict:
     from lexora.zstd_core import compress  # the payload these grams index
+    from lexora.catalog import _pack_postings  # the encoder schema v4 actually ships
 
     per_doc = {d: grams_of(zipf_text(chars, seed=seed + d)) for d in range(docs)}
     canonical = "".join(zipf_text(chars, seed=seed + d) for d in range(docs)).encode("utf-8")
@@ -110,6 +113,8 @@ def measure_shape(docs: int, chars: int, seed: int = 7) -> dict:
                      " WITHOUT ROWID")
         conn.execute("CREATE TABLE e_posting_text (gram TEXT PRIMARY KEY, docs BLOB NOT NULL)"
                      " WITHOUT ROWID")
+        conn.execute("CREATE TABLE f_posting_varint (gram TEXT PRIMARY KEY, postings BLOB NOT NULL)"
+                     " WITHOUT ROWID")
 
         conn.executemany("INSERT INTO a_current VALUES (?,?)", pairs)
         conn.executemany("INSERT INTO b_hash32 VALUES (?,?)",
@@ -126,6 +131,8 @@ def measure_shape(docs: int, chars: int, seed: int = 7) -> dict:
                          [(h, _pack(v)) for h, v in postings.items()])
         conn.executemany("INSERT INTO e_posting_text VALUES (?,?)",
                          [(g, _pack(v)) for g, v in postings_text.items()])
+        conn.executemany("INSERT INTO f_posting_varint VALUES (?,?)",
+                         [(g, _pack_postings(v)) for g, v in postings_text.items()])
         conn.commit()
 
         sizes = {}
@@ -136,6 +143,9 @@ def measure_shape(docs: int, chars: int, seed: int = 7) -> dict:
                            "bytes_per_row": round(size / rows, 2) if rows else 0}
         conn.close()
 
+    sizes["f_posting_varint"]["bytes_per_pair"] = round(
+        sizes["f_posting_varint"]["bytes"] / len(pairs), 3
+    )
     distinct_grams = len({g for g, _ in pairs})
     distinct_hashes = len({zlib.crc32(g.encode()) for g, _ in pairs})
     base = sizes["a_current"]["bytes"] or 1
