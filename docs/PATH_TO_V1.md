@@ -4,9 +4,11 @@
 > session note or a chat summary, this file wins on *sequencing*; accepted ADRs still win on
 > *decisions*. Update it whenever something lands — an item that is done and still listed
 > here is worse than no list.
-> **Last verified:** 2026-11-23 (state reconciliation: PRs #50 and #51 merged — a short CJK query is
-> answered from a `doc_grams` index, schema v3, instead of a scan; the scan survives only for
-> documents the index does not cover. Gate **765 passed / 3 skipped**, linkcheck OK. P3.8 added
+> **Last verified:** 2026-11-26 (schema v4: `doc_grams` is one posting list per gram, delta-coded,
+> so the index costs 1.46×–2.11× the payload it indexes instead of 6.66×–13.4× —
+> [ADR-0027](ADR/ADR-0027-schema-v4-gram-postings.md), repacked from v3 on open. Prior: 2026-11-23 —
+> a short CJK query is answered from a `doc_grams` index, schema v3, instead of a scan; the scan
+> survives only for documents the index does not cover. Gate **765 passed / 3 skipped**, linkcheck OK. P3.8 added
 > for the gram table's measured cost, P5.3 and P5.4 closed, and **P7 written down: the work only
 > the owner can do**.) Prior: 2026-11-16 (Forge cycle: **P3.6 landed — the plugin seam is now reachable from the CLI**: `canon --language hi` / `pack --language hi`, with the default path byte-identical and an unknown id a usage error. Gate 712 passed / 3 skipped. Prior: 2026-11-09 — the second language landed — Hindi as a separate
 > distribution behind the ADR-0022 seam, and `pack()` now records a plugin's provenance in the
@@ -68,7 +70,7 @@ multi-user concurrency, cloud anything.
 | OCR (external Tesseract plugin) | **Done** | ADR-0019; `ocr_core.py`; 15 tests; real 99-page scan |
 | Multilingual — plugin seam | **Done: proven by four languages, and by a tokenizer that is not `unicode61`** | [ADR-0022](ADR/ADR-0022-language-plugins.md) + [ADR-0023](ADR/ADR-0023-plugin-provenance.md) + [ADR-0024](ADR/ADR-0024-tokenizer-recording.md); Hindi ships as `packages/lexora-lang-hi`, Chinese as `packages/lexora-lang-zh` and Gujarati as `packages/lexora-lang-gu` (`gu-1`, 2026-11-23), all readable without them |
 | Multilingual — selectable from the CLI | **Done** | P3.6 landed 2026-11-16: `canon --language hi` / `pack --language hi`; 9 tests, defaults byte-identical |
-| Short CJK queries (the `trigram` floor) | **Done — answered from an index** | PRs #50/#51 merged 2026-11-23; [ADR-0024](ADR/ADR-0024-tokenizer-recording.md); schema v3 `doc_grams`; 36 tests in `tests/test_catalog_tokenizer.py` |
+| Short CJK queries (the `trigram` floor) | **Done — answered from an index** | PRs #50/#51 merged 2026-11-23; [ADR-0024](ADR/ADR-0024-tokenizer-recording.md); `doc_grams`, **schema v4** since 2026-11-26 ([ADR-0027](ADR/ADR-0027-schema-v4-gram-postings.md): one delta-coded posting list per gram, 1.46×–2.11× the payload instead of 6.66×–13.4×); 36 tests in `tests/test_catalog_tokenizer.py` + 17 in `tests/test_gram_postings.py` |
 | GUI query view | **Done** | `gui/query.py`; 14 offscreen tests; parity with the CLI asserted |
 | GUI on subprocess (ADR-0011) | **Done** | `service.py` is a CLI client; 10 argv-level tests |
 | Release | **Not started** | M7 / P7 |

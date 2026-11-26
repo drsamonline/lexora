@@ -1,7 +1,9 @@
 # LEXORA Project Status
 
 > **Status:** Active — update at every session end
-> **Last verified:** 2026-11-23 (state reconciliation: `main` @ `931aac4` after PRs #50 and #51
+> **Last verified:** 2026-11-26 (schema v4 — `doc_grams` is one delta-coded posting list per gram,
+> [ADR-0027](ADR/ADR-0027-schema-v4-gram-postings.md); gate **879 passed / 15 skipped** with both
+> language plugins installed). Prior: 2026-11-23 (state reconciliation: `main` @ `931aac4` after PRs #50 and #51
 > merged — short CJK queries answered from a `doc_grams` index (schema v3). Gate **765 passed /
 > 3 skipped**, linkcheck OK, both language plugins installed. The two open PRs are closed and the
 > repository has no open issues.) Prior: 2026-11-18 (release `v0.2.0-alpha.1`; Chinese as the

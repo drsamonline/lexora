@@ -57,7 +57,7 @@ from lexora.container import (
     unpack as lxz_unpack,
 )
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 # Contentless (`content=''`): FTS5 stores the inverted index only, never a second
 # uncompressed copy of the text. Measured on 18.2 MiB of Gutenberg prose this costs
@@ -116,16 +116,78 @@ SHORT_QUERY_SCAN_LIMIT = 1000
 #: would give, and the same answer the scan gave, without reading a single blob.
 SHORT_QUERY_GRAM_MAX = TRIGRAM_FLOOR - 1
 
-#: One row per (gram, document), for the documents the trigram index holds. Keyed
-#: gram-first because every query is "which documents hold this gram", and `WITHOUT
-#: ROWID` makes that key the storage instead of a second copy of it. Unigrams and
-#: bigrams share the table: a query says its own length, so the two cannot be confused.
+#: One row per GRAM, holding the packed ids of every document that holds it. Schema v4.
+#:
+#: v3 stored one row per (gram, document), and `benchmarks/gram_index_probe.py` measured
+#: what that costs: on a 50-document corpus the v3 table is 6.6x the stored payload it
+#: answers for, and 13.3x where bigrams recur across documents — against 2.2x and 1.8x
+#: for this inverted shape, which is why the shape changed and the probe is committed
+#: beside it. The ids are delta-coded LEB128 varints, so a posting list costs about one
+#: byte per document instead of the ~14 bytes a v3 row cost. Unigrams and bigrams share
+#: the table: a query says its own length, so the two cannot be confused.
+#:
+#: No hash is involved, deliberately. The probe found a 32-bit hash of the gram would
+#: save nothing worth the risk (1.06x-1.19x against this shape's 2-3x) while turning an
+#: exact answer into a candidate answer that has to be verified against the document.
 GRAM_SCHEMA = (
     "CREATE TABLE IF NOT EXISTS doc_grams ("
-    " gram TEXT NOT NULL,"
-    " doc_id INTEGER NOT NULL,"
-    " PRIMARY KEY (gram, doc_id)) WITHOUT ROWID"
+    " gram TEXT PRIMARY KEY,"
+    " postings BLOB NOT NULL) WITHOUT ROWID"
 )
+
+#: Which documents carry gram rows at all. One row per document, so "is this document
+#: indexed" is a primary-key lookup rather than a scan of every posting list — and a
+#: document whose blob failed verification is simply absent, which is what leaves it
+#: uncovered for the scan to answer.
+GRAM_DOC_SCHEMA = (
+    "CREATE TABLE IF NOT EXISTS doc_gram_docs (doc_id INTEGER PRIMARY KEY)"
+)
+
+
+def _varint_encode(value: int) -> bytes:
+    """LEB128: 0-127 in one byte, 128-16383 in two, and so on."""
+    out = bytearray()
+    while True:
+        byte = value & 0x7F
+        value >>= 7
+        out.append(byte | (0x80 if value else 0))
+        if not value:
+            return bytes(out)
+
+
+def _varint_decode(blob: bytes) -> list[int]:
+    values: list[int] = []
+    shift = 0
+    acc = 0
+    for byte in blob:
+        acc |= (byte & 0x7F) << shift
+        if byte & 0x80:
+            shift += 7
+        else:
+            values.append(acc)
+            shift = 0
+            acc = 0
+    return values
+
+
+def _pack_postings(doc_ids) -> bytes:
+    """Sorted document ids, delta-coded: a run of consecutive ids costs one byte each."""
+    out = bytearray()
+    previous = 0
+    for doc_id in sorted(set(doc_ids)):
+        out += _varint_encode(doc_id - previous)
+        previous = doc_id
+    return bytes(out)
+
+
+def _unpack_postings(blob: bytes) -> list[int]:
+    """The ids `_pack_postings` wrote, in ascending order."""
+    ids: list[int] = []
+    previous = 0
+    for delta in _varint_decode(blob):
+        previous += delta
+        ids.append(previous)
+    return ids
 INDEX_NAME = "catalog.sqlite"
 BLOB_DIR = "blobs"
 
@@ -255,6 +317,7 @@ class Catalog:
                 """
             )
             self._conn.execute(GRAM_SCHEMA)
+            self._conn.execute(GRAM_DOC_SCHEMA)
             self._migrate()
             self._conn.execute(
                 "INSERT OR REPLACE INTO meta(key, value) VALUES ('schema_version', ?)",
@@ -303,7 +366,25 @@ class Catalog:
                 # on open — the same rule the tokenizer column follows: a migration
                 # that made a user re-ingest their documents would not be a migration.
                 self._conn.execute(GRAM_SCHEMA)
+                self._conn.execute(GRAM_DOC_SCHEMA)
+                # A catalog with no posting table cannot have indexed documents, so a
+                # coverage marker left behind by one (a table dropped, a restore of the
+                # wrong file) is cleared rather than trusted: it would otherwise say
+                # "indexed" for documents the index cannot answer for, and the scan
+                # would never be asked.
+                self._conn.execute("DELETE FROM doc_gram_docs")
                 self._backfill_grams()
+            else:
+                self._conn.execute(GRAM_DOC_SCHEMA)
+                gram_columns = {
+                    row["name"]
+                    for row in self._conn.execute("PRAGMA table_info(doc_grams)")
+                }
+                if {"gram", "doc_id"} <= gram_columns:
+                    # v3 -> v4: one row per (gram, document) becomes one posting list
+                    # per gram. A pure in-database transform: no blob is read, because
+                    # the v3 table already holds every gram.
+                    self._repack_grams()
             # The version is part of the migration, not a cosmetic stamp: a catalog
             # that has the v2 shape and says v1 is a catalog nobody can reason about.
             self._conn.execute(
@@ -379,24 +460,77 @@ class Catalog:
         if tokenizer != "trigram":
             return
         grams = self._grams(path) | self._grams(title or "") | self._grams(body)
-        self._conn.executemany(
-            "INSERT OR IGNORE INTO doc_grams(gram, doc_id) VALUES (?, ?)",
-            ((gram, doc_id) for gram in grams),
-        )
+        self._grams_write(doc_id, grams)
+
+    def _grams_write(self, doc_id: int, grams: set[str]) -> None:
+        """Merge one document's id into every posting list it belongs in.
+
+        The coverage marker is written last and only when there is a gram to write, so
+        `doc_gram_docs` never claims a document the posting lists cannot answer for.
+        """
+        for gram in grams:
+            row = self._conn.execute(
+                "SELECT postings FROM doc_grams WHERE gram = ?", (gram,)
+            ).fetchone()
+            ids = _unpack_postings(row["postings"]) if row else []
+            if doc_id in ids:
+                continue  # already recorded: a re-add of the same document is a no-op
+            ids.append(doc_id)
+            self._conn.execute(
+                "INSERT INTO doc_grams(gram, postings) VALUES (?, ?)"
+                " ON CONFLICT(gram) DO UPDATE SET postings = excluded.postings",
+                (gram, _pack_postings(ids)),
+            )
+        if grams:
+            self._conn.execute(
+                "INSERT OR IGNORE INTO doc_gram_docs(doc_id) VALUES (?)", (doc_id,)
+            )
 
     def _grams_delete(self, doc_id: int) -> None:
-        self._conn.execute("DELETE FROM doc_grams WHERE doc_id = ?", (doc_id,))
+        """Remove one document's id from every posting list it reached.
+
+        A posting list that loses its last id is dropped rather than left empty: an
+        empty list would answer "no documents" for a gram no document holds, which is
+        the same answer a missing row gives — but it would also make the gram count in
+        `stats()` claim an index larger than the one that is there.
+        """
+        for row in list(self._conn.execute("SELECT gram, postings FROM doc_grams")):
+            ids = _unpack_postings(row["postings"])
+            if doc_id not in ids:
+                continue
+            rest = [other for other in ids if other != doc_id]
+            if rest:
+                self._conn.execute(
+                    "UPDATE doc_grams SET postings = ? WHERE gram = ?",
+                    (_pack_postings(rest), row["gram"]),
+                )
+            else:
+                self._conn.execute(
+                    "DELETE FROM doc_grams WHERE gram = ?", (row["gram"],)
+                )
+        self._conn.execute("DELETE FROM doc_gram_docs WHERE doc_id = ?", (doc_id,))
 
     def _gram_rowids(self, folded: str) -> set[int]:
-        """Documents holding `folded` as a gram. Exact for a needle of length 1 or 2."""
-        return {
-            row["doc_id"] for row in self._conn.execute(
-                "SELECT g.doc_id FROM doc_grams g"
-                " JOIN documents d ON d.doc_id = g.doc_id"
-                " WHERE g.gram = ? AND d.deleted = 0 AND d.superseded = 0",
-                (folded,),
+        """Documents holding `folded` as a gram. Exact for a needle of length 1 or 2.
+
+        One primary-key lookup and one decode: the cost is the size of the ANSWER, not
+        the size of the corpus, which is the property v3 had and this keeps. A posting
+        that names a document that is no longer live is filtered here rather than
+        trusted — `_unindex` is best-effort for the FTS row and this must not inherit
+        that.
+        """
+        row = self._conn.execute(
+            "SELECT postings FROM doc_grams WHERE gram = ?", (folded,)
+        ).fetchone()
+        if row is None:
+            return set()
+        live = {
+            r["doc_id"]
+            for r in self._conn.execute(
+                "SELECT doc_id FROM documents WHERE deleted = 0 AND superseded = 0"
             )
         }
+        return {doc_id for doc_id in _unpack_postings(row["postings"]) if doc_id in live}
 
     #: The live trigram documents, and how many there are. Shared by the gram index's
     #: backfill and the scan so the two can never disagree about which documents the
@@ -423,13 +557,13 @@ class Catalog:
         """Live trigram documents with no grams yet, and how many there are.
 
         This is the honest definition of "what the index cannot answer": a document
-        with no rows in `doc_grams`. Every document has a path, so a gram-indexed
-        document always has at least one row — an empty set means "not indexed",
+        with no row in `doc_gram_docs`. Every document has a path, so a gram-indexed
+        document always has at least one gram — a missing marker means "not indexed",
         never "indexed and empty".
         """
         where = (
             self._LIVE_TRIGRAM_WHERE
-            + " AND NOT EXISTS (SELECT 1 FROM doc_grams g WHERE g.doc_id = d.doc_id)"
+            + " AND NOT EXISTS (SELECT 1 FROM doc_gram_docs x WHERE x.doc_id = d.doc_id)"
         )
         total = self._conn.execute("SELECT COUNT(*)" + where).fetchone()[0]
         rows = self._conn.execute(
@@ -450,7 +584,7 @@ class Catalog:
         """
         rows, _ = self._live_trigram_rows()
         missing = [r for r in rows if not self._conn.execute(
-            "SELECT 1 FROM doc_grams WHERE doc_id = ? LIMIT 1", (r["doc_id"],)
+            "SELECT 1 FROM doc_gram_docs WHERE doc_id = ? LIMIT 1", (r["doc_id"],)
         ).fetchone()]
         with self._conn:
             for row in missing:
@@ -462,6 +596,30 @@ class Catalog:
                     continue
                 self._grams_insert(row["doc_id"], row["path"], row["title"], body,
                                    "trigram")
+
+    def _repack_grams(self) -> None:
+        """v3 -> v4: one row per (gram, document) becomes one posting list per gram.
+
+        No blob is read — the v3 table already holds every gram, so this is a pure
+        in-database transform. The coverage marker is written from the documents the v3
+        rows actually named, so a v3 catalog that was half backfilled stays half
+        backfilled instead of being declared indexed.
+        """
+        by_gram: dict[str, list[int]] = {}
+        docs: set[int] = set()
+        for row in self._conn.execute("SELECT gram, doc_id FROM doc_grams"):
+            by_gram.setdefault(row["gram"], []).append(row["doc_id"])
+            docs.add(row["doc_id"])
+        self._conn.execute("DROP TABLE doc_grams")
+        self._conn.execute(GRAM_SCHEMA)
+        self._conn.executemany(
+            "INSERT INTO doc_grams(gram, postings) VALUES (?, ?)",
+            ((gram, _pack_postings(ids)) for gram, ids in by_gram.items()),
+        )
+        self._conn.executemany(
+            "INSERT OR IGNORE INTO doc_gram_docs(doc_id) VALUES (?)",
+            ((doc_id,) for doc_id in sorted(docs)),
+        )
 
     def _unindex(self, doc_id: int, path: str, title: str | None, sha: str, rel: str,
                  tokenizer: str = DEFAULT_TOKENIZER) -> None:
@@ -994,11 +1152,11 @@ class Catalog:
         # still waiting for the backfill.
         gram_rows = self._conn.execute("SELECT COUNT(*) AS n FROM doc_grams").fetchone()["n"]
         gram_docs = self._conn.execute(
-            "SELECT COUNT(DISTINCT doc_id) AS n FROM doc_grams"
+            "SELECT COUNT(*) AS n FROM doc_gram_docs"
         ).fetchone()["n"]
         gram_uncovered = self._conn.execute(
             "SELECT COUNT(*)" + self._LIVE_TRIGRAM_WHERE
-            + " AND NOT EXISTS (SELECT 1 FROM doc_grams g WHERE g.doc_id = d.doc_id)"
+            + " AND NOT EXISTS (SELECT 1 FROM doc_gram_docs x WHERE x.doc_id = d.doc_id)"
         ).fetchone()[0]
         index_bytes = self.index_path.stat().st_size if self.index_path.exists() else 0
         canonical = live["canonical"] or 0

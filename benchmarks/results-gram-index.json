@@ -21,15 +21,15 @@
         },
         "b_hash32": {
           "rows": 5636,
-          "bytes": 73728,
-          "bytes_per_row": 13.08,
-          "vs_current": 1.06
+          "bytes": 69632,
+          "bytes_per_row": 12.35,
+          "vs_current": 1.12
         },
         "c_hash4": {
           "rows": 5636,
-          "bytes": 65536,
-          "bytes_per_row": 11.63,
-          "vs_current": 1.19
+          "bytes": 69632,
+          "bytes_per_row": 12.35,
+          "vs_current": 1.12
         },
         "d_posting32": {
           "rows": 5636,
@@ -39,13 +39,20 @@
         },
         "e_posting_text": {
           "rows": 5636,
-          "bytes": 102400,
-          "bytes_per_row": 18.17,
-          "vs_current": 0.76
+          "bytes": 106496,
+          "bytes_per_row": 18.9,
+          "vs_current": 0.73
+        },
+        "f_posting_varint": {
+          "rows": 5636,
+          "bytes": 81920,
+          "bytes_per_row": 14.54,
+          "bytes_per_pair": 14.535,
+          "vs_current": 0.95
         }
       },
       "current_vs_stored_payload": 3.15,
-      "best_packing_vs_stored_payload": 2.66
+      "best_packing_vs_stored_payload": 2.82
     },
     "small-corpus-50x4k": {
       "documents": 50,
@@ -59,37 +66,44 @@
       "layouts": {
         "a_current": {
           "rows": 105626,
-          "bytes": 1478656,
-          "bytes_per_row": 14.0,
+          "bytes": 1490944,
+          "bytes_per_row": 14.12,
           "vs_current": 1.0
         },
         "b_hash32": {
           "rows": 105626,
-          "bytes": 1400832,
-          "bytes_per_row": 13.26,
-          "vs_current": 1.06
+          "bytes": 1396736,
+          "bytes_per_row": 13.22,
+          "vs_current": 1.07
         },
         "c_hash4": {
           "rows": 105626,
           "bytes": 1273856,
           "bytes_per_row": 12.06,
-          "vs_current": 1.16
+          "vs_current": 1.17
         },
         "d_posting32": {
           "rows": 15273,
-          "bytes": 659456,
-          "bytes_per_row": 43.18,
-          "vs_current": 2.24
+          "bytes": 679936,
+          "bytes_per_row": 44.52,
+          "vs_current": 2.19
         },
         "e_posting_text": {
           "rows": 15273,
-          "bytes": 708608,
-          "bytes_per_row": 46.4,
-          "vs_current": 2.09
+          "bytes": 700416,
+          "bytes_per_row": 45.86,
+          "vs_current": 2.13
+        },
+        "f_posting_varint": {
+          "rows": 15273,
+          "bytes": 327680,
+          "bytes_per_row": 21.45,
+          "bytes_per_pair": 3.102,
+          "vs_current": 4.55
         }
       },
-      "current_vs_stored_payload": 6.61,
-      "best_packing_vs_stored_payload": 2.95
+      "current_vs_stored_payload": 6.66,
+      "best_packing_vs_stored_payload": 1.46
     },
     "recurring-bigrams-500x400": {
       "documents": 500,
@@ -103,37 +117,44 @@
       "layouts": {
         "a_current": {
           "rows": 205082,
-          "bytes": 2973696,
-          "bytes_per_row": 14.5,
+          "bytes": 2998272,
+          "bytes_per_row": 14.62,
           "vs_current": 1.0
         },
         "b_hash32": {
           "rows": 205082,
-          "bytes": 2883584,
-          "bytes_per_row": 14.06,
-          "vs_current": 1.03
+          "bytes": 2887680,
+          "bytes_per_row": 14.08,
+          "vs_current": 1.04
         },
         "c_hash4": {
           "rows": 205082,
-          "bytes": 2674688,
-          "bytes_per_row": 13.04,
-          "vs_current": 1.11
+          "bytes": 2637824,
+          "bytes_per_row": 12.86,
+          "vs_current": 1.14
         },
         "d_posting32": {
           "rows": 15197,
-          "bytes": 1675264,
-          "bytes_per_row": 110.24,
-          "vs_current": 1.78
+          "bytes": 1646592,
+          "bytes_per_row": 108.35,
+          "vs_current": 1.82
         },
         "e_posting_text": {
           "rows": 15197,
-          "bytes": 1695744,
-          "bytes_per_row": 111.58,
-          "vs_current": 1.75
+          "bytes": 1671168,
+          "bytes_per_row": 109.97,
+          "vs_current": 1.79
+        },
+        "f_posting_varint": {
+          "rows": 15197,
+          "bytes": 471040,
+          "bytes_per_row": 31.0,
+          "bytes_per_pair": 2.297,
+          "vs_current": 6.37
         }
       },
-      "current_vs_stored_payload": 13.29,
-      "best_packing_vs_stored_payload": 7.49
+      "current_vs_stored_payload": 13.4,
+      "best_packing_vs_stored_payload": 2.11
     }
   }
 }
