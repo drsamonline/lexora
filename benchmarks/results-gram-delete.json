@@ -1,0 +1,72 @@
+{
+  "probe": "gram_delete_probe",
+  "question": "what does unindexing one document cost, and what does a digest buy?",
+  "note": "Synthetic Zipfian Chinese from the committed pool, trigram tokenizer. Statement and decode counts are the primary figures; seconds are reported for context.",
+  "sqlite": "3.40.1",
+  "shapes": {
+    "small": {
+      "documents": 50,
+      "characters_per_document": 300,
+      "distinct_grams": 5672,
+      "documents_grams": {
+        "doc0001.txt": 356,
+        "doc0002.txt": 357
+      },
+      "stored_payload_bytes": 42013,
+      "postings_bytes": 18595,
+      "digest_bytes": 45390,
+      "digest_vs_postings": 2.441,
+      "digest_vs_stored_payload": 1.08,
+      "index_bytes": 454656,
+      "deletes": {
+        "scan": {
+          "doc_grams_statements": 6030,
+          "posting_lists_decoded": 5672,
+          "documents_removed": 1,
+          "seconds": 0.1259
+        },
+        "digest": {
+          "doc_grams_statements": 712,
+          "posting_lists_decoded": 356,
+          "documents_removed": 1,
+          "seconds": 0.0354
+        }
+      },
+      "posting_lists_decoded_ratio": 15.9,
+      "grams_after_two_deletes": 5547,
+      "stale_ids_left_in_postings": 0
+    },
+    "named": {
+      "documents": 500,
+      "characters_per_document": 1200,
+      "distinct_grams": 19478,
+      "documents_grams": {
+        "doc0001.txt": 1044,
+        "doc0002.txt": 1048
+      },
+      "stored_payload_bytes": 1131833,
+      "postings_bytes": 531313,
+      "digest_bytes": 1004202,
+      "digest_vs_postings": 1.89,
+      "digest_vs_stored_payload": 0.887,
+      "index_bytes": 8523776,
+      "deletes": {
+        "scan": {
+          "doc_grams_statements": 20527,
+          "posting_lists_decoded": 19478,
+          "documents_removed": 1,
+          "seconds": 1.0793
+        },
+        "digest": {
+          "doc_grams_statements": 2088,
+          "posting_lists_decoded": 1044,
+          "documents_removed": 1,
+          "seconds": 0.3171
+        }
+      },
+      "posting_lists_decoded_ratio": 18.7,
+      "grams_after_two_deletes": 19476,
+      "stale_ids_left_in_postings": 0
+    }
+  }
+}

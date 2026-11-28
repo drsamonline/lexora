@@ -49,7 +49,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from lexora import __version__, codec_registry
+from lexora import __version__, codec_registry, zstd_core
 from lexora.container import (
     ContainerError,
     pack as lxz_pack,
@@ -143,6 +143,25 @@ GRAM_DOC_SCHEMA = (
     "CREATE TABLE IF NOT EXISTS doc_gram_docs (doc_id INTEGER PRIMARY KEY)"
 )
 
+#: One row per document, holding the grams THAT document reached, front-coded.
+#:
+#: v4 made a delete a scan of every posting list in the table: `_grams_delete` could
+#: only find the grams a document touched by decoding all of them, which is bounded by
+#: the VOCABULARY (~15k rows on a 500-document catalog) rather than by the document.
+#: `benchmarks/gram_delete_probe.py` measures what that costs and what this buys. The
+#: digest is the v3 rows, per document, front-coded: grams are sorted and each is
+#: written as the shared prefix length with its predecessor, then its remaining bytes,
+#: so a run of bigrams sharing a first character costs ~1 byte of prefix each.
+#:
+#: It is a lookup table, never an authority: a posting left behind by a stale digest is
+#: filtered by `_gram_rowids` at read time, and a document with no digest row (a v4
+#: catalog written before this table existed) still deletes exactly, by the scan.
+GRAM_DIGEST_SCHEMA = (
+    "CREATE TABLE IF NOT EXISTS doc_gram_digest ("
+    " doc_id INTEGER PRIMARY KEY,"
+    " grams BLOB NOT NULL)"
+)
+
 
 def _varint_encode(value: int) -> bytes:
     """LEB128: 0-127 in one byte, 128-16383 in two, and so on."""
@@ -188,6 +207,80 @@ def _unpack_postings(blob: bytes) -> list[int]:
         previous += delta
         ids.append(previous)
     return ids
+
+
+def _varint_at(blob: bytes, pos: int) -> tuple[int, int]:
+    """One LEB128 value from `blob` at `pos`, and where the next one starts."""
+    value = 0
+    shift = 0
+    while True:
+        byte = blob[pos]
+        pos += 1
+        value |= (byte & 0x7F) << shift
+        if not byte & 0x80:
+            return value, pos
+        shift += 7
+
+
+def _pack_grams(grams) -> bytes:
+    """A document's grams, sorted and front-coded: prefix length, suffix, next.
+
+    Sorted by code point, which for UTF-8 is sorted by byte, so neighbouring grams
+    really do share a prefix (`今天`, `今天天`, ...). Nothing is hashed: the digest is a
+    list of the exact keys the posting table is keyed by, so a delete that follows it
+    cannot miss a gram it recorded.
+    """
+    out = bytearray()
+    previous = b""
+    for gram in sorted(grams):
+        raw = gram.encode("utf-8")
+        shared = 0
+        limit = min(len(previous), len(raw))
+        while shared < limit and previous[shared] == raw[shared]:
+            shared += 1
+        out += _varint_encode(shared)
+        out += _varint_encode(len(raw) - shared)
+        out += raw[shared:]
+        previous = raw
+    return bytes(out)
+
+
+def _unpack_grams(blob: bytes) -> list[str]:
+    """The grams `_pack_grams` wrote, in the order it wrote them."""
+    grams: list[str] = []
+    previous = b""
+    pos = 0
+    end = len(blob)
+    while pos < end:
+        shared, pos = _varint_at(blob, pos)
+        suffix_len, pos = _varint_at(blob, pos)
+        raw = previous[:shared] + blob[pos:pos + suffix_len]
+        pos += suffix_len
+        grams.append(raw.decode("utf-8"))
+        previous = raw
+    return grams
+
+
+#: The zstd level the digest is stored at — the same level `add()` stores payloads at,
+#: so the index does not carry a second, unexplained tuning knob.
+DIGEST_LEVEL = 9
+
+
+def _digest_pack(grams) -> bytes:
+    """The stored form of a document's gram digest: front-coded, then one zstd frame.
+
+    Front-coding alone leaves the digest at 4.1x the posting table it exists to save
+    (`benchmarks/gram_delete_probe.py`), because a document's grams are mostly not
+    adjacent in the vocabulary. Compressed, it is 0.86x the stored payload and 1.8x the
+    posting table — 10 % of the whole index for a delete that touches the document
+    instead of the vocabulary.
+    """
+    return zstd_core.compress(_pack_grams(grams), level=DIGEST_LEVEL)
+
+
+def _digest_unpack(blob: bytes) -> list[str]:
+    """The grams `_digest_pack` wrote."""
+    return _unpack_grams(zstd_core.decompress(blob))
 INDEX_NAME = "catalog.sqlite"
 BLOB_DIR = "blobs"
 
@@ -318,6 +411,7 @@ class Catalog:
             )
             self._conn.execute(GRAM_SCHEMA)
             self._conn.execute(GRAM_DOC_SCHEMA)
+            self._conn.execute(GRAM_DIGEST_SCHEMA)
             self._migrate()
             self._conn.execute(
                 "INSERT OR REPLACE INTO meta(key, value) VALUES ('schema_version', ?)",
@@ -367,6 +461,7 @@ class Catalog:
                 # that made a user re-ingest their documents would not be a migration.
                 self._conn.execute(GRAM_SCHEMA)
                 self._conn.execute(GRAM_DOC_SCHEMA)
+                self._conn.execute(GRAM_DIGEST_SCHEMA)
                 # A catalog with no posting table cannot have indexed documents, so a
                 # coverage marker left behind by one (a table dropped, a restore of the
                 # wrong file) is cleared rather than trusted: it would otherwise say
@@ -376,15 +471,31 @@ class Catalog:
                 self._backfill_grams()
             else:
                 self._conn.execute(GRAM_DOC_SCHEMA)
+                # The digest table arrives for a catalog written by v4 before it existed.
+                # It is created BEFORE the repack below, because `_repack_grams` writes
+                # the digests it can derive from the v3 rows it is already walking.
+                digest_missing = "doc_gram_digest" not in tables
+                if digest_missing:
+                    self._conn.execute(GRAM_DIGEST_SCHEMA)
                 gram_columns = {
                     row["name"]
                     for row in self._conn.execute("PRAGMA table_info(doc_grams)")
                 }
+                repacked = False
                 if {"gram", "doc_id"} <= gram_columns:
                     # v3 -> v4: one row per (gram, document) becomes one posting list
                     # per gram. A pure in-database transform: no blob is read, because
                     # the v3 table already holds every gram.
                     self._repack_grams()
+                    repacked = True
+                # v4 -> v4 + digest: a catalog written before the digest table existed
+                # has posting lists but no per-document list of the grams they name, so
+                # a delete would have to walk the vocabulary. One scan here inverts the
+                # postings into digests, and every later delete is bounded by the
+                # document instead. A v3 table was repacked above and has its digests
+                # written by `_repack_grams`, so this only runs on a pre-digest v4.
+                if digest_missing and not repacked:
+                    self._backfill_gram_digests()
             # The version is part of the migration, not a cosmetic stamp: a catalog
             # that has the v2 shape and says v1 is a catalog nobody can reason about.
             self._conn.execute(
@@ -482,6 +593,13 @@ class Catalog:
                 (gram, _pack_postings(ids)),
             )
         if grams:
+            # The digest is written in the same transaction as the postings it
+            # describes, so a delete can follow it without re-deriving it — and it is
+            # replaced rather than merged: it is this document's grams, not a history.
+            self._conn.execute(
+                "INSERT OR REPLACE INTO doc_gram_digest(doc_id, grams) VALUES (?, ?)",
+                (doc_id, _digest_pack(grams)),
+            )
             self._conn.execute(
                 "INSERT OR IGNORE INTO doc_gram_docs(doc_id) VALUES (?)", (doc_id,)
             )
@@ -493,22 +611,69 @@ class Catalog:
         empty list would answer "no documents" for a gram no document holds, which is
         the same answer a missing row gives — but it would also make the gram count in
         `stats()` claim an index larger than the one that is there.
+
+        WHICH POSTING LISTS are the document's is answered by its digest row, so the
+        cost of a delete is the size of the DOCUMENT, not the size of the vocabulary.
+        Without a digest row the old path is taken: a scan of every posting list, which
+        is exact but bounded by the vocabulary. That is not a legacy branch kept for
+        sentiment — a v4 catalog written before the digest table existed has posting
+        lists and no digests, and it must still delete correctly.
         """
-        for row in list(self._conn.execute("SELECT gram, postings FROM doc_grams")):
-            ids = _unpack_postings(row["postings"])
-            if doc_id not in ids:
-                continue
-            rest = [other for other in ids if other != doc_id]
-            if rest:
+        digest = self._conn.execute(
+            "SELECT grams FROM doc_gram_digest WHERE doc_id = ?", (doc_id,)
+        ).fetchone()
+        if digest is None:
+            self._grams_delete_scan(doc_id)
+        else:
+            try:
+                grams = _digest_unpack(digest["grams"])
+            except (zstd_core.CodecError, UnicodeDecodeError):
+                # A digest is an accelerator, never the authority: a byte flipped in the
+                # stored blob must not make a document undeletable. Drop the unreadable
+                # row and take the exact-but-slower path.
+                grams = None
                 self._conn.execute(
-                    "UPDATE doc_grams SET postings = ? WHERE gram = ?",
-                    (_pack_postings(rest), row["gram"]),
+                    "DELETE FROM doc_gram_digest WHERE doc_id = ?", (doc_id,)
                 )
+            if grams is None:
+                self._grams_delete_scan(doc_id)
             else:
+                for gram in grams:
+                    self._grams_delete_from(gram, doc_id)
                 self._conn.execute(
-                    "DELETE FROM doc_grams WHERE gram = ?", (row["gram"],)
+                    "DELETE FROM doc_gram_digest WHERE doc_id = ?", (doc_id,)
                 )
         self._conn.execute("DELETE FROM doc_gram_docs WHERE doc_id = ?", (doc_id,))
+
+    def _grams_delete_from(self, gram: str, doc_id: int) -> None:
+        """Drop one id from one posting list, removing the list when it empties."""
+        row = self._conn.execute(
+            "SELECT postings FROM doc_grams WHERE gram = ?", (gram,)
+        ).fetchone()
+        if row is None:
+            return
+        ids = _unpack_postings(row["postings"])
+        if doc_id not in ids:
+            return
+        rest = [other for other in ids if other != doc_id]
+        if rest:
+            self._conn.execute(
+                "UPDATE doc_grams SET postings = ? WHERE gram = ?",
+                (_pack_postings(rest), gram),
+            )
+        else:
+            self._conn.execute("DELETE FROM doc_grams WHERE gram = ?", (gram,))
+
+    def _grams_delete_scan(self, doc_id: int) -> None:
+        """The digestless delete: every posting list is decoded to find the document.
+
+        Exact, and bounded by the vocabulary rather than by the document. Kept because
+        a catalog can legitimately have postings and no digests (written by v4 before
+        this table existed, or restored from such a file), and `_backfill_gram_digests`
+        turns that case into the fast one on the next open.
+        """
+        for row in list(self._conn.execute("SELECT gram FROM doc_grams")):
+            self._grams_delete_from(row["gram"], doc_id)
 
     def _gram_rowids(self, folded: str) -> set[int]:
         """Documents holding `folded` as a gram. Exact for a needle of length 1 or 2.
@@ -607,6 +772,9 @@ class Catalog:
         """
         by_gram: dict[str, list[int]] = {}
         docs: set[int] = set()
+        # The v3 rows are the only authority here: a digest left over from a previous
+        # v4 shape describes documents this table no longer holds.
+        self._conn.execute("DELETE FROM doc_gram_digest")
         for row in self._conn.execute("SELECT gram, doc_id FROM doc_grams"):
             by_gram.setdefault(row["gram"], []).append(row["doc_id"])
             docs.add(row["doc_id"])
@@ -619,6 +787,34 @@ class Catalog:
         self._conn.executemany(
             "INSERT OR IGNORE INTO doc_gram_docs(doc_id) VALUES (?)",
             ((doc_id,) for doc_id in sorted(docs)),
+        )
+        # The v3 rows are also the digests, inverted: each document's own grams. Taken
+        # from the rows that were there, so a half-backfilled v3 gets digests for
+        # exactly the documents it had grams for.
+        by_doc: dict[int, set[str]] = {}
+        for gram, ids in by_gram.items():
+            for doc_id in ids:
+                by_doc.setdefault(doc_id, set()).add(gram)
+        self._conn.executemany(
+            "INSERT OR REPLACE INTO doc_gram_digest(doc_id, grams) VALUES (?, ?)",
+            ((doc_id, _digest_pack(grams)) for doc_id, grams in sorted(by_doc.items())),
+        )
+
+    def _backfill_gram_digests(self) -> None:
+        """Invert the posting lists into per-document digests, once, on open.
+
+        Called from `_migrate` only when the digest table was absent — a catalog
+        written by v4 before the table existed. No blob is read: the postings already
+        name every (gram, document) pair. The one scan this costs is paid at open, once,
+        and it is the same scan every delete used to pay.
+        """
+        by_doc: dict[int, set[str]] = {}
+        for row in self._conn.execute("SELECT gram, postings FROM doc_grams"):
+            for doc_id in _unpack_postings(row["postings"]):
+                by_doc.setdefault(doc_id, set()).add(row["gram"])
+        self._conn.executemany(
+            "INSERT OR REPLACE INTO doc_gram_digest(doc_id, grams) VALUES (?, ?)",
+            ((doc_id, _digest_pack(grams)) for doc_id, grams in sorted(by_doc.items())),
         )
 
     def _unindex(self, doc_id: int, path: str, title: str | None, sha: str, rel: str,
@@ -1158,6 +1354,18 @@ class Catalog:
             "SELECT COUNT(*)" + self._LIVE_TRIGRAM_WHERE
             + " AND NOT EXISTS (SELECT 1 FROM doc_gram_docs x WHERE x.doc_id = d.doc_id)"
         ).fetchone()[0]
+        # How many documents a delete can find its own grams for without walking the
+        # table. Reported rather than assumed: a catalog whose digests were never
+        # backfilled deletes exactly, but at the vocabulary's cost.
+        # Guarded, because a report must not be the thing that raises: a catalog whose
+        # digest table was dropped (or restored from a file without it) still answers.
+        gram_digested = 0
+        if self._conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'doc_gram_digest'"
+        ).fetchone():
+            gram_digested = self._conn.execute(
+                "SELECT COUNT(*) AS n FROM doc_gram_digest"
+            ).fetchone()["n"]
         index_bytes = self.index_path.stat().st_size if self.index_path.exists() else 0
         canonical = live["canonical"] or 0
         stored = live["stored"] or 0
@@ -1170,6 +1378,7 @@ class Catalog:
             "gram_index": {
                 "documents": gram_docs,
                 "grams": gram_rows,
+                "digested": gram_digested,
                 "uncovered": gram_uncovered,
             },
             "blobs": blobs["n"] or 0,
