@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+**Changed — a delete is bounded by the document, not by the vocabulary (ADR-0028).** Schema
+v4 gave a gram *lookup* the size of its answer and left the *delete* decoding every posting
+list in the table: unindexing one document on a 500-document catalog decoded **19,478** lists
+(1.08 s), and every supersede of an edited path paid it. `doc_gram_digest` now holds, per
+indexed document, the grams that document reached — sorted, front-coded, one zstd-9 frame —
+so the same delete decodes **1,044** lists (**18.7×** fewer, 0.32 s) and touches only the
+posting lists it must. The digest costs **1.89×** the posting table, **0.887×** the stored
+payload, ~10 % of the whole index, and that number is why it is compressed: front-coded alone
+it was 4.1×. It is an accelerator and never the authority — written in the same transaction
+as the postings it describes; a document with no digest still deletes exactly by the scan; a
+v4 catalog from before the table is backfilled in one pass on its next open and a v3 catalog
+gets digests from the rows the repack already walks (no blob read in either); an unreadable
+digest is dropped and the scan taken, so a document never becomes undeletable because an
+index entry rotted; and a posting left behind by any of those is filtered at read time.
+`stats()["gram_index"]["digested"]` says which state a catalog is in.
+`benchmarks/gram_delete_probe.py` → `benchmarks/results-gram-delete.json` is the artifact;
+`tests/test_gram_delete_digest.py` is 15 tests, and **8 mutations of the shipped code are all
+red** (digest never written, delete always scans, digest stored uncompressed, front coding
+dropped, backfill does nothing, corrupt digest raises instead of falling back, repack writes
+empty digests, postings not pruned). Suite **894 passed, 15 skipped**.
+
 **Changed — the gram index is one posting list per gram, not one row per pair (schema v4,
 [ADR-0027](docs/ADR/ADR-0027-schema-v4-gram-postings.md)).** ADR-0025 kept
 `doc_grams(gram, doc_id)` because every layout it measured stored document ids at a fixed
